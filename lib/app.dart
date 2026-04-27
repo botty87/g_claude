@@ -13,9 +13,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Claude Code GUI',
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
+      theme: AppTheme.dark,
       debugShowCheckedModeBanner: false,
       routerConfig: _router.config(),
     );

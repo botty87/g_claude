@@ -31,6 +31,10 @@ dependencies:
   talker_flutter: ^5.0.0
   talker_bloc_logger: ^5.0.0
 
+  # Fonts + icons
+  google_fonts: ^6.2.1
+  material_symbols_icons: ^4.2928.1
+
   # Desktop
   window_manager: ^0.5.0
   tray_manager: ^0.5.0
