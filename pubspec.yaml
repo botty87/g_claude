@@ -1,0 +1,63 @@
+name: g_claude
+description: "Desktop GUI for Claude Code (macOS first)."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.5
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_bloc: ^9.1.1
+
+  # DI
+  get_it: ^9.2.0
+  injectable: ^2.5.0
+
+  # Models
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
+  equatable: ^2.0.7
+
+  # Routing
+  auto_route: ^11.1.0
+
+  # Logging
+  talker_flutter: ^5.0.0
+  talker_bloc_logger: ^5.0.0
+
+  # Desktop
+  window_manager: ^0.5.0
+  tray_manager: ^0.5.0
+  hotkey_manager: ^0.2.3
+  desktop_drop: ^0.6.0
+
+  # FS / paths
+  path_provider: ^2.1.5
+  path: ^1.9.1
+
+  # HTTP server (PermissionServer — sessione successiva)
+  shelf: ^1.4.2
+  shelf_router: ^1.1.4
+
+  # AI tooling — agent-driven UI inspection
+  marionette_flutter: ^0.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  build_runner: ^2.7.0
+  injectable_generator: ^2.7.0
+  freezed: ^3.1.0
+  json_serializable: ^6.8.0
+  auto_route_generator: ^10.5.0
+
+flutter:
+  uses-material-design: true
