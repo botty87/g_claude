@@ -13,7 +13,11 @@
     },
     "sidePanel": {
       "explorerLabel": "EXPLORER",
-      "fileTreePlaceholder": "File tree — session 2"
+      "refresh": "Refresh",
+      "toggleHiddenShow": "Show hidden files",
+      "toggleHiddenHide": "Hide hidden files",
+      "emptyFolder": "Empty folder",
+      "loadError": "Cannot read folder"
     }
   },
   "workspace": {

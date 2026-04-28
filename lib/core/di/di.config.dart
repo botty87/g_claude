@@ -14,6 +14,15 @@ import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:talker_flutter/talker_flutter.dart' as _i207;
 
+import '../../features/explorer/data/datasources/file_system_datasource.dart'
+    as _i12;
+import '../../features/explorer/data/repositories/file_system_repository_impl.dart'
+    as _i890;
+import '../../features/explorer/domain/repositories/file_system_repository.dart'
+    as _i150;
+import '../../features/explorer/domain/usecases/list_directory.dart' as _i308;
+import '../../features/explorer/presentation/cubit/explorer_cubit.dart'
+    as _i188;
 import '../../features/shell/presentation/cubit/shell_cubit.dart' as _i68;
 import '../../features/workspace/data/datasources/workspace_local_datasource.dart'
     as _i735;
@@ -49,6 +58,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i331.BlocObserver>(
       () => blocObserverModule.blocObserver(gh<_i207.Talker>()),
     );
+    gh.lazySingleton<_i12.FileSystemDataSource>(
+      () => _i12.FileSystemDataSourceImpl(),
+    );
     gh.lazySingleton<_i268.WorkspaceRepository>(
       () => _i824.WorkspaceRepositoryImpl(gh<_i735.WorkspaceLocalDataSource>()),
     );
@@ -58,9 +70,22 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i305.OpenWorkspace>(
       () => _i305.OpenWorkspace(gh<_i268.WorkspaceRepository>()),
     );
+    gh.lazySingleton<_i150.FileSystemRepository>(
+      () => _i890.FileSystemRepositoryImpl(gh<_i12.FileSystemDataSource>()),
+    );
     gh.lazySingleton<_i179.WorkspacesCubit>(
       () =>
           _i179.WorkspacesCubit(gh<_i305.OpenWorkspace>(), gh<_i207.Talker>()),
+    );
+    gh.factory<_i308.ListDirectory>(
+      () => _i308.ListDirectory(gh<_i150.FileSystemRepository>()),
+    );
+    gh.lazySingleton<_i188.ExplorerCubit>(
+      () => _i188.ExplorerCubit(
+        gh<_i308.ListDirectory>(),
+        gh<_i179.WorkspacesCubit>(),
+        gh<_i207.Talker>(),
+      )..init(),
     );
     return this;
   }

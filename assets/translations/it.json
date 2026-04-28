@@ -13,7 +13,11 @@
     },
     "sidePanel": {
       "explorerLabel": "ESPLORA",
-      "fileTreePlaceholder": "Albero file — sessione 2"
+      "refresh": "Aggiorna",
+      "toggleHiddenShow": "Mostra file nascosti",
+      "toggleHiddenHide": "Nascondi file nascosti",
+      "emptyFolder": "Cartella vuota",
+      "loadError": "Impossibile leggere la cartella"
     }
   },
   "workspace": {
