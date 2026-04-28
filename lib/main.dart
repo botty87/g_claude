@@ -8,6 +8,7 @@ import 'app.dart';
 import 'core/di/di.dart';
 import 'core/marionette/marionette_log_bridge.dart';
 import 'core/window/window_setup.dart';
+import 'features/workspace/presentation/cubit/workspaces_cubit.dart';
 
 Future<void> main() async {
   // Marionette debug-only AI agent driver. Tree-shaken in release; skipped
@@ -33,6 +34,45 @@ Future<void> main() async {
   }
 
   Bloc.observer = getIt<BlocObserver>();
+
+  if (marionetteEnabled) {
+    registerMarionetteExtension(
+      name: 'openWorkspace',
+      description: 'Test-only: opens a workspace by absolute path, bypassing the native picker.',
+      callback: (params) async {
+        final path = params['path'];
+        if (path == null || path.isEmpty) {
+          return const MarionetteExtensionResult.invalidParams('Missing "path"');
+        }
+        await getIt<WorkspacesCubit>().openPath(path);
+        return const MarionetteExtensionResult.success({'ok': true});
+      },
+    );
+    registerMarionetteExtension(
+      name: 'closeWorkspace',
+      description: 'Test-only: closes a workspace by id (absolute path).',
+      callback: (params) async {
+        final id = params['id'];
+        if (id == null || id.isEmpty) {
+          return const MarionetteExtensionResult.invalidParams('Missing "id"');
+        }
+        await getIt<WorkspacesCubit>().closeWorkspace(id);
+        return const MarionetteExtensionResult.success({'ok': true});
+      },
+    );
+    registerMarionetteExtension(
+      name: 'setActiveWorkspace',
+      description: 'Test-only: sets the active workspace by id.',
+      callback: (params) async {
+        final id = params['id'];
+        if (id == null || id.isEmpty) {
+          return const MarionetteExtensionResult.invalidParams('Missing "id"');
+        }
+        getIt<WorkspacesCubit>().setActive(id);
+        return const MarionetteExtensionResult.success({'ok': true});
+      },
+    );
+  }
 
   runApp(App());
 }

@@ -14,6 +14,19 @@ import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:talker_flutter/talker_flutter.dart' as _i207;
 
+import '../../features/shell/presentation/cubit/shell_cubit.dart' as _i68;
+import '../../features/workspace/data/datasources/workspace_local_datasource.dart'
+    as _i735;
+import '../../features/workspace/data/repositories/workspace_repository_impl.dart'
+    as _i824;
+import '../../features/workspace/domain/repositories/workspace_repository.dart'
+    as _i268;
+import '../../features/workspace/domain/usecases/close_workspace.dart'
+    as _i1026;
+import '../../features/workspace/domain/usecases/load_claude_md.dart' as _i268;
+import '../../features/workspace/domain/usecases/open_workspace.dart' as _i305;
+import '../../features/workspace/presentation/cubit/workspaces_cubit.dart'
+    as _i179;
 import '../router/app_router.dart' as _i81;
 import 'modules/bloc_observer_module.dart' as _i596;
 import 'modules/router_module.dart' as _i322;
@@ -31,8 +44,31 @@ extension GetItInjectableX on _i174.GetIt {
     final blocObserverModule = _$BlocObserverModule();
     gh.lazySingleton<_i81.AppRouter>(() => routerModule.router);
     gh.lazySingleton<_i207.Talker>(() => talkerModule.talker);
+    gh.lazySingleton<_i68.ShellCubit>(() => _i68.ShellCubit());
+    gh.lazySingleton<_i735.WorkspaceLocalDataSource>(
+      () => _i735.WorkspaceLocalDataSourceImpl(),
+    );
     gh.lazySingleton<_i331.BlocObserver>(
       () => blocObserverModule.blocObserver(gh<_i207.Talker>()),
+    );
+    gh.lazySingleton<_i268.WorkspaceRepository>(
+      () => _i824.WorkspaceRepositoryImpl(gh<_i735.WorkspaceLocalDataSource>()),
+    );
+    gh.factory<_i1026.CloseWorkspace>(
+      () => _i1026.CloseWorkspace(gh<_i268.WorkspaceRepository>()),
+    );
+    gh.factory<_i268.LoadClaudeMd>(
+      () => _i268.LoadClaudeMd(gh<_i268.WorkspaceRepository>()),
+    );
+    gh.factory<_i305.OpenWorkspace>(
+      () => _i305.OpenWorkspace(gh<_i268.WorkspaceRepository>()),
+    );
+    gh.lazySingleton<_i179.WorkspacesCubit>(
+      () => _i179.WorkspacesCubit(
+        gh<_i305.OpenWorkspace>(),
+        gh<_i1026.CloseWorkspace>(),
+        gh<_i207.Talker>(),
+      ),
     );
     return this;
   }

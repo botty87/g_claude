@@ -44,6 +44,13 @@ dependencies:
   # FS / paths
   path_provider: ^2.1.5
   path: ^1.9.1
+  file_picker: ^11.0.2
+
+  # Layout
+  multi_split_view: ^3.6.1
+
+  # Markdown rendering (predisposto per chat — non usato in sessione 1)
+  flutter_markdown: ^0.7.7+1
 
   # HTTP server (PermissionServer — sessione successiva)
   shelf: ^1.4.2
