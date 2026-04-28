@@ -47,3 +47,15 @@ final class ParsingException implements Exception {
   final Object? cause;
   const ParsingException({required this.message, this.cause});
 }
+
+@immutable
+final class WorkspaceNotFoundException implements Exception {
+  final String path;
+  const WorkspaceNotFoundException(this.path);
+}
+
+@immutable
+final class WorkspaceNotADirectoryException implements Exception {
+  final String path;
+  const WorkspaceNotADirectoryException(this.path);
+}

@@ -55,13 +55,12 @@ extension WorkspacesStatePatterns on WorkspacesState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( WorkspacesStateInitial value)?  initial,TResult Function( WorkspacesStateLoaded value)?  loaded,TResult Function( WorkspacesStateError value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( WorkspacesStateInitial value)?  initial,TResult Function( WorkspacesStateLoaded value)?  loaded,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case WorkspacesStateInitial() when initial != null:
 return initial(_that);case WorkspacesStateLoaded() when loaded != null:
-return loaded(_that);case WorkspacesStateError() when error != null:
-return error(_that);case _:
+return loaded(_that);case _:
   return orElse();
 
 }
@@ -79,13 +78,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( WorkspacesStateInitial value)  initial,required TResult Function( WorkspacesStateLoaded value)  loaded,required TResult Function( WorkspacesStateError value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( WorkspacesStateInitial value)  initial,required TResult Function( WorkspacesStateLoaded value)  loaded,}){
 final _that = this;
 switch (_that) {
 case WorkspacesStateInitial():
 return initial(_that);case WorkspacesStateLoaded():
-return loaded(_that);case WorkspacesStateError():
-return error(_that);}
+return loaded(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -99,13 +97,12 @@ return error(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( WorkspacesStateInitial value)?  initial,TResult? Function( WorkspacesStateLoaded value)?  loaded,TResult? Function( WorkspacesStateError value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( WorkspacesStateInitial value)?  initial,TResult? Function( WorkspacesStateLoaded value)?  loaded,}){
 final _that = this;
 switch (_that) {
 case WorkspacesStateInitial() when initial != null:
 return initial(_that);case WorkspacesStateLoaded() when loaded != null:
-return loaded(_that);case WorkspacesStateError() when error != null:
-return error(_that);case _:
+return loaded(_that);case _:
   return null;
 
 }
@@ -122,12 +119,11 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function( List<Workspace> workspaces,  WorkspaceId? activeId)?  loaded,TResult Function( Failure failure,  List<Workspace> workspaces,  WorkspaceId? activeId)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function( List<Workspace> workspaces,  WorkspaceId? activeId,  Failure? lastFailure)?  loaded,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case WorkspacesStateInitial() when initial != null:
 return initial();case WorkspacesStateLoaded() when loaded != null:
-return loaded(_that.workspaces,_that.activeId);case WorkspacesStateError() when error != null:
-return error(_that.failure,_that.workspaces,_that.activeId);case _:
+return loaded(_that.workspaces,_that.activeId,_that.lastFailure);case _:
   return orElse();
 
 }
@@ -145,12 +141,11 @@ return error(_that.failure,_that.workspaces,_that.activeId);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function( List<Workspace> workspaces,  WorkspaceId? activeId)  loaded,required TResult Function( Failure failure,  List<Workspace> workspaces,  WorkspaceId? activeId)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function( List<Workspace> workspaces,  WorkspaceId? activeId,  Failure? lastFailure)  loaded,}) {final _that = this;
 switch (_that) {
 case WorkspacesStateInitial():
 return initial();case WorkspacesStateLoaded():
-return loaded(_that.workspaces,_that.activeId);case WorkspacesStateError():
-return error(_that.failure,_that.workspaces,_that.activeId);}
+return loaded(_that.workspaces,_that.activeId,_that.lastFailure);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -164,12 +159,11 @@ return error(_that.failure,_that.workspaces,_that.activeId);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function( List<Workspace> workspaces,  WorkspaceId? activeId)?  loaded,TResult? Function( Failure failure,  List<Workspace> workspaces,  WorkspaceId? activeId)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function( List<Workspace> workspaces,  WorkspaceId? activeId,  Failure? lastFailure)?  loaded,}) {final _that = this;
 switch (_that) {
 case WorkspacesStateInitial() when initial != null:
 return initial();case WorkspacesStateLoaded() when loaded != null:
-return loaded(_that.workspaces,_that.activeId);case WorkspacesStateError() when error != null:
-return error(_that.failure,_that.workspaces,_that.activeId);case _:
+return loaded(_that.workspaces,_that.activeId,_that.lastFailure);case _:
   return null;
 
 }
@@ -213,17 +207,18 @@ String toString() {
 
 
 class WorkspacesStateLoaded extends WorkspacesState {
-  const WorkspacesStateLoaded({required final  List<Workspace> workspaces, this.activeId}): _workspaces = workspaces,super._();
+  const WorkspacesStateLoaded({final  List<Workspace> workspaces = const <Workspace>[], this.activeId, this.lastFailure}): _workspaces = workspaces,super._();
   
 
  final  List<Workspace> _workspaces;
- List<Workspace> get workspaces {
+@JsonKey() List<Workspace> get workspaces {
   if (_workspaces is EqualUnmodifiableListView) return _workspaces;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_workspaces);
 }
 
  final  WorkspaceId? activeId;
+ final  Failure? lastFailure;
 
 /// Create a copy of WorkspacesState
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +230,16 @@ $WorkspacesStateLoadedCopyWith<WorkspacesStateLoaded> get copyWith => _$Workspac
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkspacesStateLoaded&&const DeepCollectionEquality().equals(other._workspaces, _workspaces)&&(identical(other.activeId, activeId) || other.activeId == activeId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkspacesStateLoaded&&const DeepCollectionEquality().equals(other._workspaces, _workspaces)&&(identical(other.activeId, activeId) || other.activeId == activeId)&&(identical(other.lastFailure, lastFailure) || other.lastFailure == lastFailure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_workspaces),activeId);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_workspaces),activeId,lastFailure);
 
 @override
 String toString() {
-  return 'WorkspacesState.loaded(workspaces: $workspaces, activeId: $activeId)';
+  return 'WorkspacesState.loaded(workspaces: $workspaces, activeId: $activeId, lastFailure: $lastFailure)';
 }
 
 
@@ -255,7 +250,7 @@ abstract mixin class $WorkspacesStateLoadedCopyWith<$Res> implements $Workspaces
   factory $WorkspacesStateLoadedCopyWith(WorkspacesStateLoaded value, $Res Function(WorkspacesStateLoaded) _then) = _$WorkspacesStateLoadedCopyWithImpl;
 @useResult
 $Res call({
- List<Workspace> workspaces, WorkspaceId? activeId
+ List<Workspace> workspaces, WorkspaceId? activeId, Failure? lastFailure
 });
 
 
@@ -272,87 +267,12 @@ class _$WorkspacesStateLoadedCopyWithImpl<$Res>
 
 /// Create a copy of WorkspacesState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? workspaces = null,Object? activeId = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? workspaces = null,Object? activeId = freezed,Object? lastFailure = freezed,}) {
   return _then(WorkspacesStateLoaded(
 workspaces: null == workspaces ? _self._workspaces : workspaces // ignore: cast_nullable_to_non_nullable
 as List<Workspace>,activeId: freezed == activeId ? _self.activeId : activeId // ignore: cast_nullable_to_non_nullable
-as WorkspaceId?,
-  ));
-}
-
-
-}
-
-/// @nodoc
-
-
-class WorkspacesStateError extends WorkspacesState {
-  const WorkspacesStateError({required this.failure, final  List<Workspace> workspaces = const <Workspace>[], this.activeId}): _workspaces = workspaces,super._();
-  
-
- final  Failure failure;
- final  List<Workspace> _workspaces;
-@JsonKey() List<Workspace> get workspaces {
-  if (_workspaces is EqualUnmodifiableListView) return _workspaces;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_workspaces);
-}
-
- final  WorkspaceId? activeId;
-
-/// Create a copy of WorkspacesState
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$WorkspacesStateErrorCopyWith<WorkspacesStateError> get copyWith => _$WorkspacesStateErrorCopyWithImpl<WorkspacesStateError>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkspacesStateError&&(identical(other.failure, failure) || other.failure == failure)&&const DeepCollectionEquality().equals(other._workspaces, _workspaces)&&(identical(other.activeId, activeId) || other.activeId == activeId));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,failure,const DeepCollectionEquality().hash(_workspaces),activeId);
-
-@override
-String toString() {
-  return 'WorkspacesState.error(failure: $failure, workspaces: $workspaces, activeId: $activeId)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $WorkspacesStateErrorCopyWith<$Res> implements $WorkspacesStateCopyWith<$Res> {
-  factory $WorkspacesStateErrorCopyWith(WorkspacesStateError value, $Res Function(WorkspacesStateError) _then) = _$WorkspacesStateErrorCopyWithImpl;
-@useResult
-$Res call({
- Failure failure, List<Workspace> workspaces, WorkspaceId? activeId
-});
-
-
-
-
-}
-/// @nodoc
-class _$WorkspacesStateErrorCopyWithImpl<$Res>
-    implements $WorkspacesStateErrorCopyWith<$Res> {
-  _$WorkspacesStateErrorCopyWithImpl(this._self, this._then);
-
-  final WorkspacesStateError _self;
-  final $Res Function(WorkspacesStateError) _then;
-
-/// Create a copy of WorkspacesState
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? failure = null,Object? workspaces = null,Object? activeId = freezed,}) {
-  return _then(WorkspacesStateError(
-failure: null == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
-as Failure,workspaces: null == workspaces ? _self._workspaces : workspaces // ignore: cast_nullable_to_non_nullable
-as List<Workspace>,activeId: freezed == activeId ? _self.activeId : activeId // ignore: cast_nullable_to_non_nullable
-as WorkspaceId?,
+as WorkspaceId?,lastFailure: freezed == lastFailure ? _self.lastFailure : lastFailure // ignore: cast_nullable_to_non_nullable
+as Failure?,
   ));
 }
 

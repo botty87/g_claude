@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../../core/error/exceptions.dart';
+
 abstract interface class WorkspaceLocalDataSource {
   Future<void> ensureDirectoryExists(String path);
 
@@ -19,22 +21,26 @@ class WorkspaceLocalDataSourceImpl implements WorkspaceLocalDataSource {
 
   @override
   Future<void> ensureDirectoryExists(String path) async {
-    final dir = Directory(path);
-    if (!await dir.exists()) {
-      throw const FileSystemException('Directory does not exist');
-    }
-    final stat = await dir.stat();
-    if (stat.type != FileSystemEntityType.directory) {
-      throw const FileSystemException('Path is not a directory');
+    final stat = await FileStat.stat(path);
+    switch (stat.type) {
+      case FileSystemEntityType.notFound:
+        throw WorkspaceNotFoundException(path);
+      case FileSystemEntityType.directory:
+        return;
+      default:
+        throw WorkspaceNotADirectoryException(path);
     }
   }
 
   @override
   Future<String?> readClaudeMd(String path) async {
     for (final name in _candidates) {
-      final file = File(p.join(path, name));
-      if (await file.exists()) {
-        return file.readAsString();
+      try {
+        return await File(p.join(path, name)).readAsString();
+      } on PathNotFoundException {
+        continue;
+      } on FileSystemException {
+        continue;
       }
     }
     return null;

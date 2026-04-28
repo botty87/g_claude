@@ -25,9 +25,11 @@ Future<void> main() async {
     WidgetsFlutterBinding.ensureInitialized();
   }
 
-  await EasyLocalization.ensureInitialized();
-  await setupWindow();
-  await configureDependencies();
+  await Future.wait([
+    EasyLocalization.ensureInitialized(),
+    setupWindow(),
+    configureDependencies(),
+  ]);
 
   // Forward Talker stream to Marionette before Bloc.observer attaches so the
   // log bridge captures Bloc transitions emitted by TalkerBlocObserver too.
@@ -38,41 +40,23 @@ Future<void> main() async {
   Bloc.observer = getIt<BlocObserver>();
 
   if (marionetteEnabled) {
-    registerMarionetteExtension(
+    _registerWorkspaceCubitExtension(
       name: 'openWorkspace',
       description: 'Test-only: opens a workspace by absolute path, bypassing the native picker.',
-      callback: (params) async {
-        final path = params['path'];
-        if (path == null || path.isEmpty) {
-          return const MarionetteExtensionResult.invalidParams('Missing "path"');
-        }
-        await getIt<WorkspacesCubit>().openPath(path);
-        return const MarionetteExtensionResult.success({'ok': true});
-      },
+      paramKey: 'path',
+      handler: (cubit, value) => cubit.openPath(value),
     );
-    registerMarionetteExtension(
+    _registerWorkspaceCubitExtension(
       name: 'closeWorkspace',
       description: 'Test-only: closes a workspace by id (absolute path).',
-      callback: (params) async {
-        final id = params['id'];
-        if (id == null || id.isEmpty) {
-          return const MarionetteExtensionResult.invalidParams('Missing "id"');
-        }
-        await getIt<WorkspacesCubit>().closeWorkspace(id);
-        return const MarionetteExtensionResult.success({'ok': true});
-      },
+      paramKey: 'id',
+      handler: (cubit, value) async => cubit.closeWorkspace(value),
     );
-    registerMarionetteExtension(
+    _registerWorkspaceCubitExtension(
       name: 'setActiveWorkspace',
       description: 'Test-only: sets the active workspace by id.',
-      callback: (params) async {
-        final id = params['id'];
-        if (id == null || id.isEmpty) {
-          return const MarionetteExtensionResult.invalidParams('Missing "id"');
-        }
-        getIt<WorkspacesCubit>().setActive(id);
-        return const MarionetteExtensionResult.success({'ok': true});
-      },
+      paramKey: 'id',
+      handler: (cubit, value) async => cubit.setActive(value),
     );
   }
 
@@ -84,5 +68,25 @@ Future<void> main() async {
       useOnlyLangCode: true,
       child: App(),
     ),
+  );
+}
+
+void _registerWorkspaceCubitExtension({
+  required String name,
+  required String description,
+  required String paramKey,
+  required Future<void> Function(WorkspacesCubit cubit, String value) handler,
+}) {
+  registerMarionetteExtension(
+    name: name,
+    description: description,
+    callback: (params) async {
+      final value = params[paramKey];
+      if (value == null || value.isEmpty) {
+        return MarionetteExtensionResult.invalidParams('Missing "$paramKey"');
+      }
+      await handler(getIt<WorkspacesCubit>(), value);
+      return const MarionetteExtensionResult.success({'ok': true});
+    },
   );
 }

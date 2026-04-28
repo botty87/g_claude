@@ -21,8 +21,6 @@ import '../../features/workspace/data/repositories/workspace_repository_impl.dar
     as _i824;
 import '../../features/workspace/domain/repositories/workspace_repository.dart'
     as _i268;
-import '../../features/workspace/domain/usecases/close_workspace.dart'
-    as _i1026;
 import '../../features/workspace/domain/usecases/load_claude_md.dart' as _i268;
 import '../../features/workspace/domain/usecases/open_workspace.dart' as _i305;
 import '../../features/workspace/presentation/cubit/workspaces_cubit.dart'
@@ -54,9 +52,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i268.WorkspaceRepository>(
       () => _i824.WorkspaceRepositoryImpl(gh<_i735.WorkspaceLocalDataSource>()),
     );
-    gh.factory<_i1026.CloseWorkspace>(
-      () => _i1026.CloseWorkspace(gh<_i268.WorkspaceRepository>()),
-    );
     gh.factory<_i268.LoadClaudeMd>(
       () => _i268.LoadClaudeMd(gh<_i268.WorkspaceRepository>()),
     );
@@ -64,11 +59,8 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i305.OpenWorkspace(gh<_i268.WorkspaceRepository>()),
     );
     gh.lazySingleton<_i179.WorkspacesCubit>(
-      () => _i179.WorkspacesCubit(
-        gh<_i305.OpenWorkspace>(),
-        gh<_i1026.CloseWorkspace>(),
-        gh<_i207.Talker>(),
-      ),
+      () =>
+          _i179.WorkspacesCubit(gh<_i305.OpenWorkspace>(), gh<_i207.Talker>()),
     );
     return this;
   }

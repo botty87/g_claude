@@ -34,15 +34,12 @@ class WorkspaceTabBar extends StatelessWidget {
                   child: Row(
                     children: [
                       for (final w in list)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 2),
-                          child: WorkspaceTab(
-                            key: ValueKey('workspace_tab_${w.id}'),
-                            workspace: w,
-                            isActive: w.id == activeId,
-                            onTap: () => context.read<WorkspacesCubit>().setActive(w.id),
-                            onClose: () => context.read<WorkspacesCubit>().closeWorkspace(w.id),
-                          ),
+                        WorkspaceTab(
+                          key: ValueKey('workspace_tab_${w.id}'),
+                          workspace: w,
+                          isActive: w.id == activeId,
+                          onTap: () => context.read<WorkspacesCubit>().setActive(w.id),
+                          onClose: () => context.read<WorkspacesCubit>().closeWorkspace(w.id),
                         ),
                       const NewWorkspaceButton(),
                     ],

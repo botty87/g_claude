@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
+import '../../../../shared/widgets/hoverable.dart';
 
-class ActivityBarItem extends StatefulWidget {
+class ActivityBarItem extends StatelessWidget {
   const ActivityBarItem({
     super.key,
     required this.icon,
@@ -20,63 +21,53 @@ class ActivityBarItem extends StatefulWidget {
   final bool isEnabled;
   final VoidCallback? onTap;
 
-  @override
-  State<ActivityBarItem> createState() => _ActivityBarItemState();
-}
+  Color _iconColor(bool hover) {
+    if (!isEnabled) return AppColors.onSurfaceVariant.withValues(alpha: 0.25);
+    if (isActive) return AppColors.primary;
+    return AppColors.onSurfaceVariant.withValues(alpha: hover ? 1.0 : 0.7);
+  }
 
-class _ActivityBarItemState extends State<ActivityBarItem> {
-  bool _hover = false;
+  Color _fillColor(bool hover) {
+    if (isActive) return AppColors.glassActive;
+    if (hover && isEnabled) return AppColors.glassHover;
+    return Colors.transparent;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final iconColor = !widget.isEnabled
-        ? AppColors.onSurfaceVariant.withValues(alpha: 0.25)
-        : widget.isActive
-            ? AppColors.primary
-            : AppColors.onSurfaceVariant.withValues(alpha: _hover ? 1.0 : 0.7);
-    final fill = widget.isActive
-        ? AppColors.glassActive
-        : (_hover && widget.isEnabled)
-            ? AppColors.glassHover
-            : Colors.transparent;
-    final tooltipMessage = widget.isEnabled
-        ? widget.tooltip
-        : '${widget.tooltip}${'shell.activity.comingLaterSuffix'.tr()}';
-    final child = Stack(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: fill,
-            borderRadius: BorderRadius.circular(AppRadii.md),
-          ),
-          child: Icon(widget.icon, size: 20, color: iconColor),
-        ),
-        if (widget.isActive)
-          Positioned(
-            left: 0,
-            top: 6,
-            bottom: 6,
-            child: Container(
-              width: 2,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.horizontal(right: Radius.circular(2)),
-              ),
-            ),
-          ),
-      ],
-    );
+    final tooltipMessage = isEnabled
+        ? tooltip
+        : '$tooltip${'shell.activity.comingLaterSuffix'.tr()}';
     return Tooltip(
       message: tooltipMessage,
-      child: MouseRegion(
-        cursor: widget.isEnabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-        onEnter: (_) => setState(() => _hover = true),
-        onExit: (_) => setState(() => _hover = false),
-        child: GestureDetector(
-          onTap: widget.isEnabled ? widget.onTap : null,
-          child: child,
+      child: Hoverable(
+        cursor: isEnabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        onTap: isEnabled ? onTap : null,
+        builder: (context, hover) => Stack(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _fillColor(hover),
+                borderRadius: BorderRadius.circular(AppRadii.md),
+              ),
+              child: Icon(icon, size: 20, color: _iconColor(hover)),
+            ),
+            if (isActive)
+              Positioned(
+                left: 0,
+                top: 6,
+                bottom: 6,
+                child: Container(
+                  width: 2,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.horizontal(right: Radius.circular(2)),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

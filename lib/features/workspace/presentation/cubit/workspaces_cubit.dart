@@ -1,13 +1,14 @@
+import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:path/path.dart' as p;
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/workspace.dart';
-import '../../domain/usecases/close_workspace.dart';
 import '../../domain/usecases/open_workspace.dart';
 
 part 'workspaces_cubit.freezed.dart';
@@ -15,12 +16,13 @@ part 'workspaces_cubit.state.dart';
 
 @lazySingleton
 class WorkspacesCubit extends Cubit<WorkspacesState> {
-  WorkspacesCubit(this._openWorkspace, this._closeWorkspace, this._talker)
+  WorkspacesCubit(this._openWorkspace, this._talker)
       : super(const WorkspacesState.initial());
 
   final OpenWorkspace _openWorkspace;
-  final CloseWorkspace _closeWorkspace;
   final Talker _talker;
+
+  String _normalize(String path) => p.normalize(p.absolute(path));
 
   Future<void> openFromPicker() async {
     final selected = await FilePicker.getDirectoryPath(
@@ -35,31 +37,30 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
 
   Future<void> openPath(String path) async {
     final start = DateTime.now();
+    final normalized = _normalize(path);
     final existing = state.workspacesOrEmpty;
 
-    final duplicate = existing.where((w) => w.path == path).cast<Workspace?>();
-    if (duplicate.isNotEmpty) {
-      _talker.info('Workspace already open: $path — activating existing tab');
-      setActive(duplicate.first!.id);
+    final duplicate = existing.firstWhereOrNull((w) => w.id == normalized);
+    if (duplicate != null) {
+      _talker.info('Workspace already open: $normalized — activating existing tab');
+      setActive(duplicate.id);
       return;
     }
 
-    _talker.info('Opening workspace at: $path');
-    final result = await _openWorkspace(path: path);
+    final result = await _openWorkspace(path: normalized);
 
     result.fold(
       (failure) {
-        _talker.error('Failed to open workspace: $path', failure);
-        emit(WorkspacesState.error(
-          failure: failure,
+        _talker.error('Failed to open workspace: $normalized', failure);
+        emit(WorkspacesState.loaded(
           workspaces: existing,
           activeId: state.activeIdOrNull,
+          lastFailure: failure,
         ));
       },
       (workspace) {
-        final next = [...existing, workspace];
         emit(WorkspacesState.loaded(
-          workspaces: next,
+          workspaces: [...existing, workspace],
           activeId: workspace.id,
         ));
         final ms = DateTime.now().difference(start).inMilliseconds;
@@ -68,27 +69,21 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     );
   }
 
-  Future<void> closeWorkspace(WorkspaceId id) async {
+  void closeWorkspace(WorkspaceId id) {
     final list = state.workspacesOrEmpty;
     final index = list.indexWhere((w) => w.id == id);
     if (index < 0) return;
 
-    final result = await _closeWorkspace(id: id);
-    result.fold(
-      (failure) => _talker.error('Failed to close workspace: $id', failure),
-      (_) => _talker.info('Closed workspace: $id'),
-    );
-
+    _talker.info('Closed workspace: $id');
     final next = [...list]..removeAt(index);
     if (next.isEmpty) {
-      emit(const WorkspacesState.loaded(workspaces: []));
+      emit(const WorkspacesState.loaded());
       return;
     }
 
-    WorkspaceId? newActive = state.activeIdOrNull;
+    var newActive = state.activeIdOrNull;
     if (newActive == id) {
-      final fallbackIndex = index < next.length ? index : next.length - 1;
-      newActive = next[fallbackIndex].id;
+      newActive = next[index < next.length ? index : next.length - 1].id;
     }
     emit(WorkspacesState.loaded(workspaces: next, activeId: newActive));
   }

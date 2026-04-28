@@ -5,9 +5,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/widgets/hoverable.dart';
 import '../../domain/entities/workspace.dart';
 
-class WorkspaceTab extends StatefulWidget {
+class WorkspaceTab extends StatelessWidget {
   const WorkspaceTab({
     super.key,
     required this.workspace,
@@ -22,36 +23,24 @@ class WorkspaceTab extends StatefulWidget {
   final VoidCallback onClose;
 
   @override
-  State<WorkspaceTab> createState() => _WorkspaceTabState();
-}
-
-class _WorkspaceTabState extends State<WorkspaceTab> {
-  bool _hover = false;
-  bool _hoverClose = false;
-
-  @override
   Widget build(BuildContext context) {
-    final fill = widget.isActive
-        ? AppColors.glassActive
-        : _hover
-            ? AppColors.glassHover
-            : Colors.transparent;
-    final textColor = widget.isActive
-        ? AppColors.onSurface
-        : AppColors.onSurfaceVariant;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Container(
+    return Hoverable(
+      onTap: onTap,
+      builder: (context, hover) {
+        final fill = isActive
+            ? AppColors.glassActive
+            : hover
+                ? AppColors.glassHover
+                : Colors.transparent;
+        final textColor = isActive ? AppColors.onSurface : AppColors.onSurfaceVariant;
+        return Container(
           height: AppSpacing.toolbarHeight,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           decoration: BoxDecoration(
             color: fill,
             borderRadius: BorderRadius.circular(AppRadii.sm),
-            border: widget.isActive
+            border: isActive
                 ? const Border(bottom: BorderSide(color: AppColors.brandIndigo, width: 2))
                 : null,
           ),
@@ -60,35 +49,30 @@ class _WorkspaceTabState extends State<WorkspaceTab> {
               Icon(Symbols.folder, size: 14, color: textColor),
               const SizedBox(width: AppSpacing.sm),
               Text(
-                widget.workspace.name,
+                workspace.name,
                 style: AppTypography.navTab.copyWith(color: textColor),
               ),
               const SizedBox(width: AppSpacing.sm),
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                onEnter: (_) => setState(() => _hoverClose = true),
-                onExit: (_) => setState(() => _hoverClose = false),
-                child: GestureDetector(
-                  onTap: widget.onClose,
-                  child: Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: _hoverClose ? AppColors.glassHover : Colors.transparent,
-                      borderRadius: BorderRadius.circular(AppRadii.sm),
-                    ),
-                    child: Icon(
-                      Symbols.close,
-                      size: 14,
-                      color: textColor.withValues(alpha: _hoverClose ? 1.0 : 0.6),
-                    ),
+              Hoverable(
+                onTap: onClose,
+                builder: (context, closeHover) => Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: closeHover ? AppColors.glassHover : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
+                  ),
+                  child: Icon(
+                    Symbols.close,
+                    size: 14,
+                    color: textColor.withValues(alpha: closeHover ? 1.0 : 0.6),
                   ),
                 ),
               ),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

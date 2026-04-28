@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../../workspace/presentation/widgets/empty_state_view.dart';
 import '../../../workspace/presentation/widgets/workspace_tab_bar.dart';
@@ -86,27 +87,30 @@ class _MainArea extends StatelessWidget {
 
   final MultiSplitViewController splitController;
 
+  static final _splitTheme = MultiSplitViewThemeData(
+    dividerThickness: 1,
+    dividerPainter: DividerPainters.background(
+      color: AppColors.outlineVariant,
+      highlightedColor: AppColors.brandIndigo,
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<WorkspacesCubit, WorkspacesState>(
-      builder: (context, wsState) {
-        final active = wsState.activeWorkspace;
+    return BlocSelector<WorkspacesCubit, WorkspacesState, Workspace?>(
+      selector: (state) => state.activeWorkspace,
+      builder: (context, active) {
         if (active == null) {
           return const EmptyStateView();
         }
-        return BlocBuilder<ShellCubit, ShellState>(
-          builder: (context, shellState) {
-            if (!shellState.sidePanelOpen) {
+        return BlocSelector<ShellCubit, ShellState, bool>(
+          selector: (state) => state.sidePanelOpen,
+          builder: (context, sidePanelOpen) {
+            if (!sidePanelOpen) {
               return WorkspaceView(workspace: active);
             }
             return MultiSplitViewTheme(
-              data: MultiSplitViewThemeData(
-                dividerThickness: 1,
-                dividerPainter: DividerPainters.background(
-                  color: AppColors.outlineVariant,
-                  highlightedColor: AppColors.brandIndigo,
-                ),
-              ),
+              data: _splitTheme,
               child: MultiSplitView(
                 controller: splitController,
                 builder: (context, area) {
