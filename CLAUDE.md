@@ -21,6 +21,7 @@ Feature **puramente presentation** (es. `shell`) hanno solo `presentation/`.
 ## Stack
 
 - **State management**: `flutter_bloc` con **Cubit** (no Bloc events boilerplate)
+- **Widget locale state**: `flutter_hooks` (`HookWidget` + `useState` / `useEffect` / `useMemoized` / `useTextEditingController` / `useScrollController` / `useFocusNode` / `useIsMounted` ecc.). **No `StatefulWidget`** salvo casi rari in cui un hook non basta (annotare il perche').
 - **DI**: `get_it` + `injectable` (annotazioni: `@injectable`, `@LazySingleton`, `@lazySingleton`, `@PostConstruct`, `@factoryParam`)
 - **Models**: `freezed` con `freezed_annotation`. State **sealed**. Equality automatica.
 - **Routing**: `auto_route` (`@RoutePage`, `RootStackRouter`)
@@ -35,7 +36,7 @@ Feature **puramente presentation** (es. `shell`) hanno solo `presentation/`.
 
 **Cubit (stile proloco)**:
 ```dart
-@lazySingleton                                    // o @injectable / @factoryParam
+@lazySingleton                                    // app-global (default)
 class FooCubit extends Cubit<FooState> {
   FooCubit(this._dep) : super(const FooState.initial());
   final Dependency _dep;
@@ -44,6 +45,33 @@ class FooCubit extends Cubit<FooState> {
   Future<void> init() async { /* setup */ }       // opzionale
 }
 ```
+
+**Cubit DI — quale annotazione usare**:
+- `@lazySingleton` (default): cubit con stato app-global che deve sopravvivere a cambi di route, hot reload, rebuild widget. Esempi: `WorkspacesCubit`, `ShellCubit`, `FileTabsCubit`, `ExplorerCubit`. Anche cubit che si registrano allo stream di altri cubit in `@PostConstruct` **devono** essere singleton (factory perderebbe stato e leak StreamSubscription).
+- `@injectable` (factory): solo cubit scoped a una page/route, creati e distrutti col widget owner (via `BlocProvider(create: () => getIt<FooCubit>())`). Adatto a flussi isolati (wizard, form modal) dove serve istanza fresca ad ogni apertura.
+- `@factoryParam`: factory con parametri runtime non risolvibili da DI (es. id entita').
+
+**HookWidget**:
+```dart
+class FooView extends HookWidget {
+  const FooView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = useTextEditingController();
+    final query = useState('');
+
+    useEffect(() {
+      void listener() => query.value = controller.text;
+      controller.addListener(listener);
+      return () => controller.removeListener(listener);
+    }, [controller]);
+
+    return TextField(controller: controller);
+  }
+}
+```
+Niente `dispose` manuale: gli hook gestiscono il lifecycle. Per dipendenze su props, usa la dep-list di `useEffect` (es. `[widget.path]`).
 
 State in file separato `foo_cubit.state.dart`:
 ```dart

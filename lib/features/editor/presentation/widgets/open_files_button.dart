@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:path/path.dart' as p;
 
@@ -66,37 +67,26 @@ class OpenFilesButton extends StatelessWidget {
   }
 }
 
-class _OpenFilesPopover extends StatefulWidget {
+class _OpenFilesPopover extends HookWidget {
   const _OpenFilesPopover({required this.anchor});
 
   final Offset anchor;
 
   @override
-  State<_OpenFilesPopover> createState() => _OpenFilesPopoverState();
-}
-
-class _OpenFilesPopoverState extends State<_OpenFilesPopover> {
-  final _searchCtrl = TextEditingController();
-  String _query = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _searchCtrl.addListener(() {
-      final q = _searchCtrl.text.toLowerCase().trim();
-      if (q == _query) return;
-      setState(() => _query = q);
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final searchCtrl = useTextEditingController();
+    final query = useState('');
+
+    useEffect(() {
+      void listener() {
+        final q = searchCtrl.text.toLowerCase().trim();
+        if (q == query.value) return;
+        query.value = q;
+      }
+      searchCtrl.addListener(listener);
+      return () => searchCtrl.removeListener(listener);
+    }, [searchCtrl]);
+
     return Stack(
       children: [
         Positioned.fill(
@@ -106,8 +96,8 @@ class _OpenFilesPopoverState extends State<_OpenFilesPopover> {
           ),
         ),
         Positioned(
-          left: widget.anchor.dx,
-          top: widget.anchor.dy + 4,
+          left: anchor.dx,
+          top: anchor.dy + 4,
           child: Material(
             elevation: 8,
             borderRadius: BorderRadius.circular(AppRadii.md),
@@ -123,7 +113,7 @@ class _OpenFilesPopoverState extends State<_OpenFilesPopover> {
                       padding: const EdgeInsets.all(AppSpacing.sm),
                       child: TextField(
                         key: const ValueKey('open_files_search'),
-                        controller: _searchCtrl,
+                        controller: searchCtrl,
                         autofocus: true,
                         style: AppTypography.bodyMain.copyWith(fontSize: 13),
                         decoration: InputDecoration(
@@ -155,7 +145,7 @@ class _OpenFilesPopoverState extends State<_OpenFilesPopover> {
                     ),
                     const Divider(
                         height: 1, color: AppColors.outlineVariant),
-                    Flexible(child: _OpenFilesList(query: _query)),
+                    Flexible(child: _OpenFilesList(query: query.value)),
                   ],
                 ),
               ),

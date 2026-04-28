@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -15,53 +16,37 @@ import 'activity_bar.dart';
 import 'side_panel.dart';
 
 @RoutePage()
-class AppShellPage extends StatefulWidget {
+class AppShellPage extends HookWidget {
   const AppShellPage({super.key});
 
   @override
-  State<AppShellPage> createState() => _AppShellPageState();
-}
-
-class _AppShellPageState extends State<AppShellPage> {
-  late final FocusNode _focusNode;
-  late final MultiSplitViewController _splitController;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode = FocusNode();
-    _splitController = MultiSplitViewController(
-      areas: [
-        Area(size: 280, min: 200, max: 480),
-        Area(),
-      ],
-    );
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    _splitController.dispose();
-    super.dispose();
-  }
-
-  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent) return KeyEventResult.ignored;
-    final isMetaB = event.logicalKey == LogicalKeyboardKey.keyB &&
-        HardwareKeyboard.instance.isMetaPressed;
-    if (isMetaB) {
-      context.read<ShellCubit>().toggleSidePanel();
-      return KeyEventResult.handled;
-    }
-    return KeyEventResult.ignored;
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final focusNode = useFocusNode();
+    final splitController = useMemoized(
+      () => MultiSplitViewController(
+        areas: [
+          Area(size: 280, min: 200, max: 480),
+          Area(),
+        ],
+      ),
+    );
+    useEffect(() => splitController.dispose, [splitController]);
+
+    KeyEventResult onKey(FocusNode node, KeyEvent event) {
+      if (event is! KeyDownEvent) return KeyEventResult.ignored;
+      final isMetaB = event.logicalKey == LogicalKeyboardKey.keyB &&
+          HardwareKeyboard.instance.isMetaPressed;
+      if (isMetaB) {
+        context.read<ShellCubit>().toggleSidePanel();
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    }
+
     return Focus(
-      focusNode: _focusNode,
+      focusNode: focusNode,
       autofocus: true,
-      onKeyEvent: _onKey,
+      onKeyEvent: onKey,
       child: Scaffold(
         backgroundColor: AppColors.surface,
         body: Column(
@@ -71,7 +56,7 @@ class _AppShellPageState extends State<AppShellPage> {
               child: Row(
                 children: [
                   const ActivityBar(),
-                  Expanded(child: _MainArea(splitController: _splitController)),
+                  Expanded(child: _MainArea(splitController: splitController)),
                 ],
               ),
             ),

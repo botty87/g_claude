@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
-class Hoverable extends StatefulWidget {
+class Hoverable extends HookWidget {
   const Hoverable({
     super.key,
     required this.builder,
@@ -15,22 +16,16 @@ class Hoverable extends StatefulWidget {
   final VoidCallback? onDoubleTap;
 
   @override
-  State<Hoverable> createState() => _HoverableState();
-}
-
-class _HoverableState extends State<Hoverable> {
-  bool _hover = false;
-
-  @override
   Widget build(BuildContext context) {
+    final hover = useState(false);
     return MouseRegion(
-      cursor: widget.cursor,
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
+      cursor: cursor,
+      onEnter: (_) => hover.value = true,
+      onExit: (_) => hover.value = false,
       child: GestureDetector(
-        onTap: widget.onTap,
-        onDoubleTap: widget.onDoubleTap,
-        child: widget.builder(context, _hover),
+        onTap: onTap,
+        onDoubleTap: onDoubleTap,
+        child: builder(context, hover.value),
       ),
     );
   }

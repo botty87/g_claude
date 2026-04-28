@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:re_highlight/re_highlight.dart';
@@ -21,6 +22,7 @@ import 'package:re_highlight/languages/ini.dart';
 import 'package:re_highlight/styles/atom-one-dark.dart' as hl_theme;
 
 import '../../../../core/di/di.dart';
+import '../../../../core/error/failure_extensions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -75,45 +77,26 @@ final _hl = Highlight()
 // CodeView
 // ---------------------------------------------------------------------------
 
-class CodeView extends StatefulWidget {
+class CodeView extends HookWidget {
   const CodeView({super.key, required this.path});
 
   final String path;
 
   @override
-  State<CodeView> createState() => _CodeViewState();
-}
-
-class _CodeViewState extends State<CodeView> {
-  _ViewState _state = const _Loading();
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  @override
-  void didUpdateWidget(CodeView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.path != widget.path) {
-      setState(() => _state = const _Loading());
-      _load();
-    }
-  }
-
-  void _load() {
-    getIt<ReadFile>().call(path: widget.path).then((either) {
-      if (!mounted) return;
-      setState(() {
-        _state = either.fold(_Error.new, _Loaded.new);
-      });
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return switch (_state) {
+    final state = useState<_ViewState>(const _Loading());
+
+    useEffect(() {
+      var cancelled = false;
+      state.value = const _Loading();
+      getIt<ReadFile>().call(path: path).then((either) {
+        if (cancelled) return;
+        state.value = either.fold(_Error.new, _Loaded.new);
+      });
+      return () => cancelled = true;
+    }, [path]);
+
+    return switch (state.value) {
       _Loading() => const Center(
           child: SizedBox(
             width: 24,
@@ -138,11 +121,16 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final msg = failure is ValidationFailure
-        ? _mapValidationMessage((failure as ValidationFailure).message)
-        : 'editor.fileLoadError'.tr();
-
-    final caption = failure is ValidationFailure ? null : (failure as dynamic).message as String?;
+    final f = failure;
+    final String msg;
+    final String? caption;
+    if (f is ValidationFailure) {
+      msg = _mapValidationMessage(f.message);
+      caption = null;
+    } else {
+      msg = 'editor.fileLoadError'.tr();
+      caption = f.toUserMessage();
+    }
 
     return Center(
       child: Column(
@@ -177,13 +165,15 @@ class _ErrorView extends StatelessWidget {
 // Highlighted view
 // ---------------------------------------------------------------------------
 
-class _HighlightedView extends StatelessWidget {
+class _HighlightedView extends HookWidget {
   const _HighlightedView({required this.content});
 
   final FileContent content;
 
   @override
   Widget build(BuildContext context) {
+    final vController = useScrollController();
+    final hController = useScrollController();
     final baseStyle = AppTypography.terminalCode
         .copyWith(color: AppColors.onSurface);
 
@@ -213,8 +203,11 @@ class _HighlightedView extends StatelessWidget {
     return Container(
       color: AppColors.surface,
       child: Scrollbar(
+        controller: vController,
         child: SingleChildScrollView(
+          controller: vController,
           child: SingleChildScrollView(
+            controller: hController,
             scrollDirection: Axis.horizontal,
             child: Padding(
               padding: const EdgeInsets.all(16),

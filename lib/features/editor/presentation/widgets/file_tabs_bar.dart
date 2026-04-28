@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -9,47 +10,30 @@ import '../cubit/file_tabs_cubit.dart';
 import 'file_tab.dart';
 import 'open_files_button.dart';
 
-class FileTabsBar extends StatefulWidget {
+class FileTabsBar extends HookWidget {
   const FileTabsBar({super.key});
 
   @override
-  State<FileTabsBar> createState() => _FileTabsBarState();
-}
-
-class _FileTabsBarState extends State<FileTabsBar> {
-  late final ScrollController _scrollController;
-  final Map<String, GlobalKey> _tabKeys = {};
-  String? _lastActivePath;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  GlobalKey _keyFor(String path) =>
-      _tabKeys.putIfAbsent(path, () => GlobalKey());
-
-  void _ensureActiveVisible(String? activePath) {
-    if (activePath == null) return;
-    final ctx = _tabKeys[activePath]?.currentContext;
-    if (ctx == null) return;
-    Scrollable.ensureVisible(
-      ctx,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      alignment: 0.5,
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final scrollController = useScrollController();
+    final tabKeys = useMemoized(() => <String, GlobalKey>{}, const []);
+    final lastActivePath = useRef<String?>(null);
+
+    GlobalKey keyFor(String path) =>
+        tabKeys.putIfAbsent(path, () => GlobalKey());
+
+    void ensureActiveVisible(String? activePath) {
+      if (activePath == null) return;
+      final ctx = tabKeys[activePath]?.currentContext;
+      if (ctx == null) return;
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        alignment: 0.5,
+      );
+    }
+
     return Container(
       height: AppSpacing.toolbarHeight,
       decoration: const BoxDecoration(
@@ -72,11 +56,10 @@ class _FileTabsBarState extends State<FileTabsBar> {
                       curr.filesFor(activeId)?.activePath,
                   listener: (context, state) {
                     final activePath = state.filesFor(activeId)?.activePath;
-                    if (activePath == _lastActivePath) return;
-                    _lastActivePath = activePath;
+                    if (activePath == lastActivePath.value) return;
+                    lastActivePath.value = activePath;
                     WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (!mounted) return;
-                      _ensureActiveVisible(activePath);
+                      ensureActiveVisible(activePath);
                     });
                   },
                   builder: (context, state) {
@@ -85,13 +68,13 @@ class _FileTabsBarState extends State<FileTabsBar> {
                       return const SizedBox.shrink();
                     }
                     return SingleChildScrollView(
-                      controller: _scrollController,
+                      controller: scrollController,
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
                           for (final path in files.openPaths)
                             FileTab(
-                              key: _keyFor(path),
+                              key: keyFor(path),
                               workspaceId: activeId,
                               path: path,
                               isActive: path == files.activePath,
