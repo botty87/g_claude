@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -21,14 +22,14 @@ class SidePanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'EXPLORER',
+            'shell.sidePanel.explorerLabel'.tr(),
             style: AppTypography.sidebarLabel.copyWith(
               color: AppColors.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'File tree — sessione 2',
+            'shell.sidePanel.fileTreePlaceholder'.tr(),
             style: AppTypography.bodyMain.copyWith(
               color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
             ),

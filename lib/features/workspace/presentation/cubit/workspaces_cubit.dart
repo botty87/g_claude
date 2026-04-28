@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -23,7 +24,7 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
 
   Future<void> openFromPicker() async {
     final selected = await FilePicker.getDirectoryPath(
-      dialogTitle: 'Open folder',
+      dialogTitle: 'workspace.picker.title'.tr(),
     );
     if (selected == null) {
       _talker.debug('Workspace picker dismissed');

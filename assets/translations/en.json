@@ -1,0 +1,35 @@
+{
+  "app": {
+    "title": "Claude Code GUI"
+  },
+  "shell": {
+    "activity": {
+      "explorer": "Explorer",
+      "search": "Search",
+      "git": "Source Control",
+      "sessions": "Sessions",
+      "settings": "Settings",
+      "comingLaterSuffix": " (coming later)"
+    },
+    "sidePanel": {
+      "explorerLabel": "EXPLORER",
+      "fileTreePlaceholder": "File tree — session 2"
+    }
+  },
+  "workspace": {
+    "picker": {
+      "title": "Open folder"
+    },
+    "emptyState": {
+      "openFolder": "Open Folder...",
+      "hint": "Open a folder to begin"
+    },
+    "view": {
+      "noClaudeMd": "No CLAUDE.md in this workspace"
+    },
+    "chat": {
+      "placeholder": "Ask Claude... (coming in session 3)",
+      "tooltip": "Coming in session 3"
+    }
+  }
+}

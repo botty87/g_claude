@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -30,7 +31,7 @@ class ActivityBar extends StatelessWidget {
                 context,
                 key: 'activity_explorer',
                 icon: Symbols.folder,
-                tooltip: 'Explorer',
+                tooltip: 'shell.activity.explorer'.tr(),
                 id: ActivityId.explorer,
                 state: state,
                 isEnabled: true,
@@ -39,7 +40,7 @@ class ActivityBar extends StatelessWidget {
                 context,
                 key: 'activity_search',
                 icon: Symbols.search,
-                tooltip: 'Search',
+                tooltip: 'shell.activity.search'.tr(),
                 id: ActivityId.search,
                 state: state,
                 isEnabled: false,
@@ -48,7 +49,7 @@ class ActivityBar extends StatelessWidget {
                 context,
                 key: 'activity_git',
                 icon: Symbols.fork_right,
-                tooltip: 'Source Control',
+                tooltip: 'shell.activity.git'.tr(),
                 id: ActivityId.git,
                 state: state,
                 isEnabled: false,
@@ -57,7 +58,7 @@ class ActivityBar extends StatelessWidget {
                 context,
                 key: 'activity_sessions',
                 icon: Symbols.chat,
-                tooltip: 'Sessions',
+                tooltip: 'shell.activity.sessions'.tr(),
                 id: ActivityId.sessions,
                 state: state,
                 isEnabled: false,
@@ -67,7 +68,7 @@ class ActivityBar extends StatelessWidget {
                 context,
                 key: 'activity_settings',
                 icon: Symbols.settings,
-                tooltip: 'Settings',
+                tooltip: 'shell.activity.settings'.tr(),
                 id: ActivityId.settings,
                 state: state,
                 isEnabled: false,

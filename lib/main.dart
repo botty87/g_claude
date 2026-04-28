@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,6 +25,7 @@ Future<void> main() async {
     WidgetsFlutterBinding.ensureInitialized();
   }
 
+  await EasyLocalization.ensureInitialized();
   await setupWindow();
   await configureDependencies();
 
@@ -74,5 +76,13 @@ Future<void> main() async {
     );
   }
 
-  runApp(App());
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [Locale('en'), Locale('it')],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('en'),
+      useOnlyLangCode: true,
+      child: App(),
+    ),
+  );
 }

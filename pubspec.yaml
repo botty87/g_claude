@@ -52,6 +52,9 @@ dependencies:
   # Markdown rendering (predisposto per chat — non usato in sessione 1)
   flutter_markdown: ^0.7.7+1
 
+  # Localization
+  easy_localization: ^3.0.8
+
   # HTTP server (PermissionServer — sessione successiva)
   shelf: ^1.4.2
   shelf_router: ^1.1.4
@@ -72,3 +75,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/translations/

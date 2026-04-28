@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -47,7 +48,7 @@ class _ClaudeMdView extends StatelessWidget {
     if (content == null) {
       return Center(
         child: Text(
-          'No CLAUDE.md in this workspace',
+          'workspace.view.noClaudeMd'.tr(),
           style: AppTypography.bodyMain.copyWith(
             color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
           ),
@@ -80,7 +81,7 @@ class _DisabledChatInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'Coming in session 3',
+      message: 'workspace.chat.tooltip'.tr(),
       child: Container(
         height: 44,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -98,7 +99,7 @@ class _DisabledChatInput extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.sm),
             Text(
-              'Ask Claude... (coming in session 3)',
+              'workspace.chat.placeholder'.tr(),
               style: AppTypography.bodyMain.copyWith(
                 color: AppColors.onSurfaceVariant.withValues(alpha: 0.4),
               ),

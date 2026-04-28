@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -40,7 +41,7 @@ class _ActivityBarItemState extends State<ActivityBarItem> {
             : Colors.transparent;
     final tooltipMessage = widget.isEnabled
         ? widget.tooltip
-        : '${widget.tooltip} (coming later)';
+        : '${widget.tooltip}${'shell.activity.comingLaterSuffix'.tr()}';
     final child = Stack(
       children: [
         Container(

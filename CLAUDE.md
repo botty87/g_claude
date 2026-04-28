@@ -29,6 +29,7 @@ Feature **puramente presentation** (es. `shell`) hanno solo `presentation/`.
 - **UseCase**: interfaccia in `core/utils/usecase.dart`. Firma standard `Future<Either<Failure, T>> call(...)`. Parametri inline o `*Params extends Equatable`.
 - **Logging**: `talker_flutter` + `talker_bloc_logger` (BlocObserver registrato globalmente). Forward to Marionette in debug mode tramite `core/marionette/marionette_log_bridge.dart`.
 - **Theme**: Glass Graphite dark M3. Token in `core/theme/` (`AppColors`, `AppTypography`, `AppSpacing`, `AppRadii`). Effetti glass via `shared/widgets/glass/glass_pane.dart`.
+- **Localization**: `easy_localization` con JSON in `assets/translations/{en,it}.json`. Init in `main.dart` (`EasyLocalization.ensureInitialized()` + wrap `App` in `EasyLocalization`). Lingue supportate: `en` (fallback), `it`. Usa `useOnlyLangCode: true` (no varianti regionali). Gerarchia chiavi: `<feature>.<area>.<key>` es. `workspace.emptyState.openFolder`. Niente stringhe hardcoded UI: usare `'key.path'.tr()`. Eccezioni: log Talker (dev-facing, sempre EN), nomi tecnici/brand (es. "Claude Code GUI" in `MaterialApp.title`).
 
 ## Pattern
 
@@ -128,6 +129,7 @@ Widget interattivi devono avere `ValueKey<String>` quando serve test/automation.
 - No singleton globali fuori da `getIt`. No state condivisi via static.
 - No `setState` per state cross-widget — usa Cubit.
 - No hardcoded string list per cose dinamiche (vedi vecchia `OPEN EDITORS` rimossa).
+- No stringhe UI hardcoded — sempre via `'key.path'.tr()` (vedi sezione Localization). Aggiungere chiave a entrambi `en.json` e `it.json` insieme.
 - No `print` — usa `talker.info`, `talker.error`.
 - No commenti narrativi in codice (lascia parlare il nome). Commenti solo per WHY non ovvi.
 - No test in fase scaffolding — verranno aggiunti quando logica diventa non triviale (parser NDJSON, permission resolver).
