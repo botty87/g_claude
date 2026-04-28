@@ -44,6 +44,15 @@
       "searchHint": "Search open files...",
       "empty": "No files open",
       "noMatches": "No matches"
+    },
+    "find": {
+      "hint": "Find in file",
+      "noResults": "No results",
+      "previous": "Previous match",
+      "next": "Next match",
+      "close": "Close",
+      "caseSensitive": "Match case",
+      "regex": "Regex"
     }
   }
 }

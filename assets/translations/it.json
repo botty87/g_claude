@@ -44,6 +44,15 @@
       "searchHint": "Cerca file aperti...",
       "empty": "Nessun file aperto",
       "noMatches": "Nessun risultato"
+    },
+    "find": {
+      "hint": "Cerca nel file",
+      "noResults": "Nessun risultato",
+      "previous": "Risultato precedente",
+      "next": "Risultato successivo",
+      "close": "Chiudi",
+      "caseSensitive": "Maiuscole/minuscole",
+      "regex": "Regex"
     }
   }
 }

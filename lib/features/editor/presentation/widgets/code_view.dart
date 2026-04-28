@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:re_highlight/re_highlight.dart';
+import 'package:re_editor/re_editor.dart';
 import 'package:re_highlight/languages/dart.dart';
 import 'package:re_highlight/languages/json.dart';
 import 'package:re_highlight/languages/yaml.dart';
@@ -19,7 +19,7 @@ import 'package:re_highlight/languages/kotlin.dart';
 import 'package:re_highlight/languages/java.dart';
 import 'package:re_highlight/languages/bash.dart';
 import 'package:re_highlight/languages/ini.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart' as hl_theme;
+import 'package:re_highlight/styles/github-dark.dart' as hl_theme;
 
 import '../../../../core/di/di.dart';
 import '../../../../core/error/failure_extensions.dart';
@@ -28,6 +28,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../domain/entities/file_content.dart';
 import '../../domain/usecases/read_file.dart';
+import 'code_find_panel.dart';
 
 // ---------------------------------------------------------------------------
 // Local state hierarchy (no freezed — kept inline, private)
@@ -52,26 +53,27 @@ class _Error extends _ViewState {
 }
 
 // ---------------------------------------------------------------------------
-// Shared highlight instance with all supported languages registered once
+// Language registry — re_highlight Mode keyed by FileContent.language string
 // ---------------------------------------------------------------------------
 
-final _hl = Highlight()
-  ..registerLanguage('dart', langDart)
-  ..registerLanguage('json', langJson)
-  ..registerLanguage('yaml', langYaml)
-  ..registerLanguage('markdown', langMarkdown)
-  ..registerLanguage('xml', langXml)
-  ..registerLanguage('css', langCss)
-  ..registerLanguage('javascript', langJavascript)
-  ..registerLanguage('typescript', langTypescript)
-  ..registerLanguage('python', langPython)
-  ..registerLanguage('go', langGo)
-  ..registerLanguage('rust', langRust)
-  ..registerLanguage('swift', langSwift)
-  ..registerLanguage('kotlin', langKotlin)
-  ..registerLanguage('java', langJava)
-  ..registerLanguage('bash', langBash)
-  ..registerLanguage('ini', langIni);
+final Map<String, CodeHighlightThemeMode> _languageModes = {
+  'dart': CodeHighlightThemeMode(mode: langDart),
+  'json': CodeHighlightThemeMode(mode: langJson),
+  'yaml': CodeHighlightThemeMode(mode: langYaml),
+  'markdown': CodeHighlightThemeMode(mode: langMarkdown),
+  'xml': CodeHighlightThemeMode(mode: langXml),
+  'css': CodeHighlightThemeMode(mode: langCss),
+  'javascript': CodeHighlightThemeMode(mode: langJavascript),
+  'typescript': CodeHighlightThemeMode(mode: langTypescript),
+  'python': CodeHighlightThemeMode(mode: langPython),
+  'go': CodeHighlightThemeMode(mode: langGo),
+  'rust': CodeHighlightThemeMode(mode: langRust),
+  'swift': CodeHighlightThemeMode(mode: langSwift),
+  'kotlin': CodeHighlightThemeMode(mode: langKotlin),
+  'java': CodeHighlightThemeMode(mode: langJava),
+  'bash': CodeHighlightThemeMode(mode: langBash),
+  'ini': CodeHighlightThemeMode(mode: langIni),
+};
 
 // ---------------------------------------------------------------------------
 // CodeView
@@ -98,12 +100,8 @@ class CodeView extends HookWidget {
 
     return switch (state.value) {
       _Loading() => const Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
+        child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
       _Error(:final failure) => _ErrorView(failure: failure),
       _Loaded(:final content) => _HighlightedView(content: content),
     };
@@ -138,9 +136,7 @@ class _ErrorView extends StatelessWidget {
         children: [
           const Icon(Symbols.error_outline, color: AppColors.error, size: 32),
           const SizedBox(height: 8),
-          Text(msg,
-              style: AppTypography.bodyMain
-                  .copyWith(color: AppColors.onSurfaceVariant)),
+          Text(msg, style: AppTypography.bodyMain.copyWith(color: AppColors.onSurfaceVariant)),
           if (caption != null)
             Text(
               caption,
@@ -162,7 +158,7 @@ class _ErrorView extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Highlighted view
+// Highlighted view — read-only re_editor with line numbers
 // ---------------------------------------------------------------------------
 
 class _HighlightedView extends HookWidget {
@@ -172,49 +168,48 @@ class _HighlightedView extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vController = useScrollController();
-    final hController = useScrollController();
-    final baseStyle = AppTypography.terminalCode
-        .copyWith(color: AppColors.onSurface);
+    final controller = useMemoized(() => CodeLineEditingController.fromText(content.content), [
+      content.path,
+      content.content,
+    ]);
+    useEffect(() => controller.dispose, [controller]);
 
-    TextSpan span;
-    try {
-      final lang = content.language;
-      final result = lang != null
-          ? _hl.highlight(
-              code: content.content,
-              language: lang,
-              ignoreIllegals: true,
-            )
-          : null;
+    final findController = useMemoized(() => CodeFindController(controller), [controller]);
+    useEffect(() => findController.dispose, [findController]);
 
-      if (result != null) {
-        final renderer = TextSpanRenderer(baseStyle, hl_theme.atomOneDarkTheme);
-        result.render(renderer);
-        span = renderer.span ??
-            TextSpan(text: content.content, style: baseStyle);
-      } else {
-        span = TextSpan(text: content.content, style: baseStyle);
-      }
-    } catch (_) {
-      span = TextSpan(text: content.content, style: baseStyle);
-    }
+    final lang = content.language;
+    final languages = lang != null && _languageModes.containsKey(lang)
+        ? {lang: _languageModes[lang]!}
+        : const <String, CodeHighlightThemeMode>{};
+
+    final baseStyle = AppTypography.terminalCode.copyWith(color: AppColors.onSurface);
 
     return Container(
       color: AppColors.surface,
-      child: Scrollbar(
-        controller: vController,
-        child: SingleChildScrollView(
-          controller: vController,
-          child: SingleChildScrollView(
-            controller: hController,
-            scrollDirection: Axis.horizontal,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: SelectableText.rich(span),
-            ),
-          ),
+      child: CodeEditor(
+        controller: controller,
+        findController: findController,
+        style: CodeEditorStyle(
+          backgroundColor: AppColors.surface,
+          textColor: AppColors.onSurface,
+          fontFamily: baseStyle.fontFamily,
+          fontSize: baseStyle.fontSize,
+          codeTheme: CodeHighlightTheme(languages: languages, theme: hl_theme.githubDarkTheme),
         ),
+        indicatorBuilder: (context, editingController, chunkController, notifier) {
+          return Row(
+            children: [
+              DefaultCodeLineNumber(
+                controller: editingController,
+                notifier: notifier,
+                textStyle: baseStyle.copyWith(color: AppColors.onSurfaceVariant.withValues(alpha: 0.4)),
+              ),
+              DefaultCodeChunkIndicator(width: 16, controller: chunkController, notifier: notifier),
+            ],
+          );
+        },
+        findBuilder: (context, controller, readOnly) => CodeFindPanel(controller: controller),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       ),
     );
   }

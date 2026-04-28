@@ -48,8 +48,9 @@ dependencies:
   collection: ^1.19.0
   file_picker: ^11.0.2
 
-  # Syntax highlighting
+  # Syntax highlighting + code viewer
   re_highlight: ^0.0.3
+  re_editor: ^0.8.0
 
   # Layout
   multi_split_view: ^3.6.1
