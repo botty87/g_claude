@@ -4,9 +4,8 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import 'mac_traffic_lights.dart';
 
-/// 40px top chrome bar: traffic lights · brand · tabs · spacer · actions.
+/// 40px top chrome bar: brand · tabs · spacer · settings.
 class TopHeader extends StatelessWidget {
   const TopHeader({super.key, required this.tabs, required this.activeTab, this.onTabSelected});
 
@@ -24,15 +23,11 @@ class TopHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const MacTrafficLights(),
-          const SizedBox(width: AppSpacing.lg),
           Text('CLAUDE CODE', style: AppTypography.brand),
           const SizedBox(width: AppSpacing.lg),
           ...tabs.map((t) => _TabItem(label: t, isActive: t == activeTab, onTap: () => onTabSelected?.call(t))),
           const Spacer(),
           const _IconButton(icon: Symbols.settings),
-          const SizedBox(width: AppSpacing.xs),
-          const _IconButton(icon: Symbols.close),
         ],
       ),
     );

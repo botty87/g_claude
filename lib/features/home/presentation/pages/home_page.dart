@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../shared/widgets/glass/glass_window.dart';
 import '../widgets/conversation_pane.dart';
 import '../widgets/idle_pane.dart';
 import '../widgets/side_nav_bar.dart';
@@ -25,27 +24,22 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.windowPadding),
-        child: GlassWindow(
-          child: Column(
-            children: [
-              TopHeader(
-                tabs: _tabs,
-                activeTab: _activeTab,
-                onTabSelected: (t) => setState(() => _activeTab = t),
-              ),
-              const Expanded(
-                child: Row(
-                  children: [
-                    SideNavBar(),
-                    Expanded(child: _Workspace()),
-                  ],
-                ),
-              ),
-            ],
+      body: Column(
+        children: [
+          TopHeader(
+            tabs: _tabs,
+            activeTab: _activeTab,
+            onTabSelected: (t) => setState(() => _activeTab = t),
           ),
-        ),
+          const Expanded(
+            child: Row(
+              children: [
+                SideNavBar(),
+                Expanded(child: _Workspace()),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
