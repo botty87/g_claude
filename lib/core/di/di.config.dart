@@ -14,6 +14,14 @@ import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:talker_flutter/talker_flutter.dart' as _i207;
 
+import '../../features/editor/data/datasources/file_content_datasource.dart'
+    as _i630;
+import '../../features/editor/data/repositories/file_content_repository_impl.dart'
+    as _i574;
+import '../../features/editor/domain/repositories/file_content_repository.dart'
+    as _i1043;
+import '../../features/editor/domain/usecases/read_file.dart' as _i622;
+import '../../features/editor/presentation/cubit/file_tabs_cubit.dart' as _i648;
 import '../../features/explorer/data/datasources/file_system_datasource.dart'
     as _i12;
 import '../../features/explorer/data/repositories/file_system_repository_impl.dart'
@@ -55,11 +63,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i735.WorkspaceLocalDataSource>(
       () => _i735.WorkspaceLocalDataSourceImpl(),
     );
+    gh.lazySingleton<_i630.FileContentDataSource>(
+      () => _i630.FileContentDataSourceImpl(),
+    );
     gh.lazySingleton<_i331.BlocObserver>(
       () => blocObserverModule.blocObserver(gh<_i207.Talker>()),
     );
     gh.lazySingleton<_i12.FileSystemDataSource>(
       () => _i12.FileSystemDataSourceImpl(),
+    );
+    gh.lazySingleton<_i1043.FileContentRepository>(
+      () => _i574.FileContentRepositoryImpl(gh<_i630.FileContentDataSource>()),
+    );
+    gh.factory<_i622.ReadFile>(
+      () => _i622.ReadFile(gh<_i1043.FileContentRepository>()),
     );
     gh.lazySingleton<_i268.WorkspaceRepository>(
       () => _i824.WorkspaceRepositoryImpl(gh<_i735.WorkspaceLocalDataSource>()),
@@ -86,6 +103,11 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i179.WorkspacesCubit>(),
         gh<_i207.Talker>(),
       )..init(),
+    );
+    gh.lazySingleton<_i648.FileTabsCubit>(
+      () =>
+          _i648.FileTabsCubit(gh<_i179.WorkspacesCubit>(), gh<_i207.Talker>())
+            ..init(),
     );
     return this;
   }

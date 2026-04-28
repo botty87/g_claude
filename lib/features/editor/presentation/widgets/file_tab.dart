@@ -1,38 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
-import '../../domain/entities/workspace.dart';
+import '../../../workspace/domain/entities/workspace.dart';
+import '../cubit/file_tabs_cubit.dart';
 
-class WorkspaceTab extends StatelessWidget {
-  const WorkspaceTab({
-    super.key,
-    required this.workspace,
+class FileTab extends StatelessWidget {
+  const FileTab({
+    required this.workspaceId,
+    required this.path,
     required this.isActive,
-    required this.onTap,
-    required this.onClose,
+    required this.isPreview,
+    super.key,
   });
 
-  final Workspace workspace;
+  final WorkspaceId workspaceId;
+  final String path;
   final bool isActive;
-  final VoidCallback onTap;
-  final VoidCallback onClose;
+  final bool isPreview;
 
   @override
   Widget build(BuildContext context) {
     return Hoverable(
-      onTap: onTap,
+      onTap: () => context.read<FileTabsCubit>().setActiveFile(workspaceId, path),
+      onDoubleTap: isPreview
+          ? () => context.read<FileTabsCubit>().pinFile(workspaceId, path)
+          : null,
       builder: (context, hover) {
         final fill = isActive
-            ? AppColors.glassActive
+            ? AppColors.surface
             : hover
                 ? AppColors.glassHover
                 : Colors.transparent;
-        final textColor = isActive ? AppColors.onSurface : AppColors.onSurfaceVariant;
+        final textColor =
+            isActive ? AppColors.onSurface : AppColors.onSurfaceVariant;
         return Container(
           height: AppSpacing.toolbarHeight,
           margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -41,25 +48,34 @@ class WorkspaceTab extends StatelessWidget {
             color: fill,
             borderRadius: BorderRadius.circular(AppRadii.sm),
             border: isActive
-                ? const Border(bottom: BorderSide(color: AppColors.brandIndigo, width: 2))
+                ? const Border(
+                    bottom: BorderSide(color: AppColors.brandIndigo, width: 2),
+                  )
                 : null,
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Symbols.folder, size: 14, color: textColor),
+              Icon(Symbols.description, size: 14, color: textColor),
               const SizedBox(width: AppSpacing.sm),
               Text(
-                workspace.name,
-                style: AppTypography.navTab.copyWith(color: textColor),
+                p.basename(path),
+                style: AppTypography.navTab.copyWith(
+                  color: textColor,
+                  fontStyle: isPreview ? FontStyle.italic : FontStyle.normal,
+                ),
               ),
               const SizedBox(width: AppSpacing.sm),
               Hoverable(
-                onTap: onClose,
+                onTap: () =>
+                    context.read<FileTabsCubit>().closeFile(workspaceId, path),
                 builder: (context, closeHover) => Container(
                   width: 18,
                   height: 18,
                   decoration: BoxDecoration(
-                    color: closeHover ? AppColors.glassHover : Colors.transparent,
+                    color: closeHover
+                        ? AppColors.glassHover
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppRadii.sm),
                   ),
                   child: Icon(

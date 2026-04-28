@@ -59,3 +59,13 @@ final class WorkspaceNotADirectoryException implements Exception {
   final String path;
   const WorkspaceNotADirectoryException(this.path);
 }
+
+final class FileTooLargeException implements Exception {
+  FileTooLargeException(this.sizeBytes);
+  final int sizeBytes;
+}
+
+@immutable
+final class BinaryFileException implements Exception {
+  const BinaryFileException();
+}

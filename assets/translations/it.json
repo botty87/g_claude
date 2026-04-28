@@ -28,12 +28,22 @@
       "openFolder": "Apri cartella...",
       "hint": "Apri una cartella per iniziare"
     },
-    "view": {
-      "noClaudeMd": "Nessun CLAUDE.md in questo workspace"
-    },
-    "chat": {
-      "placeholder": "Chiedi a Claude... (in arrivo nella sessione 3)",
-      "tooltip": "In arrivo nella sessione 3"
+    "dropdown": {
+      "empty": "Apri cartella...",
+      "openFolder": "Apri cartella...",
+      "closeWorkspace": "Chiudi"
+    }
+  },
+  "editor": {
+    "noFileOpen": "Nessun file aperto. Clicca un file nell'explorer per visualizzarlo.",
+    "fileLoadError": "Impossibile leggere il file",
+    "fileTooLarge": "File troppo grande da visualizzare",
+    "binaryFile": "File binario (anteprima non supportata)",
+    "openFiles": {
+      "tooltip": "File aperti",
+      "searchHint": "Cerca file aperti...",
+      "empty": "Nessun file aperto",
+      "noMatches": "Nessun risultato"
     }
   }
 }

@@ -5,14 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../editor/presentation/widgets/file_tabs_bar.dart';
+import '../../../editor/presentation/widgets/file_viewer.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../../workspace/presentation/widgets/empty_state_view.dart';
-import '../../../workspace/presentation/widgets/workspace_tab_bar.dart';
 import '../cubit/shell_cubit.dart';
 import 'activity_bar.dart';
 import 'side_panel.dart';
-import 'workspace_view.dart';
 
 @RoutePage()
 class AppShellPage extends StatefulWidget {
@@ -66,7 +66,7 @@ class _AppShellPageState extends State<AppShellPage> {
         backgroundColor: AppColors.surface,
         body: Column(
           children: [
-            const WorkspaceTabBar(),
+            const FileTabsBar(),
             Expanded(
               child: Row(
                 children: [
@@ -107,7 +107,7 @@ class _MainArea extends StatelessWidget {
           selector: (state) => state.sidePanelOpen,
           builder: (context, sidePanelOpen) {
             if (!sidePanelOpen) {
-              return WorkspaceView(workspace: active);
+              return const FileViewer();
             }
             return MultiSplitViewTheme(
               data: _splitTheme,
@@ -117,7 +117,7 @@ class _MainArea extends StatelessWidget {
                   if (area.index == 0) {
                     return const SidePanel();
                   }
-                  return WorkspaceView(workspace: active);
+                  return const FileViewer();
                 },
               ),
             );

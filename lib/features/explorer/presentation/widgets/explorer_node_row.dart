@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
+import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../domain/entities/file_node.dart';
 import '../cubit/explorer_cubit.dart';
@@ -39,14 +40,13 @@ class ExplorerNodeRow extends StatelessWidget {
     final isDir = node.isDir;
 
     return Hoverable(
-      cursor: isDir ? SystemMouseCursors.click : SystemMouseCursors.basic,
       onTap: isDir
           ? () => context.read<ExplorerCubit>().toggleFolder(workspaceId, node.path)
-          : null,
+          : () => context.read<FileTabsCubit>().openFile(workspaceId, node.path),
       builder: (context, hover) {
         return Container(
           height: rowHeight,
-          color: hover && isDir ? AppColors.glassHover : Colors.transparent,
+          color: hover ? AppColors.glassHover : Colors.transparent,
           padding: EdgeInsetsDirectional.only(
             start: AppSpacing.sm + depth * indentPerLevel,
             end: AppSpacing.sm,

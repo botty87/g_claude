@@ -28,12 +28,22 @@
       "openFolder": "Open Folder...",
       "hint": "Open a folder to begin"
     },
-    "view": {
-      "noClaudeMd": "No CLAUDE.md in this workspace"
-    },
-    "chat": {
-      "placeholder": "Ask Claude... (coming in session 3)",
-      "tooltip": "Coming in session 3"
+    "dropdown": {
+      "empty": "Open Folder...",
+      "openFolder": "Open Folder...",
+      "closeWorkspace": "Close"
+    }
+  },
+  "editor": {
+    "noFileOpen": "No file open. Click a file in the explorer to view it.",
+    "fileLoadError": "Cannot read file",
+    "fileTooLarge": "File too large to preview",
+    "binaryFile": "Binary file (preview not supported)",
+    "openFiles": {
+      "tooltip": "Open files",
+      "searchHint": "Search open files...",
+      "empty": "No files open",
+      "noMatches": "No matches"
     }
   }
 }

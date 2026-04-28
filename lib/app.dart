@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/di/di.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'features/editor/presentation/cubit/file_tabs_cubit.dart';
 import 'features/explorer/presentation/cubit/explorer_cubit.dart';
 import 'features/shell/presentation/cubit/shell_cubit.dart';
 import 'features/workspace/presentation/cubit/workspaces_cubit.dart';
@@ -21,6 +22,7 @@ class App extends StatelessWidget {
         BlocProvider<WorkspacesCubit>.value(value: getIt<WorkspacesCubit>()),
         BlocProvider<ShellCubit>.value(value: getIt<ShellCubit>()),
         BlocProvider<ExplorerCubit>.value(value: getIt<ExplorerCubit>()),
+        BlocProvider<FileTabsCubit>.value(value: getIt<FileTabsCubit>()),
       ],
       child: MaterialApp.router(
         title: 'Claude Code GUI',
