@@ -7,22 +7,34 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../features/workspace/domain/entities/workspace.dart';
 import '../../../../features/workspace/presentation/cubit/workspaces_cubit.dart';
+import '../../data/datasources/file_tabs_persistence_datasource.dart';
 
 part 'file_tabs_cubit.freezed.dart';
 part 'file_tabs_cubit.state.dart';
 
 @lazySingleton
 class FileTabsCubit extends Cubit<FileTabsState> {
-  FileTabsCubit(this._workspacesCubit, this._talker)
+  FileTabsCubit(this._workspacesCubit, this._persistence, this._talker)
       : super(const FileTabsState());
 
   final WorkspacesCubit _workspacesCubit;
+  final FileTabsPersistenceDataSource _persistence;
   final Talker _talker;
   StreamSubscription<WorkspacesState>? _wsSub;
+  StreamSubscription<FileTabsState>? _selfSub;
+  Timer? _saveDebounce;
+  bool _restoring = false;
+
+  static const _saveDebounceMs = 250;
 
   @PostConstruct()
   void init() {
     _wsSub = _workspacesCubit.stream.listen(_onWorkspacesChanged);
+    _selfSub = stream.listen((_) {
+      if (_restoring) return;
+      _saveDebounce?.cancel();
+      _saveDebounce = Timer(const Duration(milliseconds: _saveDebounceMs), _persist);
+    });
   }
 
   void _onWorkspacesChanged(WorkspacesState ws) {
@@ -122,9 +134,65 @@ class FileTabsCubit extends Cubit<FileTabsState> {
     emit(state.copyWith(perWorkspace: {...state.perWorkspace, id: next}));
   }
 
+  Future<void> restore() async {
+    _restoring = true;
+    try {
+      final snapshot = await _persistence.read();
+      if (snapshot == null || snapshot.perWorkspace.isEmpty) return;
+      final aliveIds = _workspacesCubit.state.workspacesOrEmpty
+          .map((w) => w.id)
+          .toSet();
+      final filtered = <WorkspaceId, WorkspaceFiles>{};
+      snapshot.perWorkspace.forEach((id, files) {
+        if (!aliveIds.contains(id)) return;
+        if (files.openPaths.isEmpty) return;
+        var active = files.activePath;
+        if (active != null && !files.openPaths.contains(active)) {
+          active = files.openPaths.first;
+        }
+        var preview = files.previewPath;
+        if (preview != null && !files.openPaths.contains(preview)) {
+          preview = null;
+        }
+        filtered[id] = WorkspaceFiles(
+          openPaths: List.unmodifiable(files.openPaths),
+          activePath: active,
+          previewPath: preview,
+        );
+      });
+      if (filtered.isEmpty) return;
+      emit(state.copyWith(perWorkspace: filtered));
+      _talker.info('Restored file tabs for ${filtered.length} workspace(s)');
+    } catch (e, st) {
+      _talker.error('Failed to restore file tabs', e, st);
+    } finally {
+      _restoring = false;
+    }
+  }
+
+  Future<void> _persist() async {
+    try {
+      final perWs = state.perWorkspace.map(
+        (id, files) => MapEntry(
+          id,
+          PersistedWorkspaceFiles(
+            openPaths: files.openPaths,
+            activePath: files.activePath,
+            previewPath: files.previewPath,
+          ),
+        ),
+      );
+      await _persistence.write(PersistedFileTabs(perWorkspace: perWs));
+    } catch (e, st) {
+      _talker.error('Failed to persist file tabs', e, st);
+    }
+  }
+
   @override
   Future<void> close() async {
+    _saveDebounce?.cancel();
     await _wsSub?.cancel();
+    await _selfSub?.cancel();
     return super.close();
   }
 }

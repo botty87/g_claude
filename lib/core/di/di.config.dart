@@ -12,10 +12,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart' as _i331;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
+import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import 'package:talker_flutter/talker_flutter.dart' as _i207;
 
 import '../../features/editor/data/datasources/file_content_datasource.dart'
     as _i630;
+import '../../features/editor/data/datasources/file_tabs_persistence_datasource.dart'
+    as _i283;
 import '../../features/editor/data/repositories/file_content_repository_impl.dart'
     as _i574;
 import '../../features/editor/domain/repositories/file_content_repository.dart'
@@ -34,6 +37,8 @@ import '../../features/explorer/presentation/cubit/explorer_cubit.dart'
 import '../../features/shell/presentation/cubit/shell_cubit.dart' as _i68;
 import '../../features/workspace/data/datasources/workspace_local_datasource.dart'
     as _i735;
+import '../../features/workspace/data/datasources/workspaces_persistence_datasource.dart'
+    as _i420;
 import '../../features/workspace/data/repositories/workspace_repository_impl.dart'
     as _i824;
 import '../../features/workspace/domain/repositories/workspace_repository.dart'
@@ -42,21 +47,28 @@ import '../../features/workspace/domain/usecases/load_claude_md.dart' as _i268;
 import '../../features/workspace/domain/usecases/open_workspace.dart' as _i305;
 import '../../features/workspace/presentation/cubit/workspaces_cubit.dart'
     as _i179;
+import '../persistence/key_value_store.dart' as _i494;
 import '../router/app_router.dart' as _i81;
 import 'modules/bloc_observer_module.dart' as _i596;
+import 'modules/preferences_module.dart' as _i329;
 import 'modules/router_module.dart' as _i322;
 import 'modules/talker_module.dart' as _i185;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
-  _i174.GetIt init({
+  Future<_i174.GetIt> init({
     String? environment,
     _i526.EnvironmentFilter? environmentFilter,
-  }) {
+  }) async {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
+    final preferencesModule = _$PreferencesModule();
     final routerModule = _$RouterModule();
     final talkerModule = _$TalkerModule();
     final blocObserverModule = _$BlocObserverModule();
+    await gh.factoryAsync<_i460.SharedPreferences>(
+      () => preferencesModule.sharedPreferences,
+      preResolve: true,
+    );
     gh.lazySingleton<_i81.AppRouter>(() => routerModule.router);
     gh.lazySingleton<_i207.Talker>(() => talkerModule.talker);
     gh.lazySingleton<_i68.ShellCubit>(() => _i68.ShellCubit());
@@ -71,6 +83,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i12.FileSystemDataSource>(
       () => _i12.FileSystemDataSourceImpl(),
+    );
+    gh.lazySingleton<_i494.KeyValueStore>(
+      () => _i494.SharedPreferencesKeyValueStore(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i1043.FileContentRepository>(
       () => _i574.FileContentRepositoryImpl(gh<_i630.FileContentDataSource>()),
@@ -87,12 +102,34 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i305.OpenWorkspace>(
       () => _i305.OpenWorkspace(gh<_i268.WorkspaceRepository>()),
     );
+    gh.lazySingleton<_i283.FileTabsPersistenceDataSource>(
+      () => _i283.FileTabsPersistenceDataSourceImpl(
+        gh<_i494.KeyValueStore>(),
+        gh<_i207.Talker>(),
+      ),
+    );
     gh.lazySingleton<_i150.FileSystemRepository>(
       () => _i890.FileSystemRepositoryImpl(gh<_i12.FileSystemDataSource>()),
     );
+    gh.lazySingleton<_i420.WorkspacesPersistenceDataSource>(
+      () => _i420.WorkspacesPersistenceDataSourceImpl(
+        gh<_i494.KeyValueStore>(),
+        gh<_i207.Talker>(),
+      ),
+    );
     gh.lazySingleton<_i179.WorkspacesCubit>(
-      () =>
-          _i179.WorkspacesCubit(gh<_i305.OpenWorkspace>(), gh<_i207.Talker>()),
+      () => _i179.WorkspacesCubit(
+        gh<_i305.OpenWorkspace>(),
+        gh<_i420.WorkspacesPersistenceDataSource>(),
+        gh<_i207.Talker>(),
+      )..init(),
+    );
+    gh.lazySingleton<_i648.FileTabsCubit>(
+      () => _i648.FileTabsCubit(
+        gh<_i179.WorkspacesCubit>(),
+        gh<_i283.FileTabsPersistenceDataSource>(),
+        gh<_i207.Talker>(),
+      )..init(),
     );
     gh.factory<_i308.ListDirectory>(
       () => _i308.ListDirectory(gh<_i150.FileSystemRepository>()),
@@ -104,14 +141,11 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i207.Talker>(),
       )..init(),
     );
-    gh.lazySingleton<_i648.FileTabsCubit>(
-      () =>
-          _i648.FileTabsCubit(gh<_i179.WorkspacesCubit>(), gh<_i207.Talker>())
-            ..init(),
-    );
     return this;
   }
 }
+
+class _$PreferencesModule extends _i329.PreferencesModule {}
 
 class _$RouterModule extends _i322.RouterModule {}
 

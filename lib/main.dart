@@ -9,6 +9,7 @@ import 'app.dart';
 import 'core/di/di.dart';
 import 'core/marionette/marionette_log_bridge.dart';
 import 'core/window/window_setup.dart';
+import 'features/editor/presentation/cubit/file_tabs_cubit.dart';
 import 'features/workspace/presentation/cubit/workspaces_cubit.dart';
 
 Future<void> main() async {
@@ -36,6 +37,12 @@ Future<void> main() async {
   if (marionetteEnabled && marionetteLogCollector != null) {
     MarionetteLogBridge(talker: getIt<Talker>(), collector: marionetteLogCollector).start();
   }
+
+  // Restore persisted state before BlocObserver attaches to avoid logging
+  // restore emissions as user-driven transitions. Workspaces first — file tabs
+  // filter against alive workspace ids on restore.
+  await getIt<WorkspacesCubit>().restore();
+  await getIt<FileTabsCubit>().restore();
 
   Bloc.observer = getIt<BlocObserver>();
 
