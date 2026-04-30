@@ -212,6 +212,10 @@ class _HighlightedView extends HookWidget {
           );
         },
         findBuilder: (context, controller, readOnly) => CodeFindPanel(controller: controller),
+        scrollbarBuilder: (context, child, details) => Scrollbar(
+          controller: details.controller,
+          child: child,
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       ),
     );
