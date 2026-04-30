@@ -137,7 +137,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i188.ExplorerCubit>(
       () => _i188.ExplorerCubit(
         gh<_i308.ListDirectory>(),
+        gh<_i622.ReadFile>(),
         gh<_i179.WorkspacesCubit>(),
+        gh<_i648.FileTabsCubit>(),
         gh<_i207.Talker>(),
       )..init(),
     );

@@ -20,6 +20,7 @@ class ExplorerNodeRow extends StatelessWidget {
     required this.workspaceId,
     required this.isExpanded,
     required this.isLoading,
+    this.isSelected = false,
     this.error,
   });
 
@@ -28,6 +29,7 @@ class ExplorerNodeRow extends StatelessWidget {
   final WorkspaceId workspaceId;
   final bool isExpanded;
   final bool isLoading;
+  final bool isSelected;
   final Failure? error;
 
   static const indentPerLevel = 14.0;
@@ -44,9 +46,17 @@ class ExplorerNodeRow extends StatelessWidget {
           ? () => context.read<ExplorerCubit>().toggleFolder(workspaceId, node.path)
           : () => context.read<FileTabsCubit>().openFile(workspaceId, node.path),
       builder: (context, hover) {
+        final Color background;
+        if (isSelected) {
+          background = AppColors.primaryContainer.withValues(alpha: 0.35);
+        } else if (hover) {
+          background = AppColors.glassHover;
+        } else {
+          background = Colors.transparent;
+        }
         return Container(
           height: rowHeight,
-          color: hover ? AppColors.glassHover : Colors.transparent,
+          color: background,
           padding: EdgeInsetsDirectional.only(
             start: AppSpacing.sm + depth * indentPerLevel,
             end: AppSpacing.sm,
@@ -60,7 +70,11 @@ class ExplorerNodeRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   node.name,
-                  style: AppTypography.bodyMain.copyWith(fontSize: 13),
+                  style: AppTypography.bodyMain.copyWith(
+                    fontSize: 13,
+                    color: isSelected ? AppColors.onPrimaryContainer : null,
+                    fontWeight: isSelected ? FontWeight.w600 : null,
+                  ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),

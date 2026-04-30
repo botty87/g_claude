@@ -280,7 +280,7 @@ as bool,
 /// @nodoc
 mixin _$WorkspaceTree {
 
- Map<String, List<FileNode>> get children; Set<String> get expanded; Set<String> get loading; Map<String, Failure> get errors;
+ Map<String, List<FileNode>> get children; Set<String> get expanded; Set<String> get loading; Map<String, Failure> get errors; String? get selectedPath;
 /// Create a copy of WorkspaceTree
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -291,16 +291,16 @@ $WorkspaceTreeCopyWith<WorkspaceTree> get copyWith => _$WorkspaceTreeCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkspaceTree&&const DeepCollectionEquality().equals(other.children, children)&&const DeepCollectionEquality().equals(other.expanded, expanded)&&const DeepCollectionEquality().equals(other.loading, loading)&&const DeepCollectionEquality().equals(other.errors, errors));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkspaceTree&&const DeepCollectionEquality().equals(other.children, children)&&const DeepCollectionEquality().equals(other.expanded, expanded)&&const DeepCollectionEquality().equals(other.loading, loading)&&const DeepCollectionEquality().equals(other.errors, errors)&&(identical(other.selectedPath, selectedPath) || other.selectedPath == selectedPath));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(children),const DeepCollectionEquality().hash(expanded),const DeepCollectionEquality().hash(loading),const DeepCollectionEquality().hash(errors));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(children),const DeepCollectionEquality().hash(expanded),const DeepCollectionEquality().hash(loading),const DeepCollectionEquality().hash(errors),selectedPath);
 
 @override
 String toString() {
-  return 'WorkspaceTree(children: $children, expanded: $expanded, loading: $loading, errors: $errors)';
+  return 'WorkspaceTree(children: $children, expanded: $expanded, loading: $loading, errors: $errors, selectedPath: $selectedPath)';
 }
 
 
@@ -311,7 +311,7 @@ abstract mixin class $WorkspaceTreeCopyWith<$Res>  {
   factory $WorkspaceTreeCopyWith(WorkspaceTree value, $Res Function(WorkspaceTree) _then) = _$WorkspaceTreeCopyWithImpl;
 @useResult
 $Res call({
- Map<String, List<FileNode>> children, Set<String> expanded, Set<String> loading, Map<String, Failure> errors
+ Map<String, List<FileNode>> children, Set<String> expanded, Set<String> loading, Map<String, Failure> errors, String? selectedPath
 });
 
 
@@ -328,13 +328,14 @@ class _$WorkspaceTreeCopyWithImpl<$Res>
 
 /// Create a copy of WorkspaceTree
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? children = null,Object? expanded = null,Object? loading = null,Object? errors = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? children = null,Object? expanded = null,Object? loading = null,Object? errors = null,Object? selectedPath = freezed,}) {
   return _then(_self.copyWith(
 children: null == children ? _self.children : children // ignore: cast_nullable_to_non_nullable
 as Map<String, List<FileNode>>,expanded: null == expanded ? _self.expanded : expanded // ignore: cast_nullable_to_non_nullable
 as Set<String>,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
 as Set<String>,errors: null == errors ? _self.errors : errors // ignore: cast_nullable_to_non_nullable
-as Map<String, Failure>,
+as Map<String, Failure>,selectedPath: freezed == selectedPath ? _self.selectedPath : selectedPath // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -419,10 +420,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, List<FileNode>> children,  Set<String> expanded,  Set<String> loading,  Map<String, Failure> errors)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, List<FileNode>> children,  Set<String> expanded,  Set<String> loading,  Map<String, Failure> errors,  String? selectedPath)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WorkspaceTree() when $default != null:
-return $default(_that.children,_that.expanded,_that.loading,_that.errors);case _:
+return $default(_that.children,_that.expanded,_that.loading,_that.errors,_that.selectedPath);case _:
   return orElse();
 
 }
@@ -440,10 +441,10 @@ return $default(_that.children,_that.expanded,_that.loading,_that.errors);case _
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, List<FileNode>> children,  Set<String> expanded,  Set<String> loading,  Map<String, Failure> errors)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, List<FileNode>> children,  Set<String> expanded,  Set<String> loading,  Map<String, Failure> errors,  String? selectedPath)  $default,) {final _that = this;
 switch (_that) {
 case _WorkspaceTree():
-return $default(_that.children,_that.expanded,_that.loading,_that.errors);case _:
+return $default(_that.children,_that.expanded,_that.loading,_that.errors,_that.selectedPath);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -460,10 +461,10 @@ return $default(_that.children,_that.expanded,_that.loading,_that.errors);case _
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, List<FileNode>> children,  Set<String> expanded,  Set<String> loading,  Map<String, Failure> errors)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, List<FileNode>> children,  Set<String> expanded,  Set<String> loading,  Map<String, Failure> errors,  String? selectedPath)?  $default,) {final _that = this;
 switch (_that) {
 case _WorkspaceTree() when $default != null:
-return $default(_that.children,_that.expanded,_that.loading,_that.errors);case _:
+return $default(_that.children,_that.expanded,_that.loading,_that.errors,_that.selectedPath);case _:
   return null;
 
 }
@@ -475,7 +476,7 @@ return $default(_that.children,_that.expanded,_that.loading,_that.errors);case _
 
 
 class _WorkspaceTree implements WorkspaceTree {
-  const _WorkspaceTree({final  Map<String, List<FileNode>> children = const <String, List<FileNode>>{}, final  Set<String> expanded = const <String>{}, final  Set<String> loading = const <String>{}, final  Map<String, Failure> errors = const <String, Failure>{}}): _children = children,_expanded = expanded,_loading = loading,_errors = errors;
+  const _WorkspaceTree({final  Map<String, List<FileNode>> children = const <String, List<FileNode>>{}, final  Set<String> expanded = const <String>{}, final  Set<String> loading = const <String>{}, final  Map<String, Failure> errors = const <String, Failure>{}, this.selectedPath}): _children = children,_expanded = expanded,_loading = loading,_errors = errors;
   
 
  final  Map<String, List<FileNode>> _children;
@@ -506,6 +507,7 @@ class _WorkspaceTree implements WorkspaceTree {
   return EqualUnmodifiableMapView(_errors);
 }
 
+@override final  String? selectedPath;
 
 /// Create a copy of WorkspaceTree
 /// with the given fields replaced by the non-null parameter values.
@@ -517,16 +519,16 @@ _$WorkspaceTreeCopyWith<_WorkspaceTree> get copyWith => __$WorkspaceTreeCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkspaceTree&&const DeepCollectionEquality().equals(other._children, _children)&&const DeepCollectionEquality().equals(other._expanded, _expanded)&&const DeepCollectionEquality().equals(other._loading, _loading)&&const DeepCollectionEquality().equals(other._errors, _errors));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkspaceTree&&const DeepCollectionEquality().equals(other._children, _children)&&const DeepCollectionEquality().equals(other._expanded, _expanded)&&const DeepCollectionEquality().equals(other._loading, _loading)&&const DeepCollectionEquality().equals(other._errors, _errors)&&(identical(other.selectedPath, selectedPath) || other.selectedPath == selectedPath));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_children),const DeepCollectionEquality().hash(_expanded),const DeepCollectionEquality().hash(_loading),const DeepCollectionEquality().hash(_errors));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_children),const DeepCollectionEquality().hash(_expanded),const DeepCollectionEquality().hash(_loading),const DeepCollectionEquality().hash(_errors),selectedPath);
 
 @override
 String toString() {
-  return 'WorkspaceTree(children: $children, expanded: $expanded, loading: $loading, errors: $errors)';
+  return 'WorkspaceTree(children: $children, expanded: $expanded, loading: $loading, errors: $errors, selectedPath: $selectedPath)';
 }
 
 
@@ -537,7 +539,7 @@ abstract mixin class _$WorkspaceTreeCopyWith<$Res> implements $WorkspaceTreeCopy
   factory _$WorkspaceTreeCopyWith(_WorkspaceTree value, $Res Function(_WorkspaceTree) _then) = __$WorkspaceTreeCopyWithImpl;
 @override @useResult
 $Res call({
- Map<String, List<FileNode>> children, Set<String> expanded, Set<String> loading, Map<String, Failure> errors
+ Map<String, List<FileNode>> children, Set<String> expanded, Set<String> loading, Map<String, Failure> errors, String? selectedPath
 });
 
 
@@ -554,13 +556,14 @@ class __$WorkspaceTreeCopyWithImpl<$Res>
 
 /// Create a copy of WorkspaceTree
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? children = null,Object? expanded = null,Object? loading = null,Object? errors = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? children = null,Object? expanded = null,Object? loading = null,Object? errors = null,Object? selectedPath = freezed,}) {
   return _then(_WorkspaceTree(
 children: null == children ? _self._children : children // ignore: cast_nullable_to_non_nullable
 as Map<String, List<FileNode>>,expanded: null == expanded ? _self._expanded : expanded // ignore: cast_nullable_to_non_nullable
 as Set<String>,loading: null == loading ? _self._loading : loading // ignore: cast_nullable_to_non_nullable
 as Set<String>,errors: null == errors ? _self._errors : errors // ignore: cast_nullable_to_non_nullable
-as Map<String, Failure>,
+as Map<String, Failure>,selectedPath: freezed == selectedPath ? _self.selectedPath : selectedPath // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

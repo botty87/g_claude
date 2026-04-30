@@ -6,6 +6,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../domain/entities/file_node.dart';
@@ -18,24 +19,60 @@ class ExplorerView extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Trigger initial load for the currently active workspace.
-    // ExplorerCubit.ensureRootLoaded is idempotent — re-runs are a no-op.
     useEffect(() {
       final active = context.read<WorkspacesCubit>().state.activeWorkspace;
       if (active != null) {
-        context.read<ExplorerCubit>().ensureRootLoaded(active.id, active.path);
+        final explorer = context.read<ExplorerCubit>();
+        final fileTabs = context.read<FileTabsCubit>();
+        explorer.ensureRootLoaded(active.id, active.path).then((_) {
+          final activePath = fileTabs.state.filesFor(active.id)?.activePath;
+          if (activePath != null) {
+            explorer.revealPath(active.id, active.path, activePath);
+          }
+        });
       }
       return null;
     }, const []);
 
-    return BlocListener<WorkspacesCubit, WorkspacesState>(
-      listenWhen: (prev, curr) =>
-          prev.activeWorkspace?.id != curr.activeWorkspace?.id,
-      listener: (context, state) {
-        final active = state.activeWorkspace;
-        if (active == null) return;
-        context.read<ExplorerCubit>().ensureRootLoaded(active.id, active.path);
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<WorkspacesCubit, WorkspacesState>(
+          listenWhen: (prev, curr) =>
+              prev.activeWorkspace?.id != curr.activeWorkspace?.id,
+          listener: (context, state) async {
+            final active = state.activeWorkspace;
+            if (active == null) return;
+            final explorer = context.read<ExplorerCubit>();
+            final fileTabs = context.read<FileTabsCubit>();
+            await explorer.ensureRootLoaded(active.id, active.path);
+            final activePath = fileTabs.state.filesFor(active.id)?.activePath;
+            if (activePath != null) {
+              await explorer.revealPath(active.id, active.path, activePath);
+            } else {
+              explorer.clearSelection(active.id);
+            }
+          },
+        ),
+        BlocListener<FileTabsCubit, FileTabsState>(
+          listenWhen: (prev, curr) {
+            final active = context.read<WorkspacesCubit>().state.activeWorkspace;
+            if (active == null) return false;
+            return prev.filesFor(active.id)?.activePath !=
+                curr.filesFor(active.id)?.activePath;
+          },
+          listener: (context, state) {
+            final active = context.read<WorkspacesCubit>().state.activeWorkspace;
+            if (active == null) return;
+            final activePath = state.filesFor(active.id)?.activePath;
+            final explorer = context.read<ExplorerCubit>();
+            if (activePath == null) {
+              explorer.clearSelection(active.id);
+            } else {
+              explorer.revealPath(active.id, active.path, activePath);
+            }
+          },
+        ),
+      ],
       child: BlocBuilder<WorkspacesCubit, WorkspacesState>(
         builder: (context, wsState) {
           final active = wsState.activeWorkspace;
@@ -63,13 +100,16 @@ class ExplorerView extends HookWidget {
   }
 }
 
-class _ExplorerTree extends StatelessWidget {
+class _ExplorerTree extends HookWidget {
   const _ExplorerTree({required this.workspace});
 
   final Workspace workspace;
 
   @override
   Widget build(BuildContext context) {
+    final scrollController = useScrollController();
+    final lastScrolledPath = useRef<String?>(null);
+
     return BlocBuilder<ExplorerCubit, ExplorerState>(
       builder: (context, state) {
         final tree = state.trees[workspace.id];
@@ -78,7 +118,6 @@ class _ExplorerTree extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        // Root-level error
         if (tree.errors.containsKey(workspace.path) &&
             !tree.children.containsKey(workspace.path)) {
           return Padding(
@@ -108,7 +147,33 @@ class _ExplorerTree extends StatelessWidget {
           );
         }
 
+        final selectedPath = tree.selectedPath;
+        if (selectedPath != null && selectedPath != lastScrolledPath.value) {
+          final idx = visible.indexWhere((e) => e.node.path == selectedPath);
+          if (idx >= 0) {
+            lastScrolledPath.value = selectedPath;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!scrollController.hasClients) return;
+              final target = idx * ExplorerNodeRow.rowHeight;
+              final viewport = scrollController.position.viewportDimension;
+              final offset = scrollController.offset;
+              if (target < offset || target > offset + viewport - ExplorerNodeRow.rowHeight) {
+                final desired = (target - viewport / 2 + ExplorerNodeRow.rowHeight)
+                    .clamp(0.0, scrollController.position.maxScrollExtent);
+                scrollController.animateTo(
+                  desired,
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                );
+              }
+            });
+          }
+        } else if (selectedPath == null) {
+          lastScrolledPath.value = null;
+        }
+
         return ListView.builder(
+          controller: scrollController,
           itemCount: visible.length,
           itemExtent: ExplorerNodeRow.rowHeight,
           itemBuilder: (context, index) {
@@ -120,6 +185,7 @@ class _ExplorerTree extends StatelessWidget {
               workspaceId: workspace.id,
               isExpanded: tree.expanded.contains(entry.node.path),
               isLoading: tree.loading.contains(entry.node.path),
+              isSelected: tree.selectedPath == entry.node.path,
               error: tree.errors[entry.node.path],
             );
           },

@@ -15,5 +15,6 @@ abstract class WorkspaceTree with _$WorkspaceTree {
     @Default(<String>{}) Set<String> expanded,
     @Default(<String>{}) Set<String> loading,
     @Default(<String, Failure>{}) Map<String, Failure> errors,
+    String? selectedPath,
   }) = _WorkspaceTree;
 }
