@@ -15,47 +15,44 @@ class WorkspaceDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<WorkspacesCubit, WorkspacesState>(
-      builder: (context, state) {
-        final active = state.activeWorkspace;
-        final workspaces = state.workspacesOrEmpty;
+    final active = context.select<WorkspacesCubit, Workspace?>(
+      (c) => c.state.activeWorkspace,
+    );
+    final workspaces = context.select<WorkspacesCubit, List<Workspace>>(
+      (c) => c.state.workspacesOrEmpty,
+    );
 
-        return Hoverable(
-          key: const ValueKey('workspace_dropdown'),
-          onTap: () => _showMenu(context, workspaces, active),
-          builder: (context, hover) {
-            return Container(
-              height: 28,
-              constraints: const BoxConstraints(maxWidth: 200),
-              decoration: BoxDecoration(
-                color: hover ? AppColors.glassHover : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
+    return Hoverable(
+      key: const ValueKey('workspace_dropdown'),
+      onTap: () => _showMenu(context, workspaces, active),
+      builder: (context, hover) {
+        return Container(
+          height: 28,
+          constraints: const BoxConstraints(maxWidth: 200),
+          decoration: BoxDecoration(
+            color: hover ? AppColors.glassHover : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Symbols.folder,
+                  size: 14, color: AppColors.onSurfaceVariant),
+              const SizedBox(width: AppSpacing.xs),
+              Flexible(
+                child: Text(
+                  active?.name ?? 'workspace.dropdown.empty'.tr(),
+                  style: AppTypography.bodyMain.copyWith(fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Symbols.folder,
-                      size: 14, color: AppColors.onSurfaceVariant),
-                  const SizedBox(width: AppSpacing.xs),
-                  Flexible(
-                    child: Text(
-                      active?.name ??
-                          'workspace.dropdown.empty'.tr(),
-                      style: AppTypography.bodyMain
-                          .copyWith(fontSize: 12),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  const Icon(Symbols.expand_more,
-                      size: 14, color: AppColors.onSurfaceVariant),
-                ],
-              ),
-            );
-          },
+              const SizedBox(width: AppSpacing.xs),
+              const Icon(Symbols.expand_more,
+                  size: 14, color: AppColors.onSurfaceVariant),
+            ],
+          ),
         );
       },
     );

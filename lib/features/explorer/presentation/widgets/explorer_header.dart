@@ -34,20 +34,7 @@ class ExplorerHeader extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          BlocSelector<ExplorerCubit, ExplorerState, bool>(
-            selector: (state) => state.showHidden,
-            builder: (context, showHidden) {
-              return Tooltip(
-                message: showHidden
-                    ? 'shell.sidePanel.toggleHiddenHide'.tr()
-                    : 'shell.sidePanel.toggleHiddenShow'.tr(),
-                child: _HeaderIconButton(
-                  icon: showHidden ? Symbols.visibility_off : Symbols.visibility,
-                  onTap: () => context.read<ExplorerCubit>().toggleHidden(),
-                ),
-              );
-            },
-          ),
+          const _ToggleHiddenButton(),
           const SizedBox(width: AppSpacing.xs),
           Tooltip(
             message: 'shell.sidePanel.refresh'.tr(),
@@ -66,6 +53,26 @@ class ExplorerHeader extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ToggleHiddenButton extends StatelessWidget {
+  const _ToggleHiddenButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final showHidden = context.select<ExplorerCubit, bool>(
+      (c) => c.state.showHidden,
+    );
+    return Tooltip(
+      message: showHidden
+          ? 'shell.sidePanel.toggleHiddenHide'.tr()
+          : 'shell.sidePanel.toggleHiddenShow'.tr(),
+      child: _HeaderIconButton(
+        icon: showHidden ? Symbols.visibility_off : Symbols.visibility,
+        onTap: () => context.read<ExplorerCubit>().toggleHidden(),
       ),
     );
   }

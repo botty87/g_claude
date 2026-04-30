@@ -172,40 +172,35 @@ class _OpenFilesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<WorkspacesCubit, WorkspacesState>(
-      builder: (context, ws) {
-        final active = ws.activeWorkspace;
-        if (active == null) {
-          return _placeholder('editor.openFiles.empty'.tr());
-        }
-        return BlocBuilder<FileTabsCubit, FileTabsState>(
-          builder: (context, ft) {
-            final files = ft.filesFor(active.id);
-            final paths = files?.openPaths ?? const <String>[];
-            if (paths.isEmpty) {
-              return _placeholder('editor.openFiles.empty'.tr());
-            }
-            final filtered = paths
-                .where((path) => _matches(path, active.path))
-                .toList();
-            if (filtered.isEmpty) {
-              return _placeholder('editor.openFiles.noMatches'.tr());
-            }
-            return ListView.builder(
-              shrinkWrap: true,
-              itemCount: filtered.length,
-              itemBuilder: (context, index) {
-                final path = filtered[index];
-                return _OpenFileRow(
-                  workspaceId: active.id,
-                  path: path,
-                  workspacePath: active.path,
-                  isActive: files?.activePath == path,
-                  isPreview: files?.previewPath == path,
-                );
-              },
-            );
-          },
+    final active = context.select<WorkspacesCubit, Workspace?>(
+      (c) => c.state.activeWorkspace,
+    );
+    if (active == null) {
+      return _placeholder('editor.openFiles.empty'.tr());
+    }
+    final files = context.select<FileTabsCubit, WorkspaceFiles?>(
+      (c) => c.state.filesFor(active.id),
+    );
+    final paths = files?.openPaths ?? const <String>[];
+    if (paths.isEmpty) {
+      return _placeholder('editor.openFiles.empty'.tr());
+    }
+    final filtered =
+        paths.where((path) => _matches(path, active.path)).toList();
+    if (filtered.isEmpty) {
+      return _placeholder('editor.openFiles.noMatches'.tr());
+    }
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: filtered.length,
+      itemBuilder: (context, index) {
+        final path = filtered[index];
+        return _OpenFileRow(
+          workspaceId: active.id,
+          path: path,
+          workspacePath: active.path,
+          isActive: files?.activePath == path,
+          isPreview: files?.previewPath == path,
         );
       },
     );

@@ -26,23 +26,16 @@ class FileViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocSelector<WorkspacesCubit, WorkspacesState, WorkspaceId?>(
-      selector: (state) => state.activeIdOrNull,
-      builder: (context, activeId) {
-        if (activeId == null) {
-          return const _EmptyState();
-        }
-        return BlocSelector<FileTabsCubit, FileTabsState, String?>(
-          selector: (state) => state.filesFor(activeId)?.activePath,
-          builder: (context, activePath) {
-            if (activePath == null) {
-              return const _EmptyState();
-            }
-            return _PooledStack(activeId: activeId, activePath: activePath);
-          },
-        );
-      },
+    final activeId = context.select<WorkspacesCubit, WorkspaceId?>(
+      (c) => c.state.activeIdOrNull,
     );
+    final activePath = context.select<FileTabsCubit, String?>(
+      (c) => activeId == null ? null : c.state.filesFor(activeId)?.activePath,
+    );
+    if (activeId == null || activePath == null) {
+      return const _EmptyState();
+    }
+    return _PooledStack(activeId: activeId, activePath: activePath);
   }
 }
 

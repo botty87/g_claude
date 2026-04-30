@@ -35,31 +35,30 @@ class AppShellPage extends HookWidget {
       return KeyEventResult.ignored;
     }
 
+    final workspaceOpen = context.select<ShellCubit, bool>(
+      (c) => c.state.workspaceOpen,
+    );
+
     return Focus(
       focusNode: focusNode,
       autofocus: true,
       onKeyEvent: onKey,
       child: Scaffold(
         backgroundColor: AppColors.surface,
-        body: BlocSelector<ShellCubit, ShellState, bool>(
-          selector: (state) => state.workspaceOpen,
-          builder: (context, workspaceOpen) {
-            return Column(
-              children: [
-                const FileTabsBar(),
-                Expanded(
-                  child: workspaceOpen
-                      ? Row(
-                          children: const [
-                            ActivityBar(),
-                            Expanded(child: _MainArea()),
-                          ],
-                        )
-                      : const ClaudeTerminalPane(),
-                ),
-              ],
-            );
-          },
+        body: Column(
+          children: [
+            const FileTabsBar(),
+            Expanded(
+              child: workspaceOpen
+                  ? Row(
+                      children: const [
+                        ActivityBar(),
+                        Expanded(child: _MainArea()),
+                      ],
+                    )
+                  : const ClaudeTerminalPane(),
+            ),
+          ],
         ),
       ),
     );
@@ -100,31 +99,29 @@ class _MainArea extends HookWidget {
     );
     useEffect(() => controller.dispose, [controller]);
 
-    return BlocSelector<WorkspacesCubit, WorkspacesState, Workspace?>(
-      selector: (state) => state.activeWorkspace,
-      builder: (context, active) {
-        if (active == null) {
-          return const EmptyStateView();
-        }
-        return MultiSplitViewTheme(
-          data: _splitTheme,
-          child: MultiSplitView(
-            controller: controller,
-            builder: (context, area) {
-              switch (area.id) {
-                case _idSide:
-                  return const SidePanel();
-                case _idPreview:
-                  return const FileViewer();
-                case _idClaude:
-                  return const ClaudeTerminalPane();
-                default:
-                  return const SizedBox.shrink();
-              }
-            },
-          ),
-        );
-      },
+    final active = context.select<WorkspacesCubit, Workspace?>(
+      (c) => c.state.activeWorkspace,
+    );
+    if (active == null) {
+      return const EmptyStateView();
+    }
+    return MultiSplitViewTheme(
+      data: _splitTheme,
+      child: MultiSplitView(
+        controller: controller,
+        builder: (context, area) {
+          switch (area.id) {
+            case _idSide:
+              return const SidePanel();
+            case _idPreview:
+              return const FileViewer();
+            case _idClaude:
+              return const ClaudeTerminalPane();
+            default:
+              return const SizedBox.shrink();
+          }
+        },
+      ),
     );
   }
 }

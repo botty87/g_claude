@@ -38,6 +38,10 @@ class FileTabsBar extends HookWidget {
       );
     }
 
+    final activeId = context.select<WorkspacesCubit, WorkspaceId?>(
+      (c) => c.state.activeIdOrNull,
+    );
+
     return Container(
       height: AppSpacing.toolbarHeight,
       decoration: const BoxDecoration(
@@ -50,47 +54,43 @@ class FileTabsBar extends HookWidget {
         children: [
           const OpenFilesButton(),
           Expanded(
-            child: BlocSelector<WorkspacesCubit, WorkspacesState, WorkspaceId?>(
-              selector: (state) => state.activeIdOrNull,
-              builder: (context, activeId) {
-                if (activeId == null) return const SizedBox.shrink();
-                return BlocConsumer<FileTabsCubit, FileTabsState>(
-                  listenWhen: (prev, curr) =>
-                      prev.filesFor(activeId)?.activePath !=
-                      curr.filesFor(activeId)?.activePath,
-                  listener: (context, state) {
-                    final activePath = state.filesFor(activeId)?.activePath;
-                    if (activePath == lastActivePath.value) return;
-                    lastActivePath.value = activePath;
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      ensureActiveVisible(activePath);
-                    });
-                  },
-                  builder: (context, state) {
-                    final files = state.filesFor(activeId);
-                    if (files == null || files.openPaths.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-                    return SingleChildScrollView(
-                      controller: scrollController,
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          for (final path in files.openPaths)
-                            FileTab(
-                              key: keyFor(path),
-                              workspaceId: activeId,
-                              path: path,
-                              isActive: path == files.activePath,
-                              isPreview: path == files.previewPath,
-                            ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+            child: activeId == null
+                ? const SizedBox.shrink()
+                : BlocConsumer<FileTabsCubit, FileTabsState>(
+                    listenWhen: (prev, curr) =>
+                        prev.filesFor(activeId)?.activePath !=
+                        curr.filesFor(activeId)?.activePath,
+                    listener: (context, state) {
+                      final activePath = state.filesFor(activeId)?.activePath;
+                      if (activePath == lastActivePath.value) return;
+                      lastActivePath.value = activePath;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        ensureActiveVisible(activePath);
+                      });
+                    },
+                    builder: (context, state) {
+                      final files = state.filesFor(activeId);
+                      if (files == null || files.openPaths.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return SingleChildScrollView(
+                        controller: scrollController,
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final path in files.openPaths)
+                              FileTab(
+                                key: keyFor(path),
+                                workspaceId: activeId,
+                                path: path,
+                                isActive: path == files.activePath,
+                                isPreview: path == files.previewPath,
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
           ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
@@ -108,26 +108,24 @@ class _WorkspaceToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocSelector<ShellCubit, ShellState, bool>(
-      selector: (state) => state.workspaceOpen,
-      builder: (context, workspaceOpen) {
-        return Tooltip(
-          message: workspaceOpen
-              ? 'shell.workspace.toggleToFullscreen'.tr()
-              : 'shell.workspace.toggleToWorkspace'.tr(),
-          child: IconButton(
-            key: const ValueKey('workspace_toggle_button'),
-            onPressed: () => context.read<ShellCubit>().toggleWorkspace(),
-            icon: Icon(
-              workspaceOpen ? Symbols.fullscreen : Symbols.fullscreen_exit,
-              size: 16,
-              color: AppColors.onSurface,
-            ),
-            visualDensity: VisualDensity.compact,
-            splashRadius: 14,
-          ),
-        );
-      },
+    final workspaceOpen = context.select<ShellCubit, bool>(
+      (c) => c.state.workspaceOpen,
+    );
+    return Tooltip(
+      message: workspaceOpen
+          ? 'shell.workspace.toggleToFullscreen'.tr()
+          : 'shell.workspace.toggleToWorkspace'.tr(),
+      child: IconButton(
+        key: const ValueKey('workspace_toggle_button'),
+        onPressed: () => context.read<ShellCubit>().toggleWorkspace(),
+        icon: Icon(
+          workspaceOpen ? Symbols.fullscreen : Symbols.fullscreen_exit,
+          size: 16,
+          color: AppColors.onSurface,
+        ),
+        visualDensity: VisualDensity.compact,
+        splashRadius: 14,
+      ),
     );
   }
 }

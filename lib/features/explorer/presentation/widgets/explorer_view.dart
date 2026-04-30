@@ -40,6 +40,10 @@ class ExplorerView extends HookWidget {
       return null;
     }, [activeId]);
 
+    final active = context.select<WorkspacesCubit, Workspace?>(
+      (c) => c.state.activeWorkspace,
+    );
+
     return BlocListener<FileTabsCubit, FileTabsState>(
       listenWhen: (prev, curr) {
         if (activeId == null) return false;
@@ -57,27 +61,22 @@ class ExplorerView extends HookWidget {
           explorer.revealPath(active.id, active.path, activePath);
         }
       },
-      child: BlocSelector<WorkspacesCubit, WorkspacesState, Workspace?>(
-        selector: (state) => state.activeWorkspace,
-        builder: (context, active) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ExplorerHeader(
-                onRefresh: active != null
-                    ? () => context
-                        .read<ExplorerCubit>()
-                        .refresh(active.id, active.path)
-                    : null,
-              ),
-              Expanded(
-                child: active == null
-                    ? const SizedBox.shrink()
-                    : _ExplorerTree(workspace: active),
-              ),
-            ],
-          );
-        },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ExplorerHeader(
+            onRefresh: active != null
+                ? () => context
+                    .read<ExplorerCubit>()
+                    .refresh(active.id, active.path)
+                : null,
+          ),
+          Expanded(
+            child: active == null
+                ? const SizedBox.shrink()
+                : _ExplorerTree(workspace: active),
+          ),
+        ],
       ),
     );
   }

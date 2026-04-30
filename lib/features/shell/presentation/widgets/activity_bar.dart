@@ -69,27 +69,25 @@ class ActivityBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocSelector<ShellCubit, ShellState, ActivityId>(
-      selector: (state) => state.selectedActivity,
-      builder: (context, selected) {
-        return Container(
-          width: width,
-          decoration: const BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-            border: Border(
-              right: BorderSide(color: AppColors.outlineVariant, width: 1),
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            children: [
-              for (final e in _topEntries) _entryItem(context, e, selected),
-              const Spacer(),
-              _entryItem(context, _settingsEntry, selected),
-            ],
-          ),
-        );
-      },
+    final selected = context.select<ShellCubit, ActivityId>(
+      (c) => c.state.selectedActivity,
+    );
+    return Container(
+      width: width,
+      decoration: const BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        border: Border(
+          right: BorderSide(color: AppColors.outlineVariant, width: 1),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        children: [
+          for (final e in _topEntries) _entryItem(context, e, selected),
+          const Spacer(),
+          _entryItem(context, _settingsEntry, selected),
+        ],
+      ),
     );
   }
 
