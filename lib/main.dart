@@ -14,6 +14,7 @@ import 'core/window/window_setup.dart';
 import 'features/editor/domain/usecases/read_file.dart';
 import 'features/editor/presentation/cubit/file_tabs_cubit.dart';
 import 'features/explorer/presentation/cubit/explorer_cubit.dart';
+import 'features/workspace/domain/entities/workspace.dart';
 import 'features/workspace/presentation/cubit/workspaces_cubit.dart';
 
 Future<void> main() async {
@@ -50,21 +51,17 @@ Future<void> main() async {
   await workspacesCubit.restore();
   await fileTabsCubit.restore();
 
-  // Pre-warm explorer trees and file contents for each workspace's open tabs
-  // so the first click after restart does not pay disk I/O. Fire-and-forget.
-  final explorerCubit = getIt<ExplorerCubit>();
-  final readFile = getIt<ReadFile>();
-  for (final workspace in workspacesCubit.state.workspacesOrEmpty) {
-    final files = fileTabsCubit.state.filesFor(workspace.id);
-    if (files == null) continue;
-    final activePath = files.activePath;
-    if (activePath != null) {
-      unawaited(explorerCubit.prewarmReveal(workspace.id, workspace.path, activePath));
-    }
-    for (final path in files.openPaths) {
-      unawaited(readFile(path: path));
-    }
-  }
+  // Defer prewarm until after first frame so I/O does not contend with paint.
+  // Throttled to _prewarmConcurrency so a heavy restore (many tabs × many
+  // workspaces) does not flood the event loop with concurrent disk reads.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(_prewarmPersistedTabs(
+      workspaces: workspacesCubit,
+      fileTabs: fileTabsCubit,
+      explorer: getIt<ExplorerCubit>(),
+      readFile: getIt<ReadFile>(),
+    ));
+  });
 
   Bloc.observer = getIt<BlocObserver>();
 
@@ -97,6 +94,43 @@ Future<void> main() async {
       useOnlyLangCode: true,
       child: App(),
     ),
+  );
+}
+
+const _prewarmConcurrency = 4;
+
+Future<void> _prewarmPersistedTabs({
+  required WorkspacesCubit workspaces,
+  required FileTabsCubit fileTabs,
+  required ExplorerCubit explorer,
+  required ReadFile readFile,
+}) async {
+  final reveals = <(WorkspaceId, String, String)>[];
+  final reads = <String>{};
+  for (final workspace in workspaces.state.workspacesOrEmpty) {
+    final files = fileTabs.state.filesFor(workspace.id);
+    if (files == null) continue;
+    final activePath = files.activePath;
+    if (activePath != null) {
+      reveals.add((workspace.id, workspace.path, activePath));
+    }
+    reads.addAll(files.openPaths);
+  }
+
+  for (final (id, root, target) in reveals) {
+    unawaited(explorer.prewarmReveal(id, root, target));
+  }
+
+  final queue = reads.toList();
+  Future<void> worker() async {
+    while (queue.isNotEmpty) {
+      final path = queue.removeLast();
+      await readFile(path: path);
+    }
+  }
+
+  await Future.wait(
+    List.generate(_prewarmConcurrency, (_) => worker()),
   );
 }
 
