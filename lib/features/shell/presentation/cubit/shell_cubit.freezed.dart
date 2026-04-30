@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ShellState {
 
- bool get sidePanelOpen; ActivityId get selectedActivity;
+ bool get workspaceOpen; ActivityId get selectedActivity;
 /// Create a copy of ShellState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ShellStateCopyWith<ShellState> get copyWith => _$ShellStateCopyWithImpl<ShellSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShellState&&(identical(other.sidePanelOpen, sidePanelOpen) || other.sidePanelOpen == sidePanelOpen)&&(identical(other.selectedActivity, selectedActivity) || other.selectedActivity == selectedActivity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShellState&&(identical(other.workspaceOpen, workspaceOpen) || other.workspaceOpen == workspaceOpen)&&(identical(other.selectedActivity, selectedActivity) || other.selectedActivity == selectedActivity));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,sidePanelOpen,selectedActivity);
+int get hashCode => Object.hash(runtimeType,workspaceOpen,selectedActivity);
 
 @override
 String toString() {
-  return 'ShellState(sidePanelOpen: $sidePanelOpen, selectedActivity: $selectedActivity)';
+  return 'ShellState(workspaceOpen: $workspaceOpen, selectedActivity: $selectedActivity)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ShellStateCopyWith<$Res>  {
   factory $ShellStateCopyWith(ShellState value, $Res Function(ShellState) _then) = _$ShellStateCopyWithImpl;
 @useResult
 $Res call({
- bool sidePanelOpen, ActivityId selectedActivity
+ bool workspaceOpen, ActivityId selectedActivity
 });
 
 
@@ -62,9 +62,9 @@ class _$ShellStateCopyWithImpl<$Res>
 
 /// Create a copy of ShellState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? sidePanelOpen = null,Object? selectedActivity = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? workspaceOpen = null,Object? selectedActivity = null,}) {
   return _then(_self.copyWith(
-sidePanelOpen: null == sidePanelOpen ? _self.sidePanelOpen : sidePanelOpen // ignore: cast_nullable_to_non_nullable
+workspaceOpen: null == workspaceOpen ? _self.workspaceOpen : workspaceOpen // ignore: cast_nullable_to_non_nullable
 as bool,selectedActivity: null == selectedActivity ? _self.selectedActivity : selectedActivity // ignore: cast_nullable_to_non_nullable
 as ActivityId,
   ));
@@ -151,10 +151,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool sidePanelOpen,  ActivityId selectedActivity)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool workspaceOpen,  ActivityId selectedActivity)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ShellState() when $default != null:
-return $default(_that.sidePanelOpen,_that.selectedActivity);case _:
+return $default(_that.workspaceOpen,_that.selectedActivity);case _:
   return orElse();
 
 }
@@ -172,10 +172,10 @@ return $default(_that.sidePanelOpen,_that.selectedActivity);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool sidePanelOpen,  ActivityId selectedActivity)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool workspaceOpen,  ActivityId selectedActivity)  $default,) {final _that = this;
 switch (_that) {
 case _ShellState():
-return $default(_that.sidePanelOpen,_that.selectedActivity);case _:
+return $default(_that.workspaceOpen,_that.selectedActivity);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -192,10 +192,10 @@ return $default(_that.sidePanelOpen,_that.selectedActivity);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool sidePanelOpen,  ActivityId selectedActivity)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool workspaceOpen,  ActivityId selectedActivity)?  $default,) {final _that = this;
 switch (_that) {
 case _ShellState() when $default != null:
-return $default(_that.sidePanelOpen,_that.selectedActivity);case _:
+return $default(_that.workspaceOpen,_that.selectedActivity);case _:
   return null;
 
 }
@@ -207,10 +207,10 @@ return $default(_that.sidePanelOpen,_that.selectedActivity);case _:
 
 
 class _ShellState implements ShellState {
-  const _ShellState({required this.sidePanelOpen, required this.selectedActivity});
+  const _ShellState({required this.workspaceOpen, required this.selectedActivity});
   
 
-@override final  bool sidePanelOpen;
+@override final  bool workspaceOpen;
 @override final  ActivityId selectedActivity;
 
 /// Create a copy of ShellState
@@ -223,16 +223,16 @@ _$ShellStateCopyWith<_ShellState> get copyWith => __$ShellStateCopyWithImpl<_She
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShellState&&(identical(other.sidePanelOpen, sidePanelOpen) || other.sidePanelOpen == sidePanelOpen)&&(identical(other.selectedActivity, selectedActivity) || other.selectedActivity == selectedActivity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShellState&&(identical(other.workspaceOpen, workspaceOpen) || other.workspaceOpen == workspaceOpen)&&(identical(other.selectedActivity, selectedActivity) || other.selectedActivity == selectedActivity));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,sidePanelOpen,selectedActivity);
+int get hashCode => Object.hash(runtimeType,workspaceOpen,selectedActivity);
 
 @override
 String toString() {
-  return 'ShellState(sidePanelOpen: $sidePanelOpen, selectedActivity: $selectedActivity)';
+  return 'ShellState(workspaceOpen: $workspaceOpen, selectedActivity: $selectedActivity)';
 }
 
 
@@ -243,7 +243,7 @@ abstract mixin class _$ShellStateCopyWith<$Res> implements $ShellStateCopyWith<$
   factory _$ShellStateCopyWith(_ShellState value, $Res Function(_ShellState) _then) = __$ShellStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool sidePanelOpen, ActivityId selectedActivity
+ bool workspaceOpen, ActivityId selectedActivity
 });
 
 
@@ -260,9 +260,9 @@ class __$ShellStateCopyWithImpl<$Res>
 
 /// Create a copy of ShellState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? sidePanelOpen = null,Object? selectedActivity = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? workspaceOpen = null,Object? selectedActivity = null,}) {
   return _then(_ShellState(
-sidePanelOpen: null == sidePanelOpen ? _self.sidePanelOpen : sidePanelOpen // ignore: cast_nullable_to_non_nullable
+workspaceOpen: null == workspaceOpen ? _self.workspaceOpen : workspaceOpen // ignore: cast_nullable_to_non_nullable
 as bool,selectedActivity: null == selectedActivity ? _self.selectedActivity : selectedActivity // ignore: cast_nullable_to_non_nullable
 as ActivityId,
   ));

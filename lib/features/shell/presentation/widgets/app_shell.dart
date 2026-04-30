@@ -6,6 +6,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../claude/presentation/widgets/claude_terminal_pane.dart';
 import '../../../editor/presentation/widgets/file_tabs_bar.dart';
 import '../../../editor/presentation/widgets/file_viewer.dart';
 import '../../../workspace/domain/entities/workspace.dart';
@@ -22,22 +23,13 @@ class AppShellPage extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final focusNode = useFocusNode();
-    final splitController = useMemoized(
-      () => MultiSplitViewController(
-        areas: [
-          Area(size: 280, min: 200, max: 480),
-          Area(),
-        ],
-      ),
-    );
-    useEffect(() => splitController.dispose, [splitController]);
 
     KeyEventResult onKey(FocusNode node, KeyEvent event) {
       if (event is! KeyDownEvent) return KeyEventResult.ignored;
-      final isMetaB = event.logicalKey == LogicalKeyboardKey.keyB &&
-          HardwareKeyboard.instance.isMetaPressed;
-      if (isMetaB) {
-        context.read<ShellCubit>().toggleSidePanel();
+      final isMeta = HardwareKeyboard.instance.isMetaPressed;
+      if (!isMeta) return KeyEventResult.ignored;
+      if (event.logicalKey == LogicalKeyboardKey.keyB) {
+        context.read<ShellCubit>().toggleWorkspace();
         return KeyEventResult.handled;
       }
       return KeyEventResult.ignored;
@@ -49,28 +41,37 @@ class AppShellPage extends HookWidget {
       onKeyEvent: onKey,
       child: Scaffold(
         backgroundColor: AppColors.surface,
-        body: Column(
-          children: [
-            const FileTabsBar(),
-            Expanded(
-              child: Row(
-                children: [
-                  const ActivityBar(),
-                  Expanded(child: _MainArea(splitController: splitController)),
-                ],
-              ),
-            ),
-          ],
+        body: BlocSelector<ShellCubit, ShellState, bool>(
+          selector: (state) => state.workspaceOpen,
+          builder: (context, workspaceOpen) {
+            return Column(
+              children: [
+                const FileTabsBar(),
+                Expanded(
+                  child: workspaceOpen
+                      ? Row(
+                          children: const [
+                            ActivityBar(),
+                            Expanded(child: _MainArea()),
+                          ],
+                        )
+                      : const ClaudeTerminalPane(),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 }
 
-class _MainArea extends StatelessWidget {
-  const _MainArea({required this.splitController});
+class _MainArea extends HookWidget {
+  const _MainArea();
 
-  final MultiSplitViewController splitController;
+  static const _idSide = 'side';
+  static const _idPreview = 'preview';
+  static const _idClaude = 'claude';
 
   static final _splitTheme = MultiSplitViewThemeData(
     dividerThickness: 1,
@@ -82,31 +83,40 @@ class _MainArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = useMemoized(
+      () => MultiSplitViewController(
+        areas: [
+          Area(id: _idSide, size: 280, min: 200, max: 480),
+          Area(id: _idPreview, min: 320, flex: 1),
+          Area(id: _idClaude, min: 480, flex: 1),
+        ],
+      ),
+    );
+    useEffect(() => controller.dispose, [controller]);
+
     return BlocSelector<WorkspacesCubit, WorkspacesState, Workspace?>(
       selector: (state) => state.activeWorkspace,
       builder: (context, active) {
         if (active == null) {
           return const EmptyStateView();
         }
-        return BlocSelector<ShellCubit, ShellState, bool>(
-          selector: (state) => state.sidePanelOpen,
-          builder: (context, sidePanelOpen) {
-            if (!sidePanelOpen) {
-              return const FileViewer();
-            }
-            return MultiSplitViewTheme(
-              data: _splitTheme,
-              child: MultiSplitView(
-                controller: splitController,
-                builder: (context, area) {
-                  if (area.index == 0) {
-                    return const SidePanel();
-                  }
+        return MultiSplitViewTheme(
+          data: _splitTheme,
+          child: MultiSplitView(
+            controller: controller,
+            builder: (context, area) {
+              switch (area.id) {
+                case _idSide:
+                  return const SidePanel();
+                case _idPreview:
                   return const FileViewer();
-                },
-              ),
-            );
-          },
+                case _idClaude:
+                  return const ClaudeTerminalPane();
+                default:
+                  return const SizedBox.shrink();
+              }
+            },
+          ),
         );
       },
     );

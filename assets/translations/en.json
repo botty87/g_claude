@@ -18,6 +18,20 @@
       "toggleHiddenHide": "Hide hidden files",
       "emptyFolder": "Empty folder",
       "loadError": "Cannot read folder"
+    },
+    "workspace": {
+      "toggleTooltip": "Toggle workspace"
+    }
+  },
+  "claude": {
+    "terminal": {
+      "title": "Claude Terminal",
+      "status": {
+        "connected": "Connected"
+      },
+      "input": {
+        "placeholder": "Send a message to Claude..."
+      }
     }
   },
   "workspace": {

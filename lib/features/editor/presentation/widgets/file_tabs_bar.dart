@@ -1,9 +1,12 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../shell/presentation/cubit/shell_cubit.dart';
+import '../../../shell/presentation/widgets/workspace_dropdown.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../cubit/file_tabs_cubit.dart';
@@ -88,8 +91,42 @@ class FileTabsBar extends HookWidget {
               },
             ),
           ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            child: WorkspaceDropdown(),
+          ),
+          const _WorkspaceToggleButton(),
         ],
       ),
+    );
+  }
+}
+
+class _WorkspaceToggleButton extends StatelessWidget {
+  const _WorkspaceToggleButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocSelector<ShellCubit, ShellState, bool>(
+      selector: (state) => state.workspaceOpen,
+      builder: (context, workspaceOpen) {
+        return Tooltip(
+          message: 'shell.workspace.toggleTooltip'.tr(),
+          child: IconButton(
+            key: const ValueKey('workspace_toggle_button'),
+            onPressed: () => context.read<ShellCubit>().toggleWorkspace(),
+            icon: Icon(
+              workspaceOpen
+                  ? Icons.view_sidebar
+                  : Icons.view_sidebar_outlined,
+              size: 16,
+              color: workspaceOpen ? AppColors.onSurface : AppColors.outline,
+            ),
+            visualDensity: VisualDensity.compact,
+            splashRadius: 14,
+          ),
+        );
+      },
     );
   }
 }

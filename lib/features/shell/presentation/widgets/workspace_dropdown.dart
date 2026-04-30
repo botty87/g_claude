@@ -25,33 +25,33 @@ class WorkspaceDropdown extends StatelessWidget {
           onTap: () => _showMenu(context, workspaces, active),
           builder: (context, hover) {
             return Container(
-              height: 36,
+              height: 28,
+              constraints: const BoxConstraints(maxWidth: 200),
               decoration: BoxDecoration(
                 color: hover ? AppColors.glassHover : Colors.transparent,
-                border: const Border(
-                  bottom: BorderSide(
-                      color: AppColors.outlineVariant, width: 1),
-                ),
+                borderRadius: BorderRadius.circular(6),
               ),
               padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md),
+                  horizontal: AppSpacing.sm),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Symbols.folder,
-                      size: 16, color: AppColors.onSurfaceVariant),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
+                      size: 14, color: AppColors.onSurfaceVariant),
+                  const SizedBox(width: AppSpacing.xs),
+                  Flexible(
                     child: Text(
                       active?.name ??
                           'workspace.dropdown.empty'.tr(),
                       style: AppTypography.bodyMain
-                          .copyWith(fontSize: 13),
+                          .copyWith(fontSize: 12),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
                   ),
+                  const SizedBox(width: AppSpacing.xs),
                   const Icon(Symbols.expand_more,
-                      size: 16, color: AppColors.onSurfaceVariant),
+                      size: 14, color: AppColors.onSurfaceVariant),
                 ],
               ),
             );

@@ -18,6 +18,20 @@
       "toggleHiddenHide": "Nascondi file nascosti",
       "emptyFolder": "Cartella vuota",
       "loadError": "Impossibile leggere la cartella"
+    },
+    "workspace": {
+      "toggleTooltip": "Mostra/nascondi workspace"
+    }
+  },
+  "claude": {
+    "terminal": {
+      "title": "Claude Terminal",
+      "status": {
+        "connected": "Connesso"
+      },
+      "input": {
+        "placeholder": "Invia un messaggio a Claude..."
+      }
     }
   },
   "workspace": {

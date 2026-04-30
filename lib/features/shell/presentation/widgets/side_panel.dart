@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../explorer/presentation/widgets/explorer_view.dart';
-import 'workspace_dropdown.dart';
 
 class SidePanel extends StatelessWidget {
   const SidePanel({super.key});
@@ -16,13 +15,7 @@ class SidePanel extends StatelessWidget {
           right: BorderSide(color: AppColors.outlineVariant, width: 1),
         ),
       ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          WorkspaceDropdown(),
-          Expanded(child: ExplorerView()),
-        ],
-      ),
+      child: const ExplorerView(),
     );
   }
 }
