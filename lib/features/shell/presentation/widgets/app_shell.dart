@@ -88,8 +88,8 @@ class _MainArea extends HookWidget {
       () => MultiSplitViewController(
         areas: [
           Area(id: _idSide, size: 280, min: 200, max: 480),
-          Area(id: _idPreview, min: 320, flex: 1),
-          Area(id: _idClaude, min: 480, flex: 1),
+          Area(id: _idPreview, size: 380, min: 320),
+          Area(id: _idClaude, flex: 1),
         ],
       ),
     );
