@@ -19,64 +19,47 @@ class ExplorerView extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
+    final activeId = context
+        .select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
+
     useEffect(() {
+      if (activeId == null) return null;
       final active = context.read<WorkspacesCubit>().state.activeWorkspace;
-      if (active != null) {
-        final explorer = context.read<ExplorerCubit>();
-        final fileTabs = context.read<FileTabsCubit>();
-        explorer.ensureRootLoaded(active.id, active.path).then((_) {
-          final activePath = fileTabs.state.filesFor(active.id)?.activePath;
-          if (activePath != null) {
-            explorer.revealPath(active.id, active.path, activePath);
-          }
-        });
-      }
+      if (active == null) return null;
+      final explorer = context.read<ExplorerCubit>();
+      final fileTabs = context.read<FileTabsCubit>();
+      explorer.ensureRootLoaded(active.id, active.path).then((_) {
+        if (!context.mounted) return;
+        final activePath = fileTabs.state.filesFor(active.id)?.activePath;
+        if (activePath != null) {
+          explorer.revealPath(active.id, active.path, activePath);
+        } else {
+          explorer.clearSelection(active.id);
+        }
+      });
       return null;
-    }, const []);
+    }, [activeId]);
 
-    return MultiBlocListener(
-      listeners: [
-        BlocListener<WorkspacesCubit, WorkspacesState>(
-          listenWhen: (prev, curr) =>
-              prev.activeWorkspace?.id != curr.activeWorkspace?.id,
-          listener: (context, state) async {
-            final active = state.activeWorkspace;
-            if (active == null) return;
-            final explorer = context.read<ExplorerCubit>();
-            final fileTabs = context.read<FileTabsCubit>();
-            await explorer.ensureRootLoaded(active.id, active.path);
-            final activePath = fileTabs.state.filesFor(active.id)?.activePath;
-            if (activePath != null) {
-              await explorer.revealPath(active.id, active.path, activePath);
-            } else {
-              explorer.clearSelection(active.id);
-            }
-          },
-        ),
-        BlocListener<FileTabsCubit, FileTabsState>(
-          listenWhen: (prev, curr) {
-            final active = context.read<WorkspacesCubit>().state.activeWorkspace;
-            if (active == null) return false;
-            return prev.filesFor(active.id)?.activePath !=
-                curr.filesFor(active.id)?.activePath;
-          },
-          listener: (context, state) {
-            final active = context.read<WorkspacesCubit>().state.activeWorkspace;
-            if (active == null) return;
-            final activePath = state.filesFor(active.id)?.activePath;
-            final explorer = context.read<ExplorerCubit>();
-            if (activePath == null) {
-              explorer.clearSelection(active.id);
-            } else {
-              explorer.revealPath(active.id, active.path, activePath);
-            }
-          },
-        ),
-      ],
-      child: BlocBuilder<WorkspacesCubit, WorkspacesState>(
-        builder: (context, wsState) {
-          final active = wsState.activeWorkspace;
-
+    return BlocListener<FileTabsCubit, FileTabsState>(
+      listenWhen: (prev, curr) {
+        if (activeId == null) return false;
+        return prev.filesFor(activeId)?.activePath !=
+            curr.filesFor(activeId)?.activePath;
+      },
+      listener: (context, state) {
+        final active = context.read<WorkspacesCubit>().state.activeWorkspace;
+        if (active == null) return;
+        final activePath = state.filesFor(active.id)?.activePath;
+        final explorer = context.read<ExplorerCubit>();
+        if (activePath == null) {
+          explorer.clearSelection(active.id);
+        } else {
+          explorer.revealPath(active.id, active.path, activePath);
+        }
+      },
+      child: BlocSelector<WorkspacesCubit, WorkspacesState, Workspace?>(
+        selector: (state) => state.activeWorkspace,
+        builder: (context, active) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -108,68 +91,38 @@ class _ExplorerTree extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final scrollController = useScrollController();
-    final lastScrolledPath = useRef<String?>(null);
 
-    return BlocBuilder<ExplorerCubit, ExplorerState>(
+    return BlocConsumer<ExplorerCubit, ExplorerState>(
+      listenWhen: (prev, curr) =>
+          prev.trees[workspace.id]?.selectedPath !=
+          curr.trees[workspace.id]?.selectedPath,
+      listener: (context, state) {
+        final tree = state.trees[workspace.id];
+        if (tree == null) return;
+        final selected = tree.selectedPath;
+        if (selected == null) return;
+        final visible = _buildVisible(workspace.path, tree, state.showHidden);
+        final idx = visible.indexWhere((e) => e.node.path == selected);
+        if (idx < 0) return;
+        _maybeAutoScroll(scrollController, idx);
+      },
+      buildWhen: (prev, curr) =>
+          prev.trees[workspace.id] != curr.trees[workspace.id] ||
+          prev.showHidden != curr.showHidden,
       builder: (context, state) {
         final tree = state.trees[workspace.id];
-
         if (tree == null) {
           return const SizedBox.shrink();
         }
 
         if (tree.errors.containsKey(workspace.path) &&
             !tree.children.containsKey(workspace.path)) {
-          return Padding(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            child: Text(
-              'shell.sidePanel.loadError'.tr(),
-              style: AppTypography.bodyMain.copyWith(
-                fontSize: 13,
-                color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
-              ),
-            ),
-          );
+          return _ExplorerMessage(text: 'shell.sidePanel.loadError'.tr());
         }
 
         final visible = _buildVisible(workspace.path, tree, state.showHidden);
-
         if (visible.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            child: Text(
-              'shell.sidePanel.emptyFolder'.tr(),
-              style: AppTypography.bodyMain.copyWith(
-                fontSize: 13,
-                color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
-              ),
-            ),
-          );
-        }
-
-        final selectedPath = tree.selectedPath;
-        if (selectedPath != null && selectedPath != lastScrolledPath.value) {
-          final idx = visible.indexWhere((e) => e.node.path == selectedPath);
-          if (idx >= 0) {
-            lastScrolledPath.value = selectedPath;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!scrollController.hasClients) return;
-              final target = idx * ExplorerNodeRow.rowHeight;
-              final viewport = scrollController.position.viewportDimension;
-              final offset = scrollController.offset;
-              if (target < offset || target > offset + viewport - ExplorerNodeRow.rowHeight) {
-                final desired = (target - viewport / 2 + ExplorerNodeRow.rowHeight)
-                    .clamp(0.0, scrollController.position.maxScrollExtent);
-                scrollController.animateTo(
-                  desired,
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOut,
-                );
-              }
-            });
-          }
-        } else if (selectedPath == null) {
-          lastScrolledPath.value = null;
+          return _ExplorerMessage(text: 'shell.sidePanel.emptyFolder'.tr());
         }
 
         return ListView.builder(
@@ -194,6 +147,26 @@ class _ExplorerTree extends HookWidget {
     );
   }
 
+  void _maybeAutoScroll(ScrollController controller, int index) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!controller.hasClients) return;
+      final target = index * ExplorerNodeRow.rowHeight;
+      final viewport = controller.position.viewportDimension;
+      final offset = controller.offset;
+      final inView = target >= offset &&
+          target <= offset + viewport - ExplorerNodeRow.rowHeight;
+      if (inView) return;
+      final desired =
+          (target - viewport / 2 + ExplorerNodeRow.rowHeight)
+              .clamp(0.0, controller.position.maxScrollExtent);
+      controller.animateTo(
+        desired,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
   List<_VisibleEntry> _buildVisible(
     String rootPath,
     WorkspaceTree tree,
@@ -214,6 +187,26 @@ class _ExplorerTree extends HookWidget {
 
     walk(rootPath, 0);
     return out;
+  }
+}
+
+class _ExplorerMessage extends StatelessWidget {
+  const _ExplorerMessage({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      child: Text(
+        text,
+        style: AppTypography.bodyMain.copyWith(
+          fontSize: 13,
+          color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
+        ),
+      ),
+    );
   }
 }
 

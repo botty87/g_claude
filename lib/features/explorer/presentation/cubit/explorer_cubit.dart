@@ -36,16 +36,15 @@ class ExplorerCubit extends Cubit<ExplorerState> {
   final Talker _talker;
   StreamSubscription<WorkspacesState>? _wsSub;
   StreamSubscription<FileTabsState>? _ftSub;
-  // Tracks the openPaths set per workspace at the previous tick so we can
-  // diff against the new state and prewarm only freshly added paths.
   final Map<WorkspaceId, Set<String>> _knownOpenPaths = {};
+  final Map<WorkspaceId, WorkspaceFiles> _lastFilesRef = {};
 
   @PostConstruct()
   void init() {
     _wsSub = _workspacesCubit.stream.listen(_onWorkspacesChanged);
-    // Seed known set from current state so we don't re-prewarm restored tabs.
     for (final entry in _fileTabsCubit.state.perWorkspace.entries) {
       _knownOpenPaths[entry.key] = entry.value.openPaths.toSet();
+      _lastFilesRef[entry.key] = entry.value;
     }
     _ftSub = _fileTabsCubit.stream.listen(_onFileTabsChanged);
   }
@@ -53,7 +52,10 @@ class ExplorerCubit extends Cubit<ExplorerState> {
   void _onFileTabsChanged(FileTabsState ft) {
     for (final entry in ft.perWorkspace.entries) {
       final id = entry.key;
-      final newPaths = entry.value.openPaths.toSet();
+      final files = entry.value;
+      if (identical(_lastFilesRef[id], files)) continue;
+      _lastFilesRef[id] = files;
+      final newPaths = files.openPaths.toSet();
       final known = _knownOpenPaths[id] ?? const <String>{};
       final added = newPaths.difference(known);
       _knownOpenPaths[id] = newPaths;
@@ -66,8 +68,8 @@ class ExplorerCubit extends Cubit<ExplorerState> {
         unawaited(_readFile(path: path));
       }
     }
-    // Drop entries for workspaces that disappeared from the file tabs map.
     _knownOpenPaths.removeWhere((id, _) => !ft.perWorkspace.containsKey(id));
+    _lastFilesRef.removeWhere((id, _) => !ft.perWorkspace.containsKey(id));
   }
 
   void _onWorkspacesChanged(WorkspacesState ws) {
@@ -184,21 +186,23 @@ class ExplorerCubit extends Cubit<ExplorerState> {
         );
         emit(state.copyWith(trees: {...state.trees, id: refreshed}));
 
-        // Best-effort refresh of all expanded non-root paths
-        for (final expandedPath in tree.expanded.where((p) => p != rootPath)) {
-          final subResult = await _listDirectory(path: expandedPath);
-          subResult.fold(
-            (failure) {
-              _talker.debug('ExplorerCubit: refresh skipping $expandedPath: $failure');
-            },
-            (subNodes) {
-              refreshed = refreshed.copyWith(
-                children: {...refreshed.children, expandedPath: subNodes},
-              );
-              emit(state.copyWith(trees: {...state.trees, id: refreshed}));
-            },
+        final subPaths = tree.expanded
+            .where((p) => p != rootPath)
+            .toList(growable: false);
+        if (subPaths.isEmpty) return;
+        final subResults = await Future.wait(
+          subPaths.map((p) => _listDirectory(path: p)),
+        );
+        final mergedChildren = {...refreshed.children};
+        for (var i = 0; i < subPaths.length; i++) {
+          subResults[i].fold(
+            (failure) => _talker
+                .debug('ExplorerCubit: refresh skipping ${subPaths[i]}: $failure'),
+            (subNodes) => mergedChildren[subPaths[i]] = subNodes,
           );
         }
+        refreshed = refreshed.copyWith(children: mergedChildren);
+        emit(state.copyWith(trees: {...state.trees, id: refreshed}));
       },
     );
   }
