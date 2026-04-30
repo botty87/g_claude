@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -66,22 +67,29 @@ class FileTab extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Hoverable(
-                onTap: () =>
-                    context.read<FileTabsCubit>().closeFile(workspaceId, path),
-                builder: (context, closeHover) => Container(
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: closeHover
-                        ? AppColors.glassHover
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppRadii.sm),
-                  ),
-                  child: Icon(
-                    Symbols.close,
-                    size: 14,
-                    color: textColor.withValues(alpha: closeHover ? 1.0 : 0.6),
+              Tooltip(
+                message: isActive
+                    ? '${'editor.tab.close'.tr()} (⌘W)'
+                    : 'editor.tab.close'.tr(),
+                child: Hoverable(
+                  onTap: () => context
+                      .read<FileTabsCubit>()
+                      .closeFile(workspaceId, path),
+                  builder: (context, closeHover) => Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: closeHover
+                          ? AppColors.glassHover
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(AppRadii.sm),
+                    ),
+                    child: Icon(
+                      Symbols.close,
+                      size: 14,
+                      color:
+                          textColor.withValues(alpha: closeHover ? 1.0 : 0.6),
+                    ),
                   ),
                 ),
               ),

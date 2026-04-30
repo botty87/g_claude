@@ -23,32 +23,22 @@ class FileTabsBar extends HookWidget {
     final tabKeys = useMemoized(() => <String, GlobalKey>{}, const []);
     final lastActivePath = useRef<String?>(null);
 
-    GlobalKey keyFor(String path) =>
-        tabKeys.putIfAbsent(path, () => GlobalKey());
+    GlobalKey keyFor(String path) => tabKeys.putIfAbsent(path, () => GlobalKey());
 
     void ensureActiveVisible(String? activePath) {
       if (activePath == null) return;
       final ctx = tabKeys[activePath]?.currentContext;
       if (ctx == null) return;
-      Scrollable.ensureVisible(
-        ctx,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        alignment: 0.5,
-      );
+      Scrollable.ensureVisible(ctx, duration: const Duration(milliseconds: 200), curve: Curves.easeOut, alignment: 0.5);
     }
 
-    final activeId = context.select<WorkspacesCubit, WorkspaceId?>(
-      (c) => c.state.activeIdOrNull,
-    );
+    final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
 
     return Container(
       height: AppSpacing.toolbarHeight,
       decoration: const BoxDecoration(
         color: AppColors.surfaceContainerLow,
-        border: Border(
-          bottom: BorderSide(color: AppColors.outlineVariant, width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.outlineVariant, width: 1)),
       ),
       child: Row(
         children: [
@@ -58,8 +48,7 @@ class FileTabsBar extends HookWidget {
                 ? const SizedBox.shrink()
                 : BlocConsumer<FileTabsCubit, FileTabsState>(
                     listenWhen: (prev, curr) =>
-                        prev.filesFor(activeId)?.activePath !=
-                        curr.filesFor(activeId)?.activePath,
+                        prev.filesFor(activeId)?.activePath != curr.filesFor(activeId)?.activePath,
                     listener: (context, state) {
                       final activePath = state.filesFor(activeId)?.activePath;
                       if (activePath == lastActivePath.value) return;
@@ -108,21 +97,14 @@ class _WorkspaceToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final workspaceOpen = context.select<ShellCubit, bool>(
-      (c) => c.state.workspaceOpen,
-    );
+    final workspaceOpen = context.select<ShellCubit, bool>((c) => c.state.workspaceOpen);
+    final action = workspaceOpen ? 'shell.workspace.toggleToFullscreen'.tr() : 'shell.workspace.toggleToWorkspace'.tr();
     return Tooltip(
-      message: workspaceOpen
-          ? 'shell.workspace.toggleToFullscreen'.tr()
-          : 'shell.workspace.toggleToWorkspace'.tr(),
+      message: '$action (⌘B)',
       child: IconButton(
         key: const ValueKey('workspace_toggle_button'),
         onPressed: () => context.read<ShellCubit>().toggleWorkspace(),
-        icon: Icon(
-          workspaceOpen ? Symbols.fullscreen : Symbols.fullscreen_exit,
-          size: 16,
-          color: AppColors.onSurface,
-        ),
+        icon: Icon(workspaceOpen ? Symbols.fullscreen : Symbols.fullscreen_exit, size: 16, color: AppColors.onSurface),
         visualDensity: VisualDensity.compact,
         splashRadius: 14,
       ),

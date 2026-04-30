@@ -60,6 +60,9 @@
     "fileLoadError": "Cannot read file",
     "fileTooLarge": "File too large to preview",
     "binaryFile": "Binary file (preview not supported)",
+    "tab": {
+      "close": "Close"
+    },
     "openFiles": {
       "tooltip": "Open files",
       "searchHint": "Search open files...",

@@ -45,6 +45,13 @@ class ExplorerNodeRow extends StatelessWidget {
       onTap: isDir
           ? () => context.read<ExplorerCubit>().toggleFolder(workspaceId, node.path)
           : () => context.read<FileTabsCubit>().openFile(workspaceId, node.path),
+      onDoubleTap: isDir
+          ? null
+          : () {
+              final cubit = context.read<FileTabsCubit>();
+              cubit.openFile(workspaceId, node.path);
+              cubit.pinFile(workspaceId, node.path);
+            },
       builder: (context, hover) {
         final Color background;
         if (isSelected) {

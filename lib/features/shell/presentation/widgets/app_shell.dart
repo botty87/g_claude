@@ -7,6 +7,7 @@ import 'package:multi_split_view/multi_split_view.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../claude/presentation/widgets/claude_terminal_pane.dart';
+import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
 import '../../../editor/presentation/widgets/file_tabs_bar.dart';
 import '../../../editor/presentation/widgets/file_viewer.dart';
 import '../../../workspace/domain/entities/workspace.dart';
@@ -24,15 +25,32 @@ class AppShellPage extends HookWidget {
   Widget build(BuildContext context) {
     final focusNode = useFocusNode();
 
+    bool toggleWorkspace() {
+      context.read<ShellCubit>().toggleWorkspace();
+      return true;
+    }
+
+    bool closeActiveTab() {
+      final activeId = context.read<WorkspacesCubit>().state.activeIdOrNull;
+      if (activeId == null) return false;
+      final activePath =
+          context.read<FileTabsCubit>().state.filesFor(activeId)?.activePath;
+      if (activePath == null) return false;
+      context.read<FileTabsCubit>().closeFile(activeId, activePath);
+      return true;
+    }
+
     KeyEventResult onKey(FocusNode node, KeyEvent event) {
       if (event is! KeyDownEvent) return KeyEventResult.ignored;
-      final isMeta = HardwareKeyboard.instance.isMetaPressed;
-      if (!isMeta) return KeyEventResult.ignored;
-      if (event.logicalKey == LogicalKeyboardKey.keyB) {
-        context.read<ShellCubit>().toggleWorkspace();
-        return KeyEventResult.handled;
+      if (!HardwareKeyboard.instance.isMetaPressed) {
+        return KeyEventResult.ignored;
       }
-      return KeyEventResult.ignored;
+      final handled = switch (event.logicalKey) {
+        LogicalKeyboardKey.keyB => toggleWorkspace(),
+        LogicalKeyboardKey.keyW => closeActiveTab(),
+        _ => false,
+      };
+      return handled ? KeyEventResult.handled : KeyEventResult.ignored;
     }
 
     final workspaceOpen = context.select<ShellCubit, bool>(
