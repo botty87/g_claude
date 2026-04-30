@@ -75,7 +75,7 @@ class _MainArea extends HookWidget {
 
   static final _splitTheme = MultiSplitViewThemeData(
     dividerThickness: 1,
-    dividerHandleBuffer: 10,
+    dividerHandleBuffer: 2,
     dividerPainter: DividerPainters.background(
       color: AppColors.outlineVariant,
       highlightedColor: AppColors.brandIndigo,
