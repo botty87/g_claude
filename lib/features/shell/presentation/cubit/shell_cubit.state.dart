@@ -6,6 +6,7 @@ enum ActivityId { explorer, search, git, sessions, settings }
 abstract class ShellState with _$ShellState {
   const factory ShellState({
     required bool workspaceOpen,
+    required bool sidePanelCollapsed,
     required ActivityId selectedActivity,
   }) = _ShellState;
 }

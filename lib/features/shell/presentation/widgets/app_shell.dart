@@ -84,14 +84,19 @@ class _MainArea extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sidePanelCollapsed = context.select<ShellCubit, bool>(
+      (c) => c.state.sidePanelCollapsed,
+    );
     final controller = useMemoized(
       () => MultiSplitViewController(
         areas: [
-          Area(id: _idSide, size: 280, min: 200, max: 480),
+          if (!sidePanelCollapsed)
+            Area(id: _idSide, size: 280, min: 200, max: 480),
           Area(id: _idPreview, size: 380, min: 320),
           Area(id: _idClaude, flex: 1),
         ],
       ),
+      [sidePanelCollapsed],
     );
     useEffect(() => controller.dispose, [controller]);
 

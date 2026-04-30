@@ -16,11 +16,13 @@
       "refresh": "Aggiorna",
       "toggleHiddenShow": "Mostra file nascosti",
       "toggleHiddenHide": "Nascondi file nascosti",
+      "collapse": "Riduci pannello",
       "emptyFolder": "Cartella vuota",
       "loadError": "Impossibile leggere la cartella"
     },
     "workspace": {
-      "toggleTooltip": "Mostra/nascondi workspace"
+      "toggleToFullscreen": "Nascondi workspace, focus Claude",
+      "toggleToWorkspace": "Mostra workspace"
     }
   },
   "claude": {

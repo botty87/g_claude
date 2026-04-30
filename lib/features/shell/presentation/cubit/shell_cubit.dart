@@ -15,6 +15,7 @@ class ShellCubit extends Cubit<ShellState> {
   ShellCubit(this._fileTabsCubit, this._workspacesCubit)
       : super(const ShellState(
           workspaceOpen: true,
+          sidePanelCollapsed: false,
           selectedActivity: ActivityId.explorer,
         ));
 
@@ -47,8 +48,18 @@ class ShellCubit extends Cubit<ShellState> {
   }
 
   void selectActivity(ActivityId id) {
-    if (state.selectedActivity == id) return;
-    emit(state.copyWith(selectedActivity: id));
+    if (state.selectedActivity == id) {
+      emit(state.copyWith(sidePanelCollapsed: !state.sidePanelCollapsed));
+      return;
+    }
+    emit(state.copyWith(
+      selectedActivity: id,
+      sidePanelCollapsed: false,
+    ));
+  }
+
+  void toggleSidePanelCollapsed() {
+    emit(state.copyWith(sidePanelCollapsed: !state.sidePanelCollapsed));
   }
 
   @override

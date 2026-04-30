@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -111,16 +112,16 @@ class _WorkspaceToggleButton extends StatelessWidget {
       selector: (state) => state.workspaceOpen,
       builder: (context, workspaceOpen) {
         return Tooltip(
-          message: 'shell.workspace.toggleTooltip'.tr(),
+          message: workspaceOpen
+              ? 'shell.workspace.toggleToFullscreen'.tr()
+              : 'shell.workspace.toggleToWorkspace'.tr(),
           child: IconButton(
             key: const ValueKey('workspace_toggle_button'),
             onPressed: () => context.read<ShellCubit>().toggleWorkspace(),
             icon: Icon(
-              workspaceOpen
-                  ? Icons.view_sidebar
-                  : Icons.view_sidebar_outlined,
+              workspaceOpen ? Symbols.fullscreen : Symbols.fullscreen_exit,
               size: 16,
-              color: workspaceOpen ? AppColors.onSurface : AppColors.outline,
+              color: AppColors.onSurface,
             ),
             visualDensity: VisualDensity.compact,
             splashRadius: 14,
