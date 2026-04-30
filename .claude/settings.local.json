@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "mcp__dart__analyze_files"
+      "mcp__dart__analyze_files",
+      "mcp__dart__add_roots"
     ]
   }
 }
