@@ -168,19 +168,17 @@ class _HighlightedView extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = useMemoized(() => CodeLineEditingController.fromText(content.content), [
-      content.path,
-      content.content,
-    ]);
+    final controller = useMemoized(
+      () => CodeLineEditingController.fromText(content.content),
+      [content.path, content.content],
+    );
     useEffect(() => controller.dispose, [controller]);
 
     final findController = useMemoized(() => CodeFindController(controller), [controller]);
     useEffect(() => findController.dispose, [findController]);
 
     final lang = content.language;
-    final languages = lang != null && _languageModes.containsKey(lang)
-        ? {lang: _languageModes[lang]!}
-        : const <String, CodeHighlightThemeMode>{};
+    final languageMode = lang != null ? _languageModes[lang] : null;
 
     final baseStyle = AppTypography.terminalCode.copyWith(color: AppColors.onSurface);
 
@@ -194,7 +192,12 @@ class _HighlightedView extends HookWidget {
           textColor: AppColors.onSurface,
           fontFamily: baseStyle.fontFamily,
           fontSize: baseStyle.fontSize,
-          codeTheme: CodeHighlightTheme(languages: languages, theme: hl_theme.githubDarkTheme),
+          codeTheme: (lang == null || languageMode == null)
+              ? null
+              : CodeHighlightTheme(
+                  languages: {lang: languageMode},
+                  theme: hl_theme.githubDarkTheme,
+                ),
         ),
         indicatorBuilder: (context, editingController, chunkController, notifier) {
           return Row(
