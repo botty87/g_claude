@@ -192,10 +192,10 @@ class _HighlightedView extends HookWidget {
           textColor: AppColors.onSurface,
           fontFamily: baseStyle.fontFamily,
           fontSize: baseStyle.fontSize,
-          codeTheme: (lang == null || languageMode == null)
+          codeTheme: languageMode == null
               ? null
               : CodeHighlightTheme(
-                  languages: {lang: languageMode},
+                  languages: {lang!: languageMode},
                   theme: hl_theme.githubDarkTheme,
                 ),
         ),

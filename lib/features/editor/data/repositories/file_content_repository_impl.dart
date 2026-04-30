@@ -16,15 +16,12 @@ class FileContentRepositoryImpl implements FileContentRepository {
 
   final FileContentDataSource _dataSource;
 
-  // Bounded LRU cache. Avoids re-reading files on tab switches: switching
-  // away from a file and back used to cost a fresh disk read. With this
-  // cache the second visit hits memory instantly.
+  // Bounded LRU cache so revisiting a tab does not pay disk I/O.
   static const _maxEntries = 30;
-  static const _maxBytes = 10 * 1024 * 1024; // 10 MB
+  static const _maxBytes = 10 * 1024 * 1024;
   final LinkedHashMap<String, FileContent> _cache = LinkedHashMap();
   int _cachedBytes = 0;
-  // Coalesce concurrent reads of the same path so prewarm + foreground read
-  // do not duplicate I/O.
+  // Coalesce concurrent reads of the same path (prewarm + foreground).
   final Map<String, Future<Either<Failure, FileContent>>> _inFlight = {};
 
   @override
