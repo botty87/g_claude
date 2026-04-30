@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +11,9 @@ import 'app.dart';
 import 'core/di/di.dart';
 import 'core/marionette/marionette_log_bridge.dart';
 import 'core/window/window_setup.dart';
+import 'features/editor/domain/usecases/read_file.dart';
 import 'features/editor/presentation/cubit/file_tabs_cubit.dart';
+import 'features/explorer/presentation/cubit/explorer_cubit.dart';
 import 'features/workspace/presentation/cubit/workspaces_cubit.dart';
 
 Future<void> main() async {
@@ -41,8 +45,26 @@ Future<void> main() async {
   // Restore persisted state before BlocObserver attaches to avoid logging
   // restore emissions as user-driven transitions. Workspaces first — file tabs
   // filter against alive workspace ids on restore.
-  await getIt<WorkspacesCubit>().restore();
-  await getIt<FileTabsCubit>().restore();
+  final workspacesCubit = getIt<WorkspacesCubit>();
+  final fileTabsCubit = getIt<FileTabsCubit>();
+  await workspacesCubit.restore();
+  await fileTabsCubit.restore();
+
+  // Pre-warm explorer trees and file contents for each workspace's open tabs
+  // so the first click after restart does not pay disk I/O. Fire-and-forget.
+  final explorerCubit = getIt<ExplorerCubit>();
+  final readFile = getIt<ReadFile>();
+  for (final workspace in workspacesCubit.state.workspacesOrEmpty) {
+    final files = fileTabsCubit.state.filesFor(workspace.id);
+    if (files == null) continue;
+    final activePath = files.activePath;
+    if (activePath != null) {
+      unawaited(explorerCubit.prewarmReveal(workspace.id, workspace.path, activePath));
+    }
+    for (final path in files.openPaths) {
+      unawaited(readFile(path: path));
+    }
+  }
 
   Bloc.observer = getIt<BlocObserver>();
 
