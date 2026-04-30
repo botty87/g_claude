@@ -32,6 +32,11 @@
       "input": {
         "placeholder": "Send a message to Claude..."
       }
+    },
+    "message": {
+      "userLabel": "user@workspace",
+      "promptDelimiter": "~",
+      "assistantLabel": "claude"
     }
   },
   "workspace": {

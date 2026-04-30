@@ -36,21 +36,12 @@ class ClaudeInputBar extends HookWidget {
             child: TextField(
               controller: controller,
               enabled: false,
-              style: AppTypography.bodyMain.copyWith(
-                color: AppColors.onSurface,
-                fontFamily: 'JetBrains Mono',
-                fontSize: 13,
-                height: 1.6,
-              ),
+              style: AppTypography.terminalCode.copyWith(color: AppColors.onSurface),
               decoration: InputDecoration(
                 isCollapsed: true,
                 border: InputBorder.none,
                 hintText: 'claude.terminal.input.placeholder'.tr(),
-                hintStyle: AppTypography.bodyMain.copyWith(
-                  color: AppColors.outline,
-                  fontFamily: 'JetBrains Mono',
-                  fontSize: 13,
-                ),
+                hintStyle: AppTypography.terminalCode.copyWith(color: AppColors.outline),
               ),
             ),
           ),

@@ -1,120 +1,97 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 
-// TODO(claude): replace mock messages with real message stream once subprocess is wired.
 class ClaudeMessageList extends StatelessWidget {
   const ClaudeMessageList({super.key});
-
-  static const _mockUserMessage =
-      'Can you analyze the linter rules in analysis_options.yaml and suggest improvements for a stricter typing environment?';
-  static const _mockAssistantMessage =
-      "I've reviewed your analysis_options.yaml. To enforce a stricter typing environment, especially for Dart/Flutter projects, I recommend enabling several key rules under the linter and analyzer sections.";
 
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: const [
-        _UserBubble(text: _mockUserMessage),
+        _ChatBubble(role: _Role.user, text: _ClaudeMockMessages.user),
         SizedBox(height: AppSpacing.xl),
-        _AssistantBubble(text: _mockAssistantMessage),
+        _ChatBubble(role: _Role.assistant, text: _ClaudeMockMessages.assistant),
       ],
     );
   }
 }
 
-class _UserBubble extends StatelessWidget {
-  const _UserBubble({required this.text});
+enum _Role { user, assistant }
 
+class _ChatBubble extends StatelessWidget {
+  const _ChatBubble({required this.role, required this.text});
+
+  final _Role role;
   final String text;
 
   @override
   Widget build(BuildContext context) {
+    final isUser = role == _Role.user;
+    final bodyStyle = isUser
+        ? AppTypography.terminalCode.copyWith(color: AppColors.onSurface)
+        : AppTypography.bodyMain.copyWith(
+            color: AppColors.onSurfaceVariant,
+            height: 1.5,
+          );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Icon(Icons.chevron_right, size: 14, color: AppColors.outline),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              'user@workspace',
-              style: AppTypography.bodyMain.copyWith(
-                color: AppColors.outline,
-                fontFamily: 'JetBrains Mono',
-                fontSize: 13,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              '~',
-              style: AppTypography.bodyMain.copyWith(
-                color: AppColors.surfaceVariant,
-                fontFamily: 'JetBrains Mono',
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.sm),
+        _BubbleHeader(role: role),
+        SizedBox(height: isUser ? AppSpacing.sm : AppSpacing.md),
         Padding(
           padding: const EdgeInsets.only(left: AppSpacing.xl - AppSpacing.xs),
-          child: Text(
-            text,
-            style: AppTypography.bodyMain.copyWith(
-              color: AppColors.onSurface,
-              fontFamily: 'JetBrains Mono',
-              fontSize: 13,
-              height: 1.6,
-            ),
-          ),
+          child: Text(text, style: bodyStyle),
         ),
       ],
     );
   }
 }
 
-class _AssistantBubble extends StatelessWidget {
-  const _AssistantBubble({required this.text});
+class _BubbleHeader extends StatelessWidget {
+  const _BubbleHeader({required this.role});
 
-  final String text;
+  final _Role role;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final isUser = role == _Role.user;
+    return Row(
       children: [
-        Row(
-          children: [
-            const Icon(Icons.smart_toy_outlined,
-                size: 14, color: AppColors.primary),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              'claude',
-              style: AppTypography.bodyMain.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'JetBrains Mono',
-                fontSize: 13,
-              ),
-            ),
-          ],
+        Icon(
+          isUser ? Icons.chevron_right : Icons.smart_toy_outlined,
+          size: 14,
+          color: isUser ? AppColors.outline : AppColors.primary,
         ),
-        const SizedBox(height: AppSpacing.md),
-        Padding(
-          padding: const EdgeInsets.only(left: AppSpacing.xl - AppSpacing.xs),
-          child: Text(
-            text,
-            style: AppTypography.bodyMain.copyWith(
-              color: AppColors.onSurfaceVariant,
-              height: 1.5,
-            ),
+        const SizedBox(width: AppSpacing.sm),
+        if (isUser) ...[
+          Text(
+            'claude.message.userLabel'.tr(),
+            style: AppTypography.terminalCode.copyWith(color: AppColors.outline),
           ),
-        ),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            'claude.message.promptDelimiter'.tr(),
+            style: AppTypography.terminalCode.copyWith(color: AppColors.surfaceVariant),
+          ),
+        ] else
+          Text(
+            'claude.message.assistantLabel'.tr(),
+            style: AppTypography.terminalPrompt.copyWith(color: AppColors.primary),
+          ),
       ],
     );
   }
+}
+
+abstract final class _ClaudeMockMessages {
+  static const user =
+      'Can you analyze the linter rules in analysis_options.yaml and suggest improvements for a stricter typing environment?';
+  static const assistant =
+      "I've reviewed your analysis_options.yaml. To enforce a stricter typing environment, especially for Dart/Flutter projects, I recommend enabling several key rules under the linter and analyzer sections.";
 }
