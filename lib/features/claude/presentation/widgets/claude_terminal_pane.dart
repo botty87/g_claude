@@ -1,17 +1,24 @@
+import 'dart:io';
+
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
+import '../../domain/entities/chat_attachment.dart';
 import '../cubit/claude_sessions_cubit.dart';
 import 'claude_input_bar.dart';
 import 'claude_message_list.dart';
 import 'claude_terminal_header.dart';
 
-class ClaudeTerminalPane extends StatelessWidget {
+class ClaudeTerminalPane extends HookWidget {
   const ClaudeTerminalPane({super.key});
 
   @override
@@ -31,22 +38,73 @@ class ClaudeTerminalPane extends StatelessWidget {
     final isBusy = session.runStatus == ClaudeRunStatus.running ||
         session.runStatus == ClaudeRunStatus.connecting;
 
-    return ColoredBox(
-      color: AppColors.surface,
-      child: Column(
+    final attachments = useMemoized(
+      () => ValueNotifier<List<ChatAttachment>>(const []),
+      const [],
+    );
+    useEffect(() => attachments.dispose, [attachments]);
+
+    final isHovering = useState(false);
+
+    return DropTarget(
+      enable: !isBusy,
+      onDragEntered: (_) => isHovering.value = true,
+      onDragExited: (_) => isHovering.value = false,
+      onDragDone: (details) {
+        if (isBusy) return;
+        final current = attachments.value;
+        final existing = current.map((a) => p.normalize(a.path)).toSet();
+        final additions = <ChatAttachment>[];
+        for (final xfile in details.files) {
+          final path = xfile.path;
+          if (path.isEmpty) continue;
+          final norm = p.normalize(path);
+          if (existing.contains(norm)) continue;
+          existing.add(norm);
+          final type = FileSystemEntity.typeSync(path);
+          final kind = type == FileSystemEntityType.directory
+              ? ChatAttachmentKind.directory
+              : ChatAttachmentKind.file;
+          additions.add(ChatAttachment(
+            path: path,
+            displayName: p.basename(path),
+            kind: kind,
+          ));
+        }
+        if (additions.isNotEmpty) {
+          attachments.value = [...current, ...additions];
+        }
+        isHovering.value = false;
+      },
+      child: Stack(
         children: [
-          ClaudeTerminalHeader(workspaceId: activeId, session: session),
-          _RunProgressBar(visible: isBusy),
-          Expanded(
-            child: ClaudeMessageList(
-              workspaceId: activeId,
-              messages: session.messages,
-              status: session.runStatus,
-              lastError: session.lastError,
-              stderrTail: session.stderrTail,
+          ColoredBox(
+            color: AppColors.surface,
+            child: Column(
+              children: [
+                ClaudeTerminalHeader(workspaceId: activeId, session: session),
+                _RunProgressBar(visible: isBusy),
+                Expanded(
+                  child: ClaudeMessageList(
+                    workspaceId: activeId,
+                    messages: session.messages,
+                    status: session.runStatus,
+                    lastError: session.lastError,
+                    stderrTail: session.stderrTail,
+                  ),
+                ),
+                ClaudeInputBar(
+                  workspaceId: activeId,
+                  status: session.runStatus,
+                  attachments: attachments,
+                ),
+              ],
             ),
           ),
-          ClaudeInputBar(workspaceId: activeId, status: session.runStatus),
+          if (isHovering.value)
+            const Positioned.fill(
+              child: IgnorePointer(child: _DropOverlay()),
+            ),
         ],
       ),
     );
@@ -90,6 +148,46 @@ class _NoWorkspaceState extends StatelessWidget {
               fontSize: 12,
             ),
             textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DropOverlay extends StatelessWidget {
+  const _DropOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.08),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.6),
+          width: 2,
+        ),
+      ),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(AppRadii.md),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.4),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            'claude.terminal.input.attachments.dropHint'.tr(),
+            style: AppTypography.bodyMain.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ),

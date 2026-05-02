@@ -1,9 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../../core/di/di.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -14,17 +16,22 @@ import '../../../slash_commands/domain/entities/slash_command.dart';
 import '../../../slash_commands/presentation/cubit/slash_commands_cubit.dart';
 import '../../../slash_commands/presentation/widgets/slash_command_chip_row.dart';
 import '../../../slash_commands/presentation/widgets/slash_command_overlay.dart';
+import '../../domain/entities/chat_attachment.dart';
 import '../cubit/claude_sessions_cubit.dart';
+import '../utils/attachment_token.dart';
+import 'attachment_chip_row.dart';
 
 class ClaudeInputBar extends HookWidget {
   const ClaudeInputBar({
     super.key,
     required this.workspaceId,
     required this.status,
+    required this.attachments,
   });
 
   final String workspaceId;
   final ClaudeRunStatus status;
+  final ValueNotifier<List<ChatAttachment>> attachments;
 
   bool get _isBusy =>
       status == ClaudeRunStatus.connecting ||
@@ -47,8 +54,8 @@ class ClaudeInputBar extends HookWidget {
 
     final link = useMemoized(LayerLink.new, const []);
     final selectedChips = useState<List<SlashCommand>>(const []);
+    final attachmentList = useValueListenable(attachments);
 
-    // Sync skills from sessions state into slash cubit.
     final skills = context.select<ClaudeSessionsCubit, List<String>>(
       (c) => c.state.sessions[workspaceId]?.availableSkills ?? const [],
     );
@@ -57,7 +64,6 @@ class ClaudeInputBar extends HookWidget {
       return null;
     }, [skills]);
 
-    // Forward text changes to slash cubit.
     useEffect(() {
       void listener() => slashCubit.onInputChanged(controller.text);
       controller.addListener(listener);
@@ -66,7 +72,6 @@ class ClaudeInputBar extends HookWidget {
 
     void applySelection(SlashCommand cmd) {
       if (selectedChips.value.any((c) => c.trigger == cmd.trigger)) {
-        // Already added — drop the typed prefix and dismiss.
         _stripSlashPrefix(controller);
         slashCubit.dismiss();
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -82,18 +87,71 @@ class ClaudeInputBar extends HookWidget {
       });
     }
 
+    Future<void> pickFiles() async {
+      if (_isBusy) return;
+      final res = await FilePicker.pickFiles(
+        allowMultiple: true,
+        type: FileType.any,
+      );
+      if (res == null) return;
+      final current = attachments.value;
+      final existing = current.map((a) => p.normalize(a.path)).toSet();
+      final additions = <ChatAttachment>[];
+      for (final f in res.files) {
+        final path = f.path;
+        if (path == null) continue;
+        final norm = p.normalize(path);
+        if (existing.contains(norm)) continue;
+        existing.add(norm);
+        additions.add(ChatAttachment(
+          path: path,
+          displayName: p.basename(path),
+          kind: ChatAttachmentKind.file,
+        ));
+      }
+      if (additions.isNotEmpty) {
+        attachments.value = [...current, ...additions];
+      }
+    }
+
+    Future<void> pickFolder() async {
+      if (_isBusy) return;
+      final path = await FilePicker.getDirectoryPath();
+      if (path == null) return;
+      final current = attachments.value;
+      final norm = p.normalize(path);
+      if (current.any((a) => p.normalize(a.path) == norm)) return;
+      attachments.value = [
+        ...current,
+        ChatAttachment(
+          path: path,
+          displayName: p.basename(path),
+          kind: ChatAttachmentKind.directory,
+        ),
+      ];
+    }
+
+    void removeAttachment(ChatAttachment a) {
+      attachments.value =
+          attachments.value.where((x) => x.path != a.path).toList();
+    }
+
     void submit() {
       final userText = controller.text.trim();
       final chipPrefix =
           selectedChips.value.map((c) => c.trigger).join(' ');
+      final attachmentTokens =
+          attachmentList.map((a) => formatAttachmentToken(a.path)).join(' ');
       final parts = <String>[
         if (chipPrefix.isNotEmpty) chipPrefix,
+        if (attachmentTokens.isNotEmpty) attachmentTokens,
         if (userText.isNotEmpty) userText,
       ];
       if (parts.isEmpty) return;
       final prompt = parts.join(' ');
       controller.clear();
       selectedChips.value = const [];
+      attachments.value = const [];
       sessionsCubit.sendPrompt(workspaceId, prompt);
     }
 
@@ -128,11 +186,17 @@ class ClaudeInputBar extends HookWidget {
 
       if (event.logicalKey == LogicalKeyboardKey.backspace &&
           controller.text.isEmpty &&
-          selectedChips.value.isNotEmpty &&
           !isSuggesting) {
-        selectedChips.value =
-            selectedChips.value.sublist(0, selectedChips.value.length - 1);
-        return KeyEventResult.handled;
+        if (selectedChips.value.isNotEmpty) {
+          selectedChips.value =
+              selectedChips.value.sublist(0, selectedChips.value.length - 1);
+          return KeyEventResult.handled;
+        }
+        if (attachmentList.isNotEmpty) {
+          attachments.value =
+              attachmentList.sublist(0, attachmentList.length - 1);
+          return KeyEventResult.handled;
+        }
       }
 
       if (event.logicalKey == LogicalKeyboardKey.enter) {
@@ -166,6 +230,10 @@ class ClaudeInputBar extends HookWidget {
                   .where((c) => c.trigger != cmd.trigger)
                   .toList();
             },
+          ),
+          AttachmentChipRow(
+            attachments: attachmentList,
+            onRemove: removeAttachment,
           ),
           Container(
             decoration: const BoxDecoration(
@@ -220,6 +288,22 @@ class ClaudeInputBar extends HookWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
+                  _ActionButton(
+                    key: const ValueKey('claude_input_attach_file'),
+                    icon: Symbols.attach_file,
+                    tooltipKey: 'claude.terminal.input.attachments.addFile',
+                    color: _isBusy ? AppColors.outline : AppColors.primary,
+                    onTap: _isBusy ? () {} : pickFiles,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  _ActionButton(
+                    key: const ValueKey('claude_input_attach_folder'),
+                    icon: Symbols.folder,
+                    tooltipKey: 'claude.terminal.input.attachments.addFolder',
+                    color: _isBusy ? AppColors.outline : AppColors.primary,
+                    onTap: _isBusy ? () {} : pickFolder,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
                   if (_isBusy)
                     _ActionButton(
                       icon: Symbols.stop_circle,
@@ -259,6 +343,7 @@ void _stripSlashPrefix(TextEditingController controller) {
 
 class _ActionButton extends StatelessWidget {
   const _ActionButton({
+    super.key,
     required this.icon,
     required this.tooltipKey,
     required this.color,

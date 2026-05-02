@@ -40,7 +40,13 @@
         "placeholder": "Send a message to Claude…",
         "placeholderRunning": "Claude is responding… (press Cmd+. to stop)",
         "stop": "Stop",
-        "send": "Send"
+        "send": "Send",
+        "attachments": {
+          "addFile": "Attach file",
+          "addFolder": "Attach folder",
+          "dropHint": "Drop files or folders here",
+          "removeTooltip": "Remove attachment"
+        }
       },
       "actions": {
         "clear": "Clear conversation",

@@ -40,7 +40,13 @@
         "placeholder": "Invia un messaggio a Claude…",
         "placeholderRunning": "Claude sta rispondendo… (Cmd+. per fermare)",
         "stop": "Ferma",
-        "send": "Invia"
+        "send": "Invia",
+        "attachments": {
+          "addFile": "Allega file",
+          "addFolder": "Allega cartella",
+          "dropHint": "Trascina file o cartelle qui",
+          "removeTooltip": "Rimuovi allegato"
+        }
       },
       "actions": {
         "clear": "Pulisci conversazione",
