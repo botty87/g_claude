@@ -110,7 +110,7 @@ class _MainArea extends HookWidget {
           if (!sidePanelCollapsed)
             Area(id: _idSide, size: 280, min: 200, max: 480),
           Area(id: _idPreview, size: 380, min: 320),
-          Area(id: _idClaude, flex: 1),
+          Area(id: _idClaude, size: 600, min: 360),
         ],
       ),
       [sidePanelCollapsed],
@@ -127,6 +127,7 @@ class _MainArea extends HookWidget {
       data: _splitTheme,
       child: MultiSplitView(
         controller: controller,
+        sizeOverflowPolicy: SizeOverflowPolicy.shrinkFirst,
         builder: (context, area) {
           switch (area.id) {
             case _idSide:

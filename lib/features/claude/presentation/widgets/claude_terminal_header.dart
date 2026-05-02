@@ -37,67 +37,75 @@ class ClaudeTerminalHeader extends StatelessWidget {
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      child: Row(
-        children: [
-          const Icon(Icons.terminal, size: 14, color: AppColors.primary),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            'claude.terminal.title'.tr(),
-            style: AppTypography.bodyMain.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w500,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.lg),
-          ModelPicker(
-            current: session.model,
-            enabled: !_isBusy,
-            onSelected: (m) => cubit.setModel(workspaceId, m),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          PermissionPicker(
-            current: session.permissionMode,
-            enabled: !_isBusy,
-            onSelected: (m) => cubit.setPermissionMode(workspaceId, m),
-          ),
-          const Spacer(),
-          if (session.messages.isNotEmpty)
-            Hoverable(
-              onTap: _isBusy
-                  ? null
-                  : () => cubit.clearConversation(workspaceId),
-              builder: (context, hover) => Tooltip(
-                message: 'claude.terminal.actions.clear'.tr(),
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: hover ? AppColors.glassHover : Colors.transparent,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Icon(
-                    Symbols.delete_sweep,
-                    size: 14,
-                    color: _isBusy
-                        ? AppColors.outline
-                        : AppColors.onSurfaceVariant,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 360;
+          return Row(
+            children: [
+              Tooltip(
+                message: 'claude.terminal.title'.tr(),
+                child: const Icon(
+                  Icons.terminal,
+                  size: 14,
+                  color: AppColors.primary,
                 ),
               ),
-            ),
-          const SizedBox(width: AppSpacing.sm),
-          _StatusIndicator(status: session.runStatus),
-        ],
+              const SizedBox(width: AppSpacing.md),
+              ModelPicker(
+                current: session.model,
+                enabled: !_isBusy,
+                onSelected: (m) => cubit.setModel(workspaceId, m),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              PermissionPicker(
+                current: session.permissionMode,
+                enabled: !_isBusy,
+                onSelected: (m) => cubit.setPermissionMode(workspaceId, m),
+              ),
+              const Spacer(),
+              if (session.messages.isNotEmpty)
+                Hoverable(
+                  onTap: _isBusy
+                      ? null
+                      : () => cubit.clearConversation(workspaceId),
+                  builder: (context, hover) => Tooltip(
+                    message: 'claude.terminal.actions.clear'.tr(),
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color:
+                            hover ? AppColors.glassHover : Colors.transparent,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Icon(
+                        Symbols.delete_sweep,
+                        size: 14,
+                        color: _isBusy
+                            ? AppColors.outline
+                            : AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              const SizedBox(width: AppSpacing.sm),
+              _StatusIndicator(
+                status: session.runStatus,
+                compact: compact,
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
 class _StatusIndicator extends StatelessWidget {
-  const _StatusIndicator({required this.status});
+  const _StatusIndicator({required this.status, this.compact = false});
 
   final ClaudeRunStatus status;
+  final bool compact;
 
   Color get _color {
     switch (status) {
@@ -131,26 +139,31 @@ class _StatusIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: _color,
-            shape: BoxShape.circle,
+    return Tooltip(
+      message: _labelKey.tr(),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: _color,
+              shape: BoxShape.circle,
+            ),
           ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Text(
-          _labelKey.tr(),
-          style: AppTypography.bodyMain.copyWith(
-            color: AppColors.outline,
-            fontSize: 11,
-          ),
-        ),
-      ],
+          if (!compact) ...[
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              _labelKey.tr(),
+              style: AppTypography.bodyMain.copyWith(
+                color: AppColors.outline,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

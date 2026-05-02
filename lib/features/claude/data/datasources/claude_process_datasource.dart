@@ -40,11 +40,7 @@ class ClaudeSpawnException implements Exception {
 
 @LazySingleton(as: ClaudeProcessDataSource)
 class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
-  ClaudeProcessDataSourceImpl(
-    this._talker,
-    this._permissionServer,
-    this._settingsWriter,
-  );
+  ClaudeProcessDataSourceImpl(this._talker, this._permissionServer, this._settingsWriter);
 
   final Talker _talker;
   final PermissionServer _permissionServer;
@@ -83,13 +79,18 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
 
       final args = <String>[
         '-p',
-        '--input-format', 'stream-json',
-        '--output-format', 'stream-json',
+        '--input-format',
+        'stream-json',
+        '--output-format',
+        'stream-json',
         '--verbose',
         '--include-partial-messages',
-        '--permission-mode', 'default',
-        '--settings', settingsPath,
-        '--append-system-prompt', mode.systemPromptHint,
+        '--permission-mode',
+        'default',
+        '--settings',
+        settingsPath,
+        '--append-system-prompt',
+        mode.systemPromptHint,
         if (model != null) ...['--model', model.cliId],
         if (resumeSessionId != null) ...['--resume', resumeSessionId],
       ];
@@ -98,13 +99,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
 
       Process process;
       try {
-        process = await Process.start(
-          binary,
-          args,
-          workingDirectory: cwd,
-          environment: _buildEnv(),
-          runInShell: false,
-        );
+        process = await Process.start(binary, args, workingDirectory: cwd, environment: _buildEnv(), runInShell: false);
       } catch (e) {
         controller.addError(ClaudeSpawnException('$e'));
         await controller.close();
@@ -114,10 +109,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
       _toolByIndex.clear();
 
       final stderrTail = Queue<String>();
-      final stderrSub = process.stderr
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .listen((line) {
+      final stderrSub = process.stderr.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
         stderrTail.add(line);
         while (stderrTail.length > _stderrTailMax) {
           stderrTail.removeFirst();
@@ -125,10 +117,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
         _talker.debug('[claude stderr] $line');
       });
 
-      final stdoutSub = process.stdout
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .listen((line) {
+      final stdoutSub = process.stdout.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
         if (line.trim().isEmpty) return;
         try {
           final raw = jsonDecode(line);
@@ -164,10 +153,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
       _current = null;
 
       if (!controller.isClosed) {
-        controller.add(ClaudeEvent.sessionDead(
-          exitCode: exitCode,
-          stderrTail: stderrTail.toList(growable: false),
-        ));
+        controller.add(ClaudeEvent.sessionDead(exitCode: exitCode, stderrTail: stderrTail.toList(growable: false)));
         await controller.close();
       }
     }();
@@ -180,8 +166,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
     final p = _current;
     if (p == null) return;
     p.kill(ProcessSignal.sigterm);
-    final exited = await p.exitCode
-        .timeout(const Duration(seconds: 2), onTimeout: () => -1);
+    final exited = await p.exitCode.timeout(const Duration(seconds: 2), onTimeout: () => -1);
     if (exited == -1) {
       p.kill(ProcessSignal.sigkill);
     }
@@ -225,8 +210,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
     try {
       if (path == 'claude') {
         // PATH-based; let Process.start resolve it. Probe with --version.
-        final r = await Process.run('claude', ['--version'],
-            runInShell: false);
+        final r = await Process.run('claude', ['--version'], runInShell: false);
         return r.exitCode == 0;
       }
       final stat = await FileStat.stat(path);
@@ -239,8 +223,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
   Future<String?> _resolveViaShell() async {
     if (!Platform.isMacOS && !Platform.isLinux) return null;
     try {
-      final r = await Process.run('zsh', ['-ilc', 'command -v claude'],
-          runInShell: false);
+      final r = await Process.run('zsh', ['-ilc', 'command -v claude'], runInShell: false);
       if (r.exitCode != 0) return null;
       final out = (r.stdout as String).trim();
       if (out.isEmpty) return null;
@@ -285,10 +268,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
                 final index = (inner['index'] as int?) ?? 0;
                 final tool = _toolByIndex[index];
                 if (tool != null) tool.partialJson.write(partial);
-                yield ClaudeEvent.toolCallUpdate(
-                  toolId: tool?.toolId ?? '',
-                  partialInput: partial,
-                );
+                yield ClaudeEvent.toolCallUpdate(toolId: tool?.toolId ?? '', partialInput: partial);
               }
             }
             return;
@@ -299,15 +279,8 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
             if (block is Map<String, dynamic> && block['type'] == 'tool_use') {
               final toolName = block['name'] as String? ?? '';
               final toolId = block['id'] as String? ?? '';
-              _toolByIndex[index] = _ToolBlockState(
-                toolName: toolName,
-                toolId: toolId,
-              );
-              yield ClaudeEvent.toolCall(
-                toolName: toolName,
-                toolId: toolId,
-                index: index,
-              );
+              _toolByIndex[index] = _ToolBlockState(toolName: toolName, toolId: toolId);
+              yield ClaudeEvent.toolCall(toolName: toolName, toolId: toolId, index: index);
             }
             return;
 
@@ -326,11 +299,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
                 }
               }
             }
-            yield ClaudeEvent.toolCallComplete(
-              index: index,
-              toolId: tool?.toolId,
-              input: input,
-            );
+            yield ClaudeEvent.toolCallComplete(index: index, toolId: tool?.toolId, input: input);
             return;
 
           default:
@@ -362,8 +331,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
           final content = message['content'];
           if (content is List) {
             for (final block in content) {
-              if (block is Map<String, dynamic> &&
-                  block['type'] == 'tool_result') {
+              if (block is Map<String, dynamic> && block['type'] == 'tool_result') {
                 yield ClaudeEvent.toolResult(
                   toolUseId: block['tool_use_id'] as String? ?? '',
                   content: _flattenToolResultContent(block['content']),
@@ -378,17 +346,12 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
       case 'result':
         final isError = raw['is_error'] == true;
         if (isError) {
-          yield ClaudeEvent.errorEvent(
-            message: raw['result'] as String? ??
-                raw['error'] as String? ??
-                'Unknown error',
-          );
+          yield ClaudeEvent.errorEvent(message: raw['result'] as String? ?? raw['error'] as String? ?? 'Unknown error');
           return;
         }
         yield ClaudeEvent.taskComplete(
           result: raw['result'] as String?,
-          costUsd: (raw['total_cost_usd'] as num?)?.toDouble() ??
-              (raw['cost_usd'] as num?)?.toDouble(),
+          costUsd: (raw['total_cost_usd'] as num?)?.toDouble() ?? (raw['cost_usd'] as num?)?.toDouble(),
           durationMs: (raw['duration_ms'] as num?)?.toInt(),
           numTurns: (raw['num_turns'] as num?)?.toInt(),
         );
