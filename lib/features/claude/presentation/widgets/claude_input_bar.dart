@@ -33,7 +33,8 @@ class ClaudeInputBar extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final controller = useTextEditingController();
-    final focusNode = useFocusNode();
+    final wrapperFocus = useFocusNode(debugLabel: 'claude_input_wrapper');
+    final inputFocus = useFocusNode(debugLabel: 'claude_input_field');
     final sessionsCubit = context.read<ClaudeSessionsCubit>();
 
     final slashCubit = useMemoized(
@@ -86,7 +87,9 @@ class ClaudeInputBar extends HookWidget {
       );
       lastInserted.value = cmd;
       slashCubit.dismiss();
-      focusNode.requestFocus();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        inputFocus.requestFocus();
+      });
     }
 
     void submit() {
@@ -179,11 +182,14 @@ class ClaudeInputBar extends HookWidget {
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Focus(
-                        focusNode: focusNode,
+                        focusNode: wrapperFocus,
                         onKeyEvent: onKey,
+                        canRequestFocus: false,
                         child: TextField(
                           key: const ValueKey('claude_input_field'),
                           controller: controller,
+                          focusNode: inputFocus,
+                          autofocus: true,
                           enabled: !_isBusy,
                           maxLines: 6,
                           minLines: 1,

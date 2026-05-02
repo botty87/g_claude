@@ -54,11 +54,13 @@ class SlashCommandOverlay extends HookWidget {
                     offset: const Offset(0, -8),
                     child: Align(
                       alignment: Alignment.bottomLeft,
-                      child: SlashCommandMenu(
-                        commands: state.filtered,
-                        selectedIndex: state.selectedIndex,
-                        onSelect: cubit.selectAt,
-                        onAccept: onAccept,
+                      child: ExcludeFocus(
+                        child: SlashCommandMenu(
+                          commands: state.filtered,
+                          selectedIndex: state.selectedIndex,
+                          onSelect: cubit.selectAt,
+                          onAccept: onAccept,
+                        ),
                       ),
                     ),
                   ),
