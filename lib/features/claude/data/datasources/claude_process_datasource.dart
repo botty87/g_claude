@@ -9,6 +9,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../domain/entities/claude_event.dart';
 import '../../domain/entities/claude_model.dart';
 import '../../domain/entities/claude_permission_mode.dart';
+import 'claude_binary_resolver.dart';
 import 'claude_settings_writer.dart';
 import 'permission_server.dart';
 
@@ -50,17 +51,25 @@ const _kContent = 'content';
 const _kSessionId = 'session_id';
 const _kModel = 'model';
 const _kTools = 'tools';
+const _kSkills = 'skills';
+const _kSlashCommands = 'slash_commands';
+const _kPlugins = 'plugins';
 
 @LazySingleton(as: ClaudeProcessDataSource)
 class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
-  ClaudeProcessDataSourceImpl(this._talker, this._permissionServer, this._settingsWriter);
+  ClaudeProcessDataSourceImpl(
+    this._talker,
+    this._permissionServer,
+    this._settingsWriter,
+    this._binaryResolver,
+  );
 
   final Talker _talker;
   final PermissionServer _permissionServer;
   final ClaudeSettingsWriter _settingsWriter;
+  final ClaudeBinaryResolver _binaryResolver;
 
   Process? _current;
-  String? _binaryPath;
 
   static const _stderrTailMax = 200;
 
@@ -77,13 +86,12 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
     final controller = StreamController<ClaudeEvent>();
 
     () async {
-      final binary = _binaryPath ?? await _resolveBinary();
+      final binary = await _binaryResolver.resolve();
       if (binary == null) {
         controller.addError(const ClaudeBinaryNotFoundException());
         await controller.close();
         return;
       }
-      _binaryPath = binary;
 
       final port = await _permissionServer.start();
       final settingsPath = await _settingsWriter.ensure(port);
@@ -188,62 +196,6 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
     return env;
   }
 
-  Future<String?> _resolveBinary() async {
-    final candidates = <String>[
-      'claude',
-      '/usr/local/bin/claude',
-      '/opt/homebrew/bin/claude',
-      _expandHome('~/.npm-global/bin/claude'),
-      _expandHome('~/.local/bin/claude'),
-      _expandHome('~/.bun/bin/claude'),
-      _expandHome('~/.deno/bin/claude'),
-    ];
-
-    for (final c in candidates) {
-      if (await _isExecutable(c)) return c;
-    }
-
-    final viaShell = await _resolveViaShell();
-    if (viaShell != null && await _isExecutable(viaShell)) return viaShell;
-
-    _talker.error('Could not locate `claude` binary in PATH or common dirs');
-    return null;
-  }
-
-  String _expandHome(String path) {
-    if (!path.startsWith('~')) return path;
-    final home = Platform.environment['HOME'];
-    if (home == null) return path;
-    return path.replaceFirst('~', home);
-  }
-
-  Future<bool> _isExecutable(String path) async {
-    try {
-      if (path == 'claude') {
-        // PATH-based; let Process.start resolve it. Probe with --version.
-        final r = await Process.run('claude', ['--version'], runInShell: false);
-        return r.exitCode == 0;
-      }
-      final stat = await FileStat.stat(path);
-      return stat.type == FileSystemEntityType.file;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<String?> _resolveViaShell() async {
-    if (!Platform.isMacOS && !Platform.isLinux) return null;
-    try {
-      final r = await Process.run('zsh', ['-ilc', 'command -v claude'], runInShell: false);
-      if (r.exitCode != 0) return null;
-      final out = (r.stdout as String).trim();
-      if (out.isEmpty) return null;
-      return out.split('\n').first;
-    } catch (_) {
-      return null;
-    }
-  }
-
   /// Maps a raw NDJSON object (per the `claude -p --output-format stream-json`
   /// contract) into a list of [ClaudeEvent]. May emit zero or more events.
   Iterable<ClaudeEvent> _normalize(Map<String, dynamic> raw) sync* {
@@ -251,10 +203,25 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
     switch (type) {
       case 'system':
         if (raw[_kSubtype] == 'init') {
+          final pluginsRaw = raw[_kPlugins];
+          final plugins = pluginsRaw is List
+              ? pluginsRaw
+                  .whereType<Map<String, dynamic>>()
+                  .map((m) => ClaudePluginInfo(
+                        name: m['name'] as String? ?? '',
+                        path: m['path'] as String? ?? '',
+                        source: m['source'] as String?,
+                      ))
+                  .where((p) => p.name.isNotEmpty && p.path.isNotEmpty)
+                  .toList()
+              : const <ClaudePluginInfo>[];
           yield ClaudeEvent.sessionInit(
             sessionId: raw[_kSessionId] as String? ?? '',
             model: raw[_kModel] as String? ?? '',
             tools: (raw[_kTools] as List?)?.cast<String>() ?? const [],
+            skills: (raw[_kSkills] as List?)?.cast<String>() ?? const [],
+            slashCommands: (raw[_kSlashCommands] as List?)?.cast<String>() ?? const [],
+            plugins: plugins,
           );
         }
         return;

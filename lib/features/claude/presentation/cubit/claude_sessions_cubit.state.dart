@@ -12,6 +12,7 @@ abstract class ClaudeSessionData with _$ClaudeSessionData {
     String? claudeSessionId,
     Failure? lastError,
     @Default(<String>[]) List<String> stderrTail,
+    @Default(<String>[]) List<String> availableSkills,
   }) = _ClaudeSessionData;
 }
 

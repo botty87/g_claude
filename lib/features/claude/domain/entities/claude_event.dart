@@ -8,6 +8,15 @@ part 'claude_event.freezed.dart';
 /// unions. The data layer parses raw NDJSON into [ClaudeEvent] before exposing
 /// it to the domain.
 @freezed
+abstract class ClaudePluginInfo with _$ClaudePluginInfo {
+  const factory ClaudePluginInfo({
+    required String name,
+    required String path,
+    String? source,
+  }) = _ClaudePluginInfo;
+}
+
+@freezed
 sealed class ClaudeEvent with _$ClaudeEvent {
   /// `system/init` — emitted at session start. Carries the `session_id`
   /// (needed for `--resume`) and the model actually selected by the CLI.
@@ -15,6 +24,9 @@ sealed class ClaudeEvent with _$ClaudeEvent {
     required String sessionId,
     required String model,
     @Default(<String>[]) List<String> tools,
+    @Default(<String>[]) List<String> skills,
+    @Default(<String>[]) List<String> slashCommands,
+    @Default(<ClaudePluginInfo>[]) List<ClaudePluginInfo> plugins,
   }) = ClaudeEventSessionInit;
 
   /// Streaming text delta for the current assistant message.

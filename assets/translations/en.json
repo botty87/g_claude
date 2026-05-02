@@ -112,6 +112,17 @@
       "closeWorkspace": "Close"
     }
   },
+  "slashCommands": {
+    "empty": "No matching commands",
+    "argumentHint": "args: {hint}",
+    "source": {
+      "cliBuiltin": "builtin",
+      "user": "user",
+      "project": "project",
+      "plugin": "plugin",
+      "skill": "skill"
+    }
+  },
   "editor": {
     "noFileOpen": "No file open. Click a file in the explorer to view it.",
     "fileLoadError": "Cannot read file",

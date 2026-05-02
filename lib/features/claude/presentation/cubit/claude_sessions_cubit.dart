@@ -322,7 +322,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     if (session == null) return;
 
     switch (event) {
-      case ClaudeEventSessionInit(:final sessionId, :final model):
+      case ClaudeEventSessionInit(:final sessionId, :final model, :final skills):
         _talker.debug('Claude session init: $sessionId model=$model');
         if (sessionId.isNotEmpty) {
           _sessionToWorkspace[sessionId] = wid;
@@ -331,6 +331,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         next[wid] = session.copyWith(
           claudeSessionId: sessionId.isEmpty ? null : sessionId,
           runStatus: ClaudeRunStatus.running,
+          availableSkills: skills,
         );
         emit(state.copyWith(sessions: next));
 

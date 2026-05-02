@@ -12,6 +12,269 @@ part of 'claude_event.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
+mixin _$ClaudePluginInfo {
+
+ String get name; String get path; String? get source;
+/// Create a copy of ClaudePluginInfo
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ClaudePluginInfoCopyWith<ClaudePluginInfo> get copyWith => _$ClaudePluginInfoCopyWithImpl<ClaudePluginInfo>(this as ClaudePluginInfo, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudePluginInfo&&(identical(other.name, name) || other.name == name)&&(identical(other.path, path) || other.path == path)&&(identical(other.source, source) || other.source == source));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,name,path,source);
+
+@override
+String toString() {
+  return 'ClaudePluginInfo(name: $name, path: $path, source: $source)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ClaudePluginInfoCopyWith<$Res>  {
+  factory $ClaudePluginInfoCopyWith(ClaudePluginInfo value, $Res Function(ClaudePluginInfo) _then) = _$ClaudePluginInfoCopyWithImpl;
+@useResult
+$Res call({
+ String name, String path, String? source
+});
+
+
+
+
+}
+/// @nodoc
+class _$ClaudePluginInfoCopyWithImpl<$Res>
+    implements $ClaudePluginInfoCopyWith<$Res> {
+  _$ClaudePluginInfoCopyWithImpl(this._self, this._then);
+
+  final ClaudePluginInfo _self;
+  final $Res Function(ClaudePluginInfo) _then;
+
+/// Create a copy of ClaudePluginInfo
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? path = null,Object? source = freezed,}) {
+  return _then(_self.copyWith(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ClaudePluginInfo].
+extension ClaudePluginInfoPatterns on ClaudePluginInfo {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ClaudePluginInfo value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ClaudePluginInfo() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ClaudePluginInfo value)  $default,){
+final _that = this;
+switch (_that) {
+case _ClaudePluginInfo():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ClaudePluginInfo value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ClaudePluginInfo() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String path,  String? source)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ClaudePluginInfo() when $default != null:
+return $default(_that.name,_that.path,_that.source);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String path,  String? source)  $default,) {final _that = this;
+switch (_that) {
+case _ClaudePluginInfo():
+return $default(_that.name,_that.path,_that.source);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String path,  String? source)?  $default,) {final _that = this;
+switch (_that) {
+case _ClaudePluginInfo() when $default != null:
+return $default(_that.name,_that.path,_that.source);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _ClaudePluginInfo implements ClaudePluginInfo {
+  const _ClaudePluginInfo({required this.name, required this.path, this.source});
+  
+
+@override final  String name;
+@override final  String path;
+@override final  String? source;
+
+/// Create a copy of ClaudePluginInfo
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ClaudePluginInfoCopyWith<_ClaudePluginInfo> get copyWith => __$ClaudePluginInfoCopyWithImpl<_ClaudePluginInfo>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClaudePluginInfo&&(identical(other.name, name) || other.name == name)&&(identical(other.path, path) || other.path == path)&&(identical(other.source, source) || other.source == source));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,name,path,source);
+
+@override
+String toString() {
+  return 'ClaudePluginInfo(name: $name, path: $path, source: $source)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ClaudePluginInfoCopyWith<$Res> implements $ClaudePluginInfoCopyWith<$Res> {
+  factory _$ClaudePluginInfoCopyWith(_ClaudePluginInfo value, $Res Function(_ClaudePluginInfo) _then) = __$ClaudePluginInfoCopyWithImpl;
+@override @useResult
+$Res call({
+ String name, String path, String? source
+});
+
+
+
+
+}
+/// @nodoc
+class __$ClaudePluginInfoCopyWithImpl<$Res>
+    implements _$ClaudePluginInfoCopyWith<$Res> {
+  __$ClaudePluginInfoCopyWithImpl(this._self, this._then);
+
+  final _ClaudePluginInfo _self;
+  final $Res Function(_ClaudePluginInfo) _then;
+
+/// Create a copy of ClaudePluginInfo
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? path = null,Object? source = freezed,}) {
+  return _then(_ClaudePluginInfo(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$ClaudeEvent {
 
 
@@ -146,10 +409,10 @@ return sessionDead(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String sessionId,  String model,  List<String> tools)?  sessionInit,TResult Function( String text)?  textChunk,TResult Function( String toolName,  String toolId,  int index)?  toolCall,TResult Function( String toolId,  String partialInput)?  toolCallUpdate,TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult Function( String text)?  assistantMessage,TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult Function( String message)?  errorEvent,TResult Function( String status,  int? resetsAt)?  rateLimit,TResult Function( int? exitCode,  List<String> stderrTail)?  sessionDead,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)?  sessionInit,TResult Function( String text)?  textChunk,TResult Function( String toolName,  String toolId,  int index)?  toolCall,TResult Function( String toolId,  String partialInput)?  toolCallUpdate,TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult Function( String text)?  assistantMessage,TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult Function( String message)?  errorEvent,TResult Function( String status,  int? resetsAt)?  rateLimit,TResult Function( int? exitCode,  List<String> stderrTail)?  sessionDead,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
-return sessionInit(_that.sessionId,_that.model,_that.tools);case ClaudeEventTextChunk() when textChunk != null:
+return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins);case ClaudeEventTextChunk() when textChunk != null:
 return textChunk(_that.text);case ClaudeEventToolCall() when toolCall != null:
 return toolCall(_that.toolName,_that.toolId,_that.index);case ClaudeEventToolCallUpdate() when toolCallUpdate != null:
 return toolCallUpdate(_that.toolId,_that.partialInput);case ClaudeEventToolCallComplete() when toolCallComplete != null:
@@ -177,10 +440,10 @@ return sessionDead(_that.exitCode,_that.stderrTail);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String sessionId,  String model,  List<String> tools)  sessionInit,required TResult Function( String text)  textChunk,required TResult Function( String toolName,  String toolId,  int index)  toolCall,required TResult Function( String toolId,  String partialInput)  toolCallUpdate,required TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)  toolCallComplete,required TResult Function( String toolUseId,  String content,  bool isError)  toolResult,required TResult Function( String text)  assistantMessage,required TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)  taskComplete,required TResult Function( String message)  errorEvent,required TResult Function( String status,  int? resetsAt)  rateLimit,required TResult Function( int? exitCode,  List<String> stderrTail)  sessionDead,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)  sessionInit,required TResult Function( String text)  textChunk,required TResult Function( String toolName,  String toolId,  int index)  toolCall,required TResult Function( String toolId,  String partialInput)  toolCallUpdate,required TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)  toolCallComplete,required TResult Function( String toolUseId,  String content,  bool isError)  toolResult,required TResult Function( String text)  assistantMessage,required TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)  taskComplete,required TResult Function( String message)  errorEvent,required TResult Function( String status,  int? resetsAt)  rateLimit,required TResult Function( int? exitCode,  List<String> stderrTail)  sessionDead,}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit():
-return sessionInit(_that.sessionId,_that.model,_that.tools);case ClaudeEventTextChunk():
+return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins);case ClaudeEventTextChunk():
 return textChunk(_that.text);case ClaudeEventToolCall():
 return toolCall(_that.toolName,_that.toolId,_that.index);case ClaudeEventToolCallUpdate():
 return toolCallUpdate(_that.toolId,_that.partialInput);case ClaudeEventToolCallComplete():
@@ -204,10 +467,10 @@ return sessionDead(_that.exitCode,_that.stderrTail);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String sessionId,  String model,  List<String> tools)?  sessionInit,TResult? Function( String text)?  textChunk,TResult? Function( String toolName,  String toolId,  int index)?  toolCall,TResult? Function( String toolId,  String partialInput)?  toolCallUpdate,TResult? Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult? Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult? Function( String text)?  assistantMessage,TResult? Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult? Function( String message)?  errorEvent,TResult? Function( String status,  int? resetsAt)?  rateLimit,TResult? Function( int? exitCode,  List<String> stderrTail)?  sessionDead,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)?  sessionInit,TResult? Function( String text)?  textChunk,TResult? Function( String toolName,  String toolId,  int index)?  toolCall,TResult? Function( String toolId,  String partialInput)?  toolCallUpdate,TResult? Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult? Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult? Function( String text)?  assistantMessage,TResult? Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult? Function( String message)?  errorEvent,TResult? Function( String status,  int? resetsAt)?  rateLimit,TResult? Function( int? exitCode,  List<String> stderrTail)?  sessionDead,}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
-return sessionInit(_that.sessionId,_that.model,_that.tools);case ClaudeEventTextChunk() when textChunk != null:
+return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins);case ClaudeEventTextChunk() when textChunk != null:
 return textChunk(_that.text);case ClaudeEventToolCall() when toolCall != null:
 return toolCall(_that.toolName,_that.toolId,_that.index);case ClaudeEventToolCallUpdate() when toolCallUpdate != null:
 return toolCallUpdate(_that.toolId,_that.partialInput);case ClaudeEventToolCallComplete() when toolCallComplete != null:
@@ -229,7 +492,7 @@ return sessionDead(_that.exitCode,_that.stderrTail);case _:
 
 
 class ClaudeEventSessionInit implements ClaudeEvent {
-  const ClaudeEventSessionInit({required this.sessionId, required this.model, final  List<String> tools = const <String>[]}): _tools = tools;
+  const ClaudeEventSessionInit({required this.sessionId, required this.model, final  List<String> tools = const <String>[], final  List<String> skills = const <String>[], final  List<String> slashCommands = const <String>[], final  List<ClaudePluginInfo> plugins = const <ClaudePluginInfo>[]}): _tools = tools,_skills = skills,_slashCommands = slashCommands,_plugins = plugins;
   
 
  final  String sessionId;
@@ -239,6 +502,27 @@ class ClaudeEventSessionInit implements ClaudeEvent {
   if (_tools is EqualUnmodifiableListView) return _tools;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_tools);
+}
+
+ final  List<String> _skills;
+@JsonKey() List<String> get skills {
+  if (_skills is EqualUnmodifiableListView) return _skills;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_skills);
+}
+
+ final  List<String> _slashCommands;
+@JsonKey() List<String> get slashCommands {
+  if (_slashCommands is EqualUnmodifiableListView) return _slashCommands;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_slashCommands);
+}
+
+ final  List<ClaudePluginInfo> _plugins;
+@JsonKey() List<ClaudePluginInfo> get plugins {
+  if (_plugins is EqualUnmodifiableListView) return _plugins;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_plugins);
 }
 
 
@@ -252,16 +536,16 @@ $ClaudeEventSessionInitCopyWith<ClaudeEventSessionInit> get copyWith => _$Claude
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeEventSessionInit&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.model, model) || other.model == model)&&const DeepCollectionEquality().equals(other._tools, _tools));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeEventSessionInit&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.model, model) || other.model == model)&&const DeepCollectionEquality().equals(other._tools, _tools)&&const DeepCollectionEquality().equals(other._skills, _skills)&&const DeepCollectionEquality().equals(other._slashCommands, _slashCommands)&&const DeepCollectionEquality().equals(other._plugins, _plugins));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,sessionId,model,const DeepCollectionEquality().hash(_tools));
+int get hashCode => Object.hash(runtimeType,sessionId,model,const DeepCollectionEquality().hash(_tools),const DeepCollectionEquality().hash(_skills),const DeepCollectionEquality().hash(_slashCommands),const DeepCollectionEquality().hash(_plugins));
 
 @override
 String toString() {
-  return 'ClaudeEvent.sessionInit(sessionId: $sessionId, model: $model, tools: $tools)';
+  return 'ClaudeEvent.sessionInit(sessionId: $sessionId, model: $model, tools: $tools, skills: $skills, slashCommands: $slashCommands, plugins: $plugins)';
 }
 
 
@@ -272,7 +556,7 @@ abstract mixin class $ClaudeEventSessionInitCopyWith<$Res> implements $ClaudeEve
   factory $ClaudeEventSessionInitCopyWith(ClaudeEventSessionInit value, $Res Function(ClaudeEventSessionInit) _then) = _$ClaudeEventSessionInitCopyWithImpl;
 @useResult
 $Res call({
- String sessionId, String model, List<String> tools
+ String sessionId, String model, List<String> tools, List<String> skills, List<String> slashCommands, List<ClaudePluginInfo> plugins
 });
 
 
@@ -289,12 +573,15 @@ class _$ClaudeEventSessionInitCopyWithImpl<$Res>
 
 /// Create a copy of ClaudeEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? sessionId = null,Object? model = null,Object? tools = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? sessionId = null,Object? model = null,Object? tools = null,Object? skills = null,Object? slashCommands = null,Object? plugins = null,}) {
   return _then(ClaudeEventSessionInit(
 sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
 as String,model: null == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
 as String,tools: null == tools ? _self._tools : tools // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,skills: null == skills ? _self._skills : skills // ignore: cast_nullable_to_non_nullable
+as List<String>,slashCommands: null == slashCommands ? _self._slashCommands : slashCommands // ignore: cast_nullable_to_non_nullable
+as List<String>,plugins: null == plugins ? _self._plugins : plugins // ignore: cast_nullable_to_non_nullable
+as List<ClaudePluginInfo>,
   ));
 }
 
