@@ -11,6 +11,7 @@ import '../../../../shared/widgets/hoverable.dart';
 import '../cubit/claude_sessions_cubit.dart';
 import '_enum_ui.dart';
 import 'effort_thinking_picker.dart';
+import 'mcp_picker.dart';
 import 'model_picker.dart';
 import 'permission_picker.dart';
 
@@ -74,6 +75,8 @@ class ClaudeTerminalHeader extends StatelessWidget {
                 enabled: !_isBusy,
                 onSelected: (m) => cubit.setPermissionMode(workspaceId, m),
               ),
+              const SizedBox(width: AppSpacing.xs),
+              McpPicker(workspaceId: workspaceId),
               const Spacer(),
               if (session.messages.isNotEmpty)
                 Hoverable(

@@ -70,6 +70,21 @@
       "thinking": {
         "label": "Pensiero",
         "tooltip": "Profondità di ragionamento (premessa al prompt)"
+      },
+      "mcp": {
+        "label": "MCP",
+        "tooltip": "Server MCP (sola lettura)",
+        "title": "Server MCP",
+        "refresh": "Aggiorna",
+        "empty": "Nessun server MCP configurato",
+        "loading": "Caricamento…",
+        "error": "Impossibile caricare i server MCP",
+        "status": {
+          "connected": "Connesso",
+          "failed": "Connessione fallita",
+          "needsAuth": "Richiede autenticazione",
+          "unknown": "Sconosciuto"
+        }
       }
     },
     "model": {

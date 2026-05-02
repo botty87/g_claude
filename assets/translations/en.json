@@ -70,6 +70,21 @@
       "thinking": {
         "label": "Thinking",
         "tooltip": "Reasoning depth (prepended to your prompt)"
+      },
+      "mcp": {
+        "label": "MCP",
+        "tooltip": "MCP servers (read-only)",
+        "title": "MCP servers",
+        "refresh": "Refresh",
+        "empty": "No MCP servers configured",
+        "loading": "Loading…",
+        "error": "Failed to load MCP servers",
+        "status": {
+          "connected": "Connected",
+          "failed": "Failed to connect",
+          "needsAuth": "Needs authentication",
+          "unknown": "Unknown"
+        }
       }
     },
     "model": {

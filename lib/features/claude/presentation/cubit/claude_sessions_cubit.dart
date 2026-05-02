@@ -17,6 +17,8 @@ import '../../domain/entities/claude_model.dart';
 import '../../domain/entities/claude_effort.dart';
 import '../../domain/entities/claude_permission_mode.dart';
 import '../../domain/entities/claude_thinking_mode.dart';
+import '../../domain/entities/mcp_server.dart';
+import '../../domain/usecases/list_mcp_servers.dart';
 import '../../domain/usecases/send_prompt.dart';
 import '../../domain/usecases/stop_run.dart';
 
@@ -28,6 +30,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   ClaudeSessionsCubit(
     this._sendPrompt,
     this._stopRun,
+    this._listMcpServers,
     this._workspacesCubit,
     this._permissionServer,
     this._prefs,
@@ -36,10 +39,15 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
   final SendPrompt _sendPrompt;
   final StopRun _stopRun;
+  final ListMcpServers _listMcpServers;
   final WorkspacesCubit _workspacesCubit;
   final PermissionServer _permissionServer;
   final SharedPreferences _prefs;
   final Talker _talker;
+
+  List<McpServer>? _mcpServersCache;
+  DateTime? _mcpServersCachedAt;
+  static const Duration _mcpCacheTtl = Duration(minutes: 2);
 
   StreamSubscription<WorkspacesState>? _workspacesSub;
   StreamSubscription<Either<Failure, ClaudeEvent>>? _runSub;
@@ -666,6 +674,28 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _runningWorkspaceId = null;
     _streamingText = '';
     _lastFlushAt = null;
+  }
+
+  Future<List<McpServer>> ensureMcpServers({bool force = false}) async {
+    final now = DateTime.now();
+    if (!force &&
+        _mcpServersCache != null &&
+        _mcpServersCachedAt != null &&
+        now.difference(_mcpServersCachedAt!) < _mcpCacheTtl) {
+      return _mcpServersCache!;
+    }
+    final result = await _listMcpServers();
+    return result.fold(
+      (f) {
+        _talker.warning('mcp list failed: $f');
+        return _mcpServersCache ?? const <McpServer>[];
+      },
+      (servers) {
+        _mcpServersCache = servers;
+        _mcpServersCachedAt = now;
+        return servers;
+      },
+    );
   }
 
   @override
