@@ -1,0 +1,341 @@
+import 'dart:async';
+import 'dart:collection';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:injectable/injectable.dart';
+import 'package:talker_flutter/talker_flutter.dart';
+
+import '../../domain/entities/claude_event.dart';
+import '../../domain/entities/claude_model.dart';
+import '../../domain/entities/claude_permission_mode.dart';
+
+/// Wraps the `claude -p` subprocess: spawn, NDJSON parsing, normalization.
+abstract interface class ClaudeProcessDataSource {
+  Stream<ClaudeEvent> startRun({
+    required String cwd,
+    required String prompt,
+    required ClaudePermissionMode mode,
+    ClaudeModel? model,
+    String? resumeSessionId,
+  });
+
+  Future<void> stop();
+}
+
+class ClaudeBinaryNotFoundException implements Exception {
+  const ClaudeBinaryNotFoundException();
+  @override
+  String toString() => 'ClaudeBinaryNotFoundException';
+}
+
+class ClaudeSpawnException implements Exception {
+  ClaudeSpawnException(this.message);
+  final String message;
+  @override
+  String toString() => 'ClaudeSpawnException: $message';
+}
+
+@LazySingleton(as: ClaudeProcessDataSource)
+class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
+  ClaudeProcessDataSourceImpl(this._talker);
+
+  final Talker _talker;
+
+  Process? _current;
+  String? _binaryPath;
+
+  static const _stderrTailMax = 200;
+
+  @override
+  Stream<ClaudeEvent> startRun({
+    required String cwd,
+    required String prompt,
+    required ClaudePermissionMode mode,
+    ClaudeModel? model,
+    String? resumeSessionId,
+  }) {
+    final controller = StreamController<ClaudeEvent>();
+
+    () async {
+      final binary = _binaryPath ?? await _resolveBinary();
+      if (binary == null) {
+        controller.addError(const ClaudeBinaryNotFoundException());
+        await controller.close();
+        return;
+      }
+      _binaryPath = binary;
+
+      final args = <String>[
+        '-p',
+        '--input-format', 'stream-json',
+        '--output-format', 'stream-json',
+        '--verbose',
+        '--include-partial-messages',
+        '--permission-mode', mode.cliFlag,
+        if (mode.isBypass) '--dangerously-skip-permissions',
+        if (model != null) ...['--model', model.cliId],
+        if (resumeSessionId != null) ...['--resume', resumeSessionId],
+      ];
+
+      _talker.debug('Spawning claude: $binary ${args.join(' ')} (cwd=$cwd)');
+
+      Process process;
+      try {
+        process = await Process.start(
+          binary,
+          args,
+          workingDirectory: cwd,
+          environment: _buildEnv(),
+          runInShell: false,
+        );
+      } catch (e) {
+        controller.addError(ClaudeSpawnException('$e'));
+        await controller.close();
+        return;
+      }
+      _current = process;
+
+      final stderrTail = Queue<String>();
+      final stderrSub = process.stderr
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .listen((line) {
+        stderrTail.add(line);
+        while (stderrTail.length > _stderrTailMax) {
+          stderrTail.removeFirst();
+        }
+        _talker.debug('[claude stderr] $line');
+      });
+
+      final stdoutSub = process.stdout
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .listen((line) {
+        if (line.trim().isEmpty) return;
+        try {
+          final raw = jsonDecode(line);
+          if (raw is! Map<String, dynamic>) return;
+          final event = _normalize(raw);
+          if (event != null) controller.add(event);
+        } catch (e) {
+          _talker.warning('Could not parse NDJSON line: $line ($e)');
+        }
+      });
+
+      try {
+        final payload = {
+          'type': 'user',
+          'message': {
+            'role': 'user',
+            'content': [
+              {'type': 'text', 'text': prompt},
+            ],
+          },
+        };
+        process.stdin.writeln(jsonEncode(payload));
+        await process.stdin.flush();
+        await process.stdin.close();
+      } catch (e) {
+        _talker.warning('Failed to write to claude stdin: $e');
+      }
+
+      final exitCode = await process.exitCode;
+      await stdoutSub.cancel();
+      await stderrSub.cancel();
+      _current = null;
+
+      if (!controller.isClosed) {
+        controller.add(ClaudeEvent.sessionDead(
+          exitCode: exitCode,
+          stderrTail: stderrTail.toList(growable: false),
+        ));
+        await controller.close();
+      }
+    }();
+
+    return controller.stream;
+  }
+
+  @override
+  Future<void> stop() async {
+    final p = _current;
+    if (p == null) return;
+    p.kill(ProcessSignal.sigterm);
+    final exited = await p.exitCode
+        .timeout(const Duration(seconds: 2), onTimeout: () => -1);
+    if (exited == -1) {
+      p.kill(ProcessSignal.sigkill);
+    }
+  }
+
+  Map<String, String> _buildEnv() {
+    final env = Map<String, String>.from(Platform.environment);
+    return env;
+  }
+
+  Future<String?> _resolveBinary() async {
+    final candidates = <String>[
+      'claude',
+      '/usr/local/bin/claude',
+      '/opt/homebrew/bin/claude',
+      _expandHome('~/.npm-global/bin/claude'),
+      _expandHome('~/.local/bin/claude'),
+      _expandHome('~/.bun/bin/claude'),
+      _expandHome('~/.deno/bin/claude'),
+    ];
+
+    for (final c in candidates) {
+      if (await _isExecutable(c)) return c;
+    }
+
+    final viaShell = await _resolveViaShell();
+    if (viaShell != null && await _isExecutable(viaShell)) return viaShell;
+
+    _talker.error('Could not locate `claude` binary in PATH or common dirs');
+    return null;
+  }
+
+  String _expandHome(String path) {
+    if (!path.startsWith('~')) return path;
+    final home = Platform.environment['HOME'];
+    if (home == null) return path;
+    return path.replaceFirst('~', home);
+  }
+
+  Future<bool> _isExecutable(String path) async {
+    try {
+      if (path == 'claude') {
+        // PATH-based; let Process.start resolve it. Probe with --version.
+        final r = await Process.run('claude', ['--version'],
+            runInShell: false);
+        return r.exitCode == 0;
+      }
+      final stat = await FileStat.stat(path);
+      return stat.type == FileSystemEntityType.file;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<String?> _resolveViaShell() async {
+    if (!Platform.isMacOS && !Platform.isLinux) return null;
+    try {
+      final r = await Process.run('zsh', ['-ilc', 'command -v claude'],
+          runInShell: false);
+      if (r.exitCode != 0) return null;
+      final out = (r.stdout as String).trim();
+      if (out.isEmpty) return null;
+      return out.split('\n').first;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Maps a raw NDJSON object (per the `claude -p --output-format stream-json`
+  /// contract) into a [ClaudeEvent]. Returns null if the event is irrelevant.
+  ClaudeEvent? _normalize(Map<String, dynamic> raw) {
+    final type = raw['type'] as String?;
+    switch (type) {
+      case 'system':
+        if (raw['subtype'] == 'init') {
+          return ClaudeEvent.sessionInit(
+            sessionId: raw['session_id'] as String? ?? '',
+            model: raw['model'] as String? ?? '',
+            tools: (raw['tools'] as List?)?.cast<String>() ?? const [],
+          );
+        }
+        return null;
+
+      case 'stream_event':
+        final inner = raw['event'];
+        if (inner is! Map<String, dynamic>) return null;
+        final innerType = inner['type'] as String?;
+        switch (innerType) {
+          case 'content_block_delta':
+            final delta = inner['delta'];
+            if (delta is Map<String, dynamic>) {
+              final dType = delta['type'] as String?;
+              if (dType == 'text_delta') {
+                final text = delta['text'] as String? ?? '';
+                if (text.isEmpty) return null;
+                return ClaudeEvent.textChunk(text: text);
+              }
+              if (dType == 'input_json_delta') {
+                final partial = delta['partial_json'] as String? ?? '';
+                final toolId = inner['index']?.toString() ?? '';
+                return ClaudeEvent.toolCallUpdate(
+                  toolId: toolId,
+                  partialInput: partial,
+                );
+              }
+            }
+            return null;
+
+          case 'content_block_start':
+            final block = inner['content_block'];
+            if (block is Map<String, dynamic> && block['type'] == 'tool_use') {
+              return ClaudeEvent.toolCall(
+                toolName: block['name'] as String? ?? '',
+                toolId: block['id'] as String? ?? '',
+                index: (inner['index'] as int?) ?? 0,
+              );
+            }
+            return null;
+
+          case 'content_block_stop':
+            return ClaudeEvent.toolCallComplete(
+              index: (inner['index'] as int?) ?? 0,
+            );
+
+          default:
+            return null;
+        }
+
+      case 'assistant':
+        final message = raw['message'];
+        if (message is Map<String, dynamic>) {
+          final content = message['content'];
+          if (content is List) {
+            final buf = StringBuffer();
+            for (final block in content) {
+              if (block is Map<String, dynamic> && block['type'] == 'text') {
+                buf.write(block['text'] as String? ?? '');
+              }
+            }
+            final text = buf.toString();
+            if (text.isNotEmpty) {
+              return ClaudeEvent.assistantMessage(text: text);
+            }
+          }
+        }
+        return null;
+
+      case 'result':
+        final isError = raw['is_error'] == true;
+        if (isError) {
+          return ClaudeEvent.errorEvent(
+            message: raw['result'] as String? ??
+                raw['error'] as String? ??
+                'Unknown error',
+          );
+        }
+        return ClaudeEvent.taskComplete(
+          result: raw['result'] as String?,
+          costUsd: (raw['total_cost_usd'] as num?)?.toDouble() ??
+              (raw['cost_usd'] as num?)?.toDouble(),
+          durationMs: (raw['duration_ms'] as num?)?.toInt(),
+          numTurns: (raw['num_turns'] as num?)?.toInt(),
+        );
+
+      case 'rate_limit_event':
+        return ClaudeEvent.rateLimit(
+          status: raw['status'] as String? ?? 'unknown',
+          resetsAt: (raw['resets_at'] as num?)?.toInt(),
+        );
+
+      default:
+        return null;
+    }
+  }
+}

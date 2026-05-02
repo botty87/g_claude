@@ -15,6 +15,16 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import 'package:talker_flutter/talker_flutter.dart' as _i207;
 
+import '../../features/claude/data/datasources/claude_process_datasource.dart'
+    as _i457;
+import '../../features/claude/data/repositories/claude_repository_impl.dart'
+    as _i1009;
+import '../../features/claude/domain/repositories/claude_repository.dart'
+    as _i139;
+import '../../features/claude/domain/usecases/send_prompt.dart' as _i338;
+import '../../features/claude/domain/usecases/stop_run.dart' as _i328;
+import '../../features/claude/presentation/cubit/claude_sessions_cubit.dart'
+    as _i838;
 import '../../features/editor/data/datasources/file_content_datasource.dart'
     as _i630;
 import '../../features/editor/data/datasources/file_tabs_persistence_datasource.dart'
@@ -74,6 +84,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i735.WorkspaceLocalDataSource>(
       () => _i735.WorkspaceLocalDataSourceImpl(),
     );
+    gh.lazySingleton<_i457.ClaudeProcessDataSource>(
+      () => _i457.ClaudeProcessDataSourceImpl(gh<_i207.Talker>()),
+    );
     gh.lazySingleton<_i630.FileContentDataSource>(
       () => _i630.FileContentDataSourceImpl(),
     );
@@ -85,6 +98,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i494.KeyValueStore>(
       () => _i494.SharedPreferencesKeyValueStore(gh<_i460.SharedPreferences>()),
+    );
+    gh.lazySingleton<_i139.ClaudeRepository>(
+      () => _i1009.ClaudeRepositoryImpl(gh<_i457.ClaudeProcessDataSource>()),
     );
     gh.lazySingleton<_i1043.FileContentRepository>(
       () => _i574.FileContentRepositoryImpl(gh<_i630.FileContentDataSource>()),
@@ -100,6 +116,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i305.OpenWorkspace>(
       () => _i305.OpenWorkspace(gh<_i268.WorkspaceRepository>()),
+    );
+    gh.factory<_i338.SendPrompt>(
+      () => _i338.SendPrompt(gh<_i139.ClaudeRepository>()),
+    );
+    gh.factory<_i328.StopRun>(
+      () => _i328.StopRun(gh<_i139.ClaudeRepository>()),
     );
     gh.lazySingleton<_i283.FileTabsPersistenceDataSource>(
       () => _i283.FileTabsPersistenceDataSourceImpl(
@@ -138,6 +160,15 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i308.ListDirectory>(
       () => _i308.ListDirectory(gh<_i150.FileSystemRepository>()),
+    );
+    gh.lazySingleton<_i838.ClaudeSessionsCubit>(
+      () => _i838.ClaudeSessionsCubit(
+        gh<_i338.SendPrompt>(),
+        gh<_i328.StopRun>(),
+        gh<_i179.WorkspacesCubit>(),
+        gh<_i460.SharedPreferences>(),
+        gh<_i207.Talker>(),
+      )..init(),
     );
     gh.lazySingleton<_i188.ExplorerCubit>(
       () => _i188.ExplorerCubit(

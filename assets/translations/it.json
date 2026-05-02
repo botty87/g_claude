@@ -29,16 +29,66 @@
     "terminal": {
       "title": "Claude Terminal",
       "status": {
-        "connected": "Connesso"
+        "idle": "Pronto",
+        "connecting": "Connessione…",
+        "running": "In esecuzione",
+        "error": "Errore",
+        "sessionDead": "Sessione terminata",
+        "noWorkspace": "Apri un workspace per iniziare a chattare"
       },
       "input": {
-        "placeholder": "Invia un messaggio a Claude..."
+        "placeholder": "Invia un messaggio a Claude…",
+        "placeholderRunning": "Claude sta rispondendo… (Cmd+. per fermare)",
+        "stop": "Ferma",
+        "send": "Invia"
+      },
+      "actions": {
+        "clear": "Pulisci conversazione",
+        "newSession": "Nuova sessione"
+      },
+      "model": {
+        "label": "Modello",
+        "tooltip": "Cambia modello (applicato al prossimo prompt)"
+      },
+      "permission": {
+        "label": "Modalità",
+        "tooltip": "Modalità permessi (applicata al prossimo prompt)",
+        "warning": {
+          "default": "La modalità Default richiede un hook server (non ancora disponibile). I tool si bloccheranno fino al timeout."
+        }
       }
+    },
+    "model": {
+      "opus47": "Opus 4.7",
+      "sonnet46": "Sonnet 4.6",
+      "haiku45": "Haiku 4.5"
+    },
+    "permission": {
+      "plan": "Plan (sola lettura)",
+      "acceptEdits": "Accetta modifiche",
+      "bypassPermissions": "Bypass (yolo)",
+      "default": "Default"
     },
     "message": {
       "userLabel": "utente@workspace",
       "promptDelimiter": "~",
-      "assistantLabel": "claude"
+      "assistantLabel": "claude",
+      "systemLabel": "system",
+      "toolRunning": "Esecuzione tool: {name}",
+      "toolCompleted": "Tool: {name}",
+      "toolError": "Tool fallito: {name}"
+    },
+    "error": {
+      "binaryNotFound": "Impossibile trovare la CLI `claude` sul sistema. Installa da https://claude.com/code o aggiungi al PATH.",
+      "spawnFailed": "Impossibile avviare il processo `claude`: {message}",
+      "parseFailed": "Riga non parseabile dall'output di `claude`.",
+      "exitedNonZero": "`claude` è uscito con codice {code}.",
+      "killed": "`claude` è stato terminato.",
+      "rateLimited": "Rate limit: {status}"
+    },
+    "empty": {
+      "title": "Inizia una conversazione",
+      "hint": "Scrivi un prompt qui sotto. La conversazione persiste finché questa tab del workspace resta aperta."
     }
   },
   "workspace": {
