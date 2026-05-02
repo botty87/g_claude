@@ -49,4 +49,44 @@ class ClaudeRepositoryImpl implements ClaudeRepository {
 
   @override
   Future<void> stop() => _datasource.stop();
+
+  @override
+  Future<Either<Failure, void>> toggleMcpServer({
+    required String serverName,
+    required bool enabled,
+  }) async {
+    try {
+      await _datasource.sendControlRequest(
+        subtype: 'mcp_toggle',
+        payload: {'serverName': serverName, 'enabled': enabled},
+      );
+      return const Right(null);
+    } on StateError catch (e) {
+      return Left(SubprocessFailure(message: e.message));
+    } on McpControlException catch (e) {
+      return Left(SubprocessFailure(message: e.message));
+    } catch (e) {
+      return Left(UnexpectedFailure('$e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String?>> authenticateMcpServer({
+    required String serverName,
+  }) async {
+    try {
+      final response = await _datasource.sendControlRequest(
+        subtype: 'mcp_authenticate',
+        payload: {'serverName': serverName},
+      );
+      final authUrl = response['authUrl'];
+      return Right(authUrl is String ? authUrl : null);
+    } on StateError catch (e) {
+      return Left(SubprocessFailure(message: e.message));
+    } on McpControlException catch (e) {
+      return Left(SubprocessFailure(message: e.message));
+    } catch (e) {
+      return Left(UnexpectedFailure('$e'));
+    }
+  }
 }

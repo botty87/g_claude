@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:injectable/injectable.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -26,6 +27,22 @@ abstract interface class ClaudeProcessDataSource {
   });
 
   Future<void> stop();
+
+  /// Sends a control_request envelope to the active subprocess stdin and waits
+  /// for the matching control_response. Returns the inner `response` payload
+  /// (may be empty). Throws [McpControlException] on error or [StateError] if
+  /// no subprocess is active.
+  Future<Map<String, dynamic>> sendControlRequest({
+    required String subtype,
+    required Map<String, dynamic> payload,
+  });
+}
+
+class McpControlException implements Exception {
+  McpControlException(this.message);
+  final String message;
+  @override
+  String toString() => 'McpControlException: $message';
 }
 
 class ClaudeBinaryNotFoundException implements Exception {
@@ -76,6 +93,9 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
   static const _stderrTailMax = 200;
 
   final Map<int, _ToolBlockState> _toolByIndex = {};
+  final Map<String, Completer<Map<String, dynamic>>> _pendingControlResponses = {};
+
+  static final _rng = Random.secure();
 
   @override
   Stream<ClaudeEvent> startRun({
@@ -145,6 +165,16 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
         try {
           final raw = jsonDecode(line);
           if (raw is! Map<String, dynamic>) return;
+          // Intercept control_response before normal event parsing.
+          if (raw['type'] == 'control_response') {
+            final response = raw['response'] as Map<String, dynamic>?;
+            final reqId = response?['request_id'] as String?;
+            if (reqId != null) {
+              final pending = _pendingControlResponses.remove(reqId);
+              pending?.complete(response ?? {});
+            }
+            return;
+          }
           for (final event in _normalize(raw)) {
             controller.add(event);
           }
@@ -165,7 +195,8 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
         };
         process.stdin.writeln(jsonEncode(payload));
         await process.stdin.flush();
-        await process.stdin.close();
+        // stdin is intentionally kept open so control_request messages can be
+        // written during the run. It is closed after the process exits.
       } catch (e) {
         _talker.warning('Failed to write to claude stdin: $e');
       }
@@ -173,6 +204,15 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
       final exitCode = await process.exitCode;
       await stdoutSub.cancel();
       await stderrSub.cancel();
+
+      // Fail any control_requests still pending — the process is gone.
+      _failPendingControlResponses('subprocess exited');
+
+      // Close stdin now that the process has exited.
+      try {
+        await process.stdin.close();
+      } catch (_) {}
+
       _current = null;
 
       if (!controller.isClosed) {
@@ -192,6 +232,61 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
     final exited = await p.exitCode.timeout(const Duration(seconds: 2), onTimeout: () => -1);
     if (exited == -1) {
       p.kill(ProcessSignal.sigkill);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> sendControlRequest({
+    required String subtype,
+    required Map<String, dynamic> payload,
+  }) async {
+    final process = _current;
+    if (process == null) {
+      throw StateError('sendControlRequest: no active subprocess');
+    }
+    final id = _generateRequestId();
+    final completer = Completer<Map<String, dynamic>>();
+    _pendingControlResponses[id] = completer;
+    final envelope = {
+      'type': 'control_request',
+      'request_id': id,
+      'request': {'subtype': subtype, ...payload},
+    };
+    try {
+      process.stdin.writeln(jsonEncode(envelope));
+      await process.stdin.flush();
+    } catch (e) {
+      _pendingControlResponses.remove(id);
+      rethrow;
+    }
+    try {
+      final response = await completer.future.timeout(const Duration(seconds: 30));
+      final subtypeResp = response['subtype'] as String?;
+      if (subtypeResp == 'error') {
+        throw McpControlException(response['error']?.toString() ?? 'unknown error');
+      }
+      final inner = response['response'];
+      return inner is Map<String, dynamic> ? inner : <String, dynamic>{};
+    } on TimeoutException {
+      _pendingControlResponses.remove(id);
+      throw McpControlException('control_request timed out');
+    }
+  }
+
+  String _generateRequestId() {
+    // No uuid package in pubspec — generate a sufficiently unique local ID.
+    final ts = DateTime.now().microsecondsSinceEpoch;
+    final rand = _rng.nextInt(1 << 32);
+    return '$ts-$rand';
+  }
+
+  void _failPendingControlResponses(String reason) {
+    final pending = Map.of(_pendingControlResponses);
+    _pendingControlResponses.clear();
+    for (final completer in pending.values) {
+      if (!completer.isCompleted) {
+        completer.completeError(McpControlException(reason));
+      }
     }
   }
 

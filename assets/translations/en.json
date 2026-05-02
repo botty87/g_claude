@@ -73,12 +73,16 @@
       },
       "mcp": {
         "label": "MCP",
-        "tooltip": "MCP servers (read-only)",
+        "tooltip": "MCP servers",
         "title": "MCP servers",
         "refresh": "Refresh",
         "empty": "No MCP servers configured",
         "loading": "Loading…",
         "error": "Failed to load MCP servers",
+        "disabledLabel": "Disabled",
+        "toggleNoSession": "Start a chat to toggle MCP servers",
+        "toggleError": "Failed to toggle server",
+        "authenticate": "Authenticate",
         "status": {
           "connected": "Connected",
           "failed": "Failed to connect",

@@ -73,12 +73,16 @@
       },
       "mcp": {
         "label": "MCP",
-        "tooltip": "Server MCP (sola lettura)",
+        "tooltip": "Server MCP",
         "title": "Server MCP",
         "refresh": "Aggiorna",
         "empty": "Nessun server MCP configurato",
         "loading": "Caricamento…",
         "error": "Impossibile caricare i server MCP",
+        "disabledLabel": "Disabilitato",
+        "toggleNoSession": "Avvia una chat per modificare i server MCP",
+        "toggleError": "Impossibile cambiare lo stato del server",
+        "authenticate": "Autentica",
         "status": {
           "connected": "Connesso",
           "failed": "Connessione fallita",

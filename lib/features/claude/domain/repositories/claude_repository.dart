@@ -19,4 +19,17 @@ abstract interface class ClaudeRepository {
 
   /// Terminates the current run if any (best-effort).
   Future<void> stop();
+
+  /// Toggles an MCP server on the active subprocess via control_request.
+  /// Throws [StateError] if no subprocess is running.
+  Future<Either<Failure, void>> toggleMcpServer({
+    required String serverName,
+    required bool enabled,
+  });
+
+  /// Starts the OAuth flow for an MCP server. Returns the authUrl to open in
+  /// the user's browser.
+  Future<Either<Failure, String?>> authenticateMcpServer({
+    required String serverName,
+  });
 }

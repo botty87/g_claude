@@ -31,9 +31,12 @@ import '../../features/claude/data/repositories/mcp_repository_impl.dart'
 import '../../features/claude/domain/repositories/claude_repository.dart'
     as _i139;
 import '../../features/claude/domain/repositories/mcp_repository.dart' as _i585;
+import '../../features/claude/domain/usecases/authenticate_mcp_server.dart'
+    as _i407;
 import '../../features/claude/domain/usecases/list_mcp_servers.dart' as _i977;
 import '../../features/claude/domain/usecases/send_prompt.dart' as _i338;
 import '../../features/claude/domain/usecases/stop_run.dart' as _i328;
+import '../../features/claude/domain/usecases/toggle_mcp_server.dart' as _i920;
 import '../../features/claude/presentation/cubit/claude_sessions_cubit.dart'
     as _i838;
 import '../../features/editor/data/datasources/file_content_datasource.dart'
@@ -210,6 +213,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i207.Talker>(),
       ),
     );
+    gh.factory<_i407.AuthenticateMcpServer>(
+      () => _i407.AuthenticateMcpServer(gh<_i139.ClaudeRepository>()),
+    );
+    gh.factory<_i920.ToggleMcpServer>(
+      () => _i920.ToggleMcpServer(gh<_i139.ClaudeRepository>()),
+    );
     gh.lazySingleton<_i420.WorkspacesPersistenceDataSource>(
       () => _i420.WorkspacesPersistenceDataSourceImpl(
         gh<_i494.KeyValueStore>(),
@@ -227,22 +236,24 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i308.ListDirectory>(
       () => _i308.ListDirectory(gh<_i150.FileSystemRepository>()),
     );
-    gh.lazySingleton<_i838.ClaudeSessionsCubit>(
-      () => _i838.ClaudeSessionsCubit(
-        gh<_i338.SendPrompt>(),
-        gh<_i328.StopRun>(),
-        gh<_i977.ListMcpServers>(),
-        gh<_i179.WorkspacesCubit>(),
-        gh<_i407.PermissionServer>(),
-        gh<_i460.SharedPreferences>(),
-        gh<_i207.Talker>(),
-      )..init(),
-    );
     gh.lazySingleton<_i648.FileTabsCubit>(
       () => _i648.FileTabsCubit(
         gh<_i179.WorkspacesCubit>(),
         gh<_i283.FileTabsPersistenceDataSource>(),
         gh<_i167.WorkspaceFileWatcher>(),
+        gh<_i207.Talker>(),
+      )..init(),
+    );
+    gh.lazySingleton<_i838.ClaudeSessionsCubit>(
+      () => _i838.ClaudeSessionsCubit(
+        gh<_i338.SendPrompt>(),
+        gh<_i328.StopRun>(),
+        gh<_i977.ListMcpServers>(),
+        gh<_i920.ToggleMcpServer>(),
+        gh<_i407.AuthenticateMcpServer>(),
+        gh<_i179.WorkspacesCubit>(),
+        gh<_i407.PermissionServer>(),
+        gh<_i460.SharedPreferences>(),
         gh<_i207.Talker>(),
       )..init(),
     );

@@ -15,6 +15,7 @@ abstract class ClaudeSessionData with _$ClaudeSessionData {
     Failure? lastError,
     @Default(<String>[]) List<String> stderrTail,
     @Default(<String>[]) List<String> availableSkills,
+    @Default(<String>{}) Set<String> disabledMcpServers,
   }) = _ClaudeSessionData;
 }
 

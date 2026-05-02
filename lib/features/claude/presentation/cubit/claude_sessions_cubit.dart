@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -19,8 +20,10 @@ import '../../domain/entities/claude_permission_mode.dart';
 import '../../domain/entities/claude_thinking_mode.dart';
 import '../../domain/entities/mcp_server.dart';
 import '../../domain/usecases/list_mcp_servers.dart';
+import '../../domain/usecases/authenticate_mcp_server.dart';
 import '../../domain/usecases/send_prompt.dart';
 import '../../domain/usecases/stop_run.dart';
+import '../../domain/usecases/toggle_mcp_server.dart';
 
 part 'claude_sessions_cubit.freezed.dart';
 part 'claude_sessions_cubit.state.dart';
@@ -31,6 +34,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     this._sendPrompt,
     this._stopRun,
     this._listMcpServers,
+    this._toggleMcpServer,
+    this._authenticateMcpServer,
     this._workspacesCubit,
     this._permissionServer,
     this._prefs,
@@ -40,6 +45,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   final SendPrompt _sendPrompt;
   final StopRun _stopRun;
   final ListMcpServers _listMcpServers;
+  final ToggleMcpServer _toggleMcpServer;
+  final AuthenticateMcpServer _authenticateMcpServer;
   final WorkspacesCubit _workspacesCubit;
   final PermissionServer _permissionServer;
   final SharedPreferences _prefs;
@@ -63,6 +70,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   static const _permPrefix = 'claude.permission.';
   static const _effortPrefix = 'claude.effort.';
   static const _thinkingPrefix = 'claude.thinking.';
+  static const _mcpDisabledPrefix = 'claude.mcp_disabled.';
   static const _flushMs = 16;
 
   String _genId(String prefix) =>
@@ -184,6 +192,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         permissionMode: _readPermission(id),
         effort: _readEffort(id),
         thinkingMode: _readThinking(id),
+        disabledMcpServers: _readMcpDisabled(id),
       );
     }
     for (final id in removed) {
@@ -218,6 +227,23 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   ClaudeThinkingMode _readThinking(String workspaceId) {
     final raw = _prefs.getString('$_thinkingPrefix$workspaceId');
     return ClaudeThinkingMode.fromName(raw);
+  }
+
+  Set<String> _readMcpDisabled(String workspaceId) {
+    final raw = _prefs.getStringList('$_mcpDisabledPrefix$workspaceId');
+    return raw == null ? <String>{} : raw.toSet();
+  }
+
+  Future<void> _writeMcpDisabled(
+    String workspaceId,
+    Set<String> disabled,
+  ) async {
+    final key = '$_mcpDisabledPrefix$workspaceId';
+    if (disabled.isEmpty) {
+      await _prefs.remove(key);
+    } else {
+      await _prefs.setStringList(key, disabled.toList());
+    }
   }
 
   void setModel(String workspaceId, ClaudeModel model) {
@@ -381,6 +407,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
           availableSkills: skills,
         );
         emit(state.copyWith(sessions: next));
+        unawaited(_applyMcpDisabledOnSpawn(wid));
 
       case ClaudeEventTextChunk(:final text):
         _ensureStreamingMessage(wid);
@@ -696,6 +723,113 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         return servers;
       },
     );
+  }
+
+  bool isSessionActive(String workspaceId) {
+    if (_runningWorkspaceId != workspaceId) return false;
+    final session = state.sessions[workspaceId];
+    if (session == null) return false;
+    return session.runStatus == ClaudeRunStatus.running ||
+        session.runStatus == ClaudeRunStatus.connecting;
+  }
+
+  Future<void> toggleMcpServer(
+    String workspaceId,
+    String serverName,
+    bool enabled,
+  ) async {
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+
+    final original = session.disabledMcpServers;
+    final next = Set<String>.from(original);
+    if (enabled) {
+      next.remove(serverName);
+    } else {
+      next.add(serverName);
+    }
+    _emitSession(workspaceId, session.copyWith(disabledMcpServers: next));
+    await _writeMcpDisabled(workspaceId, next);
+
+    if (!isSessionActive(workspaceId)) {
+      _talker.info(
+        'mcp toggle persisted (no live session): '
+        '$serverName=${enabled ? "on" : "off"}',
+      );
+      return;
+    }
+
+    final result = await _toggleMcpServer(
+      serverName: serverName,
+      enabled: enabled,
+    );
+    result.fold(
+      (f) {
+        _talker.error('mcp toggle failed: ${f.toString()}');
+        final current = state.sessions[workspaceId];
+        if (current != null) {
+          _emitSession(
+            workspaceId,
+            current.copyWith(disabledMcpServers: original),
+          );
+          _writeMcpDisabled(workspaceId, original);
+        }
+      },
+      (_) =>
+          _talker.info('mcp toggle ok: $serverName=${enabled ? "on" : "off"}'),
+    );
+  }
+
+  Future<void> authenticateMcpServer(
+    String workspaceId,
+    String serverName,
+  ) async {
+    if (!isSessionActive(workspaceId)) {
+      _talker.warning('mcp auth: no active session for $workspaceId');
+      return;
+    }
+    _talker.info('mcp auth: starting flow for $serverName');
+    final result = await _authenticateMcpServer(serverName: serverName);
+    await result.fold(
+      (f) async {
+        _talker.error('mcp auth failed: ${f.toString()}');
+      },
+      (authUrl) async {
+        if (authUrl == null || authUrl.isEmpty) {
+          _talker.warning('mcp auth: no authUrl returned for $serverName');
+          return;
+        }
+        _talker.info('mcp auth: opening $authUrl');
+        try {
+          await Process.run('open', [authUrl]);
+        } catch (e) {
+          _talker.error('mcp auth: failed to open browser: $e');
+        }
+      },
+    );
+  }
+
+  Future<void> _applyMcpDisabledOnSpawn(String workspaceId) async {
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+    final disabled = session.disabledMcpServers;
+    if (disabled.isEmpty) return;
+    _talker.info(
+      'mcp: applying ${disabled.length} disabled server(s) on spawn',
+    );
+    for (final name in disabled) {
+      final result = await _toggleMcpServer(serverName: name, enabled: false);
+      result.fold(
+        (f) => _talker.warning('mcp pre-disable failed for $name: $f'),
+        (_) => null,
+      );
+    }
+  }
+
+  void _emitSession(String workspaceId, ClaudeSessionData data) {
+    final next = Map<String, ClaudeSessionData>.from(state.sessions);
+    next[workspaceId] = data;
+    emit(state.copyWith(sessions: next));
   }
 
   @override
