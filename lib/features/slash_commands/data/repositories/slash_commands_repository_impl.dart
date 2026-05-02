@@ -10,20 +10,17 @@ import '../../../claude/domain/entities/claude_event.dart';
 import '../../domain/entities/slash_command.dart';
 import '../../domain/entities/slash_command_source.dart';
 import '../../domain/repositories/slash_commands_repository.dart';
-import '../datasources/builtin_app_commands.dart';
 import '../datasources/commands_discovery_datasource.dart';
 import '../datasources/slash_commands_fs_datasource.dart';
 
 @LazySingleton(as: SlashCommandsRepository)
 class SlashCommandsRepositoryImpl implements SlashCommandsRepository {
   SlashCommandsRepositoryImpl(
-    this._builtin,
     this._fs,
     this._discovery,
     this._binary,
   );
 
-  final BuiltinAppCommands _builtin;
   final SlashCommandsFsDataSource _fs;
   final CommandsDiscoveryDataSource _discovery;
   final ClaudeBinaryResolver _binary;
@@ -123,11 +120,10 @@ class SlashCommandsRepositoryImpl implements SlashCommandsRepository {
       }
     }
 
-    final fallbackDesc = _builtin.descriptionFor(name) ?? name;
     return SlashCommand(
       name: name,
       trigger: trigger,
-      description: fallbackDesc,
+      description: name,
       source: isSkill ? SlashCommandSource.skill : SlashCommandSource.cliBuiltin,
     );
   }

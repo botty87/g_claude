@@ -50,8 +50,6 @@ import '../../features/explorer/domain/usecases/list_directory.dart' as _i308;
 import '../../features/explorer/presentation/cubit/explorer_cubit.dart'
     as _i188;
 import '../../features/shell/presentation/cubit/shell_cubit.dart' as _i68;
-import '../../features/slash_commands/data/datasources/builtin_app_commands.dart'
-    as _i857;
 import '../../features/slash_commands/data/datasources/commands_discovery_datasource.dart'
     as _i986;
 import '../../features/slash_commands/data/datasources/slash_commands_fs_datasource.dart'
@@ -105,9 +103,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i679.FilterSlashCommands>(() => _i679.FilterSlashCommands());
     gh.lazySingleton<_i81.AppRouter>(() => routerModule.router);
     gh.lazySingleton<_i207.Talker>(() => talkerModule.talker);
-    gh.lazySingleton<_i857.BuiltinAppCommands>(
-      () => _i857.BuiltinAppCommands(),
-    );
     gh.lazySingleton<_i735.WorkspaceLocalDataSource>(
       () => _i735.WorkspaceLocalDataSourceImpl(),
     );
@@ -136,6 +131,16 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i331.BlocObserver>(
       () => blocObserverModule.blocObserver(gh<_i207.Talker>()),
     );
+    gh.lazySingleton<_i266.SlashCommandsRepository>(
+      () => _i773.SlashCommandsRepositoryImpl(
+        gh<_i143.SlashCommandsFsDataSource>(),
+        gh<_i986.CommandsDiscoveryDataSource>(),
+        gh<_i1073.ClaudeBinaryResolver>(),
+      ),
+    );
+    gh.factory<_i676.LoadSlashCommands>(
+      () => _i676.LoadSlashCommands(gh<_i266.SlashCommandsRepository>()),
+    );
     gh.lazySingleton<_i457.ClaudeProcessDataSource>(
       () => _i457.ClaudeProcessDataSourceImpl(
         gh<_i207.Talker>(),
@@ -162,14 +167,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i268.WorkspaceRepository>(
       () => _i824.WorkspaceRepositoryImpl(gh<_i735.WorkspaceLocalDataSource>()),
     );
-    gh.lazySingleton<_i266.SlashCommandsRepository>(
-      () => _i773.SlashCommandsRepositoryImpl(
-        gh<_i857.BuiltinAppCommands>(),
-        gh<_i143.SlashCommandsFsDataSource>(),
-        gh<_i986.CommandsDiscoveryDataSource>(),
-        gh<_i1073.ClaudeBinaryResolver>(),
-      ),
-    );
     gh.factory<_i268.LoadClaudeMd>(
       () => _i268.LoadClaudeMd(gh<_i268.WorkspaceRepository>()),
     );
@@ -191,14 +188,18 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i150.FileSystemRepository>(
       () => _i890.FileSystemRepositoryImpl(gh<_i12.FileSystemDataSource>()),
     );
+    gh.factory<_i742.SlashCommandsCubit>(
+      () => _i742.SlashCommandsCubit(
+        gh<_i676.LoadSlashCommands>(),
+        gh<_i679.FilterSlashCommands>(),
+        gh<_i207.Talker>(),
+      ),
+    );
     gh.lazySingleton<_i420.WorkspacesPersistenceDataSource>(
       () => _i420.WorkspacesPersistenceDataSourceImpl(
         gh<_i494.KeyValueStore>(),
         gh<_i207.Talker>(),
       ),
-    );
-    gh.factory<_i676.LoadSlashCommands>(
-      () => _i676.LoadSlashCommands(gh<_i266.SlashCommandsRepository>()),
     );
     gh.lazySingleton<_i179.WorkspacesCubit>(
       () => _i179.WorkspacesCubit(
@@ -210,13 +211,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i308.ListDirectory>(
       () => _i308.ListDirectory(gh<_i150.FileSystemRepository>()),
-    );
-    gh.factory<_i742.SlashCommandsCubit>(
-      () => _i742.SlashCommandsCubit(
-        gh<_i676.LoadSlashCommands>(),
-        gh<_i679.FilterSlashCommands>(),
-        gh<_i207.Talker>(),
-      ),
     );
     gh.lazySingleton<_i648.FileTabsCubit>(
       () => _i648.FileTabsCubit(
