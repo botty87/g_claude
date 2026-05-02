@@ -6,8 +6,11 @@ import 'package:path/path.dart' as p;
 import '../../../../core/error/exceptions.dart';
 import '../../domain/entities/file_content.dart';
 
+typedef ReadFileResult = ({FileContent content, DateTime modified});
+
 abstract interface class FileContentDataSource {
-  Future<FileContent> readFile({required String path});
+  Future<ReadFileResult> readFile({required String path});
+  Future<DateTime?> mtimeOf({required String path});
 }
 
 @LazySingleton(as: FileContentDataSource)
@@ -16,7 +19,7 @@ class FileContentDataSourceImpl implements FileContentDataSource {
   static const _peekBytes = 8192;
 
   @override
-  Future<FileContent> readFile({required String path}) async {
+  Future<ReadFileResult> readFile({required String path}) async {
     final file = File(path);
     final stat = await file.stat();
 
@@ -36,12 +39,22 @@ class FileContentDataSourceImpl implements FileContentDataSource {
     }
 
     final content = await file.readAsString();
-    return FileContent(
-      path: path,
-      content: content,
-      language: _languageFor(path),
-      sizeBytes: stat.size,
+    return (
+      content: FileContent(
+        path: path,
+        content: content,
+        language: _languageFor(path),
+        sizeBytes: stat.size,
+      ),
+      modified: stat.modified,
     );
+  }
+
+  @override
+  Future<DateTime?> mtimeOf({required String path}) async {
+    final stat = await File(path).stat();
+    if (stat.type == FileSystemEntityType.notFound) return null;
+    return stat.modified;
   }
 
   String? _languageFor(String path) {
