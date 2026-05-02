@@ -157,12 +157,12 @@ return system(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String id,  String text,  DateTime createdAt)?  user,TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt)?  tool,TResult Function( String id,  String text,  DateTime createdAt)?  system,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String id,  String text,  DateTime createdAt)?  user,TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult Function( String id,  String text,  DateTime createdAt)?  system,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
 return user(_that.id,_that.text,_that.createdAt);case ClaudeMessageAssistant() when assistant != null:
 return assistant(_that.id,_that.text,_that.isStreaming,_that.createdAt);case ClaudeMessageTool() when tool != null:
-return tool(_that.id,_that.toolName,_that.status,_that.createdAt);case ClaudeMessageSystem() when system != null:
+return tool(_that.id,_that.toolName,_that.status,_that.createdAt,_that.toolUseId,_that.input,_that.output,_that.isError);case ClaudeMessageSystem() when system != null:
 return system(_that.id,_that.text,_that.createdAt);case _:
   return orElse();
 
@@ -181,12 +181,12 @@ return system(_that.id,_that.text,_that.createdAt);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String id,  String text,  DateTime createdAt)  user,required TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)  assistant,required TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt)  tool,required TResult Function( String id,  String text,  DateTime createdAt)  system,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String id,  String text,  DateTime createdAt)  user,required TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)  assistant,required TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)  tool,required TResult Function( String id,  String text,  DateTime createdAt)  system,}) {final _that = this;
 switch (_that) {
 case ClaudeMessageUser():
 return user(_that.id,_that.text,_that.createdAt);case ClaudeMessageAssistant():
 return assistant(_that.id,_that.text,_that.isStreaming,_that.createdAt);case ClaudeMessageTool():
-return tool(_that.id,_that.toolName,_that.status,_that.createdAt);case ClaudeMessageSystem():
+return tool(_that.id,_that.toolName,_that.status,_that.createdAt,_that.toolUseId,_that.input,_that.output,_that.isError);case ClaudeMessageSystem():
 return system(_that.id,_that.text,_that.createdAt);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -201,12 +201,12 @@ return system(_that.id,_that.text,_that.createdAt);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String id,  String text,  DateTime createdAt)?  user,TResult? Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult? Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt)?  tool,TResult? Function( String id,  String text,  DateTime createdAt)?  system,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String id,  String text,  DateTime createdAt)?  user,TResult? Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult? Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult? Function( String id,  String text,  DateTime createdAt)?  system,}) {final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
 return user(_that.id,_that.text,_that.createdAt);case ClaudeMessageAssistant() when assistant != null:
 return assistant(_that.id,_that.text,_that.isStreaming,_that.createdAt);case ClaudeMessageTool() when tool != null:
-return tool(_that.id,_that.toolName,_that.status,_that.createdAt);case ClaudeMessageSystem() when system != null:
+return tool(_that.id,_that.toolName,_that.status,_that.createdAt,_that.toolUseId,_that.input,_that.output,_that.isError);case ClaudeMessageSystem() when system != null:
 return system(_that.id,_that.text,_that.createdAt);case _:
   return null;
 
@@ -361,13 +361,25 @@ as DateTime,
 
 
 class ClaudeMessageTool extends ClaudeMessage {
-  const ClaudeMessageTool({required this.id, required this.toolName, required this.status, required this.createdAt}): super._();
+  const ClaudeMessageTool({required this.id, required this.toolName, required this.status, required this.createdAt, this.toolUseId, final  Map<String, dynamic>? input, this.output, this.isError = false}): _input = input,super._();
   
 
 @override final  String id;
  final  String toolName;
  final  ClaudeToolStatus status;
 @override final  DateTime createdAt;
+ final  String? toolUseId;
+ final  Map<String, dynamic>? _input;
+ Map<String, dynamic>? get input {
+  final value = _input;
+  if (value == null) return null;
+  if (_input is EqualUnmodifiableMapView) return _input;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(value);
+}
+
+ final  String? output;
+@JsonKey() final  bool isError;
 
 /// Create a copy of ClaudeMessage
 /// with the given fields replaced by the non-null parameter values.
@@ -379,16 +391,16 @@ $ClaudeMessageToolCopyWith<ClaudeMessageTool> get copyWith => _$ClaudeMessageToo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeMessageTool&&(identical(other.id, id) || other.id == id)&&(identical(other.toolName, toolName) || other.toolName == toolName)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeMessageTool&&(identical(other.id, id) || other.id == id)&&(identical(other.toolName, toolName) || other.toolName == toolName)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.toolUseId, toolUseId) || other.toolUseId == toolUseId)&&const DeepCollectionEquality().equals(other._input, _input)&&(identical(other.output, output) || other.output == output)&&(identical(other.isError, isError) || other.isError == isError));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,toolName,status,createdAt);
+int get hashCode => Object.hash(runtimeType,id,toolName,status,createdAt,toolUseId,const DeepCollectionEquality().hash(_input),output,isError);
 
 @override
 String toString() {
-  return 'ClaudeMessage.tool(id: $id, toolName: $toolName, status: $status, createdAt: $createdAt)';
+  return 'ClaudeMessage.tool(id: $id, toolName: $toolName, status: $status, createdAt: $createdAt, toolUseId: $toolUseId, input: $input, output: $output, isError: $isError)';
 }
 
 
@@ -399,7 +411,7 @@ abstract mixin class $ClaudeMessageToolCopyWith<$Res> implements $ClaudeMessageC
   factory $ClaudeMessageToolCopyWith(ClaudeMessageTool value, $Res Function(ClaudeMessageTool) _then) = _$ClaudeMessageToolCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String toolName, ClaudeToolStatus status, DateTime createdAt
+ String id, String toolName, ClaudeToolStatus status, DateTime createdAt, String? toolUseId, Map<String, dynamic>? input, String? output, bool isError
 });
 
 
@@ -416,13 +428,17 @@ class _$ClaudeMessageToolCopyWithImpl<$Res>
 
 /// Create a copy of ClaudeMessage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? toolName = null,Object? status = null,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? toolName = null,Object? status = null,Object? createdAt = null,Object? toolUseId = freezed,Object? input = freezed,Object? output = freezed,Object? isError = null,}) {
   return _then(ClaudeMessageTool(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,toolName: null == toolName ? _self.toolName : toolName // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ClaudeToolStatus,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,toolUseId: freezed == toolUseId ? _self.toolUseId : toolUseId // ignore: cast_nullable_to_non_nullable
+as String?,input: freezed == input ? _self._input : input // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>?,output: freezed == output ? _self.output : output // ignore: cast_nullable_to_non_nullable
+as String?,isError: null == isError ? _self.isError : isError // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

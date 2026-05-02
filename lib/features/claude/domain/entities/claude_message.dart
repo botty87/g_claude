@@ -26,6 +26,10 @@ sealed class ClaudeMessage with _$ClaudeMessage {
     required String toolName,
     required ClaudeToolStatus status,
     required DateTime createdAt,
+    String? toolUseId,
+    Map<String, dynamic>? input,
+    String? output,
+    @Default(false) bool isError,
   }) = ClaudeMessageTool;
 
   const factory ClaudeMessage.system({

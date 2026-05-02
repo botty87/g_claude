@@ -298,12 +298,13 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         _replaceStreamingMessage(wid, text, isStreaming: false);
         _streamingMessageId = null;
 
-      case ClaudeEventToolCall(:final toolName):
+      case ClaudeEventToolCall(:final toolName, :final toolId):
         _appendMessage(
           wid,
           ClaudeMessage.tool(
             id: 't-${DateTime.now().microsecondsSinceEpoch}',
             toolName: toolName,
+            toolUseId: toolId.isEmpty ? null : toolId,
             status: ClaudeToolStatus.running,
             createdAt: DateTime.now(),
           ),
@@ -313,9 +314,16 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         // Skip partial input updates in this iteration.
         break;
 
-      case ClaudeEventToolCallComplete():
-        // Mark last running tool as completed.
-        _markLastToolCompleted(wid);
+      case ClaudeEventToolCallComplete(:final toolId, :final input):
+        _completeToolMessage(wid, toolUseId: toolId, input: input);
+
+      case ClaudeEventToolResult(:final toolUseId, :final content, :final isError):
+        _attachToolResult(
+          wid,
+          toolUseId: toolUseId,
+          output: content,
+          isError: isError,
+        );
 
       case ClaudeEventTaskComplete():
         _flushStreamingChunks();
@@ -392,20 +400,94 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     emit(state.copyWith(sessions: next));
   }
 
-  void _markLastToolCompleted(String wid) {
+  void _completeToolMessage(
+    String wid, {
+    String? toolUseId,
+    Map<String, dynamic>? input,
+  }) {
     final session = state.sessions[wid];
     if (session == null) return;
     final list = [...session.messages];
     for (var i = list.length - 1; i >= 0; i--) {
       final m = list[i];
-      if (m is ClaudeMessageTool && m.status == ClaudeToolStatus.running) {
-        list[i] = m.copyWith(status: ClaudeToolStatus.completed);
-        break;
+      if (m is! ClaudeMessageTool) continue;
+      if (m.status != ClaudeToolStatus.running) continue;
+      if (toolUseId != null && m.toolUseId != null && m.toolUseId != toolUseId) {
+        continue;
       }
+      list[i] = m.copyWith(
+        status: ClaudeToolStatus.completed,
+        input: input ?? m.input,
+      );
+      break;
     }
     final next = Map<String, ClaudeSessionData>.from(state.sessions);
     next[wid] = session.copyWith(messages: list);
     emit(state.copyWith(sessions: next));
+  }
+
+  void _attachToolResult(
+    String wid, {
+    required String toolUseId,
+    required String output,
+    required bool isError,
+  }) {
+    if (toolUseId.isEmpty) return;
+    final session = state.sessions[wid];
+    if (session == null) return;
+    final list = [...session.messages];
+    for (var i = list.length - 1; i >= 0; i--) {
+      final m = list[i];
+      if (m is! ClaudeMessageTool) continue;
+      if (m.toolUseId != toolUseId) continue;
+      list[i] = m.copyWith(
+        output: output,
+        isError: isError,
+        status:
+            isError ? ClaudeToolStatus.error : ClaudeToolStatus.completed,
+      );
+      break;
+    }
+    final next = Map<String, ClaudeSessionData>.from(state.sessions);
+    next[wid] = session.copyWith(messages: list);
+    emit(state.copyWith(sessions: next));
+  }
+
+  /// If the last turn ended with at least one tool but no non-empty
+  /// assistant text, append a [ClaudeMessageSystem] stub so the user has a
+  /// visible completion marker.
+  List<ClaudeMessage> _appendCompletionStubIfNeeded(
+    List<ClaudeMessage> messages,
+  ) {
+    if (messages.isEmpty) return messages;
+    var lastUser = -1;
+    for (var i = messages.length - 1; i >= 0; i--) {
+      if (messages[i] is ClaudeMessageUser) {
+        lastUser = i;
+        break;
+      }
+    }
+    if (lastUser == -1) return messages;
+    var hasTool = false;
+    var hasText = false;
+    for (var i = lastUser + 1; i < messages.length; i++) {
+      final m = messages[i];
+      if (m is ClaudeMessageTool) {
+        hasTool = true;
+      } else if (m is ClaudeMessageAssistant && m.text.isNotEmpty) {
+        hasText = true;
+      }
+    }
+    if (!hasTool || hasText) return messages;
+    final now = DateTime.now();
+    return [
+      ...messages,
+      ClaudeMessage.system(
+        id: 's-${now.microsecondsSinceEpoch}',
+        text: 'claude.message.completionStub',
+        createdAt: now,
+      ),
+    ];
   }
 
   void _finishRun({
@@ -432,6 +514,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
               (messages.last as ClaudeMessageAssistant).text.isEmpty) {
             messages = messages.sublist(0, messages.length - 1);
           }
+        }
+        if (status == ClaudeRunStatus.idle) {
+          messages = _appendCompletionStubIfNeeded(messages);
         }
         final next = Map<String, ClaudeSessionData>.from(state.sessions);
         next[wid] = session.copyWith(

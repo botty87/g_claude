@@ -70,13 +70,20 @@
       "default": "Default"
     },
     "message": {
-      "userLabel": "utente@workspace",
-      "promptDelimiter": "~",
-      "assistantLabel": "claude",
+      "assistantLabel": "Claude",
       "systemLabel": "system",
-      "toolRunning": "Esecuzione tool: {name}",
-      "toolCompleted": "Tool: {name}",
-      "toolError": "Tool fallito: {name}"
+      "toolPrefix": "Tool",
+      "toolRunning": "in esecuzione",
+      "toolCompleted": "completato",
+      "toolError": "errore",
+      "toolInput": "INPUT",
+      "toolResult": "RISULTATO",
+      "toolErrorOutput": "ERRORE",
+      "toolGroupTitle": "{count} tool",
+      "toolGroupRunning": "{n} in esecuzione",
+      "toolGroupDone": "{n} completati",
+      "toolGroupErrors": "{n} errori",
+      "completionStub": "Operazione completata."
     },
     "error": {
       "binaryNotFound": "Impossibile trovare la CLI `claude` sul sistema. Installa da https://claude.com/code o aggiungi al PATH.",

@@ -55,7 +55,7 @@ extension ClaudeEventPatterns on ClaudeEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ClaudeEventSessionInit value)?  sessionInit,TResult Function( ClaudeEventTextChunk value)?  textChunk,TResult Function( ClaudeEventToolCall value)?  toolCall,TResult Function( ClaudeEventToolCallUpdate value)?  toolCallUpdate,TResult Function( ClaudeEventToolCallComplete value)?  toolCallComplete,TResult Function( ClaudeEventAssistantMessage value)?  assistantMessage,TResult Function( ClaudeEventTaskComplete value)?  taskComplete,TResult Function( ClaudeEventErrorEvent value)?  errorEvent,TResult Function( ClaudeEventRateLimit value)?  rateLimit,TResult Function( ClaudeEventSessionDead value)?  sessionDead,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ClaudeEventSessionInit value)?  sessionInit,TResult Function( ClaudeEventTextChunk value)?  textChunk,TResult Function( ClaudeEventToolCall value)?  toolCall,TResult Function( ClaudeEventToolCallUpdate value)?  toolCallUpdate,TResult Function( ClaudeEventToolCallComplete value)?  toolCallComplete,TResult Function( ClaudeEventToolResult value)?  toolResult,TResult Function( ClaudeEventAssistantMessage value)?  assistantMessage,TResult Function( ClaudeEventTaskComplete value)?  taskComplete,TResult Function( ClaudeEventErrorEvent value)?  errorEvent,TResult Function( ClaudeEventRateLimit value)?  rateLimit,TResult Function( ClaudeEventSessionDead value)?  sessionDead,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
@@ -63,7 +63,8 @@ return sessionInit(_that);case ClaudeEventTextChunk() when textChunk != null:
 return textChunk(_that);case ClaudeEventToolCall() when toolCall != null:
 return toolCall(_that);case ClaudeEventToolCallUpdate() when toolCallUpdate != null:
 return toolCallUpdate(_that);case ClaudeEventToolCallComplete() when toolCallComplete != null:
-return toolCallComplete(_that);case ClaudeEventAssistantMessage() when assistantMessage != null:
+return toolCallComplete(_that);case ClaudeEventToolResult() when toolResult != null:
+return toolResult(_that);case ClaudeEventAssistantMessage() when assistantMessage != null:
 return assistantMessage(_that);case ClaudeEventTaskComplete() when taskComplete != null:
 return taskComplete(_that);case ClaudeEventErrorEvent() when errorEvent != null:
 return errorEvent(_that);case ClaudeEventRateLimit() when rateLimit != null:
@@ -86,7 +87,7 @@ return sessionDead(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ClaudeEventSessionInit value)  sessionInit,required TResult Function( ClaudeEventTextChunk value)  textChunk,required TResult Function( ClaudeEventToolCall value)  toolCall,required TResult Function( ClaudeEventToolCallUpdate value)  toolCallUpdate,required TResult Function( ClaudeEventToolCallComplete value)  toolCallComplete,required TResult Function( ClaudeEventAssistantMessage value)  assistantMessage,required TResult Function( ClaudeEventTaskComplete value)  taskComplete,required TResult Function( ClaudeEventErrorEvent value)  errorEvent,required TResult Function( ClaudeEventRateLimit value)  rateLimit,required TResult Function( ClaudeEventSessionDead value)  sessionDead,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ClaudeEventSessionInit value)  sessionInit,required TResult Function( ClaudeEventTextChunk value)  textChunk,required TResult Function( ClaudeEventToolCall value)  toolCall,required TResult Function( ClaudeEventToolCallUpdate value)  toolCallUpdate,required TResult Function( ClaudeEventToolCallComplete value)  toolCallComplete,required TResult Function( ClaudeEventToolResult value)  toolResult,required TResult Function( ClaudeEventAssistantMessage value)  assistantMessage,required TResult Function( ClaudeEventTaskComplete value)  taskComplete,required TResult Function( ClaudeEventErrorEvent value)  errorEvent,required TResult Function( ClaudeEventRateLimit value)  rateLimit,required TResult Function( ClaudeEventSessionDead value)  sessionDead,}){
 final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit():
@@ -94,7 +95,8 @@ return sessionInit(_that);case ClaudeEventTextChunk():
 return textChunk(_that);case ClaudeEventToolCall():
 return toolCall(_that);case ClaudeEventToolCallUpdate():
 return toolCallUpdate(_that);case ClaudeEventToolCallComplete():
-return toolCallComplete(_that);case ClaudeEventAssistantMessage():
+return toolCallComplete(_that);case ClaudeEventToolResult():
+return toolResult(_that);case ClaudeEventAssistantMessage():
 return assistantMessage(_that);case ClaudeEventTaskComplete():
 return taskComplete(_that);case ClaudeEventErrorEvent():
 return errorEvent(_that);case ClaudeEventRateLimit():
@@ -113,7 +115,7 @@ return sessionDead(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ClaudeEventSessionInit value)?  sessionInit,TResult? Function( ClaudeEventTextChunk value)?  textChunk,TResult? Function( ClaudeEventToolCall value)?  toolCall,TResult? Function( ClaudeEventToolCallUpdate value)?  toolCallUpdate,TResult? Function( ClaudeEventToolCallComplete value)?  toolCallComplete,TResult? Function( ClaudeEventAssistantMessage value)?  assistantMessage,TResult? Function( ClaudeEventTaskComplete value)?  taskComplete,TResult? Function( ClaudeEventErrorEvent value)?  errorEvent,TResult? Function( ClaudeEventRateLimit value)?  rateLimit,TResult? Function( ClaudeEventSessionDead value)?  sessionDead,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ClaudeEventSessionInit value)?  sessionInit,TResult? Function( ClaudeEventTextChunk value)?  textChunk,TResult? Function( ClaudeEventToolCall value)?  toolCall,TResult? Function( ClaudeEventToolCallUpdate value)?  toolCallUpdate,TResult? Function( ClaudeEventToolCallComplete value)?  toolCallComplete,TResult? Function( ClaudeEventToolResult value)?  toolResult,TResult? Function( ClaudeEventAssistantMessage value)?  assistantMessage,TResult? Function( ClaudeEventTaskComplete value)?  taskComplete,TResult? Function( ClaudeEventErrorEvent value)?  errorEvent,TResult? Function( ClaudeEventRateLimit value)?  rateLimit,TResult? Function( ClaudeEventSessionDead value)?  sessionDead,}){
 final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
@@ -121,7 +123,8 @@ return sessionInit(_that);case ClaudeEventTextChunk() when textChunk != null:
 return textChunk(_that);case ClaudeEventToolCall() when toolCall != null:
 return toolCall(_that);case ClaudeEventToolCallUpdate() when toolCallUpdate != null:
 return toolCallUpdate(_that);case ClaudeEventToolCallComplete() when toolCallComplete != null:
-return toolCallComplete(_that);case ClaudeEventAssistantMessage() when assistantMessage != null:
+return toolCallComplete(_that);case ClaudeEventToolResult() when toolResult != null:
+return toolResult(_that);case ClaudeEventAssistantMessage() when assistantMessage != null:
 return assistantMessage(_that);case ClaudeEventTaskComplete() when taskComplete != null:
 return taskComplete(_that);case ClaudeEventErrorEvent() when errorEvent != null:
 return errorEvent(_that);case ClaudeEventRateLimit() when rateLimit != null:
@@ -143,14 +146,15 @@ return sessionDead(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String sessionId,  String model,  List<String> tools)?  sessionInit,TResult Function( String text)?  textChunk,TResult Function( String toolName,  String toolId,  int index)?  toolCall,TResult Function( String toolId,  String partialInput)?  toolCallUpdate,TResult Function( int index)?  toolCallComplete,TResult Function( String text)?  assistantMessage,TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult Function( String message)?  errorEvent,TResult Function( String status,  int? resetsAt)?  rateLimit,TResult Function( int? exitCode,  List<String> stderrTail)?  sessionDead,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String sessionId,  String model,  List<String> tools)?  sessionInit,TResult Function( String text)?  textChunk,TResult Function( String toolName,  String toolId,  int index)?  toolCall,TResult Function( String toolId,  String partialInput)?  toolCallUpdate,TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult Function( String text)?  assistantMessage,TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult Function( String message)?  errorEvent,TResult Function( String status,  int? resetsAt)?  rateLimit,TResult Function( int? exitCode,  List<String> stderrTail)?  sessionDead,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
 return sessionInit(_that.sessionId,_that.model,_that.tools);case ClaudeEventTextChunk() when textChunk != null:
 return textChunk(_that.text);case ClaudeEventToolCall() when toolCall != null:
 return toolCall(_that.toolName,_that.toolId,_that.index);case ClaudeEventToolCallUpdate() when toolCallUpdate != null:
 return toolCallUpdate(_that.toolId,_that.partialInput);case ClaudeEventToolCallComplete() when toolCallComplete != null:
-return toolCallComplete(_that.index);case ClaudeEventAssistantMessage() when assistantMessage != null:
+return toolCallComplete(_that.index,_that.toolId,_that.input);case ClaudeEventToolResult() when toolResult != null:
+return toolResult(_that.toolUseId,_that.content,_that.isError);case ClaudeEventAssistantMessage() when assistantMessage != null:
 return assistantMessage(_that.text);case ClaudeEventTaskComplete() when taskComplete != null:
 return taskComplete(_that.result,_that.costUsd,_that.durationMs,_that.numTurns);case ClaudeEventErrorEvent() when errorEvent != null:
 return errorEvent(_that.message);case ClaudeEventRateLimit() when rateLimit != null:
@@ -173,14 +177,15 @@ return sessionDead(_that.exitCode,_that.stderrTail);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String sessionId,  String model,  List<String> tools)  sessionInit,required TResult Function( String text)  textChunk,required TResult Function( String toolName,  String toolId,  int index)  toolCall,required TResult Function( String toolId,  String partialInput)  toolCallUpdate,required TResult Function( int index)  toolCallComplete,required TResult Function( String text)  assistantMessage,required TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)  taskComplete,required TResult Function( String message)  errorEvent,required TResult Function( String status,  int? resetsAt)  rateLimit,required TResult Function( int? exitCode,  List<String> stderrTail)  sessionDead,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String sessionId,  String model,  List<String> tools)  sessionInit,required TResult Function( String text)  textChunk,required TResult Function( String toolName,  String toolId,  int index)  toolCall,required TResult Function( String toolId,  String partialInput)  toolCallUpdate,required TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)  toolCallComplete,required TResult Function( String toolUseId,  String content,  bool isError)  toolResult,required TResult Function( String text)  assistantMessage,required TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)  taskComplete,required TResult Function( String message)  errorEvent,required TResult Function( String status,  int? resetsAt)  rateLimit,required TResult Function( int? exitCode,  List<String> stderrTail)  sessionDead,}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit():
 return sessionInit(_that.sessionId,_that.model,_that.tools);case ClaudeEventTextChunk():
 return textChunk(_that.text);case ClaudeEventToolCall():
 return toolCall(_that.toolName,_that.toolId,_that.index);case ClaudeEventToolCallUpdate():
 return toolCallUpdate(_that.toolId,_that.partialInput);case ClaudeEventToolCallComplete():
-return toolCallComplete(_that.index);case ClaudeEventAssistantMessage():
+return toolCallComplete(_that.index,_that.toolId,_that.input);case ClaudeEventToolResult():
+return toolResult(_that.toolUseId,_that.content,_that.isError);case ClaudeEventAssistantMessage():
 return assistantMessage(_that.text);case ClaudeEventTaskComplete():
 return taskComplete(_that.result,_that.costUsd,_that.durationMs,_that.numTurns);case ClaudeEventErrorEvent():
 return errorEvent(_that.message);case ClaudeEventRateLimit():
@@ -199,14 +204,15 @@ return sessionDead(_that.exitCode,_that.stderrTail);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String sessionId,  String model,  List<String> tools)?  sessionInit,TResult? Function( String text)?  textChunk,TResult? Function( String toolName,  String toolId,  int index)?  toolCall,TResult? Function( String toolId,  String partialInput)?  toolCallUpdate,TResult? Function( int index)?  toolCallComplete,TResult? Function( String text)?  assistantMessage,TResult? Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult? Function( String message)?  errorEvent,TResult? Function( String status,  int? resetsAt)?  rateLimit,TResult? Function( int? exitCode,  List<String> stderrTail)?  sessionDead,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String sessionId,  String model,  List<String> tools)?  sessionInit,TResult? Function( String text)?  textChunk,TResult? Function( String toolName,  String toolId,  int index)?  toolCall,TResult? Function( String toolId,  String partialInput)?  toolCallUpdate,TResult? Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult? Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult? Function( String text)?  assistantMessage,TResult? Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult? Function( String message)?  errorEvent,TResult? Function( String status,  int? resetsAt)?  rateLimit,TResult? Function( int? exitCode,  List<String> stderrTail)?  sessionDead,}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
 return sessionInit(_that.sessionId,_that.model,_that.tools);case ClaudeEventTextChunk() when textChunk != null:
 return textChunk(_that.text);case ClaudeEventToolCall() when toolCall != null:
 return toolCall(_that.toolName,_that.toolId,_that.index);case ClaudeEventToolCallUpdate() when toolCallUpdate != null:
 return toolCallUpdate(_that.toolId,_that.partialInput);case ClaudeEventToolCallComplete() when toolCallComplete != null:
-return toolCallComplete(_that.index);case ClaudeEventAssistantMessage() when assistantMessage != null:
+return toolCallComplete(_that.index,_that.toolId,_that.input);case ClaudeEventToolResult() when toolResult != null:
+return toolResult(_that.toolUseId,_that.content,_that.isError);case ClaudeEventAssistantMessage() when assistantMessage != null:
 return assistantMessage(_that.text);case ClaudeEventTaskComplete() when taskComplete != null:
 return taskComplete(_that.result,_that.costUsd,_that.durationMs,_that.numTurns);case ClaudeEventErrorEvent() when errorEvent != null:
 return errorEvent(_that.message);case ClaudeEventRateLimit() when rateLimit != null:
@@ -503,10 +509,20 @@ as String,
 
 
 class ClaudeEventToolCallComplete implements ClaudeEvent {
-  const ClaudeEventToolCallComplete({required this.index});
+  const ClaudeEventToolCallComplete({required this.index, this.toolId, final  Map<String, dynamic>? input}): _input = input;
   
 
  final  int index;
+ final  String? toolId;
+ final  Map<String, dynamic>? _input;
+ Map<String, dynamic>? get input {
+  final value = _input;
+  if (value == null) return null;
+  if (_input is EqualUnmodifiableMapView) return _input;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(value);
+}
+
 
 /// Create a copy of ClaudeEvent
 /// with the given fields replaced by the non-null parameter values.
@@ -518,16 +534,16 @@ $ClaudeEventToolCallCompleteCopyWith<ClaudeEventToolCallComplete> get copyWith =
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeEventToolCallComplete&&(identical(other.index, index) || other.index == index));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeEventToolCallComplete&&(identical(other.index, index) || other.index == index)&&(identical(other.toolId, toolId) || other.toolId == toolId)&&const DeepCollectionEquality().equals(other._input, _input));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,index);
+int get hashCode => Object.hash(runtimeType,index,toolId,const DeepCollectionEquality().hash(_input));
 
 @override
 String toString() {
-  return 'ClaudeEvent.toolCallComplete(index: $index)';
+  return 'ClaudeEvent.toolCallComplete(index: $index, toolId: $toolId, input: $input)';
 }
 
 
@@ -538,7 +554,7 @@ abstract mixin class $ClaudeEventToolCallCompleteCopyWith<$Res> implements $Clau
   factory $ClaudeEventToolCallCompleteCopyWith(ClaudeEventToolCallComplete value, $Res Function(ClaudeEventToolCallComplete) _then) = _$ClaudeEventToolCallCompleteCopyWithImpl;
 @useResult
 $Res call({
- int index
+ int index, String? toolId, Map<String, dynamic>? input
 });
 
 
@@ -555,10 +571,82 @@ class _$ClaudeEventToolCallCompleteCopyWithImpl<$Res>
 
 /// Create a copy of ClaudeEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? index = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? index = null,Object? toolId = freezed,Object? input = freezed,}) {
   return _then(ClaudeEventToolCallComplete(
 index: null == index ? _self.index : index // ignore: cast_nullable_to_non_nullable
-as int,
+as int,toolId: freezed == toolId ? _self.toolId : toolId // ignore: cast_nullable_to_non_nullable
+as String?,input: freezed == input ? _self._input : input // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>?,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ClaudeEventToolResult implements ClaudeEvent {
+  const ClaudeEventToolResult({required this.toolUseId, required this.content, this.isError = false});
+  
+
+ final  String toolUseId;
+ final  String content;
+@JsonKey() final  bool isError;
+
+/// Create a copy of ClaudeEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ClaudeEventToolResultCopyWith<ClaudeEventToolResult> get copyWith => _$ClaudeEventToolResultCopyWithImpl<ClaudeEventToolResult>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeEventToolResult&&(identical(other.toolUseId, toolUseId) || other.toolUseId == toolUseId)&&(identical(other.content, content) || other.content == content)&&(identical(other.isError, isError) || other.isError == isError));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,toolUseId,content,isError);
+
+@override
+String toString() {
+  return 'ClaudeEvent.toolResult(toolUseId: $toolUseId, content: $content, isError: $isError)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ClaudeEventToolResultCopyWith<$Res> implements $ClaudeEventCopyWith<$Res> {
+  factory $ClaudeEventToolResultCopyWith(ClaudeEventToolResult value, $Res Function(ClaudeEventToolResult) _then) = _$ClaudeEventToolResultCopyWithImpl;
+@useResult
+$Res call({
+ String toolUseId, String content, bool isError
+});
+
+
+
+
+}
+/// @nodoc
+class _$ClaudeEventToolResultCopyWithImpl<$Res>
+    implements $ClaudeEventToolResultCopyWith<$Res> {
+  _$ClaudeEventToolResultCopyWithImpl(this._self, this._then);
+
+  final ClaudeEventToolResult _self;
+  final $Res Function(ClaudeEventToolResult) _then;
+
+/// Create a copy of ClaudeEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? toolUseId = null,Object? content = null,Object? isError = null,}) {
+  return _then(ClaudeEventToolResult(
+toolUseId: null == toolUseId ? _self.toolUseId : toolUseId // ignore: cast_nullable_to_non_nullable
+as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
+as String,isError: null == isError ? _self.isError : isError // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

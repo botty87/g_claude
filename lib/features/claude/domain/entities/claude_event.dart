@@ -38,7 +38,16 @@ sealed class ClaudeEvent with _$ClaudeEvent {
   /// A tool invocation finished receiving its full input.
   const factory ClaudeEvent.toolCallComplete({
     required int index,
+    String? toolId,
+    Map<String, dynamic>? input,
   }) = ClaudeEventToolCallComplete;
+
+  /// Tool execution finished — output / error from the tool itself.
+  const factory ClaudeEvent.toolResult({
+    required String toolUseId,
+    required String content,
+    @Default(false) bool isError,
+  }) = ClaudeEventToolResult;
 
   /// Full assistant message after a content block has been assembled.
   const factory ClaudeEvent.assistantMessage({

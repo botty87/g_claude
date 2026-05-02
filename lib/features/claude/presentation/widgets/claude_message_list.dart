@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../core/error/failures.dart';
@@ -49,20 +52,77 @@ class ClaudeMessageList extends HookWidget {
     final hasError =
         status == ClaudeRunStatus.error || status == ClaudeRunStatus.sessionDead;
 
-    return ListView(
+    final items = _buildItems(messages);
+
+    return ListView.builder(
       controller: scrollController,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      children: [
-        for (var i = 0; i < messages.length; i++) ...[
-          _MessageBubble(message: messages[i]),
-          if (i < messages.length - 1) const SizedBox(height: AppSpacing.xl),
-        ],
-        if (hasError) ...[
-          const SizedBox(height: AppSpacing.xl),
-          _ErrorBanner(failure: lastError, stderrTail: stderrTail),
-        ],
-      ],
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
+      ),
+      itemCount: items.length + (hasError ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index == items.length) {
+          return Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.lg),
+            child: _ErrorBanner(failure: lastError, stderrTail: stderrTail),
+          );
+        }
+        final item = items[index];
+        final previous = index > 0 ? items[index - 1] : null;
+        final gap = _gapBefore(previous, item);
+        return Padding(
+          padding: EdgeInsets.only(top: gap),
+          child: _ItemRenderer(item: item),
+        );
+      },
     );
+  }
+
+  /// Pre-processes messages: groups consecutive tools into a single
+  /// [_ToolGroupItem] and reorders within each turn so tool group sits
+  /// between the user prompt and the assistant text(s).
+  List<_Item> _buildItems(List<ClaudeMessage> all) {
+    final items = <_Item>[];
+    var i = 0;
+    while (i < all.length) {
+      final m = all[i];
+      if (m is ClaudeMessageUser) {
+        items.add(_SingleItem(m));
+        i++;
+        // Collect everything up to next user as a turn
+        final tools = <ClaudeMessageTool>[];
+        final others = <ClaudeMessage>[];
+        while (i < all.length && all[i] is! ClaudeMessageUser) {
+          final t = all[i];
+          if (t is ClaudeMessageTool) {
+            tools.add(t);
+          } else {
+            others.add(t);
+          }
+          i++;
+        }
+        if (tools.isNotEmpty) items.add(_ToolGroupItem(tools));
+        for (final o in others) {
+          items.add(_SingleItem(o));
+        }
+      } else {
+        // Stray non-user prefix (rare): emit as-is
+        if (m is ClaudeMessageTool) {
+          items.add(_ToolGroupItem([m]));
+        } else {
+          items.add(_SingleItem(m));
+        }
+        i++;
+      }
+    }
+    return items;
+  }
+
+  double _gapBefore(_Item? previous, _Item current) {
+    if (previous == null) return 0;
+    if (previous.role != current.role) return AppSpacing.xl;
+    return AppSpacing.sm;
   }
 
   String _streamingTextSignature(List<ClaudeMessage> list) {
@@ -72,6 +132,44 @@ class ClaudeMessageList extends HookWidget {
       return '${last.id}:${last.text.length}';
     }
     return '';
+  }
+}
+
+enum _Role { user, assistant, tools, system }
+
+sealed class _Item {
+  const _Item();
+  _Role get role;
+}
+
+class _SingleItem extends _Item {
+  const _SingleItem(this.message);
+  final ClaudeMessage message;
+  @override
+  _Role get role => switch (message) {
+        ClaudeMessageUser() => _Role.user,
+        ClaudeMessageAssistant() => _Role.assistant,
+        ClaudeMessageTool() => _Role.tools,
+        ClaudeMessageSystem() => _Role.system,
+      };
+}
+
+class _ToolGroupItem extends _Item {
+  const _ToolGroupItem(this.tools);
+  final List<ClaudeMessageTool> tools;
+  @override
+  _Role get role => _Role.tools;
+}
+
+class _ItemRenderer extends StatelessWidget {
+  const _ItemRenderer({required this.item});
+  final _Item item;
+  @override
+  Widget build(BuildContext context) {
+    return switch (item) {
+      _SingleItem(:final message) => _MessageItem(message: message),
+      _ToolGroupItem(:final tools) => _ToolGroup(tools: tools),
+    };
   }
 }
 
@@ -113,8 +211,8 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({required this.message});
+class _MessageItem extends StatelessWidget {
+  const _MessageItem({required this.message});
 
   final ClaudeMessage message;
 
@@ -123,11 +221,188 @@ class _MessageBubble extends StatelessWidget {
     return switch (message) {
       ClaudeMessageUser(:final text) => _UserBubble(text: text),
       ClaudeMessageAssistant(:final text, :final isStreaming) =>
-        _AssistantBubble(text: text, isStreaming: isStreaming),
-      ClaudeMessageTool(:final toolName, :final status) =>
-        _ToolBubble(toolName: toolName, status: status),
-      ClaudeMessageSystem(:final text) => _SystemBubble(text: text),
+        _AssistantBlock(text: text, isStreaming: isStreaming),
+      ClaudeMessageTool(
+        :final toolName,
+        :final status,
+        :final input,
+        :final output,
+        :final isError,
+      ) =>
+        _ToolCard(
+          toolName: toolName,
+          status: status,
+          input: input,
+          output: output,
+          isError: isError,
+        ),
+      ClaudeMessageSystem(:final text) => _SystemLine(text: text),
     };
+  }
+}
+
+class _ToolGroup extends HookWidget {
+  const _ToolGroup({required this.tools});
+
+  final List<ClaudeMessageTool> tools;
+
+  @override
+  Widget build(BuildContext context) {
+    final expanded = useState(false);
+
+    final running = tools.where((t) => t.status == ClaudeToolStatus.running).length;
+    final errors = tools.where((t) => t.status == ClaudeToolStatus.error).length;
+    final done = tools.where((t) => t.status == ClaudeToolStatus.completed).length;
+
+    final (headerIcon, headerColor) = errors > 0
+        ? (Symbols.error, AppColors.error)
+        : running > 0
+            ? (Symbols.sync, AppColors.tertiary)
+            : (Symbols.check_circle, AppColors.outline);
+
+    final summary = _summary(running: running, done: done, errors: errors);
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 26),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLow.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppColors.outlineVariant.withValues(alpha: 0.4),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              InkWell(
+                onTap: () => expanded.value = !expanded.value,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        headerIcon,
+                        size: 14,
+                        color: headerColor,
+                        fill: errors == 0 && running == 0 ? 1 : 0,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        'claude.message.toolGroupTitle'.tr(
+                          namedArgs: {'count': '${tools.length}'},
+                        ),
+                        style: AppTypography.bodyMain.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          summary,
+                          style: AppTypography.bodyMain.copyWith(
+                            color: AppColors.outline,
+                            fontSize: 11,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      AnimatedRotation(
+                        duration: const Duration(milliseconds: 180),
+                        turns: expanded.value ? 0.5 : 0,
+                        child: Icon(
+                          Symbols.expand_more,
+                          size: 16,
+                          color: AppColors.outline.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ClipRect(
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.topCenter,
+                  child: expanded.value
+                      ? Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.sm,
+                            0,
+                            AppSpacing.sm,
+                            AppSpacing.sm,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Divider(
+                                height: AppSpacing.sm,
+                                thickness: 0.5,
+                                color: AppColors.outlineVariant,
+                              ),
+                              for (var i = 0; i < tools.length; i++) ...[
+                                if (i > 0) const SizedBox(height: AppSpacing.xs),
+                                _NestedToolCard(tool: tools[i]),
+                              ],
+                            ],
+                          ),
+                        )
+                      : const SizedBox(width: double.infinity, height: 0),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _summary({required int running, required int done, required int errors}) {
+    final parts = <String>[];
+    if (running > 0) {
+      parts.add('claude.message.toolGroupRunning'
+          .tr(namedArgs: {'n': '$running'}));
+    }
+    if (done > 0) {
+      parts.add('claude.message.toolGroupDone'
+          .tr(namedArgs: {'n': '$done'}));
+    }
+    if (errors > 0) {
+      parts.add('claude.message.toolGroupErrors'
+          .tr(namedArgs: {'n': '$errors'}));
+    }
+    return parts.join(' · ');
+  }
+}
+
+class _NestedToolCard extends StatelessWidget {
+  const _NestedToolCard({required this.tool});
+
+  final ClaudeMessageTool tool;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ToolCard(
+      toolName: tool.toolName,
+      status: tool.status,
+      input: tool.input,
+      output: tool.output,
+      isError: tool.isError,
+      padded: false,
+    );
   }
 }
 
@@ -138,80 +413,433 @@ class _UserBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.chevron_right,
-                size: 14, color: AppColors.outline),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              'claude.message.userLabel'.tr(),
-              style: AppTypography.terminalCode.copyWith(
-                color: AppColors.outline,
-              ),
+    return Align(
+      alignment: Alignment.centerRight,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerHigh,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+              bottomLeft: Radius.circular(12),
+              bottomRight: Radius.circular(4),
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              'claude.message.promptDelimiter'.tr(),
-              style: AppTypography.terminalCode.copyWith(
-                color: AppColors.surfaceVariant,
-              ),
+            border: Border.all(
+              color: AppColors.outlineVariant.withValues(alpha: 0.6),
+              width: 1,
             ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Padding(
-          padding: const EdgeInsets.only(left: AppSpacing.xl - AppSpacing.xs),
+          ),
           child: SelectableText(
             text,
-            style: AppTypography.terminalCode.copyWith(
+            style: AppTypography.bodyMain.copyWith(
               color: AppColors.onSurface,
+              height: 1.45,
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
 
-class _AssistantBubble extends StatelessWidget {
-  const _AssistantBubble({required this.text, required this.isStreaming});
+class _AssistantBlock extends StatelessWidget {
+  const _AssistantBlock({required this.text, required this.isStreaming});
 
   final String text;
   final bool isStreaming;
 
   @override
   Widget build(BuildContext context) {
+    final showPlaceholder = text.isEmpty && isStreaming;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(Icons.smart_toy_outlined,
-                size: 14, color: AppColors.primary),
+            Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: AppColors.primaryContainer.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                Symbols.auto_awesome,
+                size: 12,
+                color: AppColors.primary,
+                fill: 1,
+              ),
+            ),
             const SizedBox(width: AppSpacing.sm),
             Text(
               'claude.message.assistantLabel'.tr(),
-              style: AppTypography.terminalPrompt.copyWith(
+              style: AppTypography.bodyMain.copyWith(
                 color: AppColors.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
               ),
             ),
-            if (isStreaming) ...[
+            if (isStreaming && text.isNotEmpty) ...[
               const SizedBox(width: AppSpacing.sm),
               const _BlinkingCursor(),
             ],
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         Padding(
-          padding: const EdgeInsets.only(left: AppSpacing.xl - AppSpacing.xs),
-          child: SelectableText(
-            text.isEmpty && isStreaming ? '…' : text,
+          padding: const EdgeInsets.only(left: 26),
+          child: showPlaceholder
+              ? const _PulseDots()
+              : MarkdownBody(
+                  data: text,
+                  selectable: true,
+                  softLineBreak: true,
+                  styleSheet: _markdownStyle(),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+MarkdownStyleSheet _markdownStyle() {
+  final body = AppTypography.bodyMain.copyWith(
+    color: AppColors.onSurface,
+    height: 1.55,
+  );
+  final code = AppTypography.terminalCode.copyWith(
+    color: AppColors.onSurface,
+    fontSize: 12.5,
+    height: 1.5,
+  );
+  return MarkdownStyleSheet(
+    p: body,
+    h1: body.copyWith(fontSize: 18, fontWeight: FontWeight.w700, height: 1.3),
+    h2: body.copyWith(fontSize: 16, fontWeight: FontWeight.w700, height: 1.3),
+    h3: body.copyWith(fontSize: 14, fontWeight: FontWeight.w700, height: 1.35),
+    strong: body.copyWith(
+      color: AppColors.onSurface,
+      fontWeight: FontWeight.w700,
+    ),
+    em: body.copyWith(fontStyle: FontStyle.italic),
+    blockquote: body.copyWith(color: AppColors.onSurfaceVariant),
+    blockquoteDecoration: BoxDecoration(
+      border: Border(
+        left: BorderSide(
+          color: AppColors.primary.withValues(alpha: 0.5),
+          width: 3,
+        ),
+      ),
+    ),
+    blockquotePadding: const EdgeInsets.only(left: AppSpacing.md),
+    listBullet: body,
+    listIndent: 22,
+    code: code.copyWith(
+      backgroundColor: AppColors.surfaceContainerLow,
+      color: AppColors.tertiary,
+    ),
+    codeblockPadding: const EdgeInsets.all(AppSpacing.md),
+    codeblockDecoration: BoxDecoration(
+      color: AppColors.surfaceContainerLowest,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(
+        color: AppColors.outlineVariant.withValues(alpha: 0.5),
+      ),
+    ),
+    a: body.copyWith(
+      color: AppColors.secondary,
+      decoration: TextDecoration.underline,
+    ),
+    horizontalRuleDecoration: BoxDecoration(
+      border: Border(
+        top: BorderSide(
+          color: AppColors.outlineVariant.withValues(alpha: 0.6),
+        ),
+      ),
+    ),
+    tableHead: body.copyWith(fontWeight: FontWeight.w700),
+    tableBody: body,
+    tableBorder: TableBorder.all(
+      color: AppColors.outlineVariant.withValues(alpha: 0.4),
+      width: 1,
+    ),
+    tableCellsPadding: const EdgeInsets.symmetric(
+      horizontal: AppSpacing.sm,
+      vertical: AppSpacing.xs,
+    ),
+    pPadding: EdgeInsets.zero,
+    h1Padding: const EdgeInsets.only(top: AppSpacing.sm),
+    h2Padding: const EdgeInsets.only(top: AppSpacing.sm),
+    h3Padding: const EdgeInsets.only(top: AppSpacing.sm),
+  );
+}
+
+class _ToolCard extends HookWidget {
+  const _ToolCard({
+    required this.toolName,
+    required this.status,
+    this.input,
+    this.output,
+    this.isError = false,
+    this.padded = true,
+  });
+
+  final String toolName;
+  final ClaudeToolStatus status;
+  final Map<String, dynamic>? input;
+  final String? output;
+  final bool isError;
+  final bool padded;
+
+  static const double _bodyMaxHeight = 200; // ~10 lines of mono 12/1.5
+
+  @override
+  Widget build(BuildContext context) {
+    final expanded = useState(false);
+    final hasBody =
+        (input != null && input!.isNotEmpty) || (output?.isNotEmpty ?? false);
+
+    final (icon, color, labelKey) = switch (status) {
+      ClaudeToolStatus.running => (
+          Symbols.sync,
+          AppColors.tertiary,
+          'claude.message.toolRunning',
+        ),
+      ClaudeToolStatus.completed => (
+          Symbols.check_circle,
+          AppColors.outline,
+          'claude.message.toolCompleted',
+        ),
+      ClaudeToolStatus.error => (
+          Symbols.error,
+          AppColors.error,
+          'claude.message.toolError',
+        ),
+    };
+
+    final card = ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: AppColors.outlineVariant.withValues(alpha: 0.4),
+            width: 1,
+          ),
+        ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              InkWell(
+                onTap: hasBody ? () => expanded.value = !expanded.value : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        icon,
+                        size: 12,
+                        color: color,
+                        fill: status == ClaudeToolStatus.completed ? 1 : 0,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        'claude.message.toolPrefix'.tr(),
+                        style: AppTypography.bodyMain.copyWith(
+                          color: AppColors.outline,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        toolName,
+                        style: AppTypography.terminalCode.copyWith(
+                          color: color,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        labelKey.tr(),
+                        style: AppTypography.bodyMain.copyWith(
+                          color: AppColors.outline,
+                          fontSize: 10.5,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                      if (hasBody) ...[
+                        const SizedBox(width: AppSpacing.sm),
+                        AnimatedRotation(
+                          duration: const Duration(milliseconds: 180),
+                          turns: expanded.value ? 0.5 : 0,
+                          child: Icon(
+                            Symbols.expand_more,
+                            size: 14,
+                            color: AppColors.outline.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              ClipRect(
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.topCenter,
+                  child: expanded.value && hasBody
+                      ? _ToolBody(
+                          input: input,
+                          output: output,
+                          isError: isError,
+                          maxHeight: _bodyMaxHeight,
+                        )
+                      : const SizedBox(width: double.infinity, height: 0),
+                ),
+              ),
+            ],
+          ),
+      ),
+    );
+    if (!padded) return card;
+    return Padding(
+      padding: const EdgeInsets.only(left: 26),
+      child: card,
+    );
+  }
+}
+
+class _ToolBody extends StatelessWidget {
+  const _ToolBody({
+    required this.input,
+    required this.output,
+    required this.isError,
+    required this.maxHeight,
+  });
+
+  final Map<String, dynamic>? input;
+  final String? output;
+  final bool isError;
+  final double maxHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasInput = input != null && input!.isNotEmpty;
+    final hasOutput = output?.isNotEmpty ?? false;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.sm,
+        0,
+        AppSpacing.sm,
+        AppSpacing.sm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (hasInput)
+            _ToolBodySection(
+              labelKey: 'claude.message.toolInput',
+              body: const JsonEncoder.withIndent('  ').convert(input),
+              maxHeight: maxHeight,
+              tone: AppColors.onSurfaceVariant,
+            ),
+          if (hasInput && hasOutput) const SizedBox(height: AppSpacing.xs),
+          if (hasOutput)
+            _ToolBodySection(
+              labelKey: isError
+                  ? 'claude.message.toolErrorOutput'
+                  : 'claude.message.toolResult',
+              body: output!,
+              maxHeight: maxHeight,
+              tone: isError ? AppColors.error : AppColors.onSurface,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ToolBodySection extends HookWidget {
+  const _ToolBodySection({
+    required this.labelKey,
+    required this.body,
+    required this.maxHeight,
+    required this.tone,
+  });
+
+  final String labelKey;
+  final String body;
+  final double maxHeight;
+  final Color tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final scrollController = useScrollController();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(
+            top: AppSpacing.xs,
+            bottom: AppSpacing.xs,
+          ),
+          child: Text(
+            labelKey.tr(),
             style: AppTypography.bodyMain.copyWith(
-              color: AppColors.onSurfaceVariant,
-              height: 1.5,
+              color: AppColors.outline,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: AppColors.outlineVariant.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: Scrollbar(
+              controller: scrollController,
+              child: SingleChildScrollView(
+                controller: scrollController,
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                child: SelectableText(
+                  body,
+                  style: AppTypography.terminalCode.copyWith(
+                    color: tone,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -220,64 +848,46 @@ class _AssistantBubble extends StatelessWidget {
   }
 }
 
-class _ToolBubble extends StatelessWidget {
-  const _ToolBubble({required this.toolName, required this.status});
-
-  final String toolName;
-  final ClaudeToolStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = switch (status) {
-      ClaudeToolStatus.running => AppColors.tertiary,
-      ClaudeToolStatus.completed => AppColors.outline,
-      ClaudeToolStatus.error => AppColors.error,
-    };
-    final keyName = switch (status) {
-      ClaudeToolStatus.running => 'claude.message.toolRunning',
-      ClaudeToolStatus.completed => 'claude.message.toolCompleted',
-      ClaudeToolStatus.error => 'claude.message.toolError',
-    };
-    final icon = switch (status) {
-      ClaudeToolStatus.running => Symbols.sync,
-      ClaudeToolStatus.completed => Symbols.check_circle,
-      ClaudeToolStatus.error => Symbols.error,
-    };
-    return Padding(
-      padding: const EdgeInsets.only(left: AppSpacing.xl - AppSpacing.xs),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            keyName.tr(namedArgs: {'name': toolName}),
-            style: AppTypography.terminalCode.copyWith(
-              color: color,
-              fontSize: 11,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SystemBubble extends StatelessWidget {
-  const _SystemBubble({required this.text});
+class _SystemLine extends StatelessWidget {
+  const _SystemLine({required this.text});
 
   final String text;
 
+  static const _completionKey = 'claude.message.completionStub';
+
   @override
   Widget build(BuildContext context) {
+    final isCompletion = text == _completionKey;
+    final rendered = isCompletion ? text.tr() : text;
     return Padding(
-      padding: const EdgeInsets.only(left: AppSpacing.xl - AppSpacing.xs),
-      child: Text(
-        text,
-        style: AppTypography.terminalCode.copyWith(
-          color: AppColors.outline,
-          fontSize: 11,
-        ),
+      padding: const EdgeInsets.only(left: 26),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isCompletion) ...[
+            const Icon(
+              Symbols.check_circle,
+              size: 12,
+              color: AppColors.outline,
+              fill: 1,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+          ],
+          Flexible(
+            child: Text(
+              rendered,
+              style: (isCompletion
+                      ? AppTypography.bodyMain
+                      : AppTypography.terminalCode)
+                  .copyWith(
+                color: AppColors.outline,
+                fontSize: isCompletion ? 12 : 11,
+                fontStyle:
+                    isCompletion ? FontStyle.italic : FontStyle.normal,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -301,6 +911,50 @@ class _BlinkingCursor extends HookWidget {
         width: 6,
         height: 12,
         color: AppColors.primary,
+      ),
+    );
+  }
+}
+
+class _PulseDots extends HookWidget {
+  const _PulseDots();
+
+  static const _period = Duration(milliseconds: 1200);
+  static const _dotCount = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = useAnimationController(duration: _period)..repeat();
+    return SizedBox(
+      height: 16,
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) {
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: List.generate(_dotCount, (i) {
+              final phase = (controller.value - i / _dotCount) % 1.0;
+              final t = (1 - (phase - 0.5).abs() * 2).clamp(0.0, 1.0);
+              final scale = 0.6 + 0.4 * t;
+              final opacity = 0.35 + 0.55 * t;
+              return Padding(
+                padding: EdgeInsets.only(right: i == _dotCount - 1 ? 0 : 4),
+                child: Transform.scale(
+                  scale: scale,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: opacity),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          );
+        },
       ),
     );
   }

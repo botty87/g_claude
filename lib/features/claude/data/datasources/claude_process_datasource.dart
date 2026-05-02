@@ -55,6 +55,10 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
 
   static const _stderrTailMax = 200;
 
+  // Per-run state for reconstructing tool input from `input_json_delta`
+  // streams and matching `content_block_stop` to the right tool.
+  final Map<int, _ToolBlockState> _toolByIndex = {};
+
   @override
   Stream<ClaudeEvent> startRun({
     required String cwd,
@@ -107,6 +111,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
         return;
       }
       _current = process;
+      _toolByIndex.clear();
 
       final stderrTail = Queue<String>();
       final stderrSub = process.stderr
@@ -128,8 +133,9 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
         try {
           final raw = jsonDecode(line);
           if (raw is! Map<String, dynamic>) return;
-          final event = _normalize(raw);
-          if (event != null) controller.add(event);
+          for (final event in _normalize(raw)) {
+            controller.add(event);
+          }
         } catch (e) {
           _talker.warning('Could not parse NDJSON line: $line ($e)');
         }
@@ -245,23 +251,23 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
   }
 
   /// Maps a raw NDJSON object (per the `claude -p --output-format stream-json`
-  /// contract) into a [ClaudeEvent]. Returns null if the event is irrelevant.
-  ClaudeEvent? _normalize(Map<String, dynamic> raw) {
+  /// contract) into a list of [ClaudeEvent]. May emit zero or more events.
+  Iterable<ClaudeEvent> _normalize(Map<String, dynamic> raw) sync* {
     final type = raw['type'] as String?;
     switch (type) {
       case 'system':
         if (raw['subtype'] == 'init') {
-          return ClaudeEvent.sessionInit(
+          yield ClaudeEvent.sessionInit(
             sessionId: raw['session_id'] as String? ?? '',
             model: raw['model'] as String? ?? '',
             tools: (raw['tools'] as List?)?.cast<String>() ?? const [],
           );
         }
-        return null;
+        return;
 
       case 'stream_event':
         final inner = raw['event'];
-        if (inner is! Map<String, dynamic>) return null;
+        if (inner is! Map<String, dynamic>) return;
         final innerType = inner['type'] as String?;
         switch (innerType) {
           case 'content_block_delta':
@@ -270,38 +276,65 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
               final dType = delta['type'] as String?;
               if (dType == 'text_delta') {
                 final text = delta['text'] as String? ?? '';
-                if (text.isEmpty) return null;
-                return ClaudeEvent.textChunk(text: text);
+                if (text.isEmpty) return;
+                yield ClaudeEvent.textChunk(text: text);
+                return;
               }
               if (dType == 'input_json_delta') {
                 final partial = delta['partial_json'] as String? ?? '';
-                final toolId = inner['index']?.toString() ?? '';
-                return ClaudeEvent.toolCallUpdate(
-                  toolId: toolId,
+                final index = (inner['index'] as int?) ?? 0;
+                final tool = _toolByIndex[index];
+                if (tool != null) tool.partialJson.write(partial);
+                yield ClaudeEvent.toolCallUpdate(
+                  toolId: tool?.toolId ?? '',
                   partialInput: partial,
                 );
               }
             }
-            return null;
+            return;
 
           case 'content_block_start':
             final block = inner['content_block'];
+            final index = (inner['index'] as int?) ?? 0;
             if (block is Map<String, dynamic> && block['type'] == 'tool_use') {
-              return ClaudeEvent.toolCall(
-                toolName: block['name'] as String? ?? '',
-                toolId: block['id'] as String? ?? '',
-                index: (inner['index'] as int?) ?? 0,
+              final toolName = block['name'] as String? ?? '';
+              final toolId = block['id'] as String? ?? '';
+              _toolByIndex[index] = _ToolBlockState(
+                toolName: toolName,
+                toolId: toolId,
+              );
+              yield ClaudeEvent.toolCall(
+                toolName: toolName,
+                toolId: toolId,
+                index: index,
               );
             }
-            return null;
+            return;
 
           case 'content_block_stop':
-            return ClaudeEvent.toolCallComplete(
-              index: (inner['index'] as int?) ?? 0,
+            final index = (inner['index'] as int?) ?? 0;
+            final tool = _toolByIndex.remove(index);
+            Map<String, dynamic>? input;
+            if (tool != null) {
+              final json = tool.partialJson.toString();
+              if (json.isNotEmpty) {
+                try {
+                  final decoded = jsonDecode(json);
+                  if (decoded is Map<String, dynamic>) input = decoded;
+                } catch (_) {
+                  // partial JSON ill-formed; ignore
+                }
+              }
+            }
+            yield ClaudeEvent.toolCallComplete(
+              index: index,
+              toolId: tool?.toolId,
+              input: input,
             );
+            return;
 
           default:
-            return null;
+            return;
         }
 
       case 'assistant':
@@ -317,37 +350,92 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
             }
             final text = buf.toString();
             if (text.isNotEmpty) {
-              return ClaudeEvent.assistantMessage(text: text);
+              yield ClaudeEvent.assistantMessage(text: text);
             }
           }
         }
-        return null;
+        return;
+
+      case 'user':
+        final message = raw['message'];
+        if (message is Map<String, dynamic>) {
+          final content = message['content'];
+          if (content is List) {
+            for (final block in content) {
+              if (block is Map<String, dynamic> &&
+                  block['type'] == 'tool_result') {
+                yield ClaudeEvent.toolResult(
+                  toolUseId: block['tool_use_id'] as String? ?? '',
+                  content: _flattenToolResultContent(block['content']),
+                  isError: block['is_error'] == true,
+                );
+              }
+            }
+          }
+        }
+        return;
 
       case 'result':
         final isError = raw['is_error'] == true;
         if (isError) {
-          return ClaudeEvent.errorEvent(
+          yield ClaudeEvent.errorEvent(
             message: raw['result'] as String? ??
                 raw['error'] as String? ??
                 'Unknown error',
           );
+          return;
         }
-        return ClaudeEvent.taskComplete(
+        yield ClaudeEvent.taskComplete(
           result: raw['result'] as String?,
           costUsd: (raw['total_cost_usd'] as num?)?.toDouble() ??
               (raw['cost_usd'] as num?)?.toDouble(),
           durationMs: (raw['duration_ms'] as num?)?.toInt(),
           numTurns: (raw['num_turns'] as num?)?.toInt(),
         );
+        return;
 
       case 'rate_limit_event':
-        return ClaudeEvent.rateLimit(
+        yield ClaudeEvent.rateLimit(
           status: raw['status'] as String? ?? 'unknown',
           resetsAt: (raw['resets_at'] as num?)?.toInt(),
         );
+        return;
 
       default:
-        return null;
+        return;
     }
   }
+
+  String _flattenToolResultContent(Object? content) {
+    if (content == null) return '';
+    if (content is String) return content;
+    if (content is List) {
+      final buf = StringBuffer();
+      for (final block in content) {
+        if (block is Map<String, dynamic>) {
+          final type = block['type'] as String?;
+          if (type == 'text') {
+            buf.write(block['text'] as String? ?? '');
+          } else if (type == 'image') {
+            buf.write('[image]');
+          } else {
+            buf.write(jsonEncode(block));
+          }
+          buf.write('\n');
+        } else {
+          buf.write(block.toString());
+          buf.write('\n');
+        }
+      }
+      return buf.toString().trimRight();
+    }
+    return content.toString();
+  }
+}
+
+class _ToolBlockState {
+  _ToolBlockState({required this.toolName, required this.toolId});
+  final String toolName;
+  final String toolId;
+  final StringBuffer partialJson = StringBuffer();
 }
