@@ -28,11 +28,15 @@ class ClaudeTerminalPane extends StatelessWidget {
       return const _NoWorkspaceState();
     }
 
+    final isBusy = session.runStatus == ClaudeRunStatus.running ||
+        session.runStatus == ClaudeRunStatus.connecting;
+
     return ColoredBox(
       color: AppColors.surface,
       child: Column(
         children: [
           ClaudeTerminalHeader(workspaceId: activeId, session: session),
+          _RunProgressBar(visible: isBusy),
           Expanded(
             child: ClaudeMessageList(
               workspaceId: activeId,
@@ -45,6 +49,26 @@ class ClaudeTerminalPane extends StatelessWidget {
           ClaudeInputBar(workspaceId: activeId, status: session.runStatus),
         ],
       ),
+    );
+  }
+}
+
+class _RunProgressBar extends StatelessWidget {
+  const _RunProgressBar({required this.visible});
+
+  final bool visible;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 2,
+      child: visible
+          ? const LinearProgressIndicator(
+              minHeight: 2,
+              backgroundColor: AppColors.surfaceContainerLow,
+              valueColor: AlwaysStoppedAnimation(AppColors.primary),
+            )
+          : const SizedBox.shrink(),
     );
   }
 }

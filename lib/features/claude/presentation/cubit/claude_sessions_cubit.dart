@@ -286,6 +286,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         emit(state.copyWith(sessions: next));
 
       case ClaudeEventTextChunk(:final text):
+        _ensureStreamingMessage(wid);
         _streamingText += text;
         _chunkFlushTimer ??= Timer(
           const Duration(milliseconds: _flushMs),
@@ -295,6 +296,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       case ClaudeEventAssistantMessage(:final text):
         _flushChunkTimerCancel();
         _streamingText = '';
+        _ensureStreamingMessage(wid);
         _replaceStreamingMessage(wid, text, isStreaming: false);
         _streamingMessageId = null;
 
@@ -368,6 +370,25 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   void _flushChunkTimerCancel() {
     _chunkFlushTimer?.cancel();
     _chunkFlushTimer = null;
+  }
+
+  void _ensureStreamingMessage(String wid) {
+    if (_streamingMessageId != null) return;
+    final session = state.sessions[wid];
+    if (session == null) return;
+    final id = 'a-${DateTime.now().microsecondsSinceEpoch}';
+    final placeholder = ClaudeMessage.assistant(
+      id: id,
+      text: '',
+      isStreaming: true,
+      createdAt: DateTime.now(),
+    );
+    final next = Map<String, ClaudeSessionData>.from(state.sessions);
+    next[wid] = session.copyWith(
+      messages: [...session.messages, placeholder],
+    );
+    emit(state.copyWith(sessions: next));
+    _streamingMessageId = id;
   }
 
   void _replaceStreamingMessage(
@@ -469,16 +490,17 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     }
     if (lastUser == -1) return messages;
     var hasTool = false;
-    var hasText = false;
     for (var i = lastUser + 1; i < messages.length; i++) {
-      final m = messages[i];
-      if (m is ClaudeMessageTool) {
+      if (messages[i] is ClaudeMessageTool) {
         hasTool = true;
-      } else if (m is ClaudeMessageAssistant && m.text.isNotEmpty) {
-        hasText = true;
+        break;
       }
     }
-    if (!hasTool || hasText) return messages;
+    if (!hasTool) return messages;
+    final last = messages.last;
+    final endsWithText =
+        last is ClaudeMessageAssistant && last.text.trim().isNotEmpty;
+    if (endsWithText) return messages;
     final now = DateTime.now();
     return [
       ...messages,

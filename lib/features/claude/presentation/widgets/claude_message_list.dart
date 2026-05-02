@@ -121,7 +121,7 @@ class ClaudeMessageList extends HookWidget {
 
   double _gapBefore(_Item? previous, _Item current) {
     if (previous == null) return 0;
-    if (previous.role != current.role) return AppSpacing.xl;
+    if (previous.role != current.role) return AppSpacing.lg;
     return AppSpacing.sm;
   }
 
@@ -262,11 +262,20 @@ class _ToolGroup extends HookWidget {
 
     final summary = _summary(running: running, done: done, errors: errors);
 
-    return Padding(
-      padding: const EdgeInsets.only(left: 26),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: AnimatedContainer(
+    final bulletColor = errors > 0 ? AppColors.error : AppColors.primary;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 14),
+          child: _StepBullet(color: bulletColor),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
@@ -365,8 +374,10 @@ class _ToolGroup extends HookWidget {
               ),
             ],
           ),
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -456,48 +467,21 @@ class _AssistantBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showPlaceholder = text.isEmpty && isStreaming;
-    return Column(
+    final showPulse = text.isEmpty && isStreaming;
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                color: AppColors.primaryContainer.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              alignment: Alignment.center,
-              child: const Icon(
-                Symbols.auto_awesome,
-                size: 12,
-                color: AppColors.primary,
-                fill: 1,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              'claude.message.assistantLabel'.tr(),
-              style: AppTypography.bodyMain.copyWith(
-                color: AppColors.primary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.2,
-              ),
-            ),
-            if (isStreaming && text.isNotEmpty) ...[
-              const SizedBox(width: AppSpacing.sm),
-              const _BlinkingCursor(),
-            ],
-          ],
-        ),
-        const SizedBox(height: AppSpacing.sm),
         Padding(
-          padding: const EdgeInsets.only(left: 26),
-          child: showPlaceholder
-              ? const _PulseDots()
+          padding: const EdgeInsets.only(top: 8),
+          child: _StepBullet(
+            color: AppColors.primary,
+            pulsing: showPulse,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: showPulse
+              ? const SizedBox(height: 18)
               : MarkdownBody(
                   data: text,
                   selectable: true,
@@ -506,6 +490,51 @@ class _AssistantBlock extends StatelessWidget {
                 ),
         ),
       ],
+    );
+  }
+}
+
+class _StepBullet extends HookWidget {
+  const _StepBullet({
+    required this.color,
+    this.pulsing = false,
+  });
+
+  static const double _size = 7;
+
+  final Color color;
+  final bool pulsing;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!pulsing) {
+      return Container(
+        width: _size,
+        height: _size,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      );
+    }
+    final controller = useAnimationController(
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final t = controller.value;
+        final scale = 0.65 + 0.35 * t;
+        final opacity = 0.45 + 0.55 * t;
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+            width: _size,
+            height: _size,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: opacity),
+              shape: BoxShape.circle,
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -722,9 +751,16 @@ class _ToolCard extends HookWidget {
       ),
     );
     if (!padded) return card;
-    return Padding(
-      padding: const EdgeInsets.only(left: 26),
-      child: card,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 9),
+          child: _StepBullet(color: color),
+        ),
+        const SizedBox(width: 10),
+        Expanded(child: card),
+      ],
     );
   }
 }
@@ -859,103 +895,40 @@ class _SystemLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCompletion = text == _completionKey;
     final rendered = isCompletion ? text.tr() : text;
-    return Padding(
-      padding: const EdgeInsets.only(left: 26),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isCompletion) ...[
-            const Icon(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 7),
+          child: _StepBullet(color: AppColors.outline),
+        ),
+        const SizedBox(width: 10),
+        if (isCompletion) ...[
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Icon(
               Symbols.check_circle,
               size: 12,
               color: AppColors.outline,
               fill: 1,
             ),
-            const SizedBox(width: AppSpacing.sm),
-          ],
-          Flexible(
-            child: Text(
-              rendered,
-              style: (isCompletion
-                      ? AppTypography.bodyMain
-                      : AppTypography.terminalCode)
-                  .copyWith(
-                color: AppColors.outline,
-                fontSize: isCompletion ? 12 : 11,
-                fontStyle:
-                    isCompletion ? FontStyle.italic : FontStyle.normal,
-              ),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+        ],
+        Flexible(
+          child: Text(
+            rendered,
+            style: (isCompletion
+                    ? AppTypography.bodyMain
+                    : AppTypography.terminalCode)
+                .copyWith(
+              color: AppColors.outline,
+              fontSize: isCompletion ? 12 : 11,
+              fontStyle: isCompletion ? FontStyle.italic : FontStyle.normal,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BlinkingCursor extends HookWidget {
-  const _BlinkingCursor();
-
-  @override
-  Widget build(BuildContext context) {
-    final visible = useState(true);
-    useEffect(() {
-      final timer = Stream.periodic(const Duration(milliseconds: 500))
-          .listen((_) => visible.value = !visible.value);
-      return timer.cancel;
-    }, const []);
-    return AnimatedOpacity(
-      duration: const Duration(milliseconds: 120),
-      opacity: visible.value ? 1.0 : 0.2,
-      child: Container(
-        width: 6,
-        height: 12,
-        color: AppColors.primary,
-      ),
-    );
-  }
-}
-
-class _PulseDots extends HookWidget {
-  const _PulseDots();
-
-  static const _period = Duration(milliseconds: 1200);
-  static const _dotCount = 3;
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = useAnimationController(duration: _period)..repeat();
-    return SizedBox(
-      height: 16,
-      child: AnimatedBuilder(
-        animation: controller,
-        builder: (context, _) {
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: List.generate(_dotCount, (i) {
-              final phase = (controller.value - i / _dotCount) % 1.0;
-              final t = (1 - (phase - 0.5).abs() * 2).clamp(0.0, 1.0);
-              final scale = 0.6 + 0.4 * t;
-              final opacity = 0.35 + 0.55 * t;
-              return Padding(
-                padding: EdgeInsets.only(right: i == _dotCount - 1 ? 0 : 4),
-                child: Transform.scale(
-                  scale: scale,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: opacity),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              );
-            }),
-          );
-        },
-      ),
+        ),
+      ],
     );
   }
 }
