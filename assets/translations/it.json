@@ -62,12 +62,33 @@
         "warning": {
           "default": "La modalità Default richiede un hook server (non ancora disponibile). I tool si bloccheranno fino al timeout."
         }
+      },
+      "effort": {
+        "label": "Sforzo",
+        "tooltip": "Livello di sforzo (applicato al prossimo prompt)"
+      },
+      "thinking": {
+        "label": "Pensiero",
+        "tooltip": "Profondità di ragionamento (premessa al prompt)"
       }
     },
     "model": {
       "opus47": "Opus 4.7",
       "sonnet46": "Sonnet 4.6",
       "haiku45": "Haiku 4.5"
+    },
+    "effort": {
+      "low": "Bassa",
+      "medium": "Media",
+      "high": "Alta",
+      "xhigh": "Molto alta",
+      "max": "Massima"
+    },
+    "thinking": {
+      "off": "Off",
+      "think": "Pensa",
+      "thinkHard": "Rifletti",
+      "ultrathink": "Ultrarifletti"
     },
     "permission": {
       "plan": "Plan (sola lettura)",

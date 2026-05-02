@@ -7,6 +7,7 @@ import 'package:injectable/injectable.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../domain/entities/claude_event.dart';
+import '../../domain/entities/claude_effort.dart';
 import '../../domain/entities/claude_model.dart';
 import '../../domain/entities/claude_permission_mode.dart';
 import 'claude_binary_resolver.dart';
@@ -20,6 +21,7 @@ abstract interface class ClaudeProcessDataSource {
     required String prompt,
     required ClaudePermissionMode mode,
     ClaudeModel? model,
+    ClaudeEffort? effort,
     String? resumeSessionId,
   });
 
@@ -81,6 +83,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
     required String prompt,
     required ClaudePermissionMode mode,
     ClaudeModel? model,
+    ClaudeEffort? effort,
     String? resumeSessionId,
   }) {
     final controller = StreamController<ClaudeEvent>();
@@ -111,6 +114,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
         '--append-system-prompt',
         mode.systemPromptHint,
         if (model != null) ...['--model', model.cliId],
+        if (effort != null) ...['--effort', effort.cliId],
         if (resumeSessionId != null) ...['--resume', resumeSessionId],
       ];
 

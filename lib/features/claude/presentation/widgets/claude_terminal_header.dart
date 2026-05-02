@@ -10,6 +10,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
 import '../cubit/claude_sessions_cubit.dart';
 import '_enum_ui.dart';
+import 'effort_thinking_picker.dart';
 import 'model_picker.dart';
 import 'permission_picker.dart';
 
@@ -57,6 +58,15 @@ class ClaudeTerminalHeader extends StatelessWidget {
                 current: session.model,
                 enabled: !_isBusy,
                 onSelected: (m) => cubit.setModel(workspaceId, m),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              EffortThinkingPicker(
+                currentEffort: session.effort,
+                currentThinking: session.thinkingMode,
+                enabled: !_isBusy,
+                onEffortSelected: (e) => cubit.setEffort(workspaceId, e),
+                onThinkingSelected: (t) =>
+                    cubit.setThinking(workspaceId, t),
               ),
               const SizedBox(width: AppSpacing.xs),
               PermissionPicker(

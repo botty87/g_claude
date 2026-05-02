@@ -9,6 +9,8 @@ abstract class ClaudeSessionData with _$ClaudeSessionData {
     @Default(ClaudeRunStatus.idle) ClaudeRunStatus runStatus,
     required ClaudeModel model,
     required ClaudePermissionMode permissionMode,
+    required ClaudeEffort effort,
+    required ClaudeThinkingMode thinkingMode,
     String? claudeSessionId,
     Failure? lastError,
     @Default(<String>[]) List<String> stderrTail,

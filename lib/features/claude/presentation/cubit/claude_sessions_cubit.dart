@@ -14,7 +14,9 @@ import '../../data/datasources/permission_server.dart';
 import '../../domain/entities/claude_event.dart';
 import '../../domain/entities/claude_message.dart';
 import '../../domain/entities/claude_model.dart';
+import '../../domain/entities/claude_effort.dart';
 import '../../domain/entities/claude_permission_mode.dart';
+import '../../domain/entities/claude_thinking_mode.dart';
 import '../../domain/usecases/send_prompt.dart';
 import '../../domain/usecases/stop_run.dart';
 
@@ -51,6 +53,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
   static const _modelPrefix = 'claude.model.';
   static const _permPrefix = 'claude.permission.';
+  static const _effortPrefix = 'claude.effort.';
+  static const _thinkingPrefix = 'claude.thinking.';
   static const _flushMs = 16;
 
   String _genId(String prefix) =>
@@ -170,6 +174,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       map[id] = ClaudeSessionData(
         model: _readModel(id),
         permissionMode: _readPermission(id),
+        effort: _readEffort(id),
+        thinkingMode: _readThinking(id),
       );
     }
     for (final id in removed) {
@@ -196,6 +202,16 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     return ClaudePermissionMode.fromName(raw);
   }
 
+  ClaudeEffort _readEffort(String workspaceId) {
+    final raw = _prefs.getString('$_effortPrefix$workspaceId');
+    return ClaudeEffort.fromName(raw);
+  }
+
+  ClaudeThinkingMode _readThinking(String workspaceId) {
+    final raw = _prefs.getString('$_thinkingPrefix$workspaceId');
+    return ClaudeThinkingMode.fromName(raw);
+  }
+
   void setModel(String workspaceId, ClaudeModel model) {
     final session = state.sessions[workspaceId];
     if (session == null) return;
@@ -212,6 +228,24 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     next[workspaceId] = session.copyWith(permissionMode: mode);
     emit(state.copyWith(sessions: next));
     _prefs.setString('$_permPrefix$workspaceId', mode.name);
+  }
+
+  void setEffort(String workspaceId, ClaudeEffort effort) {
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+    final next = Map<String, ClaudeSessionData>.from(state.sessions);
+    next[workspaceId] = session.copyWith(effort: effort);
+    emit(state.copyWith(sessions: next));
+    _prefs.setString('$_effortPrefix$workspaceId', effort.name);
+  }
+
+  void setThinking(String workspaceId, ClaudeThinkingMode mode) {
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+    final next = Map<String, ClaudeSessionData>.from(state.sessions);
+    next[workspaceId] = session.copyWith(thinkingMode: mode);
+    emit(state.copyWith(sessions: next));
+    _prefs.setString('$_thinkingPrefix$workspaceId', mode.name);
   }
 
   void clearConversation(String workspaceId) {
@@ -252,6 +286,10 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       return;
     }
 
+    final cliPrompt = session.thinkingMode.keyword.isEmpty
+        ? trimmed
+        : '${session.thinkingMode.keyword} $trimmed';
+
     final now = DateTime.now();
     final userMsgId = _genId('u');
     final assistantMsgId = _genId('a');
@@ -275,7 +313,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     );
     emit(state.copyWith(sessions: next));
 
-    _talker.debug('[cc] u> ${_oneLine(_truncate(trimmed, 800))}');
+    _talker.debug('[cc] u> ${_oneLine(_truncate(cliPrompt, 800))}');
 
     _runningWorkspaceId = workspaceId;
     _streamingText = '';
@@ -283,9 +321,10 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
     final params = SendPromptParams(
       cwd: workspaceId,
-      prompt: trimmed,
+      prompt: cliPrompt,
       mode: session.permissionMode,
       model: session.model,
+      effort: session.effort,
       resumeSessionId: session.claudeSessionId,
     );
 

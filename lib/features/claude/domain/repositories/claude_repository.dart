@@ -1,6 +1,7 @@
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/either.dart';
 import '../entities/claude_event.dart';
+import '../entities/claude_effort.dart';
 import '../entities/claude_model.dart';
 import '../entities/claude_permission_mode.dart';
 
@@ -12,6 +13,7 @@ abstract interface class ClaudeRepository {
     required String prompt,
     required ClaudePermissionMode mode,
     ClaudeModel? model,
+    ClaudeEffort? effort,
     String? resumeSessionId,
   });
 

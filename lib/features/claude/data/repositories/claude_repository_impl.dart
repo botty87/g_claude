@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/either.dart';
 import '../../domain/entities/claude_event.dart';
+import '../../domain/entities/claude_effort.dart';
 import '../../domain/entities/claude_model.dart';
 import '../../domain/entities/claude_permission_mode.dart';
 import '../../domain/repositories/claude_repository.dart';
@@ -20,6 +21,7 @@ class ClaudeRepositoryImpl implements ClaudeRepository {
     required String prompt,
     required ClaudePermissionMode mode,
     ClaudeModel? model,
+    ClaudeEffort? effort,
     String? resumeSessionId,
   }) async* {
     try {
@@ -28,6 +30,7 @@ class ClaudeRepositoryImpl implements ClaudeRepository {
         prompt: prompt,
         mode: mode,
         model: model,
+        effort: effort,
         resumeSessionId: resumeSessionId,
       );
       await for (final event in source) {
