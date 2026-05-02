@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -54,6 +55,26 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
   String _genId(String prefix) =>
       '$prefix-${DateTime.now().microsecondsSinceEpoch}';
+
+  String _truncate(String s, int max) {
+    if (s.length <= max) return s;
+    return '${s.substring(0, max)}…(+${s.length - max})';
+  }
+
+  String _oneLine(String s) =>
+      s.replaceAll('\r', '').replaceAll('\n', r'\n').trim();
+
+  String? _toolNameFor(String wid, String? toolUseId) {
+    final session = state.sessions[wid];
+    if (session == null) return null;
+    for (var i = session.messages.length - 1; i >= 0; i--) {
+      final m = session.messages[i];
+      if (m is! ClaudeMessageTool) continue;
+      if (toolUseId != null && m.toolUseId != toolUseId) continue;
+      return m.toolName;
+    }
+    return null;
+  }
 
   String? _streamingMessageIdFor(String wid) {
     final session = state.sessions[wid];
@@ -244,6 +265,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     );
     emit(state.copyWith(sessions: next));
 
+    _talker.info('[cc] u> ${_oneLine(_truncate(trimmed, 800))}');
+
     _runningWorkspaceId = workspaceId;
     _streamingText = '';
     _lastFlushAt = null;
@@ -322,6 +345,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         _streamingText = '';
         _ensureStreamingMessage(wid);
         _replaceStreamingMessage(wid, text, isStreaming: false);
+        if (text.trim().isNotEmpty) {
+          _talker.info('[cc] a> ${_oneLine(_truncate(text, 800))}');
+        }
 
       case ClaudeEventToolCall(:final toolName, :final toolId):
         _appendMessage(
@@ -338,8 +364,19 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       case ClaudeEventToolCallUpdate():
         break;
 
-      case ClaudeEventToolCallComplete(:final toolId, :final input):
+      case ClaudeEventToolCallComplete(
+          :final toolId,
+          :final input,
+          :final index,
+        ):
         _completeToolMessage(wid, toolUseId: toolId, input: input);
+        final toolName = _toolNameFor(wid, toolId);
+        final inputPreview = input == null
+            ? ''
+            : ' input=${_oneLine(_truncate(jsonEncode(input), 300))}';
+        _talker.info(
+          '[cc] tool> ${toolName ?? "?"}#$index$inputPreview',
+        );
 
       case ClaudeEventToolResult(:final toolUseId, :final content, :final isError):
         _attachToolResult(
@@ -348,13 +385,20 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
           output: content,
           isError: isError,
         );
+        final toolName = _toolNameFor(wid, toolUseId);
+        _talker.info(
+          '[cc] result> ${toolName ?? "?"} '
+          'err=$isError ${_oneLine(_truncate(content, 300))}',
+        );
 
       case ClaudeEventTaskComplete():
         _flushStreamingChunks();
+        _talker.info('[cc] done');
         _finishRun(status: ClaudeRunStatus.idle);
 
       case ClaudeEventErrorEvent(:final message):
         _flushStreamingChunks();
+        _talker.info('[cc] error> ${_oneLine(message)}');
         _finishRun(
           status: ClaudeRunStatus.error,
           failure: SubprocessFailure(message: message),

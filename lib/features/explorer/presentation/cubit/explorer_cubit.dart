@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -11,6 +12,7 @@ import 'package:path/path.dart' as p;
 import '../../../../core/error/failures.dart';
 import '../../../editor/domain/usecases/read_file.dart';
 import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
+import '../../../workspace/data/datasources/workspace_file_watcher.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../domain/entities/file_node.dart';
@@ -26,6 +28,7 @@ class ExplorerCubit extends Cubit<ExplorerState> {
     this._readFile,
     this._workspacesCubit,
     this._fileTabsCubit,
+    this._fileWatcher,
     this._talker,
   ) : super(const ExplorerState());
 
@@ -33,11 +36,16 @@ class ExplorerCubit extends Cubit<ExplorerState> {
   final ReadFile _readFile;
   final WorkspacesCubit _workspacesCubit;
   final FileTabsCubit _fileTabsCubit;
+  final WorkspaceFileWatcher _fileWatcher;
   final Talker _talker;
   StreamSubscription<WorkspacesState>? _wsSub;
   StreamSubscription<FileTabsState>? _ftSub;
   final Map<WorkspaceId, Set<String>> _knownOpenPaths = {};
   final Map<WorkspaceId, WorkspaceFiles> _lastFilesRef = {};
+  final Map<WorkspaceId, StreamSubscription<FileSystemEvent>> _fsSubs = {};
+  final Map<String, Timer> _refreshTimers = {};
+
+  static const _refreshDebounceMs = 250;
 
   @PostConstruct()
   void init() {
@@ -47,6 +55,82 @@ class ExplorerCubit extends Cubit<ExplorerState> {
       _lastFilesRef[entry.key] = entry.value;
     }
     _ftSub = _fileTabsCubit.stream.listen(_onFileTabsChanged);
+    for (final w in _workspacesCubit.state.workspacesOrEmpty) {
+      _attachWatcher(w);
+    }
+  }
+
+  void _attachWatcher(Workspace w) {
+    if (_fsSubs.containsKey(w.id)) return;
+    _fsSubs[w.id] = _fileWatcher.watch(w.path).listen(
+      (event) => _onFsEvent(w, event),
+      onError: (Object e, StackTrace st) {
+        _talker.error('ExplorerCubit: watcher error for ${w.path}', e, st);
+      },
+    );
+  }
+
+  void _detachWatcher(WorkspaceId id) {
+    final sub = _fsSubs.remove(id);
+    if (sub != null) unawaited(sub.cancel());
+    _refreshTimers.removeWhere((key, timer) {
+      if (key.startsWith('$id::')) {
+        timer.cancel();
+        return true;
+      }
+      return false;
+    });
+  }
+
+  void _onFsEvent(Workspace w, FileSystemEvent event) {
+    final affected = <String>{};
+    affected.add(p.dirname(event.path));
+    if (event is FileSystemMoveEvent) {
+      final dest = event.destination;
+      if (dest != null) affected.add(p.dirname(dest));
+    }
+    final tree = state.trees[w.id];
+    if (tree == null) return;
+    for (final parent in affected) {
+      final isRoot = p.equals(parent, w.path);
+      final isExpanded = tree.expanded.contains(parent);
+      if (!isRoot && !isExpanded) continue;
+      _scheduleRefresh(w.id, parent);
+    }
+  }
+
+  void _scheduleRefresh(WorkspaceId id, String parent) {
+    final key = '$id::$parent';
+    _refreshTimers[key]?.cancel();
+    _refreshTimers[key] = Timer(
+      const Duration(milliseconds: _refreshDebounceMs),
+      () {
+        _refreshTimers.remove(key);
+        unawaited(_refreshFolder(id, parent));
+      },
+    );
+  }
+
+  Future<void> _refreshFolder(WorkspaceId id, String parent) async {
+    final tree = state.trees[id];
+    if (tree == null) return;
+    final result = await _listDirectory(path: parent);
+    result.fold(
+      (failure) {
+        _talker.debug(
+          'ExplorerCubit: watcher refresh skipped $parent: $failure',
+        );
+      },
+      (nodes) {
+        final current = state.trees[id];
+        if (current == null) return;
+        final updated = current.copyWith(
+          children: {...current.children, parent: nodes},
+          errors: Map.of(current.errors)..remove(parent),
+        );
+        emit(state.copyWith(trees: {...state.trees, id: updated}));
+      },
+    );
   }
 
   void _onFileTabsChanged(FileTabsState ft) {
@@ -74,6 +158,13 @@ class ExplorerCubit extends Cubit<ExplorerState> {
 
   void _onWorkspacesChanged(WorkspacesState ws) {
     final aliveIds = ws.workspacesOrEmpty.map((w) => w.id).toSet();
+    for (final w in ws.workspacesOrEmpty) {
+      _attachWatcher(w);
+    }
+    final orphans = _fsSubs.keys.where((id) => !aliveIds.contains(id)).toList();
+    for (final id in orphans) {
+      _detachWatcher(id);
+    }
     final stale = state.trees.keys.where((id) => !aliveIds.contains(id)).toList();
     if (stale.isEmpty) return;
     final next = Map.of(state.trees)..removeWhere((k, _) => stale.contains(k));
@@ -339,6 +430,14 @@ class ExplorerCubit extends Cubit<ExplorerState> {
   Future<void> close() async {
     await _wsSub?.cancel();
     await _ftSub?.cancel();
+    for (final t in _refreshTimers.values) {
+      t.cancel();
+    }
+    _refreshTimers.clear();
+    for (final s in _fsSubs.values) {
+      await s.cancel();
+    }
+    _fsSubs.clear();
     return super.close();
   }
 }

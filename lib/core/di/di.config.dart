@@ -48,6 +48,8 @@ import '../../features/explorer/domain/usecases/list_directory.dart' as _i308;
 import '../../features/explorer/presentation/cubit/explorer_cubit.dart'
     as _i188;
 import '../../features/shell/presentation/cubit/shell_cubit.dart' as _i68;
+import '../../features/workspace/data/datasources/workspace_file_watcher.dart'
+    as _i167;
 import '../../features/workspace/data/datasources/workspace_local_datasource.dart'
     as _i735;
 import '../../features/workspace/data/datasources/workspaces_persistence_datasource.dart'
@@ -86,6 +88,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i207.Talker>(() => talkerModule.talker);
     gh.lazySingleton<_i735.WorkspaceLocalDataSource>(
       () => _i735.WorkspaceLocalDataSourceImpl(),
+    );
+    gh.lazySingleton<_i167.WorkspaceFileWatcher>(
+      () => _i167.WorkspaceFileWatcherImpl(gh<_i207.Talker>()),
     );
     gh.lazySingleton<_i630.FileContentDataSource>(
       () => _i630.FileContentDataSourceImpl(),
@@ -143,27 +148,15 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i207.Talker>(),
       ),
     );
+    gh.lazySingleton<_i139.ClaudeRepository>(
+      () => _i1009.ClaudeRepositoryImpl(gh<_i457.ClaudeProcessDataSource>()),
+    );
     gh.lazySingleton<_i179.WorkspacesCubit>(
       () => _i179.WorkspacesCubit(
         gh<_i305.OpenWorkspace>(),
         gh<_i420.WorkspacesPersistenceDataSource>(),
+        gh<_i167.WorkspaceFileWatcher>(),
         gh<_i207.Talker>(),
-      )..init(),
-    );
-    gh.lazySingleton<_i648.FileTabsCubit>(
-      () => _i648.FileTabsCubit(
-        gh<_i179.WorkspacesCubit>(),
-        gh<_i283.FileTabsPersistenceDataSource>(),
-        gh<_i207.Talker>(),
-      )..init(),
-    );
-    gh.lazySingleton<_i139.ClaudeRepository>(
-      () => _i1009.ClaudeRepositoryImpl(gh<_i457.ClaudeProcessDataSource>()),
-    );
-    gh.lazySingleton<_i68.ShellCubit>(
-      () => _i68.ShellCubit(
-        gh<_i648.FileTabsCubit>(),
-        gh<_i179.WorkspacesCubit>(),
       )..init(),
     );
     gh.factory<_i338.SendPrompt>(
@@ -175,12 +168,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i308.ListDirectory>(
       () => _i308.ListDirectory(gh<_i150.FileSystemRepository>()),
     );
-    gh.lazySingleton<_i188.ExplorerCubit>(
-      () => _i188.ExplorerCubit(
-        gh<_i308.ListDirectory>(),
-        gh<_i622.ReadFile>(),
+    gh.lazySingleton<_i648.FileTabsCubit>(
+      () => _i648.FileTabsCubit(
         gh<_i179.WorkspacesCubit>(),
-        gh<_i648.FileTabsCubit>(),
+        gh<_i283.FileTabsPersistenceDataSource>(),
+        gh<_i167.WorkspaceFileWatcher>(),
         gh<_i207.Talker>(),
       )..init(),
     );
@@ -191,6 +183,22 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i179.WorkspacesCubit>(),
         gh<_i407.PermissionServer>(),
         gh<_i460.SharedPreferences>(),
+        gh<_i207.Talker>(),
+      )..init(),
+    );
+    gh.lazySingleton<_i68.ShellCubit>(
+      () => _i68.ShellCubit(
+        gh<_i648.FileTabsCubit>(),
+        gh<_i179.WorkspacesCubit>(),
+      )..init(),
+    );
+    gh.lazySingleton<_i188.ExplorerCubit>(
+      () => _i188.ExplorerCubit(
+        gh<_i308.ListDirectory>(),
+        gh<_i622.ReadFile>(),
+        gh<_i179.WorkspacesCubit>(),
+        gh<_i648.FileTabsCubit>(),
+        gh<_i167.WorkspaceFileWatcher>(),
         gh<_i207.Talker>(),
       )..init(),
     );

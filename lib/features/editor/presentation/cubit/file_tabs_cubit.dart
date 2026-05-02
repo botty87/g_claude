@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:path/path.dart' as p;
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../../../features/workspace/data/datasources/workspace_file_watcher.dart';
 import '../../../../features/workspace/domain/entities/workspace.dart';
 import '../../../../features/workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../data/datasources/file_tabs_persistence_datasource.dart';
@@ -14,16 +17,22 @@ part 'file_tabs_cubit.state.dart';
 
 @lazySingleton
 class FileTabsCubit extends Cubit<FileTabsState> {
-  FileTabsCubit(this._workspacesCubit, this._persistence, this._talker)
-      : super(const FileTabsState());
+  FileTabsCubit(
+    this._workspacesCubit,
+    this._persistence,
+    this._fileWatcher,
+    this._talker,
+  ) : super(const FileTabsState());
 
   final WorkspacesCubit _workspacesCubit;
   final FileTabsPersistenceDataSource _persistence;
+  final WorkspaceFileWatcher _fileWatcher;
   final Talker _talker;
   StreamSubscription<WorkspacesState>? _wsSub;
   StreamSubscription<FileTabsState>? _selfSub;
   Timer? _saveDebounce;
   bool _restoring = false;
+  final Map<WorkspaceId, StreamSubscription<FileSystemEvent>> _fsSubs = {};
 
   static const _saveDebounceMs = 250;
 
@@ -35,10 +44,58 @@ class FileTabsCubit extends Cubit<FileTabsState> {
       _saveDebounce?.cancel();
       _saveDebounce = Timer(const Duration(milliseconds: _saveDebounceMs), _persist);
     });
+    for (final w in _workspacesCubit.state.workspacesOrEmpty) {
+      _attachWatcher(w);
+    }
+  }
+
+  void _attachWatcher(Workspace w) {
+    if (_fsSubs.containsKey(w.id)) return;
+    _fsSubs[w.id] = _fileWatcher.watch(w.path).listen(
+      (event) => _onFsEvent(w, event),
+      onError: (Object e, StackTrace st) {
+        _talker.error('FileTabsCubit: watcher error for ${w.path}', e, st);
+      },
+    );
+  }
+
+  void _detachWatcher(WorkspaceId id) {
+    final sub = _fsSubs.remove(id);
+    if (sub != null) unawaited(sub.cancel());
+  }
+
+  void _onFsEvent(Workspace w, FileSystemEvent event) {
+    if (event is! FileSystemDeleteEvent) return;
+    final files = state.perWorkspace[w.id];
+    if (files == null || files.openPaths.isEmpty) return;
+    final eventCanonical = p.canonicalize(event.path);
+    for (final open in files.openPaths) {
+      final isMatch = p.equals(event.path, open) ||
+          p.canonicalize(open) == eventCanonical;
+      if (!isMatch) continue;
+      // Defer close: atomic-save (Edit/Write) emits delete + create within
+      // a few ms. If the file reappears, treat as in-place overwrite and
+      // keep the tab.
+      Timer(const Duration(milliseconds: 300), () {
+        if (File(open).existsSync()) return;
+        final current = state.perWorkspace[w.id];
+        if (current == null) return;
+        if (!current.openPaths.contains(open)) return;
+        _talker.debug('FileTabsCubit: auto-closing $open (deleted)');
+        closeFile(w.id, open);
+      });
+    }
   }
 
   void _onWorkspacesChanged(WorkspacesState ws) {
     final aliveIds = ws.workspacesOrEmpty.map((w) => w.id).toSet();
+    for (final w in ws.workspacesOrEmpty) {
+      _attachWatcher(w);
+    }
+    final orphans = _fsSubs.keys.where((id) => !aliveIds.contains(id)).toList();
+    for (final id in orphans) {
+      _detachWatcher(id);
+    }
     final stale = state.perWorkspace.keys
         .where((id) => !aliveIds.contains(id))
         .toList();
@@ -193,6 +250,10 @@ class FileTabsCubit extends Cubit<FileTabsState> {
     _saveDebounce?.cancel();
     await _wsSub?.cancel();
     await _selfSub?.cancel();
+    for (final s in _fsSubs.values) {
+      await s.cancel();
+    }
+    _fsSubs.clear();
     return super.close();
   }
 }

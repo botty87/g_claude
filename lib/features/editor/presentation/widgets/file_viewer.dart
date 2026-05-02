@@ -32,18 +32,35 @@ class FileViewer extends StatelessWidget {
     final activePath = context.select<FileTabsCubit, String?>(
       (c) => activeId == null ? null : c.state.filesFor(activeId)?.activePath,
     );
+    final openPaths = context.select<FileTabsCubit, List<String>>(
+      (c) => activeId == null
+          ? const []
+          : (c.state.filesFor(activeId)?.openPaths ?? const []),
+    );
     if (activeId == null || activePath == null) {
       return const _EmptyState();
     }
-    return _PooledStack(activeId: activeId, activePath: activePath);
+    return _PooledStack(
+      activeId: activeId,
+      activePath: activePath,
+      workspacePath: activeId,
+      openPaths: openPaths,
+    );
   }
 }
 
 class _PooledStack extends HookWidget {
-  const _PooledStack({required this.activeId, required this.activePath});
+  const _PooledStack({
+    required this.activeId,
+    required this.activePath,
+    required this.workspacePath,
+    required this.openPaths,
+  });
 
   final WorkspaceId activeId;
   final String activePath;
+  final String workspacePath;
+  final List<String> openPaths;
 
   static const _maxLiveEditors = 10;
   static const _maxLiveWorkspaces = 3;
@@ -52,10 +69,14 @@ class _PooledStack extends HookWidget {
   Widget build(BuildContext context) {
     final pools = useRef<LinkedHashMap<WorkspaceId, LinkedHashSet<String>>>(LinkedHashMap());
 
+    final openSet = openPaths.toSet();
     final paths = useMemoized<List<String>>(() {
       final map = pools.value;
       // ignore: prefer_collection_literals
       final pool = map.remove(activeId) ?? LinkedHashSet<String>();
+      // Drop pool entries for files that are no longer open in any tab so
+      // a close+reopen forces a fresh CodeView mount (and re-read from disk).
+      pool.removeWhere((p) => !openSet.contains(p));
       pool.remove(activePath);
       pool.add(activePath);
       while (pool.length > _maxLiveEditors) {
@@ -66,7 +87,7 @@ class _PooledStack extends HookWidget {
         map.remove(map.keys.first);
       }
       return pool.toList(growable: false);
-    }, [activeId, activePath]);
+    }, [activeId, activePath, openSet.length]);
 
     if (paths.isEmpty) {
       return const _EmptyState();
@@ -80,7 +101,7 @@ class _PooledStack extends HookWidget {
         for (final path in paths)
           KeyedSubtree(
             key: ValueKey('codeview-$path'),
-            child: CodeView(path: path),
+            child: CodeView(path: path, workspacePath: workspacePath),
           ),
       ],
     );

@@ -1,8 +1,13 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:path/path.dart' as p;
 import 'package:re_editor/re_editor.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 import 'package:re_highlight/languages/dart.dart';
 import 'package:re_highlight/languages/json.dart';
 import 'package:re_highlight/languages/yaml.dart';
@@ -26,6 +31,7 @@ import '../../../../core/error/failure_extensions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../workspace/data/datasources/workspace_file_watcher.dart';
 import '../../domain/entities/file_content.dart';
 import '../../domain/usecases/read_file.dart';
 import 'code_find_panel.dart';
@@ -80,30 +86,108 @@ final Map<String, CodeHighlightThemeMode> _languageModes = {
 // ---------------------------------------------------------------------------
 
 class CodeView extends HookWidget {
-  const CodeView({super.key, required this.path});
+  const CodeView({
+    super.key,
+    required this.path,
+    required this.workspacePath,
+  });
 
   final String path;
+  final String workspacePath;
 
   @override
   Widget build(BuildContext context) {
     final state = useState<_ViewState>(const _Loading());
+    final reloadTick = useState(0);
+    final talker = getIt<Talker>();
 
+    // Initial load (resets to Loading on path change).
     useEffect(() {
       var cancelled = false;
       state.value = const _Loading();
+      talker.info('[cv] initial load $path');
       getIt<ReadFile>().call(path: path).then((either) {
         if (cancelled) return;
-        state.value = either.fold(_Error.new, _Loaded.new);
+        either.fold(
+          (failure) {
+            talker.info('[cv] initial FAILED $path: $failure');
+            state.value = _Error(failure);
+          },
+          (content) {
+            talker.info('[cv] initial OK $path bytes=${content.content.length}');
+            state.value = _Loaded(content);
+          },
+        );
       });
       return () => cancelled = true;
     }, [path]);
+
+    // Soft reload triggered by file watcher: keep current content visible
+    // until the new content is ready (no Loading flash).
+    useEffect(() {
+      if (reloadTick.value == 0) return null;
+      talker.info('[cv] reload effect tick=${reloadTick.value} $path');
+      var cancelled = false;
+      getIt<ReadFile>().call(path: path).then((either) {
+        if (cancelled) return;
+        either.fold(
+          (failure) {
+            talker.info('[cv] reload FAILED $path: $failure');
+            state.value = _Error(failure);
+          },
+          (content) {
+            talker.info(
+              '[cv] reload OK $path bytes=${content.content.length}',
+            );
+            state.value = _Loaded(content);
+          },
+        );
+      });
+      return () => cancelled = true;
+    }, [reloadTick.value]);
+
+    // Subscribe to the workspace file watcher and bump reloadTick when the
+    // file changes on disk. Debounced to coalesce bursts (atomic save, etc.).
+    useEffect(() {
+      final watcher = getIt<WorkspaceFileWatcher>();
+      final canonicalSelf = p.canonicalize(path);
+      talker.debug('[cv] subscribe ws=$workspacePath file=$path');
+      Timer? debounce;
+      final sub = watcher.watch(workspacePath).listen((event) {
+        if (event is FileSystemDeleteEvent) return;
+        final eventPath = event.path;
+        final destPath =
+            event is FileSystemMoveEvent ? event.destination : null;
+        final matches = p.equals(eventPath, path) ||
+            p.canonicalize(eventPath) == canonicalSelf ||
+            (destPath != null &&
+                (p.equals(destPath, path) ||
+                    p.canonicalize(destPath) == canonicalSelf));
+        if (!matches) return;
+        talker.info(
+          '[cv] match ${event.runtimeType} $eventPath -> debounce',
+        );
+        debounce?.cancel();
+        debounce = Timer(const Duration(milliseconds: 150), () {
+          talker.info('[cv] timer fired -> bump tick');
+          reloadTick.value = reloadTick.value + 1;
+        });
+      });
+      return () {
+        debounce?.cancel();
+        sub.cancel();
+      };
+    }, [path, workspacePath]);
 
     return switch (state.value) {
       _Loading() => const Center(
         child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
       ),
       _Error(:final failure) => _ErrorView(failure: failure),
-      _Loaded(:final content) => _HighlightedView(content: content),
+      _Loaded(:final content) => _HighlightedView(
+        key: ValueKey('hv-${content.path}-${content.content.length}-${content.content.hashCode}'),
+        content: content,
+      ),
     };
   }
 }
@@ -162,7 +246,7 @@ class _ErrorView extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _HighlightedView extends HookWidget {
-  const _HighlightedView({required this.content});
+  const _HighlightedView({super.key, required this.content});
 
   final FileContent content;
 

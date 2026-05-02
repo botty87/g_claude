@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../data/datasources/workspace_file_watcher.dart';
 import '../../data/datasources/workspaces_persistence_datasource.dart';
 import '../../domain/entities/workspace.dart';
 import '../../domain/usecases/open_workspace.dart';
@@ -19,11 +20,16 @@ part 'workspaces_cubit.state.dart';
 
 @lazySingleton
 class WorkspacesCubit extends Cubit<WorkspacesState> {
-  WorkspacesCubit(this._openWorkspace, this._persistence, this._talker)
-      : super(const WorkspacesState.initial());
+  WorkspacesCubit(
+    this._openWorkspace,
+    this._persistence,
+    this._fileWatcher,
+    this._talker,
+  ) : super(const WorkspacesState.initial());
 
   final OpenWorkspace _openWorkspace;
   final WorkspacesPersistenceDataSource _persistence;
+  final WorkspaceFileWatcher _fileWatcher;
   final Talker _talker;
 
   bool _restoring = false;
@@ -93,7 +99,9 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     final index = list.indexWhere((w) => w.id == id);
     if (index < 0) return;
 
+    final closed = list[index];
     _talker.info('Closed workspace: $id');
+    unawaited(_fileWatcher.dispose(closed.path));
     final next = [...list]..removeAt(index);
     if (next.isEmpty) {
       emit(const WorkspacesState.loaded());
@@ -169,6 +177,9 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
   Future<void> close() async {
     _saveDebounce?.cancel();
     await _selfSub?.cancel();
+    for (final w in state.workspacesOrEmpty) {
+      await _fileWatcher.dispose(w.path);
+    }
     return super.close();
   }
 }
