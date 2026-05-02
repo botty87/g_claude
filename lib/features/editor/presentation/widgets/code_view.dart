@@ -81,6 +81,25 @@ final Map<String, CodeHighlightThemeMode> _languageModes = {
   'ini': CodeHighlightThemeMode(mode: langIni),
 };
 
+bool _eventMatchesPath(
+  FileSystemEvent event,
+  String target,
+  String canonicalTarget,
+) {
+  final src = event.path;
+  if (p.equals(src, target) || p.canonicalize(src) == canonicalTarget) {
+    return true;
+  }
+  if (event is FileSystemMoveEvent) {
+    final dest = event.destination;
+    if (dest != null &&
+        (p.equals(dest, target) || p.canonicalize(dest) == canonicalTarget)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // ---------------------------------------------------------------------------
 // CodeView
 // ---------------------------------------------------------------------------
@@ -101,75 +120,49 @@ class CodeView extends HookWidget {
     final reloadTick = useState(0);
     final talker = getIt<Talker>();
 
-    // Initial load (resets to Loading on path change).
     useEffect(() {
       var cancelled = false;
       state.value = const _Loading();
-      talker.info('[cv] initial load $path');
       getIt<ReadFile>().call(path: path).then((either) {
         if (cancelled) return;
         either.fold(
           (failure) {
-            talker.info('[cv] initial FAILED $path: $failure');
+            talker.debug('[cv] initial FAILED $path: $failure');
             state.value = _Error(failure);
           },
-          (content) {
-            talker.info('[cv] initial OK $path bytes=${content.content.length}');
-            state.value = _Loaded(content);
-          },
+          (content) => state.value = _Loaded(content),
         );
       });
       return () => cancelled = true;
     }, [path]);
 
-    // Soft reload triggered by file watcher: keep current content visible
-    // until the new content is ready (no Loading flash).
+    // Soft reload on watcher fire: keep the previous _Loaded visible during
+    // the re-read so the editor does not flash to a spinner on every save.
     useEffect(() {
       if (reloadTick.value == 0) return null;
-      talker.info('[cv] reload effect tick=${reloadTick.value} $path');
       var cancelled = false;
       getIt<ReadFile>().call(path: path).then((either) {
         if (cancelled) return;
         either.fold(
           (failure) {
-            talker.info('[cv] reload FAILED $path: $failure');
+            talker.debug('[cv] reload FAILED $path: $failure');
             state.value = _Error(failure);
           },
-          (content) {
-            talker.info(
-              '[cv] reload OK $path bytes=${content.content.length}',
-            );
-            state.value = _Loaded(content);
-          },
+          (content) => state.value = _Loaded(content),
         );
       });
       return () => cancelled = true;
     }, [reloadTick.value]);
 
-    // Subscribe to the workspace file watcher and bump reloadTick when the
-    // file changes on disk. Debounced to coalesce bursts (atomic save, etc.).
     useEffect(() {
       final watcher = getIt<WorkspaceFileWatcher>();
       final canonicalSelf = p.canonicalize(path);
-      talker.debug('[cv] subscribe ws=$workspacePath file=$path');
       Timer? debounce;
       final sub = watcher.watch(workspacePath).listen((event) {
         if (event is FileSystemDeleteEvent) return;
-        final eventPath = event.path;
-        final destPath =
-            event is FileSystemMoveEvent ? event.destination : null;
-        final matches = p.equals(eventPath, path) ||
-            p.canonicalize(eventPath) == canonicalSelf ||
-            (destPath != null &&
-                (p.equals(destPath, path) ||
-                    p.canonicalize(destPath) == canonicalSelf));
-        if (!matches) return;
-        talker.info(
-          '[cv] match ${event.runtimeType} $eventPath -> debounce',
-        );
+        if (!_eventMatchesPath(event, path, canonicalSelf)) return;
         debounce?.cancel();
         debounce = Timer(const Duration(milliseconds: 150), () {
-          talker.info('[cv] timer fired -> bump tick');
           reloadTick.value = reloadTick.value + 1;
         });
       });
@@ -184,8 +177,11 @@ class CodeView extends HookWidget {
         child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
       ),
       _Error(:final failure) => _ErrorView(failure: failure),
+      // Key by path only: changing the key on every save would unmount the
+      // editor and lose cursor position / scroll / selection. The inner
+      // controller swap is handled via useMemoized on content.content.
       _Loaded(:final content) => _HighlightedView(
-        key: ValueKey('hv-${content.path}-${content.content.length}-${content.content.hashCode}'),
+        key: ValueKey('hv-${content.path}'),
         content: content,
       ),
     };

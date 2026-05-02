@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:injectable/injectable.dart';
+import 'package:path/path.dart' as p;
 import 'package:talker_flutter/talker_flutter.dart';
 
 abstract interface class WorkspaceFileWatcher {
@@ -33,6 +34,22 @@ class WorkspaceFileWatcherImpl implements WorkspaceFileWatcher {
   }
 }
 
+// Path segments filtered upstream: build artifacts, VCS internals, dependency
+// caches. Tools (build_runner, git, npm) churn these at very high rates and
+// no UI surface cares about them; cutting them at the source avoids fanning
+// out hundreds of events/sec to every cubit and CodeView listener.
+const _ignoredSegments = {
+  '.git',
+  '.dart_tool',
+  '.idea',
+  '.vscode',
+  'build',
+  '.build',
+  'node_modules',
+  '.gradle',
+  'DerivedData',
+};
+
 class _WatchHandle {
   _WatchHandle._(this.path, this._talker, this.controller);
 
@@ -48,15 +65,26 @@ class _WatchHandle {
   final StreamController<FileSystemEvent> controller;
   StreamSubscription<FileSystemEvent>? _sub;
 
+  bool _isIgnored(String eventPath) {
+    final rel = p.relative(eventPath, from: path);
+    if (rel == '.' || rel.startsWith('..')) return false;
+    for (final seg in p.split(rel)) {
+      if (_ignoredSegments.contains(seg)) return true;
+    }
+    return false;
+  }
+
   void _start() {
     try {
       _sub = Directory(path)
           .watch(recursive: true)
           .listen(
             (event) {
-              _talker.verbose(
-                'FileWatcher event: ${event.runtimeType} ${event.path}',
-              );
+              if (_isIgnored(event.path)) return;
+              if (event is FileSystemMoveEvent) {
+                final dest = event.destination;
+                if (dest != null && _isIgnored(dest)) return;
+              }
               controller.add(event);
             },
             onError: (Object e, StackTrace st) {

@@ -64,6 +64,16 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   String _oneLine(String s) =>
       s.replaceAll('\r', '').replaceAll('\n', r'\n').trim();
 
+  // Skip the jsonEncode entirely for huge tool inputs (e.g. Bash dumps,
+  // multi-MB tool outputs). The truncated preview is debug-only and not
+  // worth the encode cost on the hot tool-event path.
+  String _describeToolInput(Map<String, dynamic>? input) {
+    if (input == null) return '';
+    if (input.isEmpty) return ' input={}';
+    if (input.length > 16) return ' input=<${input.length} keys>';
+    return ' input=${_oneLine(_truncate(jsonEncode(input), 300))}';
+  }
+
   String? _toolNameFor(String wid, String? toolUseId) {
     final session = state.sessions[wid];
     if (session == null) return null;
@@ -265,7 +275,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     );
     emit(state.copyWith(sessions: next));
 
-    _talker.info('[cc] u> ${_oneLine(_truncate(trimmed, 800))}');
+    _talker.debug('[cc] u> ${_oneLine(_truncate(trimmed, 800))}');
 
     _runningWorkspaceId = workspaceId;
     _streamingText = '';
@@ -346,7 +356,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         _ensureStreamingMessage(wid);
         _replaceStreamingMessage(wid, text, isStreaming: false);
         if (text.trim().isNotEmpty) {
-          _talker.info('[cc] a> ${_oneLine(_truncate(text, 800))}');
+          _talker.debug('[cc] a> ${_oneLine(_truncate(text, 800))}');
         }
 
       case ClaudeEventToolCall(:final toolName, :final toolId):
@@ -370,12 +380,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
           :final index,
         ):
         _completeToolMessage(wid, toolUseId: toolId, input: input);
-        final toolName = _toolNameFor(wid, toolId);
-        final inputPreview = input == null
-            ? ''
-            : ' input=${_oneLine(_truncate(jsonEncode(input), 300))}';
-        _talker.info(
-          '[cc] tool> ${toolName ?? "?"}#$index$inputPreview',
+        _talker.debug(
+          '[cc] tool> ${_toolNameFor(wid, toolId) ?? "?"}#$index'
+          '${_describeToolInput(input)}',
         );
 
       case ClaudeEventToolResult(:final toolUseId, :final content, :final isError):
@@ -385,9 +392,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
           output: content,
           isError: isError,
         );
-        final toolName = _toolNameFor(wid, toolUseId);
-        _talker.info(
-          '[cc] result> ${toolName ?? "?"} '
+        _talker.debug(
+          '[cc] result> ${_toolNameFor(wid, toolUseId) ?? "?"} '
           'err=$isError ${_oneLine(_truncate(content, 300))}',
         );
 
@@ -398,7 +404,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
       case ClaudeEventErrorEvent(:final message):
         _flushStreamingChunks();
-        _talker.info('[cc] error> ${_oneLine(message)}');
+        _talker.error('[cc] error> ${_oneLine(message)}');
         _finishRun(
           status: ClaudeRunStatus.error,
           failure: SubprocessFailure(message: message),
