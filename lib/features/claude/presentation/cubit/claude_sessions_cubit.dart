@@ -9,6 +9,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/either.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
+import '../../data/datasources/permission_server.dart';
 import '../../domain/entities/claude_event.dart';
 import '../../domain/entities/claude_message.dart';
 import '../../domain/entities/claude_model.dart';
@@ -25,6 +26,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     this._sendPrompt,
     this._stopRun,
     this._workspacesCubit,
+    this._permissionServer,
     this._prefs,
     this._talker,
   ) : super(const ClaudeSessionsState());
@@ -32,6 +34,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   final SendPrompt _sendPrompt;
   final StopRun _stopRun;
   final WorkspacesCubit _workspacesCubit;
+  final PermissionServer _permissionServer;
   final SharedPreferences _prefs;
   final Talker _talker;
 
@@ -43,14 +46,67 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   String? _streamingMessageId;
   String _streamingText = '';
 
+  /// Maps a Claude `session_id` (received in InitEvent) to the workspace
+  /// that owns the session, so the PermissionServer hook can lookup the
+  /// active permission mode at decision time.
+  final Map<String, String> _sessionToWorkspace = {};
+
   static const _modelPrefix = 'claude.model.';
   static const _permPrefix = 'claude.permission.';
   static const _flushMs = 16;
+
+  /// Tools that can be safely allowed in plan mode (read-only or pure UI).
+  static const _readOnlyTools = <String>{
+    'Read',
+    'Glob',
+    'Grep',
+    'BashOutput',
+    'KillShell',
+    'NotebookRead',
+    'TodoWrite',
+    'WebFetch',
+    'WebSearch',
+    'ExitPlanMode',
+    'ListMcpResourcesTool',
+    'ReadMcpResourceTool',
+  };
 
   @PostConstruct()
   void init() {
     _workspacesSub = _workspacesCubit.stream.listen(_onWorkspacesChanged);
     _onWorkspacesChanged(_workspacesCubit.state);
+    _permissionServer.setResolver(_resolvePermission);
+    unawaited(_permissionServer.start());
+  }
+
+  Future<PermissionDecision> _resolvePermission(PermissionRequest req) async {
+    final wid = _sessionToWorkspace[req.sessionId];
+    if (wid == null) {
+      _talker.warning(
+        'PermissionServer: unknown session ${req.sessionId} '
+        'tool=${req.toolName} -> defaulting allow',
+      );
+      return PermissionDecision.allow;
+    }
+    final session = state.sessions[wid];
+    if (session == null) return PermissionDecision.allow;
+    return _decisionFor(session.permissionMode, req.toolName);
+  }
+
+  PermissionDecision _decisionFor(
+    ClaudePermissionMode mode,
+    String toolName,
+  ) {
+    switch (mode) {
+      case ClaudePermissionMode.plan:
+        return _readOnlyTools.contains(toolName)
+            ? PermissionDecision.allow
+            : PermissionDecision.deny;
+      case ClaudePermissionMode.acceptEdits:
+      case ClaudePermissionMode.bypassPermissions:
+      case ClaudePermissionMode.defaultMode:
+        return PermissionDecision.allow;
+    }
   }
 
   void _onWorkspacesChanged(WorkspacesState s) {
@@ -67,6 +123,11 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     final ids = list.map((w) => w.id).toSet();
     final removed = map.keys.where((id) => !ids.contains(id)).toList();
     for (final id in removed) {
+      final closed = map[id];
+      final claudeSessionId = closed?.claudeSessionId;
+      if (claudeSessionId != null) {
+        _sessionToWorkspace.remove(claudeSessionId);
+      }
       map.remove(id);
     }
     if (removed.isNotEmpty &&
@@ -113,6 +174,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       _stopRun.call();
       _cleanupRun();
     }
+    final oldId = session.claudeSessionId;
+    if (oldId != null) _sessionToWorkspace.remove(oldId);
     final next = Map<String, ClaudeSessionData>.from(state.sessions);
     next[workspaceId] = session.copyWith(
       messages: const [],
@@ -212,6 +275,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     switch (event) {
       case ClaudeEventSessionInit(:final sessionId, :final model):
         _talker.debug('Claude session init: $sessionId model=$model');
+        if (sessionId.isNotEmpty) {
+          _sessionToWorkspace[sessionId] = wid;
+        }
         final next = Map<String, ClaudeSessionData>.from(state.sessions);
         next[wid] = session.copyWith(
           claudeSessionId: sessionId.isEmpty ? null : sessionId,
@@ -394,6 +460,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _cleanupRun();
     await _workspacesSub?.cancel();
     await _stopRun.call();
+    await _permissionServer.stop();
     return super.close();
   }
 }

@@ -9,6 +9,8 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../domain/entities/claude_event.dart';
 import '../../domain/entities/claude_model.dart';
 import '../../domain/entities/claude_permission_mode.dart';
+import 'claude_settings_writer.dart';
+import 'permission_server.dart';
 
 /// Wraps the `claude -p` subprocess: spawn, NDJSON parsing, normalization.
 abstract interface class ClaudeProcessDataSource {
@@ -38,9 +40,15 @@ class ClaudeSpawnException implements Exception {
 
 @LazySingleton(as: ClaudeProcessDataSource)
 class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
-  ClaudeProcessDataSourceImpl(this._talker);
+  ClaudeProcessDataSourceImpl(
+    this._talker,
+    this._permissionServer,
+    this._settingsWriter,
+  );
 
   final Talker _talker;
+  final PermissionServer _permissionServer;
+  final ClaudeSettingsWriter _settingsWriter;
 
   Process? _current;
   String? _binaryPath;
@@ -66,14 +74,18 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
       }
       _binaryPath = binary;
 
+      final port = await _permissionServer.start();
+      final settingsPath = await _settingsWriter.ensure(port);
+
       final args = <String>[
         '-p',
         '--input-format', 'stream-json',
         '--output-format', 'stream-json',
         '--verbose',
         '--include-partial-messages',
-        '--permission-mode', mode.cliFlag,
-        if (mode.isBypass) '--dangerously-skip-permissions',
+        '--permission-mode', 'default',
+        '--settings', settingsPath,
+        '--append-system-prompt', mode.systemPromptHint,
         if (model != null) ...['--model', model.cliId],
         if (resumeSessionId != null) ...['--resume', resumeSessionId],
       ];
