@@ -5,8 +5,10 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/menu_position.dart';
 import '../../../../shared/widgets/hoverable.dart';
 import '../../domain/entities/claude_permission_mode.dart';
+import '_enum_ui.dart';
 
 class PermissionPicker extends StatelessWidget {
   const PermissionPicker({
@@ -19,32 +21,6 @@ class PermissionPicker extends StatelessWidget {
   final ClaudePermissionMode current;
   final ValueChanged<ClaudePermissionMode> onSelected;
   final bool enabled;
-
-  IconData _iconFor(ClaudePermissionMode m) {
-    switch (m) {
-      case ClaudePermissionMode.plan:
-        return Symbols.visibility;
-      case ClaudePermissionMode.acceptEdits:
-        return Symbols.edit_note;
-      case ClaudePermissionMode.bypassPermissions:
-        return Symbols.bolt;
-      case ClaudePermissionMode.defaultMode:
-        return Symbols.shield;
-    }
-  }
-
-  Color _colorFor(ClaudePermissionMode m) {
-    switch (m) {
-      case ClaudePermissionMode.plan:
-        return AppColors.secondary;
-      case ClaudePermissionMode.acceptEdits:
-        return AppColors.primary;
-      case ClaudePermissionMode.bypassPermissions:
-        return AppColors.tertiary;
-      case ClaudePermissionMode.defaultMode:
-        return AppColors.outline;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,8 +46,7 @@ class PermissionPicker extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(_iconFor(current),
-                    size: 12, color: _colorFor(current)),
+                Icon(current.icon, size: 12, color: current.color),
                 const SizedBox(width: AppSpacing.xs),
                 Text(
                   current.labelKey.tr(),
@@ -96,18 +71,9 @@ class PermissionPicker extends StatelessWidget {
   void _showMenu(BuildContext context) {
     final box = context.findRenderObject() as RenderBox?;
     if (box == null) return;
-    final offset = box.localToGlobal(Offset.zero);
-    final size = box.size;
-    final position = RelativeRect.fromLTRB(
-      offset.dx,
-      offset.dy + size.height + 4,
-      offset.dx + size.width,
-      offset.dy + size.height + 4,
-    );
-
     showMenu<ClaudePermissionMode>(
       context: context,
-      position: position,
+      position: relativeRectBelow(box),
       color: AppColors.surfaceContainerHigh,
       items: [
         for (final m in ClaudePermissionMode.values)
@@ -117,11 +83,9 @@ class PermissionPicker extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  m == current ? Symbols.check : _iconFor(m),
+                  m == current ? Symbols.check : m.icon,
                   size: 14,
-                  color: m == current
-                      ? AppColors.brandIndigo
-                      : _colorFor(m),
+                  color: m == current ? AppColors.brandIndigo : m.color,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text(

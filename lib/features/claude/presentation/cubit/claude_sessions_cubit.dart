@@ -41,19 +41,29 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   StreamSubscription<WorkspacesState>? _workspacesSub;
   StreamSubscription<Either<Failure, ClaudeEvent>>? _runSub;
   Timer? _chunkFlushTimer;
+  DateTime? _lastFlushAt;
 
   String? _runningWorkspaceId;
-  String? _streamingMessageId;
   String _streamingText = '';
 
-  /// Maps a Claude `session_id` (received in InitEvent) to the workspace
-  /// that owns the session, so the PermissionServer hook can lookup the
-  /// active permission mode at decision time.
   final Map<String, String> _sessionToWorkspace = {};
 
   static const _modelPrefix = 'claude.model.';
   static const _permPrefix = 'claude.permission.';
   static const _flushMs = 16;
+
+  String _genId(String prefix) =>
+      '$prefix-${DateTime.now().microsecondsSinceEpoch}';
+
+  String? _streamingMessageIdFor(String wid) {
+    final session = state.sessions[wid];
+    if (session == null) return null;
+    for (var i = session.messages.length - 1; i >= 0; i--) {
+      final m = session.messages[i];
+      if (m is ClaudeMessageAssistant && m.isStreaming) return m.id;
+    }
+    return null;
+  }
 
   /// Tools that can be safely allowed in plan mode (read-only or pure UI).
   static const _readOnlyTools = <String>{
@@ -76,7 +86,15 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _workspacesSub = _workspacesCubit.stream.listen(_onWorkspacesChanged);
     _onWorkspacesChanged(_workspacesCubit.state);
     _permissionServer.setResolver(_resolvePermission);
-    unawaited(_permissionServer.start());
+    unawaited(
+      _permissionServer
+          .start()
+          .timeout(const Duration(seconds: 5))
+          .catchError((Object e, StackTrace st) {
+            _talker.error('PermissionServer.start failed', e, st);
+            return -1;
+          }),
+    );
   }
 
   Future<PermissionDecision> _resolvePermission(PermissionRequest req) async {
@@ -111,28 +129,26 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
   void _onWorkspacesChanged(WorkspacesState s) {
     final list = s.workspacesOrEmpty;
-    final map = Map<String, ClaudeSessionData>.from(state.sessions);
-    for (final w in list) {
-      if (!map.containsKey(w.id)) {
-        map[w.id] = ClaudeSessionData(
-          model: _readModel(w.id),
-          permissionMode: _readPermission(w.id),
-        );
-      }
-    }
     final ids = list.map((w) => w.id).toSet();
-    final removed = map.keys.where((id) => !ids.contains(id)).toList();
+    final added = [for (final w in list) if (!state.sessions.containsKey(w.id)) w.id];
+    final removed = [for (final k in state.sessions.keys) if (!ids.contains(k)) k];
+    if (added.isEmpty && removed.isEmpty) return;
+
+    final map = Map<String, ClaudeSessionData>.from(state.sessions);
+    for (final id in added) {
+      map[id] = ClaudeSessionData(
+        model: _readModel(id),
+        permissionMode: _readPermission(id),
+      );
+    }
     for (final id in removed) {
-      final closed = map[id];
-      final claudeSessionId = closed?.claudeSessionId;
+      final claudeSessionId = map[id]?.claudeSessionId;
       if (claudeSessionId != null) {
         _sessionToWorkspace.remove(claudeSessionId);
       }
       map.remove(id);
     }
-    if (removed.isNotEmpty &&
-        _runningWorkspaceId != null &&
-        removed.contains(_runningWorkspaceId)) {
+    if (_runningWorkspaceId != null && removed.contains(_runningWorkspaceId)) {
       _stopRun.call();
       _cleanupRun();
     }
@@ -206,8 +222,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     }
 
     final now = DateTime.now();
-    final userMsgId = 'u-${now.microsecondsSinceEpoch}';
-    final assistantMsgId = 'a-${now.microsecondsSinceEpoch}';
+    final userMsgId = _genId('u');
+    final assistantMsgId = _genId('a');
     final messages = [
       ...session.messages,
       ClaudeMessage.user(id: userMsgId, text: trimmed, createdAt: now),
@@ -229,8 +245,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     emit(state.copyWith(sessions: next));
 
     _runningWorkspaceId = workspaceId;
-    _streamingMessageId = assistantMsgId;
     _streamingText = '';
+    _lastFlushAt = null;
 
     final params = SendPromptParams(
       cwd: workspaceId,
@@ -288,23 +304,30 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       case ClaudeEventTextChunk(:final text):
         _ensureStreamingMessage(wid);
         _streamingText += text;
-        _chunkFlushTimer ??= Timer(
-          const Duration(milliseconds: _flushMs),
-          _flushStreamingChunks,
-        );
+        final now = DateTime.now();
+        final since = _lastFlushAt == null
+            ? const Duration(days: 1)
+            : now.difference(_lastFlushAt!);
+        if (since.inMilliseconds >= _flushMs) {
+          _flushStreamingChunks();
+        } else {
+          _chunkFlushTimer ??= Timer(
+            Duration(milliseconds: _flushMs - since.inMilliseconds),
+            _flushStreamingChunks,
+          );
+        }
 
       case ClaudeEventAssistantMessage(:final text):
         _flushChunkTimerCancel();
         _streamingText = '';
         _ensureStreamingMessage(wid);
         _replaceStreamingMessage(wid, text, isStreaming: false);
-        _streamingMessageId = null;
 
       case ClaudeEventToolCall(:final toolName, :final toolId):
         _appendMessage(
           wid,
           ClaudeMessage.tool(
-            id: 't-${DateTime.now().microsecondsSinceEpoch}',
+            id: _genId('t'),
             toolName: toolName,
             toolUseId: toolId.isEmpty ? null : toolId,
             status: ClaudeToolStatus.running,
@@ -313,7 +336,6 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         );
 
       case ClaudeEventToolCallUpdate():
-        // Skip partial input updates in this iteration.
         break;
 
       case ClaudeEventToolCallComplete(:final toolId, :final input):
@@ -361,10 +383,12 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   void _flushStreamingChunks() {
     _flushChunkTimerCancel();
     final wid = _runningWorkspaceId;
-    final mid = _streamingMessageId;
-    if (wid == null || mid == null) return;
+    if (wid == null) return;
+    final mid = _streamingMessageIdFor(wid);
+    if (mid == null) return;
     if (_streamingText.isEmpty) return;
     _replaceStreamingMessage(wid, _streamingText, isStreaming: true);
+    _lastFlushAt = DateTime.now();
   }
 
   void _flushChunkTimerCancel() {
@@ -373,12 +397,11 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   }
 
   void _ensureStreamingMessage(String wid) {
-    if (_streamingMessageId != null) return;
+    if (_streamingMessageIdFor(wid) != null) return;
     final session = state.sessions[wid];
     if (session == null) return;
-    final id = 'a-${DateTime.now().microsecondsSinceEpoch}';
     final placeholder = ClaudeMessage.assistant(
-      id: id,
+      id: _genId('a'),
       text: '',
       isStreaming: true,
       createdAt: DateTime.now(),
@@ -388,7 +411,6 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       messages: [...session.messages, placeholder],
     );
     emit(state.copyWith(sessions: next));
-    _streamingMessageId = id;
   }
 
   void _replaceStreamingMessage(
@@ -398,7 +420,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   }) {
     final session = state.sessions[wid];
     if (session == null) return;
-    final mid = _streamingMessageId;
+    final mid = _streamingMessageIdFor(wid);
     if (mid == null) return;
     final messages = [
       for (final m in session.messages)
@@ -474,29 +496,23 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     emit(state.copyWith(sessions: next));
   }
 
-  /// If the last turn ended with at least one tool but no non-empty
-  /// assistant text, append a [ClaudeMessageSystem] stub so the user has a
-  /// visible completion marker.
+  /// Stub system message when last turn had tools but no text reply, so user
+  /// has a visible completion marker.
   List<ClaudeMessage> _appendCompletionStubIfNeeded(
     List<ClaudeMessage> messages,
   ) {
     if (messages.isEmpty) return messages;
     var lastUser = -1;
+    var hasToolAfterUser = false;
     for (var i = messages.length - 1; i >= 0; i--) {
-      if (messages[i] is ClaudeMessageUser) {
+      final m = messages[i];
+      if (m is ClaudeMessageUser) {
         lastUser = i;
         break;
       }
+      if (m is ClaudeMessageTool) hasToolAfterUser = true;
     }
-    if (lastUser == -1) return messages;
-    var hasTool = false;
-    for (var i = lastUser + 1; i < messages.length; i++) {
-      if (messages[i] is ClaudeMessageTool) {
-        hasTool = true;
-        break;
-      }
-    }
-    if (!hasTool) return messages;
+    if (lastUser == -1 || !hasToolAfterUser) return messages;
     final last = messages.last;
     final endsWithText =
         last is ClaudeMessageAssistant && last.text.trim().isNotEmpty;
@@ -505,7 +521,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     return [
       ...messages,
       ClaudeMessage.system(
-        id: 's-${now.microsecondsSinceEpoch}',
+        id: _genId('s'),
         text: 'claude.message.completionStub',
         createdAt: now,
       ),
@@ -521,7 +537,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     if (wid != null) {
       final session = state.sessions[wid];
       if (session != null) {
-        final mid = _streamingMessageId;
+        final mid = _streamingMessageIdFor(wid);
         var messages = session.messages;
         if (mid != null) {
           messages = [
@@ -558,8 +574,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _runSub?.cancel();
     _runSub = null;
     _runningWorkspaceId = null;
-    _streamingMessageId = null;
     _streamingText = '';
+    _lastFlushAt = null;
   }
 
   @override

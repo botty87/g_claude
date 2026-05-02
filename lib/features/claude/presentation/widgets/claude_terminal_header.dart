@@ -4,10 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
 import '../cubit/claude_sessions_cubit.dart';
+import '_enum_ui.dart';
 import 'model_picker.dart';
 import 'permission_picker.dart';
 
@@ -76,7 +78,8 @@ class ClaudeTerminalHeader extends StatelessWidget {
                       decoration: BoxDecoration(
                         color:
                             hover ? AppColors.glassHover : Colors.transparent,
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius:
+                            BorderRadius.circular(AppRadii.sm),
                       ),
                       child: Icon(
                         Symbols.delete_sweep,
@@ -107,40 +110,11 @@ class _StatusIndicator extends StatelessWidget {
   final ClaudeRunStatus status;
   final bool compact;
 
-  Color get _color {
-    switch (status) {
-      case ClaudeRunStatus.idle:
-        return AppColors.outline;
-      case ClaudeRunStatus.connecting:
-        return AppColors.tertiary;
-      case ClaudeRunStatus.running:
-        return AppColors.secondary;
-      case ClaudeRunStatus.error:
-        return AppColors.error;
-      case ClaudeRunStatus.sessionDead:
-        return AppColors.error;
-    }
-  }
-
-  String get _labelKey {
-    switch (status) {
-      case ClaudeRunStatus.idle:
-        return 'claude.terminal.status.idle';
-      case ClaudeRunStatus.connecting:
-        return 'claude.terminal.status.connecting';
-      case ClaudeRunStatus.running:
-        return 'claude.terminal.status.running';
-      case ClaudeRunStatus.error:
-        return 'claude.terminal.status.error';
-      case ClaudeRunStatus.sessionDead:
-        return 'claude.terminal.status.sessionDead';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final label = status.labelKey.tr();
     return Tooltip(
-      message: _labelKey.tr(),
+      message: label,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -148,14 +122,14 @@ class _StatusIndicator extends StatelessWidget {
             width: 8,
             height: 8,
             decoration: BoxDecoration(
-              color: _color,
+              color: status.color,
               shape: BoxShape.circle,
             ),
           ),
           if (!compact) ...[
             const SizedBox(width: AppSpacing.sm),
             Text(
-              _labelKey.tr(),
+              label,
               style: AppTypography.bodyMain.copyWith(
                 color: AppColors.outline,
                 fontSize: 11,

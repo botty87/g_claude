@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/menu_position.dart';
 import '../../../../shared/widgets/hoverable.dart';
 import '../../domain/entities/claude_model.dart';
 
@@ -70,18 +71,9 @@ class ModelPicker extends StatelessWidget {
   void _showMenu(BuildContext context) {
     final box = context.findRenderObject() as RenderBox?;
     if (box == null) return;
-    final offset = box.localToGlobal(Offset.zero);
-    final size = box.size;
-    final position = RelativeRect.fromLTRB(
-      offset.dx,
-      offset.dy + size.height + 4,
-      offset.dx + size.width,
-      offset.dy + size.height + 4,
-    );
-
     showMenu<ClaudeModel>(
       context: context,
-      position: position,
+      position: relativeRectBelow(box),
       color: AppColors.surfaceContainerHigh,
       items: [
         for (final m in ClaudeModel.values)

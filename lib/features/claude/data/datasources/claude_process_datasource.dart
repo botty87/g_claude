@@ -38,6 +38,19 @@ class ClaudeSpawnException implements Exception {
   String toString() => 'ClaudeSpawnException: $message';
 }
 
+// NDJSON envelope keys per `claude -p --output-format stream-json` contract.
+const _kType = 'type';
+const _kSubtype = 'subtype';
+const _kEvent = 'event';
+const _kDelta = 'delta';
+const _kIndex = 'index';
+const _kContentBlock = 'content_block';
+const _kMessage = 'message';
+const _kContent = 'content';
+const _kSessionId = 'session_id';
+const _kModel = 'model';
+const _kTools = 'tools';
+
 @LazySingleton(as: ClaudeProcessDataSource)
 class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
   ClaudeProcessDataSourceImpl(this._talker, this._permissionServer, this._settingsWriter);
@@ -51,8 +64,6 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
 
   static const _stderrTailMax = 200;
 
-  // Per-run state for reconstructing tool input from `input_json_delta`
-  // streams and matching `content_block_stop` to the right tool.
   final Map<int, _ToolBlockState> _toolByIndex = {};
 
   @override
@@ -86,7 +97,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
         '--verbose',
         '--include-partial-messages',
         '--permission-mode',
-        'default',
+        ClaudePermissionMode.defaultMode.cliFlag,
         '--settings',
         settingsPath,
         '--append-system-prompt',
@@ -236,27 +247,27 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
   /// Maps a raw NDJSON object (per the `claude -p --output-format stream-json`
   /// contract) into a list of [ClaudeEvent]. May emit zero or more events.
   Iterable<ClaudeEvent> _normalize(Map<String, dynamic> raw) sync* {
-    final type = raw['type'] as String?;
+    final type = raw[_kType] as String?;
     switch (type) {
       case 'system':
-        if (raw['subtype'] == 'init') {
+        if (raw[_kSubtype] == 'init') {
           yield ClaudeEvent.sessionInit(
-            sessionId: raw['session_id'] as String? ?? '',
-            model: raw['model'] as String? ?? '',
-            tools: (raw['tools'] as List?)?.cast<String>() ?? const [],
+            sessionId: raw[_kSessionId] as String? ?? '',
+            model: raw[_kModel] as String? ?? '',
+            tools: (raw[_kTools] as List?)?.cast<String>() ?? const [],
           );
         }
         return;
 
       case 'stream_event':
-        final inner = raw['event'];
+        final inner = raw[_kEvent];
         if (inner is! Map<String, dynamic>) return;
-        final innerType = inner['type'] as String?;
+        final innerType = inner[_kType] as String?;
         switch (innerType) {
           case 'content_block_delta':
-            final delta = inner['delta'];
+            final delta = inner[_kDelta];
             if (delta is Map<String, dynamic>) {
-              final dType = delta['type'] as String?;
+              final dType = delta[_kType] as String?;
               if (dType == 'text_delta') {
                 final text = delta['text'] as String? ?? '';
                 if (text.isEmpty) return;
@@ -265,7 +276,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
               }
               if (dType == 'input_json_delta') {
                 final partial = delta['partial_json'] as String? ?? '';
-                final index = (inner['index'] as int?) ?? 0;
+                final index = (inner[_kIndex] as int?) ?? 0;
                 final tool = _toolByIndex[index];
                 if (tool != null) tool.partialJson.write(partial);
                 yield ClaudeEvent.toolCallUpdate(toolId: tool?.toolId ?? '', partialInput: partial);
@@ -274,9 +285,9 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
             return;
 
           case 'content_block_start':
-            final block = inner['content_block'];
-            final index = (inner['index'] as int?) ?? 0;
-            if (block is Map<String, dynamic> && block['type'] == 'tool_use') {
+            final block = inner[_kContentBlock];
+            final index = (inner[_kIndex] as int?) ?? 0;
+            if (block is Map<String, dynamic> && block[_kType] == 'tool_use') {
               final toolName = block['name'] as String? ?? '';
               final toolId = block['id'] as String? ?? '';
               _toolByIndex[index] = _ToolBlockState(toolName: toolName, toolId: toolId);
@@ -285,7 +296,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
             return;
 
           case 'content_block_stop':
-            final index = (inner['index'] as int?) ?? 0;
+            final index = (inner[_kIndex] as int?) ?? 0;
             final tool = _toolByIndex.remove(index);
             Map<String, dynamic>? input;
             if (tool != null) {
@@ -307,13 +318,13 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
         }
 
       case 'assistant':
-        final message = raw['message'];
+        final message = raw[_kMessage];
         if (message is Map<String, dynamic>) {
-          final content = message['content'];
+          final content = message[_kContent];
           if (content is List) {
             final buf = StringBuffer();
             for (final block in content) {
-              if (block is Map<String, dynamic> && block['type'] == 'text') {
+              if (block is Map<String, dynamic> && block[_kType] == 'text') {
                 buf.write(block['text'] as String? ?? '');
               }
             }
@@ -326,15 +337,15 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
         return;
 
       case 'user':
-        final message = raw['message'];
+        final message = raw[_kMessage];
         if (message is Map<String, dynamic>) {
-          final content = message['content'];
+          final content = message[_kContent];
           if (content is List) {
             for (final block in content) {
-              if (block is Map<String, dynamic> && block['type'] == 'tool_result') {
+              if (block is Map<String, dynamic> && block[_kType] == 'tool_result') {
                 yield ClaudeEvent.toolResult(
                   toolUseId: block['tool_use_id'] as String? ?? '',
-                  content: _flattenToolResultContent(block['content']),
+                  content: _flattenToolResultContent(block[_kContent]),
                   isError: block['is_error'] == true,
                 );
               }

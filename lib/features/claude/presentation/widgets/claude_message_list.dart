@@ -8,10 +8,23 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../domain/entities/claude_message.dart';
 import '../cubit/claude_sessions_cubit.dart';
+
+const _kAnimDuration = Duration(milliseconds: 180);
+const _kToolBodyMaxHeight = 200.0;
+
+(IconData, Color) _toolGroupHeaderIconAndColor({
+  required int running,
+  required int errors,
+}) {
+  if (errors > 0) return (Symbols.error, AppColors.error);
+  if (running > 0) return (Symbols.sync, AppColors.tertiary);
+  return (Symbols.check_circle, AppColors.outline);
+}
 
 class ClaudeMessageList extends HookWidget {
   const ClaudeMessageList({
@@ -52,7 +65,7 @@ class ClaudeMessageList extends HookWidget {
     final hasError =
         status == ClaudeRunStatus.error || status == ClaudeRunStatus.sessionDead;
 
-    final items = _buildItems(messages);
+    final items = useMemoized(() => _buildItems(messages), [messages]);
 
     return ListView.builder(
       controller: scrollController,
@@ -72,6 +85,7 @@ class ClaudeMessageList extends HookWidget {
         final previous = index > 0 ? items[index - 1] : null;
         final gap = _gapBefore(previous, item);
         return Padding(
+          key: ValueKey(item.key),
           padding: EdgeInsets.only(top: gap),
           child: _ItemRenderer(item: item),
         );
@@ -79,9 +93,8 @@ class ClaudeMessageList extends HookWidget {
     );
   }
 
-  /// Pre-processes messages: groups consecutive tools into a single
-  /// [_ToolGroupItem] and reorders within each turn so tool group sits
-  /// between the user prompt and the assistant text(s).
+  /// Groups consecutive tools into one [_ToolGroupItem] and emits user
+  /// prompt → tool group → assistant text(s) per turn.
   List<_Item> _buildItems(List<ClaudeMessage> all) {
     final items = <_Item>[];
     var i = 0;
@@ -140,6 +153,7 @@ enum _Role { user, assistant, tools, system }
 sealed class _Item {
   const _Item();
   _Role get role;
+  String get key;
 }
 
 class _SingleItem extends _Item {
@@ -152,6 +166,13 @@ class _SingleItem extends _Item {
         ClaudeMessageTool() => _Role.tools,
         ClaudeMessageSystem() => _Role.system,
       };
+  @override
+  String get key => switch (message) {
+        ClaudeMessageUser(:final id) => id,
+        ClaudeMessageAssistant(:final id) => id,
+        ClaudeMessageTool(:final id) => id,
+        ClaudeMessageSystem(:final id) => id,
+      };
 }
 
 class _ToolGroupItem extends _Item {
@@ -159,6 +180,8 @@ class _ToolGroupItem extends _Item {
   final List<ClaudeMessageTool> tools;
   @override
   _Role get role => _Role.tools;
+  @override
+  String get key => 'tg-${tools.first.id}';
 }
 
 class _ItemRenderer extends StatelessWidget {
@@ -254,11 +277,10 @@ class _ToolGroup extends HookWidget {
     final errors = tools.where((t) => t.status == ClaudeToolStatus.error).length;
     final done = tools.where((t) => t.status == ClaudeToolStatus.completed).length;
 
-    final (headerIcon, headerColor) = errors > 0
-        ? (Symbols.error, AppColors.error)
-        : running > 0
-            ? (Symbols.sync, AppColors.tertiary)
-            : (Symbols.check_circle, AppColors.outline);
+    final (headerIcon, headerColor) = _toolGroupHeaderIconAndColor(
+      running: running,
+      errors: errors,
+    );
 
     final summary = _summary(running: running, done: done, errors: errors);
 
@@ -274,13 +296,13 @@ class _ToolGroup extends HookWidget {
         const SizedBox(width: 10),
         Expanded(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadii.md),
             child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration: _kAnimDuration,
           curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerLow.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadii.md),
             border: Border.all(
               color: AppColors.outlineVariant.withValues(alpha: 0.4),
               width: 1,
@@ -329,7 +351,7 @@ class _ToolGroup extends HookWidget {
                         ),
                       ),
                       AnimatedRotation(
-                        duration: const Duration(milliseconds: 180),
+                        duration: _kAnimDuration,
                         turns: expanded.value ? 0.5 : 0,
                         child: Icon(
                           Symbols.expand_more,
@@ -343,7 +365,7 @@ class _ToolGroup extends HookWidget {
               ),
               ClipRect(
                 child: AnimatedSize(
-                  duration: const Duration(milliseconds: 180),
+                  duration: _kAnimDuration,
                   curve: Curves.easeOutCubic,
                   alignment: Alignment.topCenter,
                   child: expanded.value
@@ -486,7 +508,7 @@ class _AssistantBlock extends StatelessWidget {
                   data: text,
                   selectable: true,
                   softLineBreak: true,
-                  styleSheet: _markdownStyle(),
+                  styleSheet: _markdownStyle,
                 ),
         ),
       ],
@@ -539,7 +561,9 @@ class _StepBullet extends HookWidget {
   }
 }
 
-MarkdownStyleSheet _markdownStyle() {
+final MarkdownStyleSheet _markdownStyle = _buildMarkdownStyle();
+
+MarkdownStyleSheet _buildMarkdownStyle() {
   final body = AppTypography.bodyMain.copyWith(
     color: AppColors.onSurface,
     height: 1.55,
@@ -578,7 +602,7 @@ MarkdownStyleSheet _markdownStyle() {
     codeblockPadding: const EdgeInsets.all(AppSpacing.md),
     codeblockDecoration: BoxDecoration(
       color: AppColors.surfaceContainerLowest,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadii.md),
       border: Border.all(
         color: AppColors.outlineVariant.withValues(alpha: 0.5),
       ),
@@ -628,13 +652,11 @@ class _ToolCard extends HookWidget {
   final bool isError;
   final bool padded;
 
-  static const double _bodyMaxHeight = 200; // ~10 lines of mono 12/1.5
-
   @override
   Widget build(BuildContext context) {
     final expanded = useState(false);
     final hasBody =
-        (input != null && input!.isNotEmpty) || (output?.isNotEmpty ?? false);
+        (input?.isNotEmpty ?? false) || (output?.isNotEmpty ?? false);
 
     final (icon, color, labelKey) = switch (status) {
       ClaudeToolStatus.running => (
@@ -657,7 +679,7 @@ class _ToolCard extends HookWidget {
     final card = ClipRRect(
       borderRadius: BorderRadius.circular(6),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: _kAnimDuration,
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerLow,
@@ -718,7 +740,7 @@ class _ToolCard extends HookWidget {
                       if (hasBody) ...[
                         const SizedBox(width: AppSpacing.sm),
                         AnimatedRotation(
-                          duration: const Duration(milliseconds: 180),
+                          duration: _kAnimDuration,
                           turns: expanded.value ? 0.5 : 0,
                           child: Icon(
                             Symbols.expand_more,
@@ -733,7 +755,7 @@ class _ToolCard extends HookWidget {
               ),
               ClipRect(
                 child: AnimatedSize(
-                  duration: const Duration(milliseconds: 180),
+                  duration: _kAnimDuration,
                   curve: Curves.easeOutCubic,
                   alignment: Alignment.topCenter,
                   child: expanded.value && hasBody
@@ -741,7 +763,7 @@ class _ToolCard extends HookWidget {
                           input: input,
                           output: output,
                           isError: isError,
-                          maxHeight: _bodyMaxHeight,
+                          maxHeight: _kToolBodyMaxHeight,
                         )
                       : const SizedBox(width: double.infinity, height: 0),
                 ),
@@ -765,13 +787,15 @@ class _ToolCard extends HookWidget {
   }
 }
 
-class _ToolBody extends StatelessWidget {
+class _ToolBody extends HookWidget {
   const _ToolBody({
     required this.input,
     required this.output,
     required this.isError,
     required this.maxHeight,
   });
+
+  static const _jsonEncoder = JsonEncoder.withIndent('  ');
 
   final Map<String, dynamic>? input;
   final String? output;
@@ -780,8 +804,12 @@ class _ToolBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasInput = input != null && input!.isNotEmpty;
+    final hasInput = input?.isNotEmpty ?? false;
     final hasOutput = output?.isNotEmpty ?? false;
+    final encodedInput = useMemoized(
+      () => hasInput ? _jsonEncoder.convert(input) : '',
+      [input],
+    );
 
     return Container(
       width: double.infinity,
@@ -797,7 +825,7 @@ class _ToolBody extends StatelessWidget {
           if (hasInput)
             _ToolBodySection(
               labelKey: 'claude.message.toolInput',
-              body: const JsonEncoder.withIndent('  ').convert(input),
+              body: encodedInput,
               maxHeight: maxHeight,
               tone: AppColors.onSurfaceVariant,
             ),
@@ -854,7 +882,7 @@ class _ToolBodySection extends HookWidget {
         Container(
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadii.sm),
             border: Border.all(
               color: AppColors.outlineVariant.withValues(alpha: 0.3),
               width: 1,
@@ -966,7 +994,7 @@ class _ErrorBanner extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.errorContainer.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadii.md),
         border: Border.all(
           color: AppColors.error.withValues(alpha: 0.4),
           width: 1,
