@@ -1,14 +1,14 @@
 enum ClaudeModel {
-  opus47('claude-opus-4-7', 'claude.model.opus47'),
-  sonnet46('claude-sonnet-4-6', 'claude.model.sonnet46'),
-  haiku45('claude-haiku-4-5-20251001', 'claude.model.haiku45');
+  haiku('haiku', 'claude.model.haiku'),
+  sonnet('sonnet', 'claude.model.sonnet'),
+  opus('opus', 'claude.model.opus');
 
   const ClaudeModel(this.cliId, this.labelKey);
 
   final String cliId;
   final String labelKey;
 
-  static const ClaudeModel defaultModel = ClaudeModel.sonnet46;
+  static const ClaudeModel defaultModel = ClaudeModel.sonnet;
 
   static ClaudeModel? fromCliId(String? id) {
     if (id == null) return null;

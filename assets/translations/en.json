@@ -73,9 +73,9 @@
       }
     },
     "model": {
-      "opus47": "Opus 4.7",
-      "sonnet46": "Sonnet 4.6",
-      "haiku45": "Haiku 4.5"
+      "haiku": "Haiku",
+      "sonnet": "Sonnet",
+      "opus": "Opus"
     },
     "effort": {
       "low": "Low",
