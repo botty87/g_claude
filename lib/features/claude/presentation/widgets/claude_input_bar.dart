@@ -12,7 +12,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
 import '../../../slash_commands/domain/entities/slash_command.dart';
 import '../../../slash_commands/presentation/cubit/slash_commands_cubit.dart';
-import '../../../slash_commands/presentation/widgets/slash_argument_hint_bar.dart';
+import '../../../slash_commands/presentation/widgets/slash_command_chip_row.dart';
 import '../../../slash_commands/presentation/widgets/slash_command_overlay.dart';
 import '../cubit/claude_sessions_cubit.dart';
 
@@ -30,6 +30,8 @@ class ClaudeInputBar extends HookWidget {
       status == ClaudeRunStatus.connecting ||
       status == ClaudeRunStatus.running;
 
+  static final _slashPrefixRegex = RegExp(r'^\s*\/[a-zA-Z0-9:_-]*$');
+
   @override
   Widget build(BuildContext context) {
     final controller = useTextEditingController();
@@ -44,7 +46,7 @@ class ClaudeInputBar extends HookWidget {
     useEffect(() => slashCubit.close, [slashCubit]);
 
     final link = useMemoized(LayerLink.new, const []);
-    final lastInserted = useState<SlashCommand?>(null);
+    final selectedChips = useState<List<SlashCommand>>(const []);
 
     // Sync skills from sessions state into slash cubit.
     final skills = context.select<ClaudeSessionsCubit, List<String>>(
@@ -62,30 +64,18 @@ class ClaudeInputBar extends HookWidget {
       return () => controller.removeListener(listener);
     }, [controller]);
 
-    // Clear hint when user edits away from the inserted trigger.
-    useEffect(() {
-      void listener() {
-        final inserted = lastInserted.value;
-        if (inserted == null) return;
-        final lastLine = controller.text.split('\n').last.trimLeft();
-        if (!lastLine.startsWith('${inserted.trigger} ')) {
-          lastInserted.value = null;
-        }
-      }
-      controller.addListener(listener);
-      return () => controller.removeListener(listener);
-    }, [controller]);
-
     void applySelection(SlashCommand cmd) {
-      final lines = controller.text.split('\n');
-      final replacement = '${cmd.trigger} ';
-      lines[lines.length - 1] = replacement;
-      final newText = lines.join('\n');
-      controller.value = TextEditingValue(
-        text: newText,
-        selection: TextSelection.collapsed(offset: newText.length),
-      );
-      lastInserted.value = cmd;
+      if (selectedChips.value.any((c) => c.trigger == cmd.trigger)) {
+        // Already added — drop the typed prefix and dismiss.
+        _stripSlashPrefix(controller);
+        slashCubit.dismiss();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          inputFocus.requestFocus();
+        });
+        return;
+      }
+      selectedChips.value = [...selectedChips.value, cmd];
+      _stripSlashPrefix(controller);
       slashCubit.dismiss();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         inputFocus.requestFocus();
@@ -93,11 +83,18 @@ class ClaudeInputBar extends HookWidget {
     }
 
     void submit() {
-      final text = controller.text;
-      if (text.trim().isEmpty) return;
+      final userText = controller.text.trim();
+      final chipPrefix =
+          selectedChips.value.map((c) => c.trigger).join(' ');
+      final parts = <String>[
+        if (chipPrefix.isNotEmpty) chipPrefix,
+        if (userText.isNotEmpty) userText,
+      ];
+      if (parts.isEmpty) return;
+      final prompt = parts.join(' ');
       controller.clear();
-      lastInserted.value = null;
-      sessionsCubit.sendPrompt(workspaceId, text);
+      selectedChips.value = const [];
+      sessionsCubit.sendPrompt(workspaceId, prompt);
     }
 
     KeyEventResult onKey(FocusNode node, KeyEvent event) {
@@ -121,13 +118,21 @@ class ClaudeInputBar extends HookWidget {
             applySelection(cmd);
             return KeyEventResult.handled;
           }
-          // No match — dismiss overlay and fall through to normal Enter handling.
           slashCubit.dismiss();
         }
         if (event.logicalKey == LogicalKeyboardKey.escape) {
           slashCubit.dismiss();
           return KeyEventResult.handled;
         }
+      }
+
+      if (event.logicalKey == LogicalKeyboardKey.backspace &&
+          controller.text.isEmpty &&
+          selectedChips.value.isNotEmpty &&
+          !isSuggesting) {
+        selectedChips.value =
+            selectedChips.value.sublist(0, selectedChips.value.length - 1);
+        return KeyEventResult.handled;
       }
 
       if (event.logicalKey == LogicalKeyboardKey.enter) {
@@ -152,87 +157,104 @@ class ClaudeInputBar extends HookWidget {
       onAccept: applySelection,
       onDismiss: slashCubit.dismiss,
       child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ValueListenableBuilder<SlashCommand?>(
-              valueListenable: lastInserted,
-              builder: (context, cmd, _) => SlashArgumentHintBar(command: cmd),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SlashCommandChipRow(
+            chips: selectedChips.value,
+            onRemove: (cmd) {
+              selectedChips.value = selectedChips.value
+                  .where((c) => c.trigger != cmd.trigger)
+                  .toList();
+            },
+          ),
+          Container(
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceContainerLow,
+              border: Border(
+                top: BorderSide(color: AppColors.outlineVariant, width: 1),
+              ),
             ),
-            Container(
-              decoration: const BoxDecoration(
-                color: AppColors.surfaceContainerLow,
-                border: Border(
-                  top: BorderSide(color: AppColors.outlineVariant, width: 1),
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.md,
-              ),
-              child: CompositedTransformTarget(
-                link: link,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 2),
-                      child: Icon(Icons.chevron_right,
-                          size: 16, color: AppColors.primary),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Focus(
-                        focusNode: wrapperFocus,
-                        onKeyEvent: onKey,
-                        canRequestFocus: false,
-                        child: TextField(
-                          key: const ValueKey('claude_input_field'),
-                          controller: controller,
-                          focusNode: inputFocus,
-                          autofocus: true,
-                          enabled: !_isBusy,
-                          maxLines: 6,
-                          minLines: 1,
-                          textInputAction: TextInputAction.newline,
-                          style: AppTypography.terminalCode.copyWith(
-                            color: AppColors.onSurface,
-                          ),
-                          decoration: InputDecoration(
-                            isCollapsed: true,
-                            border: InputBorder.none,
-                            hintText: _isBusy
-                                ? 'claude.terminal.input.placeholderRunning'.tr()
-                                : 'claude.terminal.input.placeholder'.tr(),
-                            hintStyle: AppTypography.terminalCode.copyWith(
-                              color: AppColors.outline,
-                            ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
+            child: CompositedTransformTarget(
+              link: link,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: Icon(Icons.chevron_right,
+                        size: 16, color: AppColors.primary),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Focus(
+                      focusNode: wrapperFocus,
+                      onKeyEvent: onKey,
+                      canRequestFocus: false,
+                      child: TextField(
+                        key: const ValueKey('claude_input_field'),
+                        controller: controller,
+                        focusNode: inputFocus,
+                        autofocus: true,
+                        enabled: !_isBusy,
+                        maxLines: 6,
+                        minLines: 1,
+                        textInputAction: TextInputAction.newline,
+                        style: AppTypography.terminalCode.copyWith(
+                          color: AppColors.onSurface,
+                        ),
+                        decoration: InputDecoration(
+                          isCollapsed: true,
+                          border: InputBorder.none,
+                          hintText: _isBusy
+                              ? 'claude.terminal.input.placeholderRunning'.tr()
+                              : 'claude.terminal.input.placeholder'.tr(),
+                          hintStyle: AppTypography.terminalCode.copyWith(
+                            color: AppColors.outline,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    if (_isBusy)
-                      _ActionButton(
-                        icon: Symbols.stop_circle,
-                        tooltipKey: 'claude.terminal.input.stop',
-                        color: AppColors.error,
-                        onTap: sessionsCubit.stopRun,
-                      )
-                    else
-                      _ActionButton(
-                        icon: Symbols.send,
-                        tooltipKey: 'claude.terminal.input.send',
-                        color: AppColors.primary,
-                        onTap: submit,
-                      ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  if (_isBusy)
+                    _ActionButton(
+                      icon: Symbols.stop_circle,
+                      tooltipKey: 'claude.terminal.input.stop',
+                      color: AppColors.error,
+                      onTap: sessionsCubit.stopRun,
+                    )
+                  else
+                    _ActionButton(
+                      icon: Symbols.send,
+                      tooltipKey: 'claude.terminal.input.send',
+                      color: AppColors.primary,
+                      onTap: submit,
+                    ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
+}
+
+void _stripSlashPrefix(TextEditingController controller) {
+  final lines = controller.text.split('\n');
+  final last = lines.last;
+  if (ClaudeInputBar._slashPrefixRegex.hasMatch(last)) {
+    lines[lines.length - 1] = '';
+  }
+  final newText = lines.join('\n');
+  controller.value = TextEditingValue(
+    text: newText,
+    selection: TextSelection.collapsed(offset: newText.length),
+  );
 }
 
 class _ActionButton extends StatelessWidget {

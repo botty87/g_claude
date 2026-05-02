@@ -114,13 +114,15 @@
   },
   "slashCommands": {
     "empty": "No matching commands",
-    "argumentHint": "args: {hint}",
     "source": {
       "cliBuiltin": "builtin",
       "user": "user",
       "project": "project",
       "plugin": "plugin",
       "skill": "skill"
+    },
+    "chip": {
+      "removeTooltip": "Remove command"
     }
   },
   "editor": {
