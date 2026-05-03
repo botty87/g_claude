@@ -87,14 +87,16 @@ extension ClaudeMessagePatterns on ClaudeMessage {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ClaudeMessageUser value)?  user,TResult Function( ClaudeMessageAssistant value)?  assistant,TResult Function( ClaudeMessageTool value)?  tool,TResult Function( ClaudeMessageSystem value)?  system,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ClaudeMessageUser value)?  user,TResult Function( ClaudeMessageAssistant value)?  assistant,TResult Function( ClaudeMessageTool value)?  tool,TResult Function( ClaudeMessageSystem value)?  system,TResult Function( ClaudeMessageAskUserQuestion value)?  askUserQuestion,TResult Function( ClaudeMessagePermissionRequest value)?  permissionRequest,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
 return user(_that);case ClaudeMessageAssistant() when assistant != null:
 return assistant(_that);case ClaudeMessageTool() when tool != null:
 return tool(_that);case ClaudeMessageSystem() when system != null:
-return system(_that);case _:
+return system(_that);case ClaudeMessageAskUserQuestion() when askUserQuestion != null:
+return askUserQuestion(_that);case ClaudeMessagePermissionRequest() when permissionRequest != null:
+return permissionRequest(_that);case _:
   return orElse();
 
 }
@@ -112,14 +114,16 @@ return system(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ClaudeMessageUser value)  user,required TResult Function( ClaudeMessageAssistant value)  assistant,required TResult Function( ClaudeMessageTool value)  tool,required TResult Function( ClaudeMessageSystem value)  system,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ClaudeMessageUser value)  user,required TResult Function( ClaudeMessageAssistant value)  assistant,required TResult Function( ClaudeMessageTool value)  tool,required TResult Function( ClaudeMessageSystem value)  system,required TResult Function( ClaudeMessageAskUserQuestion value)  askUserQuestion,required TResult Function( ClaudeMessagePermissionRequest value)  permissionRequest,}){
 final _that = this;
 switch (_that) {
 case ClaudeMessageUser():
 return user(_that);case ClaudeMessageAssistant():
 return assistant(_that);case ClaudeMessageTool():
 return tool(_that);case ClaudeMessageSystem():
-return system(_that);}
+return system(_that);case ClaudeMessageAskUserQuestion():
+return askUserQuestion(_that);case ClaudeMessagePermissionRequest():
+return permissionRequest(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -133,14 +137,16 @@ return system(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ClaudeMessageUser value)?  user,TResult? Function( ClaudeMessageAssistant value)?  assistant,TResult? Function( ClaudeMessageTool value)?  tool,TResult? Function( ClaudeMessageSystem value)?  system,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ClaudeMessageUser value)?  user,TResult? Function( ClaudeMessageAssistant value)?  assistant,TResult? Function( ClaudeMessageTool value)?  tool,TResult? Function( ClaudeMessageSystem value)?  system,TResult? Function( ClaudeMessageAskUserQuestion value)?  askUserQuestion,TResult? Function( ClaudeMessagePermissionRequest value)?  permissionRequest,}){
 final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
 return user(_that);case ClaudeMessageAssistant() when assistant != null:
 return assistant(_that);case ClaudeMessageTool() when tool != null:
 return tool(_that);case ClaudeMessageSystem() when system != null:
-return system(_that);case _:
+return system(_that);case ClaudeMessageAskUserQuestion() when askUserQuestion != null:
+return askUserQuestion(_that);case ClaudeMessagePermissionRequest() when permissionRequest != null:
+return permissionRequest(_that);case _:
   return null;
 
 }
@@ -157,13 +163,15 @@ return system(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String id,  String text,  DateTime createdAt)?  user,TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult Function( String id,  String text,  DateTime createdAt)?  system,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String id,  String text,  DateTime createdAt)?  user,TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult Function( String id,  String text,  DateTime createdAt)?  system,TResult Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)?  askUserQuestion,TResult Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)?  permissionRequest,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
 return user(_that.id,_that.text,_that.createdAt);case ClaudeMessageAssistant() when assistant != null:
 return assistant(_that.id,_that.text,_that.isStreaming,_that.createdAt);case ClaudeMessageTool() when tool != null:
 return tool(_that.id,_that.toolName,_that.status,_that.createdAt,_that.toolUseId,_that.input,_that.output,_that.isError);case ClaudeMessageSystem() when system != null:
-return system(_that.id,_that.text,_that.createdAt);case _:
+return system(_that.id,_that.text,_that.createdAt);case ClaudeMessageAskUserQuestion() when askUserQuestion != null:
+return askUserQuestion(_that.id,_that.toolUseId,_that.questions,_that.createdAt,_that.answers,_that.answered);case ClaudeMessagePermissionRequest() when permissionRequest != null:
+return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput,_that.createdAt,_that.decision,_that.answered);case _:
   return orElse();
 
 }
@@ -181,13 +189,15 @@ return system(_that.id,_that.text,_that.createdAt);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String id,  String text,  DateTime createdAt)  user,required TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)  assistant,required TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)  tool,required TResult Function( String id,  String text,  DateTime createdAt)  system,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String id,  String text,  DateTime createdAt)  user,required TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)  assistant,required TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)  tool,required TResult Function( String id,  String text,  DateTime createdAt)  system,required TResult Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)  askUserQuestion,required TResult Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)  permissionRequest,}) {final _that = this;
 switch (_that) {
 case ClaudeMessageUser():
 return user(_that.id,_that.text,_that.createdAt);case ClaudeMessageAssistant():
 return assistant(_that.id,_that.text,_that.isStreaming,_that.createdAt);case ClaudeMessageTool():
 return tool(_that.id,_that.toolName,_that.status,_that.createdAt,_that.toolUseId,_that.input,_that.output,_that.isError);case ClaudeMessageSystem():
-return system(_that.id,_that.text,_that.createdAt);}
+return system(_that.id,_that.text,_that.createdAt);case ClaudeMessageAskUserQuestion():
+return askUserQuestion(_that.id,_that.toolUseId,_that.questions,_that.createdAt,_that.answers,_that.answered);case ClaudeMessagePermissionRequest():
+return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput,_that.createdAt,_that.decision,_that.answered);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -201,13 +211,15 @@ return system(_that.id,_that.text,_that.createdAt);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String id,  String text,  DateTime createdAt)?  user,TResult? Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult? Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult? Function( String id,  String text,  DateTime createdAt)?  system,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String id,  String text,  DateTime createdAt)?  user,TResult? Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult? Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult? Function( String id,  String text,  DateTime createdAt)?  system,TResult? Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)?  askUserQuestion,TResult? Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)?  permissionRequest,}) {final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
 return user(_that.id,_that.text,_that.createdAt);case ClaudeMessageAssistant() when assistant != null:
 return assistant(_that.id,_that.text,_that.isStreaming,_that.createdAt);case ClaudeMessageTool() when tool != null:
 return tool(_that.id,_that.toolName,_that.status,_that.createdAt,_that.toolUseId,_that.input,_that.output,_that.isError);case ClaudeMessageSystem() when system != null:
-return system(_that.id,_that.text,_that.createdAt);case _:
+return system(_that.id,_that.text,_that.createdAt);case ClaudeMessageAskUserQuestion() when askUserQuestion != null:
+return askUserQuestion(_that.id,_that.toolUseId,_that.questions,_that.createdAt,_that.answers,_that.answered);case ClaudeMessagePermissionRequest() when permissionRequest != null:
+return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput,_that.createdAt,_that.decision,_that.answered);case _:
   return null;
 
 }
@@ -509,6 +521,178 @@ id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ClaudeMessageAskUserQuestion extends ClaudeMessage {
+  const ClaudeMessageAskUserQuestion({required this.id, required this.toolUseId, required final  List<AskUserQuestionItem> questions, required this.createdAt, final  Map<String, String> answers = const <String, String>{}, this.answered = false}): _questions = questions,_answers = answers,super._();
+  
+
+@override final  String id;
+ final  String toolUseId;
+ final  List<AskUserQuestionItem> _questions;
+ List<AskUserQuestionItem> get questions {
+  if (_questions is EqualUnmodifiableListView) return _questions;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_questions);
+}
+
+@override final  DateTime createdAt;
+ final  Map<String, String> _answers;
+@JsonKey() Map<String, String> get answers {
+  if (_answers is EqualUnmodifiableMapView) return _answers;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_answers);
+}
+
+@JsonKey() final  bool answered;
+
+/// Create a copy of ClaudeMessage
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ClaudeMessageAskUserQuestionCopyWith<ClaudeMessageAskUserQuestion> get copyWith => _$ClaudeMessageAskUserQuestionCopyWithImpl<ClaudeMessageAskUserQuestion>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeMessageAskUserQuestion&&(identical(other.id, id) || other.id == id)&&(identical(other.toolUseId, toolUseId) || other.toolUseId == toolUseId)&&const DeepCollectionEquality().equals(other._questions, _questions)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other._answers, _answers)&&(identical(other.answered, answered) || other.answered == answered));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,toolUseId,const DeepCollectionEquality().hash(_questions),createdAt,const DeepCollectionEquality().hash(_answers),answered);
+
+@override
+String toString() {
+  return 'ClaudeMessage.askUserQuestion(id: $id, toolUseId: $toolUseId, questions: $questions, createdAt: $createdAt, answers: $answers, answered: $answered)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ClaudeMessageAskUserQuestionCopyWith<$Res> implements $ClaudeMessageCopyWith<$Res> {
+  factory $ClaudeMessageAskUserQuestionCopyWith(ClaudeMessageAskUserQuestion value, $Res Function(ClaudeMessageAskUserQuestion) _then) = _$ClaudeMessageAskUserQuestionCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String toolUseId, List<AskUserQuestionItem> questions, DateTime createdAt, Map<String, String> answers, bool answered
+});
+
+
+
+
+}
+/// @nodoc
+class _$ClaudeMessageAskUserQuestionCopyWithImpl<$Res>
+    implements $ClaudeMessageAskUserQuestionCopyWith<$Res> {
+  _$ClaudeMessageAskUserQuestionCopyWithImpl(this._self, this._then);
+
+  final ClaudeMessageAskUserQuestion _self;
+  final $Res Function(ClaudeMessageAskUserQuestion) _then;
+
+/// Create a copy of ClaudeMessage
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? toolUseId = null,Object? questions = null,Object? createdAt = null,Object? answers = null,Object? answered = null,}) {
+  return _then(ClaudeMessageAskUserQuestion(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,toolUseId: null == toolUseId ? _self.toolUseId : toolUseId // ignore: cast_nullable_to_non_nullable
+as String,questions: null == questions ? _self._questions : questions // ignore: cast_nullable_to_non_nullable
+as List<AskUserQuestionItem>,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime,answers: null == answers ? _self._answers : answers // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,answered: null == answered ? _self.answered : answered // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ClaudeMessagePermissionRequest extends ClaudeMessage {
+  const ClaudeMessagePermissionRequest({required this.id, required this.requestId, required this.toolName, required final  Map<String, dynamic> toolInput, required this.createdAt, this.decision, this.answered = false}): _toolInput = toolInput,super._();
+  
+
+@override final  String id;
+ final  String requestId;
+ final  String toolName;
+ final  Map<String, dynamic> _toolInput;
+ Map<String, dynamic> get toolInput {
+  if (_toolInput is EqualUnmodifiableMapView) return _toolInput;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_toolInput);
+}
+
+@override final  DateTime createdAt;
+ final  ClaudePermissionDecision? decision;
+@JsonKey() final  bool answered;
+
+/// Create a copy of ClaudeMessage
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ClaudeMessagePermissionRequestCopyWith<ClaudeMessagePermissionRequest> get copyWith => _$ClaudeMessagePermissionRequestCopyWithImpl<ClaudeMessagePermissionRequest>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeMessagePermissionRequest&&(identical(other.id, id) || other.id == id)&&(identical(other.requestId, requestId) || other.requestId == requestId)&&(identical(other.toolName, toolName) || other.toolName == toolName)&&const DeepCollectionEquality().equals(other._toolInput, _toolInput)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.decision, decision) || other.decision == decision)&&(identical(other.answered, answered) || other.answered == answered));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,requestId,toolName,const DeepCollectionEquality().hash(_toolInput),createdAt,decision,answered);
+
+@override
+String toString() {
+  return 'ClaudeMessage.permissionRequest(id: $id, requestId: $requestId, toolName: $toolName, toolInput: $toolInput, createdAt: $createdAt, decision: $decision, answered: $answered)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ClaudeMessagePermissionRequestCopyWith<$Res> implements $ClaudeMessageCopyWith<$Res> {
+  factory $ClaudeMessagePermissionRequestCopyWith(ClaudeMessagePermissionRequest value, $Res Function(ClaudeMessagePermissionRequest) _then) = _$ClaudeMessagePermissionRequestCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String requestId, String toolName, Map<String, dynamic> toolInput, DateTime createdAt, ClaudePermissionDecision? decision, bool answered
+});
+
+
+
+
+}
+/// @nodoc
+class _$ClaudeMessagePermissionRequestCopyWithImpl<$Res>
+    implements $ClaudeMessagePermissionRequestCopyWith<$Res> {
+  _$ClaudeMessagePermissionRequestCopyWithImpl(this._self, this._then);
+
+  final ClaudeMessagePermissionRequest _self;
+  final $Res Function(ClaudeMessagePermissionRequest) _then;
+
+/// Create a copy of ClaudeMessage
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? requestId = null,Object? toolName = null,Object? toolInput = null,Object? createdAt = null,Object? decision = freezed,Object? answered = null,}) {
+  return _then(ClaudeMessagePermissionRequest(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,requestId: null == requestId ? _self.requestId : requestId // ignore: cast_nullable_to_non_nullable
+as String,toolName: null == toolName ? _self.toolName : toolName // ignore: cast_nullable_to_non_nullable
+as String,toolInput: null == toolInput ? _self._toolInput : toolInput // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime,decision: freezed == decision ? _self.decision : decision // ignore: cast_nullable_to_non_nullable
+as ClaudePermissionDecision?,answered: null == answered ? _self.answered : answered // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

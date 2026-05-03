@@ -22,6 +22,7 @@ import '../../domain/entities/claude_effort.dart';
 import '../../domain/entities/claude_permission_mode.dart';
 import '../../domain/entities/claude_thinking_mode.dart';
 import '../../domain/entities/mcp_server.dart';
+import '../../domain/repositories/claude_repository.dart';
 import '../../domain/usecases/list_mcp_servers.dart';
 import '../../domain/usecases/authenticate_mcp_server.dart';
 import '../../domain/usecases/load_session_messages.dart';
@@ -44,6 +45,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     this._historyDs,
     this._workspacesCubit,
     this._permissionServer,
+    this._claudeRepository,
     this._prefs,
     this._talker,
   ) : super(const ClaudeSessionsState());
@@ -57,8 +59,15 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   final ClaudeHistoryDataSource _historyDs;
   final WorkspacesCubit _workspacesCubit;
   final PermissionServer _permissionServer;
+  final ClaudeRepository _claudeRepository;
   final SharedPreferences _prefs;
   final Talker _talker;
+
+  /// Tracks which workspace owns each interactive permission request so the
+  /// UI can route the answer back to the right session.
+  final Map<String, String> _permissionRequestToWorkspace = {};
+  final Map<String, String> _permissionRequestToMessage = {};
+  bool _allowAlwaysActive = false;
 
   List<McpServer>? _mcpServersCache;
   DateTime? _mcpServersCachedAt;
@@ -146,6 +155,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _workspacesSub = _workspacesCubit.stream.listen(_onWorkspacesChanged);
     _onWorkspacesChanged(_workspacesCubit.state);
     _permissionServer.setResolver(_resolvePermission);
+    _permissionServer.setInteractiveHandler(_onInteractivePermissionRequest);
     unawaited(
       _permissionServer
           .start()
@@ -154,6 +164,41 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
             _talker.error('PermissionServer.start failed', e, st);
             return -1;
           }),
+    );
+  }
+
+  void _onInteractivePermissionRequest(PermissionRequest req) {
+    final wid = _sessionToWorkspace[req.sessionId] ?? _runningWorkspaceId;
+    if (wid == null) {
+      _talker.warning(
+        'Interactive permission with no owner workspace; auto-deny',
+      );
+      _claudeRepository.respondPermission(
+        requestId: req.requestId,
+        decision: ClaudePermissionDecision.deny,
+      );
+      return;
+    }
+    final session = state.sessions[wid];
+    if (session == null) {
+      _claudeRepository.respondPermission(
+        requestId: req.requestId,
+        decision: ClaudePermissionDecision.deny,
+      );
+      return;
+    }
+    final messageId = _genId('pr');
+    _permissionRequestToWorkspace[req.requestId] = wid;
+    _permissionRequestToMessage[req.requestId] = messageId;
+    _appendMessage(
+      wid,
+      ClaudeMessage.permissionRequest(
+        id: messageId,
+        requestId: req.requestId,
+        toolName: req.toolName,
+        toolInput: req.toolInput,
+        createdAt: DateTime.now(),
+      ),
     );
   }
 
@@ -182,8 +227,12 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
             : PermissionDecision.deny;
       case ClaudePermissionMode.acceptEdits:
       case ClaudePermissionMode.bypassPermissions:
-      case ClaudePermissionMode.defaultMode:
         return PermissionDecision.allow;
+      case ClaudePermissionMode.defaultMode:
+        if (_allowAlwaysActive || _readOnlyTools.contains(toolName)) {
+          return PermissionDecision.allow;
+        }
+        return PermissionDecision.ask;
     }
   }
 
@@ -363,10 +412,86 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       stderrTail: const [],
     );
     emit(state.copyWith(sessions: next));
+    _allowAlwaysActive = false;
     unawaited(_writeActiveSession(workspaceId, null));
   }
 
   void newSession(String workspaceId) => clearConversation(workspaceId);
+
+  Future<void> answerAskUserQuestion(
+    String workspaceId,
+    String messageId,
+    Map<String, String> answers,
+  ) async {
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+    ClaudeMessageAskUserQuestion? target;
+    final list = [...session.messages];
+    for (var i = list.length - 1; i >= 0; i--) {
+      final m = list[i];
+      if (m is! ClaudeMessageAskUserQuestion) continue;
+      if (m.id != messageId) continue;
+      target = m;
+      list[i] = m.copyWith(answers: answers, answered: true);
+      break;
+    }
+    if (target == null) return;
+    _emitSession(workspaceId, session.copyWith(messages: list));
+
+    final payload = {
+      'questions': [
+        for (final q in target.questions)
+          {
+            'question': q.question,
+            'header': q.header,
+            'multiSelect': q.multiSelect,
+            'options': [
+              for (final o in q.options)
+                {'label': o.label, 'description': o.description},
+            ],
+          },
+      ],
+      'answers': answers,
+    };
+    final result = await _claudeRepository.sendToolResult(
+      toolUseId: target.toolUseId,
+      content: payload,
+    );
+    result.fold(
+      (f) => _talker.error('answerAskUserQuestion failed: $f'),
+      (_) => null,
+    );
+  }
+
+  void answerPermission(
+    String workspaceId,
+    String messageId,
+    ClaudePermissionDecision decision,
+  ) {
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+    String? requestId;
+    final list = [...session.messages];
+    for (var i = list.length - 1; i >= 0; i--) {
+      final m = list[i];
+      if (m is! ClaudeMessagePermissionRequest) continue;
+      if (m.id != messageId) continue;
+      requestId = m.requestId;
+      list[i] = m.copyWith(decision: decision, answered: true);
+      break;
+    }
+    if (requestId == null) return;
+    if (decision == ClaudePermissionDecision.allowAlways) {
+      _allowAlwaysActive = true;
+    }
+    _emitSession(workspaceId, session.copyWith(messages: list));
+    _permissionRequestToMessage.remove(requestId);
+    _permissionRequestToWorkspace.remove(requestId);
+    _claudeRepository.respondPermission(
+      requestId: requestId,
+      decision: decision,
+    );
+  }
 
   Future<void> resumeSession(String workspaceId, String sessionId) async {
     final ws = _workspacesCubit.state.workspacesOrEmpty
@@ -609,6 +734,22 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
       case ClaudeEventRateLimit(:final status):
         _talker.warning('Claude rate limit: $status');
+
+      case ClaudeEventAskUserQuestion(:final toolUseId, :final questions):
+        _appendMessage(
+          wid,
+          ClaudeMessage.askUserQuestion(
+            id: _genId('q'),
+            toolUseId: toolUseId,
+            questions: questions,
+            createdAt: DateTime.now(),
+          ),
+        );
+
+      case ClaudeEventPermissionRequest():
+        // Surfaced via PermissionServer interactive handler — nothing to do
+        // here. Kept exhaustive so the compiler enforces handling.
+        break;
 
       case ClaudeEventSessionDead(:final exitCode, :final stderrTail):
         _flushStreamingChunks();

@@ -75,6 +75,9 @@ class _App {
 class _Claude {
   const _Claude._();
 
+  /// Translations for askUser
+  final AskUser = const _ClaudeAskUser._();
+
   /// Translations for effort
   final Effort = const _ClaudeEffort._();
 
@@ -93,12 +96,36 @@ class _Claude {
   /// Translations for permission
   final Permission = const _ClaudePermission._();
 
+  /// Translations for permissionRequest
+  final PermissionRequest = const _ClaudePermissionRequest._();
+
   /// Translations for terminal
   final Terminal = const _ClaudeTerminal._();
 
   /// Translations for thinking
   final Thinking = const _ClaudeThinking._();
 
+}
+
+/// Nested class for askUser translations
+class _ClaudeAskUser {
+  const _ClaudeAskUser._();
+
+  String get answeredLabel => LocaleKeys.claude_askUser_answeredLabel.tr();
+  String get back => LocaleKeys.claude_askUser_back.tr();
+  String get multiSelectHint => LocaleKeys.claude_askUser_multiSelectHint.tr();
+  String get next => LocaleKeys.claude_askUser_next.tr();
+  String get otherOption => LocaleKeys.claude_askUser_otherOption.tr();
+  String get otherPlaceholder => LocaleKeys.claude_askUser_otherPlaceholder.tr();
+  String stepCounter({required String current, required String total}) {
+    return LocaleKeys.claude_askUser_stepCounter.tr(namedArgs: {
+      'current': current,
+      'total': total,
+    });
+  }
+
+  String get submit => LocaleKeys.claude_askUser_submit.tr();
+  String get title => LocaleKeys.claude_askUser_title.tr();
 }
 
 /// Nested class for effort translations
@@ -204,6 +231,25 @@ class _ClaudePermission {
   String get bypassPermissions => LocaleKeys.claude_permission_bypassPermissions.tr();
   String get default$ => LocaleKeys.claude_permission_default.tr();
   String get plan => LocaleKeys.claude_permission_plan.tr();
+}
+
+/// Nested class for permissionRequest translations
+class _ClaudePermissionRequest {
+  const _ClaudePermissionRequest._();
+
+  String get allowAlways => LocaleKeys.claude_permissionRequest_allowAlways.tr();
+  String get allowOnce => LocaleKeys.claude_permissionRequest_allowOnce.tr();
+  String get answeredAllowAlways => LocaleKeys.claude_permissionRequest_answeredAllowAlways.tr();
+  String get answeredAllowOnce => LocaleKeys.claude_permissionRequest_answeredAllowOnce.tr();
+  String get answeredDeny => LocaleKeys.claude_permissionRequest_answeredDeny.tr();
+  String get deny => LocaleKeys.claude_permissionRequest_deny.tr();
+  String subtitle({required String tool}) {
+    return LocaleKeys.claude_permissionRequest_subtitle.tr(namedArgs: {
+      'tool': tool,
+    });
+  }
+
+  String get title => LocaleKeys.claude_permissionRequest_title.tr();
 }
 
 /// Nested class for terminal translations

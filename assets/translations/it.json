@@ -142,6 +142,27 @@
     "empty": {
       "title": "Inizia una conversazione",
       "hint": "Scrivi un prompt qui sotto. La conversazione persiste finché questa tab del workspace resta aperta."
+    },
+    "askUser": {
+      "title": "Claude ti sta chiedendo",
+      "back": "Indietro",
+      "next": "Avanti",
+      "submit": "Conferma",
+      "stepCounter": "{current}/{total}",
+      "otherOption": "Altro…",
+      "otherPlaceholder": "Scrivi la tua risposta",
+      "answeredLabel": "Hai risposto",
+      "multiSelectHint": "Seleziona una o più opzioni"
+    },
+    "permissionRequest": {
+      "title": "Consentire tool?",
+      "subtitle": "Claude vuole usare {tool}",
+      "allowOnce": "Consenti una volta",
+      "allowAlways": "Consenti sempre",
+      "deny": "Nega",
+      "answeredAllowOnce": "Consentito una volta",
+      "answeredAllowAlways": "Sempre consentito",
+      "answeredDeny": "Negato"
     }
   },
   "workspace": {

@@ -11,16 +11,21 @@ enum PermissionDecision { allow, deny, ask }
 
 class PermissionRequest {
   const PermissionRequest({
+    required this.requestId,
     required this.sessionId,
     required this.toolName,
     required this.toolInput,
   });
 
+  final String requestId;
   final String sessionId;
   final String toolName;
   final Map<String, dynamic> toolInput;
 }
 
+/// Resolver result. Either auto-decide (allow/deny) immediately or hand off
+/// to interactive UI (`ask`); when `ask` is returned the server suspends the
+/// HTTP response until [PermissionServer.respond] completes the request.
 typedef PermissionResolver = Future<PermissionDecision> Function(
   PermissionRequest request,
 );
@@ -39,10 +44,19 @@ class PermissionServer {
   HttpServer? _server;
   int? _port;
   PermissionResolver? _resolver;
+  void Function(PermissionRequest req)? _interactiveHandler;
+
+  final Map<String, Completer<PermissionDecision>> _pending = {};
+  int _seq = 0;
 
   int? get port => _port;
 
   void setResolver(PermissionResolver resolver) => _resolver = resolver;
+
+  /// Registers a callback invoked when the resolver returns `ask` — the
+  /// caller is responsible for showing UI and eventually calling [respond].
+  void setInteractiveHandler(void Function(PermissionRequest) handler) =>
+      _interactiveHandler = handler;
 
   Future<int> start() async {
     if (_port != null) return _port!;
@@ -54,9 +68,23 @@ class PermissionServer {
 
   @disposeMethod
   Future<void> stop() async {
+    for (final c in _pending.values) {
+      if (!c.isCompleted) c.complete(PermissionDecision.deny);
+    }
+    _pending.clear();
     await _server?.close(force: true);
     _server = null;
     _port = null;
+  }
+
+  /// Resolves a previously-suspended interactive request.
+  void respond(String requestId, PermissionDecision decision) {
+    final completer = _pending.remove(requestId);
+    if (completer == null) {
+      _talker.warning('PermissionServer.respond: unknown requestId=$requestId');
+      return;
+    }
+    if (!completer.isCompleted) completer.complete(decision);
   }
 
   Future<shelf.Response> _handle(shelf.Request request) async {
@@ -72,7 +100,9 @@ class PermissionServer {
       return _ok(PermissionDecision.allow);
     }
 
+    final requestId = 'p-${DateTime.now().microsecondsSinceEpoch}-${_seq++}';
     final req = PermissionRequest(
+      requestId: requestId,
       sessionId: payload['session_id'] as String? ?? '',
       toolName: payload['tool_name'] as String? ?? '',
       toolInput:
@@ -80,9 +110,25 @@ class PermissionServer {
     );
 
     final resolver = _resolver;
-    final decision = resolver != null
+    var decision = resolver != null
         ? await resolver(req)
         : PermissionDecision.allow;
+
+    if (decision == PermissionDecision.ask) {
+      final completer = Completer<PermissionDecision>();
+      _pending[requestId] = completer;
+      final handler = _interactiveHandler;
+      if (handler == null) {
+        _talker.warning(
+          'PermissionServer: ask returned but no interactive handler — denying',
+        );
+        _pending.remove(requestId);
+        decision = PermissionDecision.deny;
+      } else {
+        handler(req);
+        decision = await completer.future;
+      }
+    }
 
     _talker.debug(
       'PermissionServer: ${req.toolName} '
@@ -91,6 +137,13 @@ class PermissionServer {
     return _ok(decision);
   }
 
+  /// Builds the PreToolUse hook response. INVARIANT: never include
+  /// `updatedInput` here. Returning `updatedInput` with extra keys (even
+  /// unrelated ones) silently corrupts the input schema of UI tools like
+  /// `AskUserQuestion`, `EnterPlanMode`, `ExitPlanMode`, `TaskCreate`, etc.,
+  /// which then auto-resolve with empty answers (see anthropics/claude-code
+  /// #29530, root cause analysis by terrylica). Keep this response minimal:
+  /// only `permissionDecision`.
   shelf.Response _ok(PermissionDecision decision) {
     return shelf.Response.ok(
       jsonEncode({

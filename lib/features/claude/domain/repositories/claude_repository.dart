@@ -2,6 +2,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/utils/either.dart';
 import '../entities/claude_event.dart';
 import '../entities/claude_effort.dart';
+import '../entities/claude_message.dart';
 import '../entities/claude_model.dart';
 import '../entities/claude_permission_mode.dart';
 
@@ -31,5 +32,20 @@ abstract interface class ClaudeRepository {
   /// the user's browser.
   Future<Either<Failure, String?>> authenticateMcpServer({
     required String serverName,
+  });
+
+  /// Sends a `tool_result` for an interactive tool call (e.g. AskUserQuestion).
+  /// Returns left if no run is active or stdin write fails.
+  Future<Either<Failure, void>> sendToolResult({
+    required String toolUseId,
+    required Object content,
+    bool isError = false,
+  });
+
+  /// Resolves a pending permission request (PreToolUse hook) with the user
+  /// decision. No-op if [requestId] is unknown.
+  void respondPermission({
+    required String requestId,
+    required ClaudePermissionDecision decision,
   });
 }
