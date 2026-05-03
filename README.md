@@ -1,6 +1,8 @@
-# g_claude
+# Clyde
 
 GUI desktop per Claude Code. Flutter macOS first.
+
+> Internamente il package Dart si chiama ancora `g_claude` (rename non eseguito per evitare invasivita').
 
 Ispirato all'architettura di [clui-cc](https://github.com/anthropics/clui-cc): l'app
 lancia il binario `claude -p` come subprocess per ogni sessione, normalizza lo stream

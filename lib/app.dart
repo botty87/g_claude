@@ -33,7 +33,7 @@ class App extends StatelessWidget {
         ),
       ],
       child: MaterialApp.router(
-        title: 'Claude Code GUI',
+        title: 'Clyde',
         theme: AppTheme.dark,
         debugShowCheckedModeBanner: false,
         localizationsDelegates: context.localizationDelegates,

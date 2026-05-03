@@ -1,7 +1,7 @@
 // Application-level settings for the Runner target.
 
-// The application's binary name. Kept as snake_case for path-safe scripting.
-PRODUCT_NAME = g_claude
+// The application's binary name.
+PRODUCT_NAME = Clyde
 
 // The application's bundle identifier (reverse-DNS Timeware).
 PRODUCT_BUNDLE_IDENTIFIER = it.timeware.gclaude

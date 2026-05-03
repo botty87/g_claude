@@ -9,7 +9,7 @@ Future<void> setupWindow() async {
     size: Size(1280, 800),
     minimumSize: Size(900, 600),
     center: true,
-    title: 'Claude Code GUI',
+    title: 'Clyde',
     titleBarStyle: TitleBarStyle.normal,
   );
 
