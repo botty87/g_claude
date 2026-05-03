@@ -29,6 +29,7 @@ class SlashCommandsCubit extends Cubit<SlashCommandsState> {
 
   Future<void> loadFor(String? workspaceCwd) async {
     final result = await _load.call(workspaceCwd: workspaceCwd);
+    if (isClosed) return;
     result.fold(
       (failure) {
         _talker.warning('slash_commands: load failed: $failure');
