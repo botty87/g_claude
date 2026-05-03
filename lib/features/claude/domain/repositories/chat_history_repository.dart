@@ -27,4 +27,9 @@ abstract interface class ChatHistoryRepository {
     required String sessionId,
     required String destinationPath,
   });
+
+  Future<Either<Failure, List<ChatSessionSummary>>> searchSessions(
+    WorkspaceId workspaceId,
+    String query,
+  );
 }

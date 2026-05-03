@@ -16,6 +16,7 @@ import '../../domain/usecases/export_chat_session.dart';
 import '../../domain/usecases/load_chat_history.dart';
 import '../../domain/usecases/load_session_messages.dart';
 import '../../domain/usecases/refresh_sessions_index.dart';
+import '../../domain/usecases/search_sessions.dart';
 import '../../data/datasources/claude_history_datasource.dart';
 
 part 'chat_history_cubit.freezed.dart';
@@ -29,6 +30,7 @@ class ChatHistoryCubit extends Cubit<ChatHistoryState> {
     this._refreshIndex,
     this._deleteSession,
     this._exportSession,
+    this._searchSessions,
     this._historyDs,
     this._workspacesCubit,
     this._talker,
@@ -39,11 +41,13 @@ class ChatHistoryCubit extends Cubit<ChatHistoryState> {
   final RefreshSessionsIndex _refreshIndex;
   final DeleteChatSession _deleteSession;
   final ExportChatSession _exportSession;
+  final SearchSessions _searchSessions;
   final ClaudeHistoryDataSource _historyDs;
   final WorkspacesCubit _workspacesCubit;
   final Talker _talker;
 
   StreamSubscription<WorkspacesState>? _wsSub;
+  final Map<String, Timer> _searchDebounce = {};
 
   @PostConstruct()
   void init() {
@@ -168,7 +172,59 @@ class ChatHistoryCubit extends Cubit<ChatHistoryState> {
   }
 
   void setQuery(WorkspaceId workspaceId, String query) {
-    _emitWs(workspaceId, _historyOrEmpty(workspaceId).copyWith(query: query));
+    _searchDebounce[workspaceId]?.cancel();
+
+    if (query.trim().isEmpty) {
+      _emitWs(
+        workspaceId,
+        _historyOrEmpty(workspaceId).copyWith(
+          query: query,
+          searchResults: null,
+          searchLoading: false,
+        ),
+      );
+      return;
+    }
+
+    _emitWs(
+      workspaceId,
+      _historyOrEmpty(workspaceId).copyWith(
+        query: query,
+        searchLoading: true,
+      ),
+    );
+
+    _searchDebounce[workspaceId] = Timer(
+      const Duration(milliseconds: 200),
+      () => unawaited(_runSearch(workspaceId, query)),
+    );
+  }
+
+  Future<void> _runSearch(WorkspaceId workspaceId, String query) async {
+    final result = await _searchSessions(workspaceId, query);
+    final current = _historyOrEmpty(workspaceId);
+    if (current.query != query) return;
+    result.fold(
+      (f) {
+        _talker.error('searchSessions failed for $workspaceId: $f');
+        _emitWs(
+          workspaceId,
+          _historyOrEmpty(workspaceId).copyWith(
+            searchResults: const [],
+            searchLoading: false,
+          ),
+        );
+      },
+      (sessions) {
+        _emitWs(
+          workspaceId,
+          _historyOrEmpty(workspaceId).copyWith(
+            searchResults: sessions,
+            searchLoading: false,
+          ),
+        );
+      },
+    );
   }
 
   Future<void> delete(
@@ -231,6 +287,10 @@ class ChatHistoryCubit extends Cubit<ChatHistoryState> {
 
   @override
   Future<void> close() async {
+    for (final t in _searchDebounce.values) {
+      t.cancel();
+    }
+    _searchDebounce.clear();
     await _wsSub?.cancel();
     return super.close();
   }

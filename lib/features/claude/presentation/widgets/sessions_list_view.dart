@@ -81,11 +81,19 @@ class SessionsListView extends HookWidget {
                   ),
                 );
               }
-              final filtered = h.sessions.where((s) {
-                if (h.query.isEmpty) return true;
-                return s.title.toLowerCase().contains(h.query.toLowerCase());
-              }).toList();
-              if (filtered.isEmpty) {
+              final list = h.query.trim().isEmpty
+                  ? h.sessions
+                  : (h.searchResults ?? const <ChatSessionSummary>[]);
+              if (h.searchLoading && list.isEmpty) {
+                return const Center(
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                );
+              }
+              if (list.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   child: Text(
@@ -98,9 +106,9 @@ class SessionsListView extends HookWidget {
                 );
               }
               return ListView.builder(
-                itemCount: filtered.length,
+                itemCount: list.length,
                 itemBuilder: (context, i) {
-                  final s = filtered[i];
+                  final s = list[i];
                   final isSelected = h.selectedId == s.id;
                   return _SessionRow(
                     key: ValueKey<String>('session_row_${s.id}'),
@@ -239,7 +247,9 @@ class _SessionRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      summary.title,
+                      summary.title.isEmpty
+                          ? 'sessions.list.untitled'.tr()
+                          : summary.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.bodyMain.copyWith(

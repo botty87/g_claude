@@ -33,6 +33,9 @@ class FileTabsBar extends HookWidget {
     }
 
     final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
+    final isSessionsActivity = context.select<ShellCubit, bool>(
+      (c) => c.state.selectedActivity == ActivityId.sessions,
+    );
 
     return Container(
       height: AppSpacing.toolbarHeight,
@@ -42,9 +45,9 @@ class FileTabsBar extends HookWidget {
       ),
       child: Row(
         children: [
-          const OpenFilesButton(),
+          if (!isSessionsActivity) const OpenFilesButton(),
           Expanded(
-            child: activeId == null
+            child: isSessionsActivity || activeId == null
                 ? const SizedBox.shrink()
                 : BlocConsumer<FileTabsCubit, FileTabsState>(
                     listenWhen: (prev, curr) =>

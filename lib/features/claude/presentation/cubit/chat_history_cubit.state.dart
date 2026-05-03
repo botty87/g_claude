@@ -11,6 +11,8 @@ abstract class WorkspaceHistory with _$WorkspaceHistory {
     @Default(<ClaudeMessage>[]) List<ClaudeMessage> previewMessages,
     @Default(false) bool previewLoading,
     @Default('') String query,
+    List<ChatSessionSummary>? searchResults,
+    @Default(false) bool searchLoading,
     Failure? lastError,
   }) = _WorkspaceHistory;
 }

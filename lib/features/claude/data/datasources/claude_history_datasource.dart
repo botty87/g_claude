@@ -34,6 +34,7 @@ abstract interface class ClaudeHistoryDataSource {
   String encodeCwd(String cwd);
   Future<List<JsonlSessionMeta>> scanWorkspace(String cwd);
   Stream<ClaudeMessage> readSession({required String encodedPath, required String sessionId});
+  Future<String> readFullText({required String encodedPath, required String sessionId});
   Future<void> deleteSession({required String encodedPath, required String sessionId});
   Future<String> exportSessionMarkdown({
     required String encodedPath,
@@ -80,7 +81,8 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
           final fileSize = stat.size;
           final sessionId = p.basenameWithoutExtension(entity.path);
 
-          String title = '(empty)';
+          String? title;
+          String? summaryFallback;
           DateTime? firstMessageAt;
           DateTime? lastMessageAt;
           int messageCount = 0;
@@ -100,8 +102,17 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
 
             final type = entry['type'] as String?;
             final isSidechain = entry['isSidechain'] == true;
+            final isMeta = entry['isMeta'] == true;
 
-            if (type == 'queue-operation' || type == 'summary' || type == 'system') continue;
+            if (type == 'queue-operation' || type == 'system') continue;
+
+            if (type == 'summary') {
+              final s = entry['summary'];
+              if (s is String && s.trim().isNotEmpty) {
+                summaryFallback ??= _truncateTitle(s);
+              }
+              continue;
+            }
 
             final rawTs = entry['timestamp'] as String?;
             final ts = rawTs != null ? DateTime.tryParse(rawTs) : null;
@@ -111,27 +122,26 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
               lastMessageAt = ts;
             }
 
-            if (isSidechain) continue;
+            if (isSidechain || isMeta) continue;
 
             if (type == 'user' || type == 'assistant') {
               messageCount++;
             }
 
-            if (type == 'user' && title == '(empty)') {
-              final message = entry['message'];
-              if (message is Map<String, dynamic>) {
-                final content = message['content'];
-                if (content is String && !content.startsWith('/')) {
-                  title = content.length > 80 ? content.substring(0, 80) : content;
-                }
+            if (type == 'user' && title == null) {
+              final candidate = _extractUserText(entry['message']);
+              if (candidate != null) {
+                title = _truncateTitle(candidate);
               }
             }
           }
 
+          final resolvedTitle = title ?? summaryFallback ?? '';
+
           metas.add(JsonlSessionMeta(
             id: sessionId,
             encodedPath: encoded,
-            title: title,
+            title: resolvedTitle,
             firstMessageAt: firstMessageAt ?? fileMtime,
             lastMessageAt: lastMessageAt ?? fileMtime,
             messageCount: messageCount,
@@ -178,6 +188,9 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
         final isSidechain = entry['isSidechain'] == true;
         if (isSidechain) continue;
 
+        final isMeta = entry['isMeta'] == true;
+        if (isMeta) continue;
+
         final rawTs = entry['timestamp'] as String?;
         final ts = rawTs != null ? (DateTime.tryParse(rawTs) ?? DateTime.now()) : DateTime.now();
         final uuid = entry['uuid'] as String?;
@@ -195,6 +208,24 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
               createdAt: ts,
             );
           } else if (content is List) {
+            final userTextBuf = StringBuffer();
+            for (final block in content) {
+              if (block is! Map<String, dynamic>) continue;
+              if (block['type'] != 'text') continue;
+              final t = block['text'] as String? ?? '';
+              if (t.isNotEmpty) {
+                if (userTextBuf.isNotEmpty) userTextBuf.write('\n');
+                userTextBuf.write(t);
+              }
+            }
+            if (userTextBuf.isNotEmpty) {
+              yield ClaudeMessage.user(
+                id: uuid ?? 'u-${ts.millisecondsSinceEpoch}',
+                text: userTextBuf.toString(),
+                createdAt: ts,
+              );
+            }
+
             for (final block in content) {
               if (block is! Map<String, dynamic>) continue;
               if (block['type'] != 'tool_result') continue;
@@ -285,6 +316,73 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
   }
 
   @override
+  Future<String> readFullText({required String encodedPath, required String sessionId}) async {
+    final file = File(p.join(_projectsDir.path, encodedPath, '$sessionId.jsonl'));
+    final buf = StringBuffer();
+    const maxBytes = 200 * 1024;
+
+    try {
+      final lines = file.openRead().transform(utf8.decoder).transform(const LineSplitter());
+
+      await for (final line in lines) {
+        if (buf.length >= maxBytes) break;
+        if (line.trim().isEmpty) continue;
+
+        Map<String, dynamic> entry;
+        try {
+          final decoded = jsonDecode(line);
+          if (decoded is! Map<String, dynamic>) continue;
+          entry = decoded;
+        } catch (_) {
+          continue;
+        }
+
+        final type = entry['type'] as String?;
+        if (type == 'queue-operation' || type == 'summary' || type == 'system') continue;
+        if (entry['isSidechain'] == true || entry['isMeta'] == true) continue;
+
+        if (type == 'user') {
+          final message = entry['message'];
+          if (message is! Map<String, dynamic>) continue;
+          final content = message['content'];
+          if (content is String) {
+            if (buf.isNotEmpty) buf.write('\n');
+            buf.write(content);
+          } else if (content is List) {
+            for (final block in content) {
+              if (block is! Map<String, dynamic>) continue;
+              if (block['type'] != 'text') continue;
+              final t = block['text'] as String? ?? '';
+              if (t.isNotEmpty) {
+                if (buf.isNotEmpty) buf.write('\n');
+                buf.write(t);
+              }
+            }
+          }
+        } else if (type == 'assistant') {
+          final message = entry['message'];
+          if (message is! Map<String, dynamic>) continue;
+          final content = message['content'];
+          if (content is! List) continue;
+          for (final block in content) {
+            if (block is! Map<String, dynamic>) continue;
+            if (block['type'] != 'text') continue;
+            final t = block['text'] as String? ?? '';
+            if (t.isNotEmpty) {
+              if (buf.isNotEmpty) buf.write('\n');
+              buf.write(t);
+            }
+          }
+        }
+      }
+    } catch (e, st) {
+      _talker.error('readFullText failed for $sessionId', e, st);
+    }
+
+    return buf.toString();
+  }
+
+  @override
   Future<void> deleteSession({required String encodedPath, required String sessionId}) async {
     final file = File(p.join(_projectsDir.path, encodedPath, '$sessionId.jsonl'));
     if (!file.existsSync()) {
@@ -349,5 +447,48 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
     await Directory(p.dirname(destinationPath)).create(recursive: true);
     await destFile.writeAsString(buf.toString());
     return destinationPath;
+  }
+
+  static final _xmlTagRe = RegExp(r'<[^>]+>');
+  static final _whitespaceRe = RegExp(r'\s+');
+
+  String? _extractUserText(dynamic message) {
+    if (message is! Map<String, dynamic>) return null;
+    final content = message['content'];
+    String? raw;
+    if (content is String) {
+      raw = content;
+    } else if (content is List) {
+      final buf = StringBuffer();
+      for (final block in content) {
+        if (block is! Map<String, dynamic>) continue;
+        if (block['type'] != 'text') continue;
+        final t = block['text'];
+        if (t is String && t.isNotEmpty) {
+          if (buf.isNotEmpty) buf.write(' ');
+          buf.write(t);
+        }
+      }
+      if (buf.isEmpty) return null;
+      raw = buf.toString();
+    } else {
+      return null;
+    }
+
+    final cleaned = raw.replaceAll(_xmlTagRe, ' ').replaceAll(_whitespaceRe, ' ').trim();
+    if (cleaned.isEmpty) return null;
+    if (cleaned.length < 3) return null;
+    if (cleaned.startsWith('/')) {
+      final spaceIdx = cleaned.indexOf(' ');
+      if (spaceIdx == -1) return cleaned;
+      final args = cleaned.substring(spaceIdx + 1).trim();
+      return args.isEmpty ? cleaned : args;
+    }
+    return cleaned;
+  }
+
+  String _truncateTitle(String s) {
+    final cleaned = s.replaceAll(_whitespaceRe, ' ').trim();
+    return cleaned.length <= 80 ? cleaned : cleaned.substring(0, 80);
   }
 }

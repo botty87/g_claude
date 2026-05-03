@@ -124,4 +124,34 @@ class ChatHistoryRepositoryImpl implements ChatHistoryRepository {
       return Left(UnexpectedFailure('$e'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<ChatSessionSummary>>> searchSessions(
+    WorkspaceId workspaceId,
+    String query,
+  ) async {
+    if (query.trim().isEmpty) return listSessions(workspaceId);
+    try {
+      final ids = await _index.searchIds(workspaceId, query);
+      if (ids.isEmpty) return const Right([]);
+      final rows = await _index.getByIds(ids, workspaceId);
+      final summaries = rows
+          .map(
+            (r) => ChatSessionSummary(
+              id: r.id,
+              workspaceId: workspaceId,
+              encodedPath: r.encodedPath,
+              title: r.title,
+              firstMessageAt: r.firstMessageAt,
+              lastMessageAt: r.lastMessageAt,
+              messageCount: r.messageCount,
+            ),
+          )
+          .toList();
+      return Right(summaries);
+    } catch (e, st) {
+      _talker.error('searchSessions failed for $workspaceId query=$query', e, st);
+      return Left(UnexpectedFailure('$e'));
+    }
+  }
 }

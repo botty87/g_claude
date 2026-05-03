@@ -173,10 +173,11 @@
   },
   "sessions": {
     "list": {
-      "search": "Search sessions...",
+      "search": "Search messages...",
       "empty": "No sessions yet",
       "newChat": "New chat",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "untitled": "Untitled session"
     },
     "preview": {
       "empty": "Select a session to preview it here",

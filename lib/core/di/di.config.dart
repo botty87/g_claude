@@ -53,6 +53,7 @@ import '../../features/claude/domain/usecases/load_session_messages.dart'
     as _i992;
 import '../../features/claude/domain/usecases/refresh_sessions_index.dart'
     as _i374;
+import '../../features/claude/domain/usecases/search_sessions.dart' as _i73;
 import '../../features/claude/domain/usecases/send_prompt.dart' as _i338;
 import '../../features/claude/domain/usecases/stop_run.dart' as _i328;
 import '../../features/claude/domain/usecases/toggle_mcp_server.dart' as _i920;
@@ -283,6 +284,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i374.RefreshSessionsIndex>(
       () => _i374.RefreshSessionsIndex(gh<_i875.ChatHistoryRepository>()),
     );
+    gh.factory<_i73.SearchSessions>(
+      () => _i73.SearchSessions(gh<_i875.ChatHistoryRepository>()),
+    );
     gh.lazySingleton<_i179.WorkspacesCubit>(
       () => _i179.WorkspacesCubit(
         gh<_i305.OpenWorkspace>(),
@@ -327,6 +331,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i374.RefreshSessionsIndex>(),
         gh<_i927.DeleteChatSession>(),
         gh<_i691.ExportChatSession>(),
+        gh<_i73.SearchSessions>(),
         gh<_i278.ClaudeHistoryDataSource>(),
         gh<_i179.WorkspacesCubit>(),
         gh<_i207.Talker>(),
