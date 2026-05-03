@@ -4,7 +4,23 @@ GUI desktop (macOS-first) per Claude Code. Ogni tab in alto = una cartella apert
 
 ## Stato corrente
 
-Sessione 1 in corso: layout shell + feature `workspace` (apri cartella -> tab + lettura `CLAUDE.md`). No subprocess `claude`, no chat, no explorer tree, no persistenza. Quei pezzi arrivano nelle sessioni successive.
+App funzionale end-to-end. Feature attive:
+
+- **workspace**: multi-cartella con tab in alto, lettura `CLAUDE.md`, persistenza `SharedPreferences` (`workspaces.v1`), file watcher per cancellazioni esterne.
+- **shell**: layout desktop con activity bar (left), side panel collassabile, split editor/chat (`multi_split_view`). Shortcut Cmd+B (toggle workspace), Cmd+W (close tab).
+- **explorer**: tree view con watcher debounced (250ms), reveal-in-tree per file attivo, prewarm su restore.
+- **editor**: tab multiple per workspace, viewer `re_editor` + `re_highlight`, drag & drop (`desktop_drop`), persistenza (`tabs.v1`).
+- **claude**: subprocess `claude -p --output-format stream-json` per workspace. Parsing NDJSON in `ClaudeEvent` sealed (sessionInit, textChunk, toolCall, toolResult, permissionRequest, askUserQuestion, sessionDead, rateLimit, ecc.). Streaming testo con flush 16ms. Settings scritte in `~/.claude/settings.json`. History JSONL in `~/.claude/projects/{cwd-encoded}/{sessionid}.jsonl` con list/search/resume/export/delete. MCP toggle + auth per workspace. **AskUserQuestion interattivo disabilitato** (flag `askUserQuestionInteractiveEnabled = false`: upstream CLI non aspetta `tool_result`).
+- **PermissionServer** (Shelf, localhost porta effimera): risolve permission mode (default/plan/acceptEdits/bypassPermissions) o emette `ClaudeMessage.permissionRequest` con UI card; risposta tramite `answerPermission` + `Completer<PermissionDecision>`.
+- **slash_commands**: palette nel input chat, comandi file-based (CLAUDE.md) + skill-based (da `sessionInit`), filtro live.
+
+Persistenza: `SharedPreferences` per workspace, tab editor, settings sessione, sessione attiva. Cronologia chat: JSONL on disk (`~/.claude/projects/`). `drift` dichiarato in `pubspec.yaml` ma non ancora usato.
+
+Bootstrap ([lib/main.dart](lib/main.dart)): Marionette (debug) → EasyLocalization + window + DI in parallelo → `MarionetteLogBridge` → restore `WorkspacesCubit` poi `FileTabsCubit` (orphan filter) → `Bloc.observer` → prewarm tab persistite (4 worker concorrenti) → `runApp`. Estensioni Marionette custom: `openWorkspace`, `closeWorkspace`, `setActiveWorkspace`.
+
+Cubit globali (in [lib/app.dart](lib/app.dart)): `WorkspacesCubit`, `ShellCubit`, `ExplorerCubit`, `FileTabsCubit`, `ClaudeSessionsCubit`, `ChatHistoryCubit`. Routing `auto_route` con singola route `AppShellRoute`.
+
+Differito: tray icon + global hotkey (deps presenti), markdown rendering chat (`flutter_markdown` dep presente).
 
 ## Architettura
 
