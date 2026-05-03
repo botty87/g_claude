@@ -142,6 +142,27 @@
     "empty": {
       "title": "Start a conversation",
       "hint": "Type a prompt below. Conversation persists while this workspace tab is open."
+    },
+    "askUser": {
+      "title": "Claude is asking",
+      "back": "Back",
+      "next": "Next",
+      "submit": "Submit",
+      "stepCounter": "{current}/{total}",
+      "otherOption": "Other…",
+      "otherPlaceholder": "Type your answer",
+      "answeredLabel": "You answered",
+      "multiSelectHint": "Select one or more"
+    },
+    "permissionRequest": {
+      "title": "Allow tool?",
+      "subtitle": "Claude wants to use {tool}",
+      "allowOnce": "Allow once",
+      "allowAlways": "Allow always",
+      "deny": "Deny",
+      "answeredAllowOnce": "Allowed once",
+      "answeredAllowAlways": "Always allowed",
+      "answeredDeny": "Denied"
     }
   },
   "workspace": {

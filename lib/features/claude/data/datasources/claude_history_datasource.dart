@@ -440,6 +440,26 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
           buf.writeln();
           buf.writeln(msg.text);
           buf.writeln();
+
+        case ClaudeMessageAskUserQuestion():
+          buf.writeln('### AskUserQuestion');
+          buf.writeln('_${msg.createdAt.toIso8601String()}_');
+          buf.writeln();
+          for (final q in msg.questions) {
+            buf.writeln('- **${q.question}**');
+            final ans = msg.answers[q.question];
+            if (ans != null) buf.writeln('  - answer: $ans');
+          }
+          buf.writeln();
+
+        case ClaudeMessagePermissionRequest():
+          buf.writeln('### Permission request: ${msg.toolName}');
+          buf.writeln('_${msg.createdAt.toIso8601String()}_');
+          buf.writeln();
+          if (msg.decision != null) {
+            buf.writeln('decision: ${msg.decision!.name}');
+          }
+          buf.writeln();
       }
     }
 

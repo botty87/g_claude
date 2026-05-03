@@ -4,16 +4,19 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/utils/either.dart';
 import '../../domain/entities/claude_event.dart';
 import '../../domain/entities/claude_effort.dart';
+import '../../domain/entities/claude_message.dart';
 import '../../domain/entities/claude_model.dart';
 import '../../domain/entities/claude_permission_mode.dart';
 import '../../domain/repositories/claude_repository.dart';
 import '../datasources/claude_process_datasource.dart';
+import '../datasources/permission_server.dart';
 
 @LazySingleton(as: ClaudeRepository)
 class ClaudeRepositoryImpl implements ClaudeRepository {
-  ClaudeRepositoryImpl(this._datasource);
+  ClaudeRepositoryImpl(this._datasource, this._permissionServer);
 
   final ClaudeProcessDataSource _datasource;
+  final PermissionServer _permissionServer;
 
   @override
   Stream<Either<Failure, ClaudeEvent>> startRun({
@@ -68,6 +71,40 @@ class ClaudeRepositoryImpl implements ClaudeRepository {
     } catch (e) {
       return Left(UnexpectedFailure('$e'));
     }
+  }
+
+  @override
+  Future<Either<Failure, void>> sendToolResult({
+    required String toolUseId,
+    required Object content,
+    bool isError = false,
+  }) async {
+    try {
+      await _datasource.sendToolResult(
+        toolUseId: toolUseId,
+        content: content,
+        isError: isError,
+      );
+      return const Right(null);
+    } on StateError catch (e) {
+      return Left(SubprocessFailure(message: e.message));
+    } catch (e) {
+      return Left(UnexpectedFailure('$e'));
+    }
+  }
+
+  @override
+  void respondPermission({
+    required String requestId,
+    required ClaudePermissionDecision decision,
+  }) {
+    final mapped = switch (decision) {
+      ClaudePermissionDecision.allowOnce ||
+      ClaudePermissionDecision.allowAlways =>
+        PermissionDecision.allow,
+      ClaudePermissionDecision.deny => PermissionDecision.deny,
+    };
+    _permissionServer.respond(requestId, mapped);
   }
 
   @override

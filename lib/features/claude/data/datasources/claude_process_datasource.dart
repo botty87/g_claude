@@ -36,6 +36,16 @@ abstract interface class ClaudeProcessDataSource {
     required String subtype,
     required Map<String, dynamic> payload,
   });
+
+  /// Writes a `tool_result` user message to stdin. Used to answer interactive
+  /// tool calls (e.g. `AskUserQuestion`) so Claude can resume the run.
+  /// `content` is JSON-encoded into the `content` field; pass already-stringified
+  /// data when needed. Throws [StateError] if no subprocess is active.
+  Future<void> sendToolResult({
+    required String toolUseId,
+    required Object content,
+    bool isError = false,
+  });
 }
 
 class McpControlException implements Exception {
@@ -57,6 +67,15 @@ class ClaudeSpawnException implements Exception {
   @override
   String toString() => 'ClaudeSpawnException: $message';
 }
+
+/// Temporary kill-switch for the interactive `AskUserQuestion` card. The CLI
+/// in `stream-json` mode auto-completes the tool with a synthetic error
+/// instead of waiting for our `tool_result` (issue anthropics/claude-code
+/// #16712), so the card never gets a chance to drive the run. Until that's
+/// fixed upstream we disallow the tool: Claude falls back to asking the
+/// questions as plain text, exactly like the non-IDE CLI. Flip this back to
+/// `true` once Anthropic ships the fix.
+const askUserQuestionInteractiveEnabled = false;
 
 // NDJSON envelope keys per `claude -p --output-format stream-json` contract.
 const _kType = 'type';
@@ -131,6 +150,10 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
         ClaudePermissionMode.defaultMode.cliFlag,
         '--settings',
         settingsPath,
+        if (!askUserQuestionInteractiveEnabled) ...[
+          '--disallowedTools',
+          'AskUserQuestion',
+        ],
         '--append-system-prompt',
         mode.systemPromptHint,
         if (model != null) ...['--model', model.cliId],
@@ -232,6 +255,40 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
     final exited = await p.exitCode.timeout(const Duration(seconds: 2), onTimeout: () => -1);
     if (exited == -1) {
       p.kill(ProcessSignal.sigkill);
+    }
+  }
+
+  @override
+  Future<void> sendToolResult({
+    required String toolUseId,
+    required Object content,
+    bool isError = false,
+  }) async {
+    final process = _current;
+    if (process == null) {
+      throw StateError('sendToolResult: no active subprocess');
+    }
+    final encoded = content is String ? content : jsonEncode(content);
+    final envelope = {
+      'type': 'user',
+      'message': {
+        'role': 'user',
+        'content': [
+          {
+            'type': 'tool_result',
+            'tool_use_id': toolUseId,
+            'content': encoded,
+            if (isError) 'is_error': true,
+          },
+        ],
+      },
+    };
+    try {
+      process.stdin.writeln(jsonEncode(envelope));
+      await process.stdin.flush();
+    } catch (e) {
+      _talker.warning('sendToolResult: stdin write failed: $e');
+      rethrow;
     }
   }
 
@@ -377,6 +434,19 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
               }
             }
             yield ClaudeEvent.toolCallComplete(index: index, toolId: tool?.toolId, input: input);
+            if (askUserQuestionInteractiveEnabled &&
+                tool != null &&
+                tool.toolName == 'AskUserQuestion' &&
+                tool.toolId.isNotEmpty &&
+                input != null) {
+              final questions = _parseAskUserQuestions(input);
+              if (questions.isNotEmpty) {
+                yield ClaudeEvent.askUserQuestion(
+                  toolUseId: tool.toolId,
+                  questions: questions,
+                );
+              }
+            }
             return;
 
           default:
@@ -444,6 +514,38 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
       default:
         return;
     }
+  }
+
+  List<AskUserQuestionItem> _parseAskUserQuestions(Map<String, dynamic> input) {
+    final raw = input['questions'];
+    if (raw is! List) return const [];
+    final result = <AskUserQuestionItem>[];
+    for (final q in raw) {
+      if (q is! Map) continue;
+      final question = q['question'] as String? ?? '';
+      if (question.isEmpty) continue;
+      final optsRaw = q['options'];
+      final options = <AskUserQuestionOption>[];
+      if (optsRaw is List) {
+        for (final o in optsRaw) {
+          if (o is Map) {
+            final label = o['label'] as String? ?? '';
+            if (label.isEmpty) continue;
+            options.add(AskUserQuestionOption(
+              label: label,
+              description: o['description'] as String? ?? '',
+            ));
+          }
+        }
+      }
+      result.add(AskUserQuestionItem(
+        question: question,
+        header: q['header'] as String? ?? '',
+        multiSelect: q['multiSelect'] == true,
+        options: options,
+      ));
+    }
+    return result;
   }
 
   String _flattenToolResultContent(Object? content) {

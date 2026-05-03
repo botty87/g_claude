@@ -275,6 +275,538 @@ as String?,
 }
 
 /// @nodoc
+mixin _$AskUserQuestionOption {
+
+ String get label; String get description;
+/// Create a copy of AskUserQuestionOption
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AskUserQuestionOptionCopyWith<AskUserQuestionOption> get copyWith => _$AskUserQuestionOptionCopyWithImpl<AskUserQuestionOption>(this as AskUserQuestionOption, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AskUserQuestionOption&&(identical(other.label, label) || other.label == label)&&(identical(other.description, description) || other.description == description));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,label,description);
+
+@override
+String toString() {
+  return 'AskUserQuestionOption(label: $label, description: $description)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $AskUserQuestionOptionCopyWith<$Res>  {
+  factory $AskUserQuestionOptionCopyWith(AskUserQuestionOption value, $Res Function(AskUserQuestionOption) _then) = _$AskUserQuestionOptionCopyWithImpl;
+@useResult
+$Res call({
+ String label, String description
+});
+
+
+
+
+}
+/// @nodoc
+class _$AskUserQuestionOptionCopyWithImpl<$Res>
+    implements $AskUserQuestionOptionCopyWith<$Res> {
+  _$AskUserQuestionOptionCopyWithImpl(this._self, this._then);
+
+  final AskUserQuestionOption _self;
+  final $Res Function(AskUserQuestionOption) _then;
+
+/// Create a copy of AskUserQuestionOption
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? label = null,Object? description = null,}) {
+  return _then(_self.copyWith(
+label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [AskUserQuestionOption].
+extension AskUserQuestionOptionPatterns on AskUserQuestionOption {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _AskUserQuestionOption value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _AskUserQuestionOption() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _AskUserQuestionOption value)  $default,){
+final _that = this;
+switch (_that) {
+case _AskUserQuestionOption():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _AskUserQuestionOption value)?  $default,){
+final _that = this;
+switch (_that) {
+case _AskUserQuestionOption() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String label,  String description)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _AskUserQuestionOption() when $default != null:
+return $default(_that.label,_that.description);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String label,  String description)  $default,) {final _that = this;
+switch (_that) {
+case _AskUserQuestionOption():
+return $default(_that.label,_that.description);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String label,  String description)?  $default,) {final _that = this;
+switch (_that) {
+case _AskUserQuestionOption() when $default != null:
+return $default(_that.label,_that.description);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _AskUserQuestionOption implements AskUserQuestionOption {
+  const _AskUserQuestionOption({required this.label, this.description = ''});
+  
+
+@override final  String label;
+@override@JsonKey() final  String description;
+
+/// Create a copy of AskUserQuestionOption
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$AskUserQuestionOptionCopyWith<_AskUserQuestionOption> get copyWith => __$AskUserQuestionOptionCopyWithImpl<_AskUserQuestionOption>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AskUserQuestionOption&&(identical(other.label, label) || other.label == label)&&(identical(other.description, description) || other.description == description));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,label,description);
+
+@override
+String toString() {
+  return 'AskUserQuestionOption(label: $label, description: $description)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$AskUserQuestionOptionCopyWith<$Res> implements $AskUserQuestionOptionCopyWith<$Res> {
+  factory _$AskUserQuestionOptionCopyWith(_AskUserQuestionOption value, $Res Function(_AskUserQuestionOption) _then) = __$AskUserQuestionOptionCopyWithImpl;
+@override @useResult
+$Res call({
+ String label, String description
+});
+
+
+
+
+}
+/// @nodoc
+class __$AskUserQuestionOptionCopyWithImpl<$Res>
+    implements _$AskUserQuestionOptionCopyWith<$Res> {
+  __$AskUserQuestionOptionCopyWithImpl(this._self, this._then);
+
+  final _AskUserQuestionOption _self;
+  final $Res Function(_AskUserQuestionOption) _then;
+
+/// Create a copy of AskUserQuestionOption
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? label = null,Object? description = null,}) {
+  return _then(_AskUserQuestionOption(
+label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$AskUserQuestionItem {
+
+ String get question; String get header; bool get multiSelect; List<AskUserQuestionOption> get options;
+/// Create a copy of AskUserQuestionItem
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AskUserQuestionItemCopyWith<AskUserQuestionItem> get copyWith => _$AskUserQuestionItemCopyWithImpl<AskUserQuestionItem>(this as AskUserQuestionItem, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AskUserQuestionItem&&(identical(other.question, question) || other.question == question)&&(identical(other.header, header) || other.header == header)&&(identical(other.multiSelect, multiSelect) || other.multiSelect == multiSelect)&&const DeepCollectionEquality().equals(other.options, options));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,question,header,multiSelect,const DeepCollectionEquality().hash(options));
+
+@override
+String toString() {
+  return 'AskUserQuestionItem(question: $question, header: $header, multiSelect: $multiSelect, options: $options)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $AskUserQuestionItemCopyWith<$Res>  {
+  factory $AskUserQuestionItemCopyWith(AskUserQuestionItem value, $Res Function(AskUserQuestionItem) _then) = _$AskUserQuestionItemCopyWithImpl;
+@useResult
+$Res call({
+ String question, String header, bool multiSelect, List<AskUserQuestionOption> options
+});
+
+
+
+
+}
+/// @nodoc
+class _$AskUserQuestionItemCopyWithImpl<$Res>
+    implements $AskUserQuestionItemCopyWith<$Res> {
+  _$AskUserQuestionItemCopyWithImpl(this._self, this._then);
+
+  final AskUserQuestionItem _self;
+  final $Res Function(AskUserQuestionItem) _then;
+
+/// Create a copy of AskUserQuestionItem
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? question = null,Object? header = null,Object? multiSelect = null,Object? options = null,}) {
+  return _then(_self.copyWith(
+question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
+as String,header: null == header ? _self.header : header // ignore: cast_nullable_to_non_nullable
+as String,multiSelect: null == multiSelect ? _self.multiSelect : multiSelect // ignore: cast_nullable_to_non_nullable
+as bool,options: null == options ? _self.options : options // ignore: cast_nullable_to_non_nullable
+as List<AskUserQuestionOption>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [AskUserQuestionItem].
+extension AskUserQuestionItemPatterns on AskUserQuestionItem {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _AskUserQuestionItem value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _AskUserQuestionItem() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _AskUserQuestionItem value)  $default,){
+final _that = this;
+switch (_that) {
+case _AskUserQuestionItem():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _AskUserQuestionItem value)?  $default,){
+final _that = this;
+switch (_that) {
+case _AskUserQuestionItem() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String question,  String header,  bool multiSelect,  List<AskUserQuestionOption> options)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _AskUserQuestionItem() when $default != null:
+return $default(_that.question,_that.header,_that.multiSelect,_that.options);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String question,  String header,  bool multiSelect,  List<AskUserQuestionOption> options)  $default,) {final _that = this;
+switch (_that) {
+case _AskUserQuestionItem():
+return $default(_that.question,_that.header,_that.multiSelect,_that.options);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String question,  String header,  bool multiSelect,  List<AskUserQuestionOption> options)?  $default,) {final _that = this;
+switch (_that) {
+case _AskUserQuestionItem() when $default != null:
+return $default(_that.question,_that.header,_that.multiSelect,_that.options);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _AskUserQuestionItem implements AskUserQuestionItem {
+  const _AskUserQuestionItem({required this.question, this.header = '', this.multiSelect = false, final  List<AskUserQuestionOption> options = const <AskUserQuestionOption>[]}): _options = options;
+  
+
+@override final  String question;
+@override@JsonKey() final  String header;
+@override@JsonKey() final  bool multiSelect;
+ final  List<AskUserQuestionOption> _options;
+@override@JsonKey() List<AskUserQuestionOption> get options {
+  if (_options is EqualUnmodifiableListView) return _options;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_options);
+}
+
+
+/// Create a copy of AskUserQuestionItem
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$AskUserQuestionItemCopyWith<_AskUserQuestionItem> get copyWith => __$AskUserQuestionItemCopyWithImpl<_AskUserQuestionItem>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AskUserQuestionItem&&(identical(other.question, question) || other.question == question)&&(identical(other.header, header) || other.header == header)&&(identical(other.multiSelect, multiSelect) || other.multiSelect == multiSelect)&&const DeepCollectionEquality().equals(other._options, _options));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,question,header,multiSelect,const DeepCollectionEquality().hash(_options));
+
+@override
+String toString() {
+  return 'AskUserQuestionItem(question: $question, header: $header, multiSelect: $multiSelect, options: $options)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$AskUserQuestionItemCopyWith<$Res> implements $AskUserQuestionItemCopyWith<$Res> {
+  factory _$AskUserQuestionItemCopyWith(_AskUserQuestionItem value, $Res Function(_AskUserQuestionItem) _then) = __$AskUserQuestionItemCopyWithImpl;
+@override @useResult
+$Res call({
+ String question, String header, bool multiSelect, List<AskUserQuestionOption> options
+});
+
+
+
+
+}
+/// @nodoc
+class __$AskUserQuestionItemCopyWithImpl<$Res>
+    implements _$AskUserQuestionItemCopyWith<$Res> {
+  __$AskUserQuestionItemCopyWithImpl(this._self, this._then);
+
+  final _AskUserQuestionItem _self;
+  final $Res Function(_AskUserQuestionItem) _then;
+
+/// Create a copy of AskUserQuestionItem
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? question = null,Object? header = null,Object? multiSelect = null,Object? options = null,}) {
+  return _then(_AskUserQuestionItem(
+question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
+as String,header: null == header ? _self.header : header // ignore: cast_nullable_to_non_nullable
+as String,multiSelect: null == multiSelect ? _self.multiSelect : multiSelect // ignore: cast_nullable_to_non_nullable
+as bool,options: null == options ? _self._options : options // ignore: cast_nullable_to_non_nullable
+as List<AskUserQuestionOption>,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$ClaudeEvent {
 
 
@@ -318,7 +850,7 @@ extension ClaudeEventPatterns on ClaudeEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ClaudeEventSessionInit value)?  sessionInit,TResult Function( ClaudeEventTextChunk value)?  textChunk,TResult Function( ClaudeEventToolCall value)?  toolCall,TResult Function( ClaudeEventToolCallUpdate value)?  toolCallUpdate,TResult Function( ClaudeEventToolCallComplete value)?  toolCallComplete,TResult Function( ClaudeEventToolResult value)?  toolResult,TResult Function( ClaudeEventAssistantMessage value)?  assistantMessage,TResult Function( ClaudeEventTaskComplete value)?  taskComplete,TResult Function( ClaudeEventErrorEvent value)?  errorEvent,TResult Function( ClaudeEventRateLimit value)?  rateLimit,TResult Function( ClaudeEventSessionDead value)?  sessionDead,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ClaudeEventSessionInit value)?  sessionInit,TResult Function( ClaudeEventTextChunk value)?  textChunk,TResult Function( ClaudeEventToolCall value)?  toolCall,TResult Function( ClaudeEventToolCallUpdate value)?  toolCallUpdate,TResult Function( ClaudeEventToolCallComplete value)?  toolCallComplete,TResult Function( ClaudeEventToolResult value)?  toolResult,TResult Function( ClaudeEventAssistantMessage value)?  assistantMessage,TResult Function( ClaudeEventTaskComplete value)?  taskComplete,TResult Function( ClaudeEventErrorEvent value)?  errorEvent,TResult Function( ClaudeEventRateLimit value)?  rateLimit,TResult Function( ClaudeEventSessionDead value)?  sessionDead,TResult Function( ClaudeEventAskUserQuestion value)?  askUserQuestion,TResult Function( ClaudeEventPermissionRequest value)?  permissionRequest,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
@@ -332,7 +864,9 @@ return assistantMessage(_that);case ClaudeEventTaskComplete() when taskComplete 
 return taskComplete(_that);case ClaudeEventErrorEvent() when errorEvent != null:
 return errorEvent(_that);case ClaudeEventRateLimit() when rateLimit != null:
 return rateLimit(_that);case ClaudeEventSessionDead() when sessionDead != null:
-return sessionDead(_that);case _:
+return sessionDead(_that);case ClaudeEventAskUserQuestion() when askUserQuestion != null:
+return askUserQuestion(_that);case ClaudeEventPermissionRequest() when permissionRequest != null:
+return permissionRequest(_that);case _:
   return orElse();
 
 }
@@ -350,7 +884,7 @@ return sessionDead(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ClaudeEventSessionInit value)  sessionInit,required TResult Function( ClaudeEventTextChunk value)  textChunk,required TResult Function( ClaudeEventToolCall value)  toolCall,required TResult Function( ClaudeEventToolCallUpdate value)  toolCallUpdate,required TResult Function( ClaudeEventToolCallComplete value)  toolCallComplete,required TResult Function( ClaudeEventToolResult value)  toolResult,required TResult Function( ClaudeEventAssistantMessage value)  assistantMessage,required TResult Function( ClaudeEventTaskComplete value)  taskComplete,required TResult Function( ClaudeEventErrorEvent value)  errorEvent,required TResult Function( ClaudeEventRateLimit value)  rateLimit,required TResult Function( ClaudeEventSessionDead value)  sessionDead,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ClaudeEventSessionInit value)  sessionInit,required TResult Function( ClaudeEventTextChunk value)  textChunk,required TResult Function( ClaudeEventToolCall value)  toolCall,required TResult Function( ClaudeEventToolCallUpdate value)  toolCallUpdate,required TResult Function( ClaudeEventToolCallComplete value)  toolCallComplete,required TResult Function( ClaudeEventToolResult value)  toolResult,required TResult Function( ClaudeEventAssistantMessage value)  assistantMessage,required TResult Function( ClaudeEventTaskComplete value)  taskComplete,required TResult Function( ClaudeEventErrorEvent value)  errorEvent,required TResult Function( ClaudeEventRateLimit value)  rateLimit,required TResult Function( ClaudeEventSessionDead value)  sessionDead,required TResult Function( ClaudeEventAskUserQuestion value)  askUserQuestion,required TResult Function( ClaudeEventPermissionRequest value)  permissionRequest,}){
 final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit():
@@ -364,7 +898,9 @@ return assistantMessage(_that);case ClaudeEventTaskComplete():
 return taskComplete(_that);case ClaudeEventErrorEvent():
 return errorEvent(_that);case ClaudeEventRateLimit():
 return rateLimit(_that);case ClaudeEventSessionDead():
-return sessionDead(_that);}
+return sessionDead(_that);case ClaudeEventAskUserQuestion():
+return askUserQuestion(_that);case ClaudeEventPermissionRequest():
+return permissionRequest(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -378,7 +914,7 @@ return sessionDead(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ClaudeEventSessionInit value)?  sessionInit,TResult? Function( ClaudeEventTextChunk value)?  textChunk,TResult? Function( ClaudeEventToolCall value)?  toolCall,TResult? Function( ClaudeEventToolCallUpdate value)?  toolCallUpdate,TResult? Function( ClaudeEventToolCallComplete value)?  toolCallComplete,TResult? Function( ClaudeEventToolResult value)?  toolResult,TResult? Function( ClaudeEventAssistantMessage value)?  assistantMessage,TResult? Function( ClaudeEventTaskComplete value)?  taskComplete,TResult? Function( ClaudeEventErrorEvent value)?  errorEvent,TResult? Function( ClaudeEventRateLimit value)?  rateLimit,TResult? Function( ClaudeEventSessionDead value)?  sessionDead,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ClaudeEventSessionInit value)?  sessionInit,TResult? Function( ClaudeEventTextChunk value)?  textChunk,TResult? Function( ClaudeEventToolCall value)?  toolCall,TResult? Function( ClaudeEventToolCallUpdate value)?  toolCallUpdate,TResult? Function( ClaudeEventToolCallComplete value)?  toolCallComplete,TResult? Function( ClaudeEventToolResult value)?  toolResult,TResult? Function( ClaudeEventAssistantMessage value)?  assistantMessage,TResult? Function( ClaudeEventTaskComplete value)?  taskComplete,TResult? Function( ClaudeEventErrorEvent value)?  errorEvent,TResult? Function( ClaudeEventRateLimit value)?  rateLimit,TResult? Function( ClaudeEventSessionDead value)?  sessionDead,TResult? Function( ClaudeEventAskUserQuestion value)?  askUserQuestion,TResult? Function( ClaudeEventPermissionRequest value)?  permissionRequest,}){
 final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
@@ -392,7 +928,9 @@ return assistantMessage(_that);case ClaudeEventTaskComplete() when taskComplete 
 return taskComplete(_that);case ClaudeEventErrorEvent() when errorEvent != null:
 return errorEvent(_that);case ClaudeEventRateLimit() when rateLimit != null:
 return rateLimit(_that);case ClaudeEventSessionDead() when sessionDead != null:
-return sessionDead(_that);case _:
+return sessionDead(_that);case ClaudeEventAskUserQuestion() when askUserQuestion != null:
+return askUserQuestion(_that);case ClaudeEventPermissionRequest() when permissionRequest != null:
+return permissionRequest(_that);case _:
   return null;
 
 }
@@ -409,7 +947,7 @@ return sessionDead(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)?  sessionInit,TResult Function( String text)?  textChunk,TResult Function( String toolName,  String toolId,  int index)?  toolCall,TResult Function( String toolId,  String partialInput)?  toolCallUpdate,TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult Function( String text)?  assistantMessage,TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult Function( String message)?  errorEvent,TResult Function( String status,  int? resetsAt)?  rateLimit,TResult Function( int? exitCode,  List<String> stderrTail)?  sessionDead,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)?  sessionInit,TResult Function( String text)?  textChunk,TResult Function( String toolName,  String toolId,  int index)?  toolCall,TResult Function( String toolId,  String partialInput)?  toolCallUpdate,TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult Function( String text)?  assistantMessage,TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult Function( String message)?  errorEvent,TResult Function( String status,  int? resetsAt)?  rateLimit,TResult Function( int? exitCode,  List<String> stderrTail)?  sessionDead,TResult Function( String toolUseId,  List<AskUserQuestionItem> questions)?  askUserQuestion,TResult Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)?  permissionRequest,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
 return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins);case ClaudeEventTextChunk() when textChunk != null:
@@ -422,7 +960,9 @@ return assistantMessage(_that.text);case ClaudeEventTaskComplete() when taskComp
 return taskComplete(_that.result,_that.costUsd,_that.durationMs,_that.numTurns);case ClaudeEventErrorEvent() when errorEvent != null:
 return errorEvent(_that.message);case ClaudeEventRateLimit() when rateLimit != null:
 return rateLimit(_that.status,_that.resetsAt);case ClaudeEventSessionDead() when sessionDead != null:
-return sessionDead(_that.exitCode,_that.stderrTail);case _:
+return sessionDead(_that.exitCode,_that.stderrTail);case ClaudeEventAskUserQuestion() when askUserQuestion != null:
+return askUserQuestion(_that.toolUseId,_that.questions);case ClaudeEventPermissionRequest() when permissionRequest != null:
+return permissionRequest(_that.requestId,_that.toolName,_that.toolInput);case _:
   return orElse();
 
 }
@@ -440,7 +980,7 @@ return sessionDead(_that.exitCode,_that.stderrTail);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)  sessionInit,required TResult Function( String text)  textChunk,required TResult Function( String toolName,  String toolId,  int index)  toolCall,required TResult Function( String toolId,  String partialInput)  toolCallUpdate,required TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)  toolCallComplete,required TResult Function( String toolUseId,  String content,  bool isError)  toolResult,required TResult Function( String text)  assistantMessage,required TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)  taskComplete,required TResult Function( String message)  errorEvent,required TResult Function( String status,  int? resetsAt)  rateLimit,required TResult Function( int? exitCode,  List<String> stderrTail)  sessionDead,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)  sessionInit,required TResult Function( String text)  textChunk,required TResult Function( String toolName,  String toolId,  int index)  toolCall,required TResult Function( String toolId,  String partialInput)  toolCallUpdate,required TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)  toolCallComplete,required TResult Function( String toolUseId,  String content,  bool isError)  toolResult,required TResult Function( String text)  assistantMessage,required TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)  taskComplete,required TResult Function( String message)  errorEvent,required TResult Function( String status,  int? resetsAt)  rateLimit,required TResult Function( int? exitCode,  List<String> stderrTail)  sessionDead,required TResult Function( String toolUseId,  List<AskUserQuestionItem> questions)  askUserQuestion,required TResult Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)  permissionRequest,}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit():
 return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins);case ClaudeEventTextChunk():
@@ -453,7 +993,9 @@ return assistantMessage(_that.text);case ClaudeEventTaskComplete():
 return taskComplete(_that.result,_that.costUsd,_that.durationMs,_that.numTurns);case ClaudeEventErrorEvent():
 return errorEvent(_that.message);case ClaudeEventRateLimit():
 return rateLimit(_that.status,_that.resetsAt);case ClaudeEventSessionDead():
-return sessionDead(_that.exitCode,_that.stderrTail);}
+return sessionDead(_that.exitCode,_that.stderrTail);case ClaudeEventAskUserQuestion():
+return askUserQuestion(_that.toolUseId,_that.questions);case ClaudeEventPermissionRequest():
+return permissionRequest(_that.requestId,_that.toolName,_that.toolInput);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -467,7 +1009,7 @@ return sessionDead(_that.exitCode,_that.stderrTail);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)?  sessionInit,TResult? Function( String text)?  textChunk,TResult? Function( String toolName,  String toolId,  int index)?  toolCall,TResult? Function( String toolId,  String partialInput)?  toolCallUpdate,TResult? Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult? Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult? Function( String text)?  assistantMessage,TResult? Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult? Function( String message)?  errorEvent,TResult? Function( String status,  int? resetsAt)?  rateLimit,TResult? Function( int? exitCode,  List<String> stderrTail)?  sessionDead,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)?  sessionInit,TResult? Function( String text)?  textChunk,TResult? Function( String toolName,  String toolId,  int index)?  toolCall,TResult? Function( String toolId,  String partialInput)?  toolCallUpdate,TResult? Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult? Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult? Function( String text)?  assistantMessage,TResult? Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult? Function( String message)?  errorEvent,TResult? Function( String status,  int? resetsAt)?  rateLimit,TResult? Function( int? exitCode,  List<String> stderrTail)?  sessionDead,TResult? Function( String toolUseId,  List<AskUserQuestionItem> questions)?  askUserQuestion,TResult? Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)?  permissionRequest,}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
 return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins);case ClaudeEventTextChunk() when textChunk != null:
@@ -480,7 +1022,9 @@ return assistantMessage(_that.text);case ClaudeEventTaskComplete() when taskComp
 return taskComplete(_that.result,_that.costUsd,_that.durationMs,_that.numTurns);case ClaudeEventErrorEvent() when errorEvent != null:
 return errorEvent(_that.message);case ClaudeEventRateLimit() when rateLimit != null:
 return rateLimit(_that.status,_that.resetsAt);case ClaudeEventSessionDead() when sessionDead != null:
-return sessionDead(_that.exitCode,_that.stderrTail);case _:
+return sessionDead(_that.exitCode,_that.stderrTail);case ClaudeEventAskUserQuestion() when askUserQuestion != null:
+return askUserQuestion(_that.toolUseId,_that.questions);case ClaudeEventPermissionRequest() when permissionRequest != null:
+return permissionRequest(_that.requestId,_that.toolName,_that.toolInput);case _:
   return null;
 
 }
@@ -1280,6 +1824,156 @@ class _$ClaudeEventSessionDeadCopyWithImpl<$Res>
 exitCode: freezed == exitCode ? _self.exitCode : exitCode // ignore: cast_nullable_to_non_nullable
 as int?,stderrTail: null == stderrTail ? _self._stderrTail : stderrTail // ignore: cast_nullable_to_non_nullable
 as List<String>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ClaudeEventAskUserQuestion implements ClaudeEvent {
+  const ClaudeEventAskUserQuestion({required this.toolUseId, required final  List<AskUserQuestionItem> questions}): _questions = questions;
+  
+
+ final  String toolUseId;
+ final  List<AskUserQuestionItem> _questions;
+ List<AskUserQuestionItem> get questions {
+  if (_questions is EqualUnmodifiableListView) return _questions;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_questions);
+}
+
+
+/// Create a copy of ClaudeEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ClaudeEventAskUserQuestionCopyWith<ClaudeEventAskUserQuestion> get copyWith => _$ClaudeEventAskUserQuestionCopyWithImpl<ClaudeEventAskUserQuestion>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeEventAskUserQuestion&&(identical(other.toolUseId, toolUseId) || other.toolUseId == toolUseId)&&const DeepCollectionEquality().equals(other._questions, _questions));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,toolUseId,const DeepCollectionEquality().hash(_questions));
+
+@override
+String toString() {
+  return 'ClaudeEvent.askUserQuestion(toolUseId: $toolUseId, questions: $questions)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ClaudeEventAskUserQuestionCopyWith<$Res> implements $ClaudeEventCopyWith<$Res> {
+  factory $ClaudeEventAskUserQuestionCopyWith(ClaudeEventAskUserQuestion value, $Res Function(ClaudeEventAskUserQuestion) _then) = _$ClaudeEventAskUserQuestionCopyWithImpl;
+@useResult
+$Res call({
+ String toolUseId, List<AskUserQuestionItem> questions
+});
+
+
+
+
+}
+/// @nodoc
+class _$ClaudeEventAskUserQuestionCopyWithImpl<$Res>
+    implements $ClaudeEventAskUserQuestionCopyWith<$Res> {
+  _$ClaudeEventAskUserQuestionCopyWithImpl(this._self, this._then);
+
+  final ClaudeEventAskUserQuestion _self;
+  final $Res Function(ClaudeEventAskUserQuestion) _then;
+
+/// Create a copy of ClaudeEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? toolUseId = null,Object? questions = null,}) {
+  return _then(ClaudeEventAskUserQuestion(
+toolUseId: null == toolUseId ? _self.toolUseId : toolUseId // ignore: cast_nullable_to_non_nullable
+as String,questions: null == questions ? _self._questions : questions // ignore: cast_nullable_to_non_nullable
+as List<AskUserQuestionItem>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ClaudeEventPermissionRequest implements ClaudeEvent {
+  const ClaudeEventPermissionRequest({required this.requestId, required this.toolName, required final  Map<String, dynamic> toolInput}): _toolInput = toolInput;
+  
+
+ final  String requestId;
+ final  String toolName;
+ final  Map<String, dynamic> _toolInput;
+ Map<String, dynamic> get toolInput {
+  if (_toolInput is EqualUnmodifiableMapView) return _toolInput;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_toolInput);
+}
+
+
+/// Create a copy of ClaudeEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ClaudeEventPermissionRequestCopyWith<ClaudeEventPermissionRequest> get copyWith => _$ClaudeEventPermissionRequestCopyWithImpl<ClaudeEventPermissionRequest>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeEventPermissionRequest&&(identical(other.requestId, requestId) || other.requestId == requestId)&&(identical(other.toolName, toolName) || other.toolName == toolName)&&const DeepCollectionEquality().equals(other._toolInput, _toolInput));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,requestId,toolName,const DeepCollectionEquality().hash(_toolInput));
+
+@override
+String toString() {
+  return 'ClaudeEvent.permissionRequest(requestId: $requestId, toolName: $toolName, toolInput: $toolInput)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ClaudeEventPermissionRequestCopyWith<$Res> implements $ClaudeEventCopyWith<$Res> {
+  factory $ClaudeEventPermissionRequestCopyWith(ClaudeEventPermissionRequest value, $Res Function(ClaudeEventPermissionRequest) _then) = _$ClaudeEventPermissionRequestCopyWithImpl;
+@useResult
+$Res call({
+ String requestId, String toolName, Map<String, dynamic> toolInput
+});
+
+
+
+
+}
+/// @nodoc
+class _$ClaudeEventPermissionRequestCopyWithImpl<$Res>
+    implements $ClaudeEventPermissionRequestCopyWith<$Res> {
+  _$ClaudeEventPermissionRequestCopyWithImpl(this._self, this._then);
+
+  final ClaudeEventPermissionRequest _self;
+  final $Res Function(ClaudeEventPermissionRequest) _then;
+
+/// Create a copy of ClaudeEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? requestId = null,Object? toolName = null,Object? toolInput = null,}) {
+  return _then(ClaudeEventPermissionRequest(
+requestId: null == requestId ? _self.requestId : requestId // ignore: cast_nullable_to_non_nullable
+as String,toolName: null == toolName ? _self.toolName : toolName // ignore: cast_nullable_to_non_nullable
+as String,toolInput: null == toolInput ? _self._toolInput : toolInput // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>,
   ));
 }
 

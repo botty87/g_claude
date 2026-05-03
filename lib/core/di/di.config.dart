@@ -196,7 +196,10 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i494.SharedPreferencesKeyValueStore(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i139.ClaudeRepository>(
-      () => _i1009.ClaudeRepositoryImpl(gh<_i457.ClaudeProcessDataSource>()),
+      () => _i1009.ClaudeRepositoryImpl(
+        gh<_i457.ClaudeProcessDataSource>(),
+        gh<_i407.PermissionServer>(),
+      ),
     );
     gh.lazySingleton<_i1043.FileContentRepository>(
       () => _i574.FileContentRepositoryImpl(gh<_i630.FileContentDataSource>()),
@@ -301,6 +304,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i308.ListDirectory>(
       () => _i308.ListDirectory(gh<_i150.FileSystemRepository>()),
     );
+    gh.lazySingleton<_i648.FileTabsCubit>(
+      () => _i648.FileTabsCubit(
+        gh<_i179.WorkspacesCubit>(),
+        gh<_i283.FileTabsPersistenceDataSource>(),
+        gh<_i167.WorkspaceFileWatcher>(),
+        gh<_i207.Talker>(),
+      )..init(),
+    );
     gh.lazySingleton<_i838.ClaudeSessionsCubit>(
       () => _i838.ClaudeSessionsCubit(
         gh<_i338.SendPrompt>(),
@@ -312,15 +323,8 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i278.ClaudeHistoryDataSource>(),
         gh<_i179.WorkspacesCubit>(),
         gh<_i407.PermissionServer>(),
+        gh<_i139.ClaudeRepository>(),
         gh<_i460.SharedPreferences>(),
-        gh<_i207.Talker>(),
-      )..init(),
-    );
-    gh.lazySingleton<_i648.FileTabsCubit>(
-      () => _i648.FileTabsCubit(
-        gh<_i179.WorkspacesCubit>(),
-        gh<_i283.FileTabsPersistenceDataSource>(),
-        gh<_i167.WorkspaceFileWatcher>(),
         gh<_i207.Talker>(),
       )..init(),
     );

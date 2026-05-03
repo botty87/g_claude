@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -14,6 +15,8 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../domain/entities/claude_message.dart';
 import '../cubit/claude_sessions_cubit.dart';
+import 'ask_user_question_card.dart';
+import 'permission_request_card.dart';
 
 const _kAnimDuration = Duration(milliseconds: 180);
 const _kToolBodyMaxHeight = 200.0;
@@ -149,7 +152,7 @@ class ClaudeMessageList extends HookWidget {
   }
 }
 
-enum _Role { user, assistant, tools, system }
+enum _Role { user, assistant, tools, system, askUser, permission }
 
 sealed class _Item {
   const _Item();
@@ -166,6 +169,8 @@ class _SingleItem extends _Item {
         ClaudeMessageAssistant() => _Role.assistant,
         ClaudeMessageTool() => _Role.tools,
         ClaudeMessageSystem() => _Role.system,
+        ClaudeMessageAskUserQuestion() => _Role.askUser,
+        ClaudeMessagePermissionRequest() => _Role.permission,
       };
   @override
   String get key => switch (message) {
@@ -173,6 +178,8 @@ class _SingleItem extends _Item {
         ClaudeMessageAssistant(:final id) => id,
         ClaudeMessageTool(:final id) => id,
         ClaudeMessageSystem(:final id) => id,
+        ClaudeMessageAskUserQuestion(:final id) => id,
+        ClaudeMessagePermissionRequest(:final id) => id,
       };
 }
 
@@ -261,8 +268,58 @@ class _MessageItem extends StatelessWidget {
           isError: isError,
         ),
       ClaudeMessageSystem(:final text) => _SystemLine(text: text),
+      final ClaudeMessageAskUserQuestion m => _AskUserQuestionItemWidget(
+          message: m,
+        ),
+      final ClaudeMessagePermissionRequest m => _PermissionRequestItemWidget(
+          message: m,
+        ),
     };
   }
+}
+
+class _AskUserQuestionItemWidget extends StatelessWidget {
+  const _AskUserQuestionItemWidget({required this.message});
+
+  final ClaudeMessageAskUserQuestion message;
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<ClaudeSessionsCubit>();
+    final wid = _findWorkspaceId(context);
+    return AskUserQuestionCard(
+      message: message,
+      onSubmit: (answers) {
+        if (wid == null) return;
+        cubit.answerAskUserQuestion(wid, message.id, answers);
+      },
+    );
+  }
+}
+
+class _PermissionRequestItemWidget extends StatelessWidget {
+  const _PermissionRequestItemWidget({required this.message});
+
+  final ClaudeMessagePermissionRequest message;
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<ClaudeSessionsCubit>();
+    final wid = _findWorkspaceId(context);
+    return PermissionRequestCard(
+      message: message,
+      onDecide: (decision) {
+        if (wid == null) return;
+        cubit.answerPermission(wid, message.id, decision);
+      },
+    );
+  }
+}
+
+String? _findWorkspaceId(BuildContext context) {
+  final ancestor =
+      context.findAncestorWidgetOfExactType<ClaudeMessageList>();
+  return ancestor?.workspaceId;
 }
 
 class _ToolGroup extends HookWidget {
