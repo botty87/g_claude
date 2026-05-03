@@ -14,6 +14,7 @@ import '../../../../core/utils/either.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../data/datasources/claude_history_datasource.dart';
 import '../../data/datasources/permission_server.dart';
+import '../../domain/entities/chat_input_draft.dart';
 import '../../domain/entities/claude_event.dart';
 import '../../domain/entities/claude_message.dart';
 import '../../domain/entities/claude_model.dart';
@@ -410,6 +411,19 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   Future<void> stopRun() async {
     if (_runningWorkspaceId == null) return;
     await _stopRun.call();
+  }
+
+  void setInputDraft(String workspaceId, ChatInputDraft draft) {
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+    if (session.inputDraft == draft) return;
+    final updated = Map<String, ClaudeSessionData>.from(state.sessions);
+    updated[workspaceId] = session.copyWith(inputDraft: draft);
+    emit(state.copyWith(sessions: updated));
+  }
+
+  void clearInputDraft(String workspaceId) {
+    setInputDraft(workspaceId, ChatInputDraft.empty);
   }
 
   Future<void> sendPrompt(String workspaceId, String text) async {

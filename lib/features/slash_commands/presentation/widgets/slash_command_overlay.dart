@@ -14,6 +14,7 @@ class SlashCommandOverlay extends HookWidget {
     required this.onAccept,
     required this.onDismiss,
     required this.child,
+    this.excludedTriggers = const {},
   });
 
   final LayerLink link;
@@ -21,6 +22,7 @@ class SlashCommandOverlay extends HookWidget {
   final ValueChanged<SlashCommand> onAccept;
   final VoidCallback onDismiss;
   final Widget child;
+  final Set<String> excludedTriggers;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +47,12 @@ class SlashCommandOverlay extends HookWidget {
                 if (state is! SlashCommandsStateSuggesting) {
                   return const SizedBox.shrink();
                 }
+                final visibleCommands = state.filtered
+                    .where((c) => !excludedTriggers.contains(c.trigger))
+                    .toList();
+                final clampedIndex = visibleCommands.isEmpty
+                    ? 0
+                    : state.selectedIndex.clamp(0, visibleCommands.length - 1);
                 return TapRegion(
                   onTapOutside: (_) => onDismiss(),
                   child: CompositedTransformFollower(
@@ -56,8 +64,8 @@ class SlashCommandOverlay extends HookWidget {
                       alignment: Alignment.bottomLeft,
                       child: ExcludeFocus(
                         child: SlashCommandMenu(
-                          commands: state.filtered,
-                          selectedIndex: state.selectedIndex,
+                          commands: visibleCommands,
+                          selectedIndex: clampedIndex,
                           onSelect: cubit.selectAt,
                           onAccept: onAccept,
                         ),
