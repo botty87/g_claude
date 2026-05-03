@@ -50,7 +50,7 @@ const _topEntries = [
     icon: Symbols.chat,
     tooltipKey: 'shell.activity.sessions',
     keyName: 'activity_sessions',
-    isEnabled: false,
+    isEnabled: true,
   ),
 ];
 

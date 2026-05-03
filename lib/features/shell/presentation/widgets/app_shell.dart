@@ -7,6 +7,7 @@ import 'package:multi_split_view/multi_split_view.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../claude/presentation/widgets/claude_terminal_pane.dart';
+import '../../../claude/presentation/widgets/session_preview_view.dart';
 import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
 import '../../../editor/presentation/widgets/file_tabs_bar.dart';
 import '../../../editor/presentation/widgets/file_viewer.dart';
@@ -133,7 +134,16 @@ class _MainArea extends HookWidget {
             case _idSide:
               return const SidePanel();
             case _idPreview:
-              return const FileViewer();
+              return BlocBuilder<ShellCubit, ShellState>(
+                buildWhen: (p, c) =>
+                    p.selectedActivity != c.selectedActivity,
+                builder: (context, state) {
+                  if (state.selectedActivity == ActivityId.sessions) {
+                    return const SessionPreviewView();
+                  }
+                  return const FileViewer();
+                },
+              );
             case _idClaude:
               return const ClaudeTerminalPane();
             default:

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -11,6 +12,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/either.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
+import '../../data/datasources/claude_history_datasource.dart';
 import '../../data/datasources/permission_server.dart';
 import '../../domain/entities/claude_event.dart';
 import '../../domain/entities/claude_message.dart';
@@ -21,6 +23,7 @@ import '../../domain/entities/claude_thinking_mode.dart';
 import '../../domain/entities/mcp_server.dart';
 import '../../domain/usecases/list_mcp_servers.dart';
 import '../../domain/usecases/authenticate_mcp_server.dart';
+import '../../domain/usecases/load_session_messages.dart';
 import '../../domain/usecases/send_prompt.dart';
 import '../../domain/usecases/stop_run.dart';
 import '../../domain/usecases/toggle_mcp_server.dart';
@@ -36,6 +39,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     this._listMcpServers,
     this._toggleMcpServer,
     this._authenticateMcpServer,
+    this._loadSessionMessages,
+    this._historyDs,
     this._workspacesCubit,
     this._permissionServer,
     this._prefs,
@@ -47,6 +52,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   final ListMcpServers _listMcpServers;
   final ToggleMcpServer _toggleMcpServer;
   final AuthenticateMcpServer _authenticateMcpServer;
+  final LoadSessionMessages _loadSessionMessages;
+  final ClaudeHistoryDataSource _historyDs;
   final WorkspacesCubit _workspacesCubit;
   final PermissionServer _permissionServer;
   final SharedPreferences _prefs;
@@ -71,6 +78,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   static const _effortPrefix = 'claude.effort.';
   static const _thinkingPrefix = 'claude.thinking.';
   static const _mcpDisabledPrefix = 'claude.mcp_disabled.';
+  static const _activeSessionPrefix = 'claude.activeSession.';
   static const _flushMs = 16;
 
   String _genId(String prefix) =>
@@ -181,19 +189,23 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   void _onWorkspacesChanged(WorkspacesState s) {
     final list = s.workspacesOrEmpty;
     final ids = list.map((w) => w.id).toSet();
-    final added = [for (final w in list) if (!state.sessions.containsKey(w.id)) w.id];
+    final added = [for (final w in list) if (!state.sessions.containsKey(w.id)) w];
     final removed = [for (final k in state.sessions.keys) if (!ids.contains(k)) k];
     if (added.isEmpty && removed.isEmpty) return;
 
     final map = Map<String, ClaudeSessionData>.from(state.sessions);
-    for (final id in added) {
-      map[id] = ClaudeSessionData(
-        model: _readModel(id),
-        permissionMode: _readPermission(id),
-        effort: _readEffort(id),
-        thinkingMode: _readThinking(id),
-        disabledMcpServers: _readMcpDisabled(id),
+    for (final w in added) {
+      map[w.id] = ClaudeSessionData(
+        model: _readModel(w.id),
+        permissionMode: _readPermission(w.id),
+        effort: _readEffort(w.id),
+        thinkingMode: _readThinking(w.id),
+        disabledMcpServers: _readMcpDisabled(w.id),
       );
+      final savedSessionId = _readActiveSession(w.id);
+      if (savedSessionId != null) {
+        unawaited(_hydrateSession(w.id, savedSessionId));
+      }
     }
     for (final id in removed) {
       final claudeSessionId = map[id]?.claudeSessionId;
@@ -207,6 +219,44 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       _cleanupRun();
     }
     emit(state.copyWith(sessions: map));
+  }
+
+  Future<void> _hydrateSession(String workspaceId, String sessionId) async {
+    final ws = _workspacesCubit.state.workspacesOrEmpty
+        .firstWhereOrNull((w) => w.id == workspaceId);
+    if (ws == null) return;
+
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+    if (session.messages.isNotEmpty || session.claudeSessionId != null) return;
+
+    final encoded = _historyDs.encodeCwd(ws.path);
+    final result = await _loadSessionMessages(
+      encodedPath: encoded,
+      sessionId: sessionId,
+    );
+    result.fold(
+      (f) {
+        _talker.error('hydrateSession failed for $sessionId: $f');
+        unawaited(_writeActiveSession(workspaceId, null));
+      },
+      (messages) {
+        final current = state.sessions[workspaceId];
+        if (current == null) return;
+        if (current.messages.isNotEmpty || current.claudeSessionId != null) return;
+        _sessionToWorkspace[sessionId] = workspaceId;
+        _emitSession(
+          workspaceId,
+          current.copyWith(
+            messages: messages,
+            claudeSessionId: sessionId,
+            runStatus: ClaudeRunStatus.idle,
+            lastError: null,
+            stderrTail: const [],
+          ),
+        );
+      },
+    );
   }
 
   ClaudeModel _readModel(String workspaceId) {
@@ -243,6 +293,18 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       await _prefs.remove(key);
     } else {
       await _prefs.setStringList(key, disabled.toList());
+    }
+  }
+
+  String? _readActiveSession(String wid) =>
+      _prefs.getString('$_activeSessionPrefix$wid');
+
+  Future<void> _writeActiveSession(String wid, String? id) async {
+    final key = '$_activeSessionPrefix$wid';
+    if (id == null) {
+      await _prefs.remove(key);
+    } else {
+      await _prefs.setString(key, id);
     }
   }
 
@@ -300,6 +362,49 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       stderrTail: const [],
     );
     emit(state.copyWith(sessions: next));
+    unawaited(_writeActiveSession(workspaceId, null));
+  }
+
+  void newSession(String workspaceId) => clearConversation(workspaceId);
+
+  Future<void> resumeSession(String workspaceId, String sessionId) async {
+    final ws = _workspacesCubit.state.workspacesOrEmpty
+        .firstWhereOrNull((w) => w.id == workspaceId);
+    final session = state.sessions[workspaceId];
+    if (ws == null || session == null) return;
+
+    if (_runningWorkspaceId == workspaceId) {
+      await _stopRun.call();
+      _cleanupRun();
+    }
+
+    final oldId = session.claudeSessionId;
+    if (oldId != null) _sessionToWorkspace.remove(oldId);
+
+    final encoded = _historyDs.encodeCwd(ws.path);
+    final result = await _loadSessionMessages(
+      encodedPath: encoded,
+      sessionId: sessionId,
+    );
+    result.fold(
+      (f) => _talker.error('resumeSession load failed for $sessionId: $f'),
+      (messages) {
+        final current = state.sessions[workspaceId];
+        if (current == null) return;
+        _sessionToWorkspace[sessionId] = workspaceId;
+        _emitSession(
+          workspaceId,
+          current.copyWith(
+            messages: messages,
+            claudeSessionId: sessionId,
+            runStatus: ClaudeRunStatus.idle,
+            lastError: null,
+            stderrTail: const [],
+          ),
+        );
+        unawaited(_writeActiveSession(workspaceId, sessionId));
+      },
+    );
   }
 
   Future<void> stopRun() async {
@@ -407,6 +512,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
           availableSkills: skills,
         );
         emit(state.copyWith(sessions: next));
+        unawaited(
+          _writeActiveSession(wid, sessionId.isEmpty ? null : sessionId),
+        );
         unawaited(_applyMcpDisabledOnSpawn(wid));
 
       case ClaudeEventTextChunk(:final text):

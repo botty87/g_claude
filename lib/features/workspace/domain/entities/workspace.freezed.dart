@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Workspace {
 
- WorkspaceId get id; String get path; String get name; String? get claudeMd; List<SessionId> get sessionIds; SessionId? get activeSessionId; DateTime get openedAt;
+ WorkspaceId get id; String get path; String get name; String? get claudeMd; DateTime get openedAt;
 /// Create a copy of Workspace
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $WorkspaceCopyWith<Workspace> get copyWith => _$WorkspaceCopyWithImpl<Workspace>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Workspace&&(identical(other.id, id) || other.id == id)&&(identical(other.path, path) || other.path == path)&&(identical(other.name, name) || other.name == name)&&(identical(other.claudeMd, claudeMd) || other.claudeMd == claudeMd)&&const DeepCollectionEquality().equals(other.sessionIds, sessionIds)&&(identical(other.activeSessionId, activeSessionId) || other.activeSessionId == activeSessionId)&&(identical(other.openedAt, openedAt) || other.openedAt == openedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Workspace&&(identical(other.id, id) || other.id == id)&&(identical(other.path, path) || other.path == path)&&(identical(other.name, name) || other.name == name)&&(identical(other.claudeMd, claudeMd) || other.claudeMd == claudeMd)&&(identical(other.openedAt, openedAt) || other.openedAt == openedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,path,name,claudeMd,const DeepCollectionEquality().hash(sessionIds),activeSessionId,openedAt);
+int get hashCode => Object.hash(runtimeType,id,path,name,claudeMd,openedAt);
 
 @override
 String toString() {
-  return 'Workspace(id: $id, path: $path, name: $name, claudeMd: $claudeMd, sessionIds: $sessionIds, activeSessionId: $activeSessionId, openedAt: $openedAt)';
+  return 'Workspace(id: $id, path: $path, name: $name, claudeMd: $claudeMd, openedAt: $openedAt)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $WorkspaceCopyWith<$Res>  {
   factory $WorkspaceCopyWith(Workspace value, $Res Function(Workspace) _then) = _$WorkspaceCopyWithImpl;
 @useResult
 $Res call({
- WorkspaceId id, String path, String name, String? claudeMd, List<SessionId> sessionIds, SessionId? activeSessionId, DateTime openedAt
+ WorkspaceId id, String path, String name, String? claudeMd, DateTime openedAt
 });
 
 
@@ -62,15 +62,13 @@ class _$WorkspaceCopyWithImpl<$Res>
 
 /// Create a copy of Workspace
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? path = null,Object? name = null,Object? claudeMd = freezed,Object? sessionIds = null,Object? activeSessionId = freezed,Object? openedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? path = null,Object? name = null,Object? claudeMd = freezed,Object? openedAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as WorkspaceId,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,claudeMd: freezed == claudeMd ? _self.claudeMd : claudeMd // ignore: cast_nullable_to_non_nullable
-as String?,sessionIds: null == sessionIds ? _self.sessionIds : sessionIds // ignore: cast_nullable_to_non_nullable
-as List<SessionId>,activeSessionId: freezed == activeSessionId ? _self.activeSessionId : activeSessionId // ignore: cast_nullable_to_non_nullable
-as SessionId?,openedAt: null == openedAt ? _self.openedAt : openedAt // ignore: cast_nullable_to_non_nullable
+as String?,openedAt: null == openedAt ? _self.openedAt : openedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
@@ -156,10 +154,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( WorkspaceId id,  String path,  String name,  String? claudeMd,  List<SessionId> sessionIds,  SessionId? activeSessionId,  DateTime openedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( WorkspaceId id,  String path,  String name,  String? claudeMd,  DateTime openedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Workspace() when $default != null:
-return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.sessionIds,_that.activeSessionId,_that.openedAt);case _:
+return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.openedAt);case _:
   return orElse();
 
 }
@@ -177,10 +175,10 @@ return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.sessionIds,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( WorkspaceId id,  String path,  String name,  String? claudeMd,  List<SessionId> sessionIds,  SessionId? activeSessionId,  DateTime openedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( WorkspaceId id,  String path,  String name,  String? claudeMd,  DateTime openedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Workspace():
-return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.sessionIds,_that.activeSessionId,_that.openedAt);case _:
+return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.openedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +195,10 @@ return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.sessionIds,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( WorkspaceId id,  String path,  String name,  String? claudeMd,  List<SessionId> sessionIds,  SessionId? activeSessionId,  DateTime openedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( WorkspaceId id,  String path,  String name,  String? claudeMd,  DateTime openedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Workspace() when $default != null:
-return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.sessionIds,_that.activeSessionId,_that.openedAt);case _:
+return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.openedAt);case _:
   return null;
 
 }
@@ -212,21 +210,13 @@ return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.sessionIds,_
 
 
 class _Workspace implements Workspace {
-  const _Workspace({required this.id, required this.path, required this.name, this.claudeMd, final  List<SessionId> sessionIds = const <SessionId>[], this.activeSessionId, required this.openedAt}): _sessionIds = sessionIds;
+  const _Workspace({required this.id, required this.path, required this.name, this.claudeMd, required this.openedAt});
   
 
 @override final  WorkspaceId id;
 @override final  String path;
 @override final  String name;
 @override final  String? claudeMd;
- final  List<SessionId> _sessionIds;
-@override@JsonKey() List<SessionId> get sessionIds {
-  if (_sessionIds is EqualUnmodifiableListView) return _sessionIds;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_sessionIds);
-}
-
-@override final  SessionId? activeSessionId;
 @override final  DateTime openedAt;
 
 /// Create a copy of Workspace
@@ -239,16 +229,16 @@ _$WorkspaceCopyWith<_Workspace> get copyWith => __$WorkspaceCopyWithImpl<_Worksp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Workspace&&(identical(other.id, id) || other.id == id)&&(identical(other.path, path) || other.path == path)&&(identical(other.name, name) || other.name == name)&&(identical(other.claudeMd, claudeMd) || other.claudeMd == claudeMd)&&const DeepCollectionEquality().equals(other._sessionIds, _sessionIds)&&(identical(other.activeSessionId, activeSessionId) || other.activeSessionId == activeSessionId)&&(identical(other.openedAt, openedAt) || other.openedAt == openedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Workspace&&(identical(other.id, id) || other.id == id)&&(identical(other.path, path) || other.path == path)&&(identical(other.name, name) || other.name == name)&&(identical(other.claudeMd, claudeMd) || other.claudeMd == claudeMd)&&(identical(other.openedAt, openedAt) || other.openedAt == openedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,path,name,claudeMd,const DeepCollectionEquality().hash(_sessionIds),activeSessionId,openedAt);
+int get hashCode => Object.hash(runtimeType,id,path,name,claudeMd,openedAt);
 
 @override
 String toString() {
-  return 'Workspace(id: $id, path: $path, name: $name, claudeMd: $claudeMd, sessionIds: $sessionIds, activeSessionId: $activeSessionId, openedAt: $openedAt)';
+  return 'Workspace(id: $id, path: $path, name: $name, claudeMd: $claudeMd, openedAt: $openedAt)';
 }
 
 
@@ -259,7 +249,7 @@ abstract mixin class _$WorkspaceCopyWith<$Res> implements $WorkspaceCopyWith<$Re
   factory _$WorkspaceCopyWith(_Workspace value, $Res Function(_Workspace) _then) = __$WorkspaceCopyWithImpl;
 @override @useResult
 $Res call({
- WorkspaceId id, String path, String name, String? claudeMd, List<SessionId> sessionIds, SessionId? activeSessionId, DateTime openedAt
+ WorkspaceId id, String path, String name, String? claudeMd, DateTime openedAt
 });
 
 
@@ -276,15 +266,13 @@ class __$WorkspaceCopyWithImpl<$Res>
 
 /// Create a copy of Workspace
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? path = null,Object? name = null,Object? claudeMd = freezed,Object? sessionIds = null,Object? activeSessionId = freezed,Object? openedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? path = null,Object? name = null,Object? claudeMd = freezed,Object? openedAt = null,}) {
   return _then(_Workspace(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as WorkspaceId,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,claudeMd: freezed == claudeMd ? _self.claudeMd : claudeMd // ignore: cast_nullable_to_non_nullable
-as String?,sessionIds: null == sessionIds ? _self._sessionIds : sessionIds // ignore: cast_nullable_to_non_nullable
-as List<SessionId>,activeSessionId: freezed == activeSessionId ? _self.activeSessionId : activeSessionId // ignore: cast_nullable_to_non_nullable
-as SessionId?,openedAt: null == openedAt ? _self.openedAt : openedAt // ignore: cast_nullable_to_non_nullable
+as String?,openedAt: null == openedAt ? _self.openedAt : openedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
