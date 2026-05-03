@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/utils/menu_position.dart';
 import '../../../../shared/widgets/hoverable.dart';
 import '../../domain/entities/claude_permission_mode.dart';
@@ -25,7 +26,7 @@ class PermissionPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'claude.terminal.permission.tooltip'.tr(),
+      message: Locales.Claude.Terminal.Permission.tooltip,
       child: Hoverable(
         key: const ValueKey('claude_permission_picker'),
         onTap: enabled ? () => _showMenu(context) : null,

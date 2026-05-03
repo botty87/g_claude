@@ -1,9 +1,9 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -69,8 +69,8 @@ class FileTab extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Tooltip(
                 message: isActive
-                    ? '${'editor.tab.close'.tr()} (⌘W)'
-                    : 'editor.tab.close'.tr(),
+                    ? '${Locales.Editor.Tab.close} (⌘W)'
+                    : Locales.Editor.Tab.close,
                 child: Hoverable(
                   onTap: () => context
                       .read<FileTabsCubit>()

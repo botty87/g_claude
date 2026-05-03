@@ -173,11 +173,18 @@
   },
   "sessions": {
     "list": {
+      "headerLabel": "SESSIONS",
       "search": "Search messages...",
       "empty": "No sessions yet",
       "newChat": "New chat",
       "refresh": "Refresh",
-      "untitled": "Untitled session"
+      "untitled": "Untitled session",
+      "relativeDate": {
+        "now": "Now",
+        "minutesAgo": "{n} min ago",
+        "hoursAgo": "{n}h ago",
+        "yesterday": "Yesterday"
+      }
     },
     "preview": {
       "empty": "Select a session to preview it here",
@@ -190,6 +197,7 @@
       "deleteConfirmTitle": "Delete session?",
       "deleteConfirmBody": "The session file will be permanently removed from disk. This cannot be undone.",
       "deleteConfirmOk": "Delete",
+      "deleteConfirmCancel": "Cancel",
       "export": "Export as Markdown",
       "exportDone": "Session exported to {path}"
     }

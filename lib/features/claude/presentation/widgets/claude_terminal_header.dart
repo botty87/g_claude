@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -47,7 +48,7 @@ class ClaudeTerminalHeader extends StatelessWidget {
           return Row(
             children: [
               Tooltip(
-                message: 'claude.terminal.title'.tr(),
+                message: Locales.Claude.Terminal.title,
                 child: const Icon(
                   Icons.terminal,
                   size: 14,
@@ -84,7 +85,7 @@ class ClaudeTerminalHeader extends StatelessWidget {
                       ? null
                       : () => cubit.clearConversation(workspaceId),
                   builder: (context, hover) => Tooltip(
-                    message: 'claude.terminal.actions.clear'.tr(),
+                    message: Locales.Claude.Terminal.Actions.clear,
                     child: Container(
                       width: 24,
                       height: 24,

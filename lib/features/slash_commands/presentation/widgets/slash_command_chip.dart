@@ -1,7 +1,7 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -68,7 +68,7 @@ class _RemoveButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'slashCommands.chip.removeTooltip'.tr(),
+      message: Locales.SlashCommands.Chip.removeTooltip,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: GestureDetector(

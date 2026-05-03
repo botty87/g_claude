@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -142,7 +142,7 @@ class _NoWorkspaceState extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.xl),
           child: Text(
-            'claude.terminal.status.noWorkspace'.tr(),
+            Locales.Claude.Terminal.Status.noWorkspace,
             style: AppTypography.bodyMain.copyWith(
               color: AppColors.outline,
               fontSize: 12,
@@ -183,7 +183,7 @@ class _DropOverlay extends StatelessWidget {
             ),
           ),
           child: Text(
-            'claude.terminal.input.attachments.dropHint'.tr(),
+            Locales.Claude.Terminal.Input.Attachments.dropHint,
             style: AppTypography.bodyMain.copyWith(
               color: AppColors.primary,
               fontWeight: FontWeight.w500,

@@ -173,11 +173,18 @@
   },
   "sessions": {
     "list": {
+      "headerLabel": "SESSIONI",
       "search": "Cerca nei messaggi...",
       "empty": "Nessuna sessione",
       "newChat": "Nuova chat",
       "refresh": "Aggiorna",
-      "untitled": "Sessione senza titolo"
+      "untitled": "Sessione senza titolo",
+      "relativeDate": {
+        "now": "Ora",
+        "minutesAgo": "{n} min fa",
+        "hoursAgo": "{n} h fa",
+        "yesterday": "Ieri"
+      }
     },
     "preview": {
       "empty": "Seleziona una sessione per vederne l'anteprima",
@@ -190,6 +197,7 @@
       "deleteConfirmTitle": "Eliminare la sessione?",
       "deleteConfirmBody": "Il file della sessione verrà rimosso definitivamente dal disco. L'azione non è reversibile.",
       "deleteConfirmOk": "Elimina",
+      "deleteConfirmCancel": "Annulla",
       "export": "Esporta come Markdown",
       "exportDone": "Sessione esportata in {path}"
     }

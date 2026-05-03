@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -23,7 +24,7 @@ class McpPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'claude.terminal.mcp.tooltip'.tr(),
+      message: Locales.Claude.Terminal.Mcp.tooltip,
       child: Hoverable(
         key: const ValueKey('mcp_picker'),
         onTap: () => _openMenu(context),
@@ -46,7 +47,7 @@ class McpPicker extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 Text(
-                  'claude.terminal.mcp.label'.tr(),
+                  Locales.Claude.Terminal.Mcp.label,
                   style: AppTypography.bodyMain.copyWith(
                     fontSize: 11,
                     color: AppColors.onSurfaceVariant,
@@ -132,7 +133,7 @@ class _McpOverlayContent extends HookWidget {
             Row(
               children: [
                 Text(
-                  'claude.terminal.mcp.title'.tr(),
+                  Locales.Claude.Terminal.Mcp.title,
                   style: AppTypography.bodyMain.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -145,7 +146,7 @@ class _McpOverlayContent extends HookWidget {
                     color: loading ? AppColors.outline : null,
                   ),
                   onPressed: loading ? null : refresh,
-                  tooltip: 'claude.terminal.mcp.refresh'.tr(),
+                  tooltip: Locales.Claude.Terminal.Mcp.refresh,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints.tightFor(
                     width: 24,
@@ -181,7 +182,7 @@ class _McpOverlayContent extends HookWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           Text(
-            'claude.terminal.mcp.loading'.tr(),
+            Locales.Claude.Terminal.Mcp.loading,
             style: AppTypography.bodyMain.copyWith(
               fontSize: 11,
               color: AppColors.outline,
@@ -193,7 +194,7 @@ class _McpOverlayContent extends HookWidget {
 
     if (snapshot.hasError) {
       return Text(
-        'claude.terminal.mcp.error'.tr(),
+        Locales.Claude.Terminal.Mcp.error,
         style: AppTypography.bodyMain.copyWith(color: AppColors.error),
       );
     }
@@ -201,7 +202,7 @@ class _McpOverlayContent extends HookWidget {
     final data = snapshot.data;
     if (data == null || data.isEmpty) {
       return Text(
-        'claude.terminal.mcp.empty'.tr(),
+        Locales.Claude.Terminal.Mcp.empty,
         style: AppTypography.bodyMain.copyWith(color: AppColors.outline),
       );
     }
@@ -273,7 +274,7 @@ class _McpServerTile extends StatelessWidget {
     final tooltipParts = <String>[
       server.name,
       _statusLabel(server.status).tr(),
-      if (isDisabled) 'claude.terminal.mcp.disabledLabel'.tr(),
+      if (isDisabled) Locales.Claude.Terminal.Mcp.disabledLabel,
     ];
     return Tooltip(
       message: tooltipParts.join(' — '),
@@ -341,8 +342,8 @@ class _McpAuthButton extends HookWidget {
   Widget build(BuildContext context) {
     final hovered = useState(false);
     final tooltip = canAuth
-        ? 'claude.terminal.mcp.authenticate'.tr()
-        : 'claude.terminal.mcp.toggleNoSession'.tr();
+        ? Locales.Claude.Terminal.Mcp.authenticate
+        : Locales.Claude.Terminal.Mcp.toggleNoSession;
     return Tooltip(
       message: tooltip,
       child: Opacity(

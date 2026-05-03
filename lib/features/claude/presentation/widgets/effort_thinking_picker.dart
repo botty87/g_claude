@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/utils/menu_position.dart';
 import '../../../../shared/widgets/hoverable.dart';
 import '../../domain/entities/claude_effort.dart';
@@ -38,7 +39,7 @@ class EffortThinkingPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'claude.terminal.effort.tooltip'.tr(),
+      message: Locales.Claude.Terminal.Effort.tooltip,
       child: Hoverable(
         key: const ValueKey('claude_effort_thinking_picker'),
         onTap: enabled ? () => _showOverlay(context) : null,
@@ -129,7 +130,7 @@ class _OverlayContent extends HookWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _SectionLabel(label: 'claude.terminal.effort.label'.tr()),
+          _SectionLabel(label: Locales.Claude.Terminal.Effort.label),
           const SizedBox(height: AppSpacing.xs),
           _EffortSegments(
             current: effort.value,
@@ -139,7 +140,7 @@ class _OverlayContent extends HookWidget {
             },
           ),
           const SizedBox(height: AppSpacing.md),
-          _SectionLabel(label: 'claude.terminal.thinking.label'.tr()),
+          _SectionLabel(label: Locales.Claude.Terminal.Thinking.label),
           const SizedBox(height: AppSpacing.xs),
           _ThinkingSegments(
             current: thinking.value,

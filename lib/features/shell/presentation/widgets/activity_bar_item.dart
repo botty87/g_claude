@@ -1,6 +1,6 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../shared/widgets/hoverable.dart';
@@ -37,7 +37,7 @@ class ActivityBarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final tooltipMessage = isEnabled
         ? tooltip
-        : '$tooltip${'shell.activity.comingLaterSuffix'.tr()}';
+        : '$tooltip${Locales.Shell.Activity.comingLaterSuffix}';
     return Tooltip(
       message: tooltipMessage,
       child: Hoverable(

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -73,7 +74,7 @@ class _EmptyPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
-        'sessions.preview.empty'.tr(),
+        Locales.Sessions.Preview.empty,
         style: AppTypography.bodyMain.copyWith(
           color: AppColors.outline,
           fontSize: 13,
@@ -106,16 +107,16 @@ class _PreviewToolbar extends StatelessWidget {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: Text('sessions.preview.resumeConfirmTitle'.tr()),
-          content: Text('sessions.preview.resumeConfirmBody'.tr()),
+          title: Text(Locales.Sessions.Preview.resumeConfirmTitle),
+          content: Text(Locales.Sessions.Preview.resumeConfirmBody),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text('sessions.preview.resumeConfirmCancel'.tr()),
+              child: Text(Locales.Sessions.Preview.resumeConfirmCancel),
             ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text('sessions.preview.resumeConfirmOk'.tr()),
+              child: Text(Locales.Sessions.Preview.resumeConfirmOk),
             ),
           ],
         ),
@@ -132,7 +133,7 @@ class _PreviewToolbar extends StatelessWidget {
     final historyCubit = context.read<ChatHistoryCubit>();
 
     final path = await FilePicker.saveFile(
-      dialogTitle: 'sessions.preview.export'.tr(),
+      dialogTitle: Locales.Sessions.Preview.export,
       fileName: '${summary.id}.md',
       type: FileType.custom,
       allowedExtensions: const ['md'],
@@ -151,8 +152,7 @@ class _PreviewToolbar extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'sessions.preview.exportDone'
-                .tr(namedArgs: {'path': result}),
+            Locales.Sessions.Preview.exportDone(path: result),
           ),
         ),
       );
@@ -166,16 +166,16 @@ class _PreviewToolbar extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('sessions.preview.deleteConfirmTitle'.tr()),
-        content: Text('sessions.preview.deleteConfirmBody'.tr()),
+        title: Text(Locales.Sessions.Preview.deleteConfirmTitle),
+        content: Text(Locales.Sessions.Preview.deleteConfirmBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('sessions.preview.deleteConfirmCancel'.tr()),
+            child: Text(Locales.Sessions.Preview.deleteConfirmCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('sessions.preview.deleteConfirmOk'.tr()),
+            child: Text(Locales.Sessions.Preview.deleteConfirmOk),
           ),
         ],
       ),
@@ -228,19 +228,19 @@ class _PreviewToolbar extends StatelessWidget {
           ),
           IconButton(
             key: const ValueKey('session_preview_resume'),
-            tooltip: 'sessions.preview.resume'.tr(),
+            tooltip: Locales.Sessions.Preview.resume,
             icon: const Icon(Symbols.play_arrow, size: 18),
             onPressed: () => _onResume(context),
           ),
           IconButton(
             key: const ValueKey('session_preview_export'),
-            tooltip: 'sessions.preview.export'.tr(),
+            tooltip: Locales.Sessions.Preview.export,
             icon: const Icon(Symbols.download, size: 18),
             onPressed: () => _onExport(context),
           ),
           IconButton(
             key: const ValueKey('session_preview_delete'),
-            tooltip: 'sessions.preview.delete'.tr(),
+            tooltip: Locales.Sessions.Preview.delete,
             color: AppColors.error,
             icon: const Icon(Symbols.delete, size: 18),
             onPressed: () => _onDelete(context),

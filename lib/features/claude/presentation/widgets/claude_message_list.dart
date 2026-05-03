@@ -7,6 +7,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -210,7 +211,7 @@ class _EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'claude.empty.title'.tr(),
+              Locales.Claude.Empty.title,
               style: AppTypography.bodyMain.copyWith(
                 color: AppColors.onSurface,
                 fontSize: 14,
@@ -220,7 +221,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'claude.empty.hint'.tr(),
+              Locales.Claude.Empty.hint,
               style: AppTypography.bodyMain.copyWith(
                 color: AppColors.outline,
                 fontSize: 12,
@@ -328,9 +329,7 @@ class _ToolGroup extends HookWidget {
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
-                        'claude.message.toolGroupTitle'.tr(
-                          namedArgs: {'count': '${tools.length}'},
-                        ),
+                        Locales.Claude.Message.toolGroupTitle(count: '${tools.length}'),
                         style: AppTypography.bodyMain.copyWith(
                           color: AppColors.onSurfaceVariant,
                           fontSize: 12,
@@ -406,16 +405,13 @@ class _ToolGroup extends HookWidget {
   String _summary({required int running, required int done, required int errors}) {
     final parts = <String>[];
     if (running > 0) {
-      parts.add('claude.message.toolGroupRunning'
-          .tr(namedArgs: {'n': '$running'}));
+      parts.add(Locales.Claude.Message.toolGroupRunning(n: '$running'));
     }
     if (done > 0) {
-      parts.add('claude.message.toolGroupDone'
-          .tr(namedArgs: {'n': '$done'}));
+      parts.add(Locales.Claude.Message.toolGroupDone(n: '$done'));
     }
     if (errors > 0) {
-      parts.add('claude.message.toolGroupErrors'
-          .tr(namedArgs: {'n': '$errors'}));
+      parts.add(Locales.Claude.Message.toolGroupErrors(n: '$errors'));
     }
     return parts.join(' · ');
   }
@@ -658,21 +654,21 @@ class _ToolCard extends HookWidget {
     final hasBody =
         (input?.isNotEmpty ?? false) || (output?.isNotEmpty ?? false);
 
-    final (icon, color, labelKey) = switch (status) {
+    final (icon, color, toolLabel) = switch (status) {
       ClaudeToolStatus.running => (
           Symbols.sync,
           AppColors.tertiary,
-          'claude.message.toolRunning',
+          Locales.Claude.Message.toolRunning,
         ),
       ClaudeToolStatus.completed => (
           Symbols.check_circle,
           AppColors.outline,
-          'claude.message.toolCompleted',
+          Locales.Claude.Message.toolCompleted,
         ),
       ClaudeToolStatus.error => (
           Symbols.error,
           AppColors.error,
-          'claude.message.toolError',
+          Locales.Claude.Message.toolError,
         ),
     };
 
@@ -711,7 +707,7 @@ class _ToolCard extends HookWidget {
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
-                        'claude.message.toolPrefix'.tr(),
+                        Locales.Claude.Message.toolPrefix,
                         style: AppTypography.bodyMain.copyWith(
                           color: AppColors.outline,
                           fontSize: 11,
@@ -730,7 +726,7 @@ class _ToolCard extends HookWidget {
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
-                        labelKey.tr(),
+                        toolLabel,
                         style: AppTypography.bodyMain.copyWith(
                           color: AppColors.outline,
                           fontSize: 10.5,
@@ -824,7 +820,7 @@ class _ToolBody extends HookWidget {
         children: [
           if (hasInput)
             _ToolBodySection(
-              labelKey: 'claude.message.toolInput',
+              label: Locales.Claude.Message.toolInput,
               body: encodedInput,
               maxHeight: maxHeight,
               tone: AppColors.onSurfaceVariant,
@@ -832,9 +828,9 @@ class _ToolBody extends HookWidget {
           if (hasInput && hasOutput) const SizedBox(height: AppSpacing.xs),
           if (hasOutput)
             _ToolBodySection(
-              labelKey: isError
-                  ? 'claude.message.toolErrorOutput'
-                  : 'claude.message.toolResult',
+              label: isError
+                  ? Locales.Claude.Message.toolErrorOutput
+                  : Locales.Claude.Message.toolResult,
               body: output!,
               maxHeight: maxHeight,
               tone: isError ? AppColors.error : AppColors.onSurface,
@@ -847,13 +843,13 @@ class _ToolBody extends HookWidget {
 
 class _ToolBodySection extends HookWidget {
   const _ToolBodySection({
-    required this.labelKey,
+    required this.label,
     required this.body,
     required this.maxHeight,
     required this.tone,
   });
 
-  final String labelKey;
+  final String label;
   final String body;
   final double maxHeight;
   final Color tone;
@@ -870,7 +866,7 @@ class _ToolBodySection extends HookWidget {
             bottom: AppSpacing.xs,
           ),
           child: Text(
-            labelKey.tr(),
+            label,
             style: AppTypography.bodyMain.copyWith(
               color: AppColors.outline,
               fontSize: 10,
@@ -970,19 +966,18 @@ class _ErrorBanner extends StatelessWidget {
   String _renderFailure(Failure f) {
     if (f is SubprocessFailure) {
       if (f.message == 'binary_not_found') {
-        return 'claude.error.binaryNotFound'.tr();
+        return Locales.Claude.Error.binaryNotFound;
       }
       if (f.message == 'exit_code') {
-        return 'claude.error.exitedNonZero'
-            .tr(namedArgs: {'code': '${f.exitCode ?? -1}'});
+        return Locales.Claude.Error.exitedNonZero(code: '${f.exitCode ?? -1}');
       }
-      return 'claude.error.spawnFailed'.tr(namedArgs: {'message': f.message});
+      return Locales.Claude.Error.spawnFailed(message: f.message);
     }
     if (f is ParsingFailure) {
-      return 'claude.error.parseFailed'.tr();
+      return Locales.Claude.Error.parseFailed;
     }
     if (f is UnexpectedFailure) {
-      return 'claude.error.spawnFailed'.tr(namedArgs: {'message': f.message});
+      return Locales.Claude.Error.spawnFailed(message: f.message);
     }
     return f.toString();
   }

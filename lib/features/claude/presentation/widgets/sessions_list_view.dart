@@ -1,9 +1,9 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -55,7 +55,7 @@ class SessionsListView extends HookWidget {
           child: TextField(
             controller: searchController,
             decoration: InputDecoration(
-              hintText: 'sessions.list.search'.tr(),
+              hintText: Locales.Sessions.List.search,
               prefixIcon: const Icon(Symbols.search, size: 16),
               isDense: true,
               border: OutlineInputBorder(
@@ -97,7 +97,7 @@ class SessionsListView extends HookWidget {
                 return Padding(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   child: Text(
-                    'sessions.list.empty'.tr(),
+                    Locales.Sessions.List.empty,
                     style: AppTypography.bodyMain.copyWith(
                       fontSize: 12,
                       color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
@@ -135,7 +135,7 @@ class SessionsListView extends HookWidget {
               context.read<ChatHistoryCubit>().clearSelection(active.id);
             },
             icon: const Icon(Symbols.add, size: 16),
-            label: Text('sessions.list.newChat'.tr()),
+            label: Text(Locales.Sessions.List.newChat),
           ),
         ),
       ],
@@ -158,14 +158,14 @@ class _SessionsHeader extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            'SESSIONI',
+            Locales.Sessions.List.headerLabel,
             style: AppTypography.sidebarLabel.copyWith(
               color: AppColors.onSurfaceVariant,
             ),
           ),
           const Spacer(),
           Tooltip(
-            message: 'sessions.list.refresh'.tr(),
+            message: Locales.Sessions.List.refresh,
             child: _HeaderIconButton(
               icon: Symbols.refresh,
               onTap: onRefresh,
@@ -248,7 +248,7 @@ class _SessionRow extends StatelessWidget {
                   children: [
                     Text(
                       summary.title.isEmpty
-                          ? 'sessions.list.untitled'.tr()
+                          ? Locales.Sessions.List.untitled
                           : summary.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -297,16 +297,13 @@ class _SessionRow extends StatelessWidget {
   String _relativeDate(DateTime dt) {
     final now = DateTime.now();
     final diff = now.difference(dt);
-    if (diff.inMinutes < 1) return 'Ora';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} min fa';
-    if (diff.inHours < 24) return '${diff.inHours} h fa';
-    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    if (diff.inMinutes < 1) return Locales.Sessions.List.RelativeDate.now;
+    if (diff.inMinutes < 60) return Locales.Sessions.List.RelativeDate.minutesAgo(n: '${diff.inMinutes}');
+    if (diff.inHours < 24) return Locales.Sessions.List.RelativeDate.hoursAgo(n: '${diff.inHours}');
+    final yesterday = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 1));
     final dtDay = DateTime(dt.year, dt.month, dt.day);
-    if (dtDay == yesterday) return 'Ieri';
-    if (dt.year == now.year) {
-      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}';
-    }
-    final yy = (dt.year % 100).toString().padLeft(2, '0');
-    return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/$yy';
+    if (dtDay == yesterday) return Locales.Sessions.List.RelativeDate.yesterday;
+    if (dt.year == now.year) return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}';
+    return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${(dt.year % 100).toString().padLeft(2, '0')}';
   }
 }

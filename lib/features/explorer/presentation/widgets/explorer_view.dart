@@ -1,8 +1,8 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -116,12 +116,12 @@ class _ExplorerTree extends HookWidget {
 
         if (tree.errors.containsKey(workspace.path) &&
             !tree.children.containsKey(workspace.path)) {
-          return _ExplorerMessage(text: 'shell.sidePanel.loadError'.tr());
+          return _ExplorerMessage(text: Locales.Shell.SidePanel.loadError);
         }
 
         final visible = _buildVisible(workspace.path, tree, state.showHidden);
         if (visible.isEmpty) {
-          return _ExplorerMessage(text: 'shell.sidePanel.emptyFolder'.tr());
+          return _ExplorerMessage(text: Locales.Shell.SidePanel.emptyFolder);
         }
 
         return ListView.builder(
