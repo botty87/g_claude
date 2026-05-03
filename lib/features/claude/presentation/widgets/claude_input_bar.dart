@@ -18,6 +18,7 @@ import '../../../slash_commands/presentation/cubit/slash_commands_cubit.dart';
 import '../../../slash_commands/presentation/widgets/slash_command_chip_row.dart';
 import '../../../slash_commands/presentation/widgets/slash_command_overlay.dart';
 import '../../domain/entities/chat_attachment.dart';
+import '../../domain/entities/chat_input_draft.dart';
 import '../cubit/claude_sessions_cubit.dart';
 import '../utils/attachment_token.dart';
 import 'attachment_chip_row.dart';
@@ -27,12 +28,10 @@ class ClaudeInputBar extends HookWidget {
     super.key,
     required this.workspaceId,
     required this.status,
-    required this.attachments,
   });
 
   final String workspaceId;
   final ClaudeRunStatus status;
-  final ValueNotifier<List<ChatAttachment>> attachments;
 
   bool get _isBusy =>
       status == ClaudeRunStatus.connecting ||
@@ -40,10 +39,17 @@ class ClaudeInputBar extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = useTextEditingController();
+    final sessionsCubit = context.read<ClaudeSessionsCubit>();
+    final initialDraft = useMemoized(
+      () =>
+          sessionsCubit.state.sessions[workspaceId]?.inputDraft ??
+          ChatInputDraft.empty,
+      const [],
+    );
+
+    final controller = useTextEditingController(text: initialDraft.text);
     final wrapperFocus = useFocusNode(debugLabel: 'claude_input_wrapper');
     final inputFocus = useFocusNode(debugLabel: 'claude_input_field');
-    final sessionsCubit = context.read<ClaudeSessionsCubit>();
 
     final slashCubit = useMemoized(
       () => getIt<SlashCommandsCubit>()..loadFor(workspaceId),
@@ -52,8 +58,25 @@ class ClaudeInputBar extends HookWidget {
     useEffect(() => slashCubit.close, [slashCubit]);
 
     final link = useMemoized(LayerLink.new, const []);
-    final selectedChips = useState<List<SlashCommand>>(const []);
-    final attachmentList = useValueListenable(attachments);
+    final selectedChips =
+        useState<List<SlashCommand>>(initialDraft.selectedCommands);
+    final attachmentList =
+        useState<List<ChatAttachment>>(initialDraft.attachments);
+
+    void persistDraft({
+      String? text,
+      List<SlashCommand>? chips,
+      List<ChatAttachment>? attachments,
+    }) {
+      sessionsCubit.setInputDraft(
+        workspaceId,
+        ChatInputDraft(
+          text: text ?? controller.text,
+          selectedCommands: chips ?? selectedChips.value,
+          attachments: attachments ?? attachmentList.value,
+        ),
+      );
+    }
 
     final skills = context.select<ClaudeSessionsCubit, List<String>>(
       (c) => c.state.sessions[workspaceId]?.availableSkills ?? const [],
@@ -64,10 +87,14 @@ class ClaudeInputBar extends HookWidget {
     }, [skills]);
 
     useEffect(() {
-      void listener() => slashCubit.onInputChanged(controller.text);
+      void listener() {
+        slashCubit.onInputChanged(controller.text);
+        persistDraft(text: controller.text);
+      }
+
       controller.addListener(listener);
       return () => controller.removeListener(listener);
-    }, [controller]);
+    }, [controller, slashCubit]);
 
     void applySelection(SlashCommand cmd) {
       if (selectedChips.value.any((c) => c.trigger == cmd.trigger)) {
@@ -78,9 +105,11 @@ class ClaudeInputBar extends HookWidget {
         });
         return;
       }
-      selectedChips.value = [...selectedChips.value, cmd];
+      final next = [...selectedChips.value, cmd];
+      selectedChips.value = next;
       _stripSlashPrefix(controller);
       slashCubit.dismiss();
+      persistDraft(chips: next, text: controller.text);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         inputFocus.requestFocus();
       });
@@ -93,7 +122,7 @@ class ClaudeInputBar extends HookWidget {
         type: FileType.any,
       );
       if (res == null) return;
-      final current = attachments.value;
+      final current = attachmentList.value;
       final existing = current.map((a) => p.normalize(a.path)).toSet();
       final additions = <ChatAttachment>[];
       for (final f in res.files) {
@@ -109,7 +138,9 @@ class ClaudeInputBar extends HookWidget {
         ));
       }
       if (additions.isNotEmpty) {
-        attachments.value = [...current, ...additions];
+        final next = [...current, ...additions];
+        attachmentList.value = next;
+        persistDraft(attachments: next);
       }
     }
 
@@ -117,10 +148,10 @@ class ClaudeInputBar extends HookWidget {
       if (_isBusy) return;
       final path = await FilePicker.getDirectoryPath();
       if (path == null) return;
-      final current = attachments.value;
+      final current = attachmentList.value;
       final norm = p.normalize(path);
       if (current.any((a) => p.normalize(a.path) == norm)) return;
-      attachments.value = [
+      final next = [
         ...current,
         ChatAttachment(
           path: path,
@@ -128,19 +159,24 @@ class ClaudeInputBar extends HookWidget {
           kind: ChatAttachmentKind.directory,
         ),
       ];
+      attachmentList.value = next;
+      persistDraft(attachments: next);
     }
 
     void removeAttachment(ChatAttachment a) {
-      attachments.value =
-          attachments.value.where((x) => x.path != a.path).toList();
+      final next =
+          attachmentList.value.where((x) => x.path != a.path).toList();
+      attachmentList.value = next;
+      persistDraft(attachments: next);
     }
 
     void submit() {
       final userText = controller.text.trim();
       final chipPrefix =
           selectedChips.value.map((c) => c.trigger).join(' ');
-      final attachmentTokens =
-          attachmentList.map((a) => formatAttachmentToken(a.path)).join(' ');
+      final attachmentTokens = attachmentList.value
+          .map((a) => formatAttachmentToken(a.path))
+          .join(' ');
       final parts = <String>[
         if (chipPrefix.isNotEmpty) chipPrefix,
         if (attachmentTokens.isNotEmpty) attachmentTokens,
@@ -150,7 +186,8 @@ class ClaudeInputBar extends HookWidget {
       final prompt = parts.join(' ');
       controller.clear();
       selectedChips.value = const [];
-      attachments.value = const [];
+      attachmentList.value = const [];
+      sessionsCubit.clearInputDraft(workspaceId);
       sessionsCubit.sendPrompt(workspaceId, prompt);
     }
 
@@ -187,13 +224,17 @@ class ClaudeInputBar extends HookWidget {
           controller.text.isEmpty &&
           !isSuggesting) {
         if (selectedChips.value.isNotEmpty) {
-          selectedChips.value =
+          final next =
               selectedChips.value.sublist(0, selectedChips.value.length - 1);
+          selectedChips.value = next;
+          persistDraft(chips: next);
           return KeyEventResult.handled;
         }
-        if (attachmentList.isNotEmpty) {
-          attachments.value =
-              attachmentList.sublist(0, attachmentList.length - 1);
+        if (attachmentList.value.isNotEmpty) {
+          final next = attachmentList.value
+              .sublist(0, attachmentList.value.length - 1);
+          attachmentList.value = next;
+          persistDraft(attachments: next);
           return KeyEventResult.handled;
         }
       }
@@ -217,6 +258,7 @@ class ClaudeInputBar extends HookWidget {
     return SlashCommandOverlay(
       link: link,
       cubit: slashCubit,
+      excludedTriggers: selectedChips.value.map((c) => c.trigger).toSet(),
       onAccept: applySelection,
       onDismiss: slashCubit.dismiss,
       child: Column(
@@ -225,13 +267,15 @@ class ClaudeInputBar extends HookWidget {
           SlashCommandChipRow(
             chips: selectedChips.value,
             onRemove: (cmd) {
-              selectedChips.value = selectedChips.value
+              final next = selectedChips.value
                   .where((c) => c.trigger != cmd.trigger)
                   .toList();
+              selectedChips.value = next;
+              persistDraft(chips: next);
             },
           ),
           AttachmentChipRow(
-            attachments: attachmentList,
+            attachments: attachmentList.value,
             onRemove: removeAttachment,
           ),
           Container(

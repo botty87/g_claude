@@ -38,11 +38,15 @@ class ClaudeTerminalPane extends HookWidget {
     final isBusy = session.runStatus == ClaudeRunStatus.running ||
         session.runStatus == ClaudeRunStatus.connecting;
 
-    final attachments = useMemoized(
-      () => ValueNotifier<List<ChatAttachment>>(const []),
-      const [],
-    );
-    useEffect(() => attachments.dispose, [attachments]);
+    final sessionsCubit = context.read<ClaudeSessionsCubit>();
+    final attachmentList = session.inputDraft.attachments;
+
+    void setAttachments(List<ChatAttachment> next) {
+      sessionsCubit.setInputDraft(
+        activeId,
+        session.inputDraft.copyWith(attachments: next),
+      );
+    }
 
     final isHovering = useState(false);
 
@@ -52,7 +56,7 @@ class ClaudeTerminalPane extends HookWidget {
       onDragExited: (_) => isHovering.value = false,
       onDragDone: (details) {
         if (isBusy) return;
-        final current = attachments.value;
+        final current = attachmentList;
         final existing = current.map((a) => p.normalize(a.path)).toSet();
         final additions = <ChatAttachment>[];
         for (final xfile in details.files) {
@@ -72,7 +76,7 @@ class ClaudeTerminalPane extends HookWidget {
           ));
         }
         if (additions.isNotEmpty) {
-          attachments.value = [...current, ...additions];
+          setAttachments([...current, ...additions]);
         }
         isHovering.value = false;
       },
@@ -94,9 +98,9 @@ class ClaudeTerminalPane extends HookWidget {
                   ),
                 ),
                 ClaudeInputBar(
+                  key: ValueKey('claude_input_bar_$activeId'),
                   workspaceId: activeId,
                   status: session.runStatus,
-                  attachments: attachments,
                 ),
               ],
             ),
