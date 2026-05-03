@@ -7,6 +7,14 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 abstract interface class WorkspaceFileWatcher {
   Stream<FileSystemEvent> watch(String workspacePath);
+
+  /// Stream filtered to events touching [filePath].
+  ///
+  /// The watcher locates the owning workspace among active handles via prefix
+  /// match; if [filePath] is not under any watched workspace, the returned
+  /// stream is empty. Move events are matched on both source and destination.
+  Stream<FileSystemEvent> watchFile(String filePath);
+
   Future<void> dispose(String workspacePath);
 }
 
@@ -27,11 +35,58 @@ class WorkspaceFileWatcherImpl implements WorkspaceFileWatcher {
   }
 
   @override
+  Stream<FileSystemEvent> watchFile(String filePath) {
+    final root = _findOwningRoot(filePath);
+    if (root == null) {
+      _talker.warning('watchFile: no active workspace owns $filePath');
+      return const Stream.empty();
+    }
+    final canonical = p.canonicalize(filePath);
+    return watch(root).where((e) => _eventMatchesPath(e, filePath, canonical));
+  }
+
+  @override
   Future<void> dispose(String workspacePath) async {
     final handle = _handles.remove(workspacePath);
     if (handle == null) return;
     await handle.dispose();
   }
+
+  String? _findOwningRoot(String filePath) {
+    final canonicalFile = p.canonicalize(filePath);
+    String? best;
+    for (final root in _handles.keys) {
+      if (p.equals(root, filePath) || p.isWithin(root, filePath)) {
+        if (best == null || root.length > best.length) best = root;
+        continue;
+      }
+      final canonicalRoot = p.canonicalize(root);
+      if (p.equals(canonicalRoot, canonicalFile) ||
+          p.isWithin(canonicalRoot, canonicalFile)) {
+        if (best == null || root.length > best.length) best = root;
+      }
+    }
+    return best;
+  }
+}
+
+bool _eventMatchesPath(
+  FileSystemEvent event,
+  String target,
+  String canonicalTarget,
+) {
+  final src = event.path;
+  if (p.equals(src, target) || p.canonicalize(src) == canonicalTarget) {
+    return true;
+  }
+  if (event is FileSystemMoveEvent) {
+    final dest = event.destination;
+    if (dest != null &&
+        (p.equals(dest, target) || p.canonicalize(dest) == canonicalTarget)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Path segments filtered upstream: build artifacts, VCS internals, dependency

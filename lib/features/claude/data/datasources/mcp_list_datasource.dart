@@ -5,14 +5,17 @@ import 'package:injectable/injectable.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../domain/entities/mcp_server.dart';
+import 'claude_binary_resolver.dart';
 
 @lazySingleton
 class McpListDataSource {
-  McpListDataSource(this._talker);
+  McpListDataSource(this._talker, this._binary);
   final Talker _talker;
+  final ClaudeBinaryResolver _binary;
 
   Future<List<McpServer>> list() async {
-    final result = await Process.run('claude', ['mcp', 'list']);
+    final binary = await _binary.resolve() ?? 'claude';
+    final result = await Process.run(binary, ['mcp', 'list']);
     if (result.exitCode != 0) {
       throw McpListException(
         'mcp list exit ${result.exitCode}: ${result.stderr}',

@@ -2,12 +2,11 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../domain/entities/slash_command.dart';
-import '../../domain/entities/slash_command_source.dart';
+import 'slash_command_source_color.dart';
 
 class SlashCommandChip extends StatelessWidget {
   const SlashCommandChip({
@@ -19,17 +18,9 @@ class SlashCommandChip extends StatelessWidget {
   final SlashCommand command;
   final VoidCallback onRemove;
 
-  Color _color() => switch (command.source) {
-        SlashCommandSource.cliBuiltin => AppColors.outline,
-        SlashCommandSource.user => AppColors.brandIndigo,
-        SlashCommandSource.project => AppColors.tertiary,
-        SlashCommandSource.plugin => AppColors.primary,
-        SlashCommandSource.skill => AppColors.secondary,
-      };
-
   @override
   Widget build(BuildContext context) {
-    final color = _color();
+    final color = command.source.badgeColor;
     final tooltipMessage = command.argumentHint != null
         ? '${command.description}\nargs: ${command.argumentHint}'
         : command.description;

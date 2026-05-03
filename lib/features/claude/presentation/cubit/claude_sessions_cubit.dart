@@ -817,13 +817,15 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _talker.info(
       'mcp: applying ${disabled.length} disabled server(s) on spawn',
     );
-    for (final name in disabled) {
-      final result = await _toggleMcpServer(serverName: name, enabled: false);
-      result.fold(
-        (f) => _talker.warning('mcp pre-disable failed for $name: $f'),
-        (_) => null,
-      );
-    }
+    await Future.wait(
+      disabled.map((name) async {
+        final result = await _toggleMcpServer(serverName: name, enabled: false);
+        result.fold(
+          (f) => _talker.warning('mcp pre-disable failed for $name: $f'),
+          (_) => null,
+        );
+      }),
+    );
   }
 
   void _emitSession(String workspaceId, ClaudeSessionData data) {

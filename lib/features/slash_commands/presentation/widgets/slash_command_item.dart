@@ -8,6 +8,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
 import '../../domain/entities/slash_command.dart';
 import '../../domain/entities/slash_command_source.dart';
+import 'slash_command_source_color.dart';
 
 class SlashCommandItem extends StatelessWidget {
   const SlashCommandItem({
@@ -20,14 +21,6 @@ class SlashCommandItem extends StatelessWidget {
   final SlashCommand command;
   final bool selected;
   final VoidCallback onTap;
-
-  Color _badgeColor(SlashCommandSource source) => switch (source) {
-        SlashCommandSource.cliBuiltin => AppColors.outline,
-        SlashCommandSource.user => AppColors.brandIndigo,
-        SlashCommandSource.project => AppColors.tertiary,
-        SlashCommandSource.plugin => AppColors.primary,
-        SlashCommandSource.skill => AppColors.secondary,
-      };
 
   String _badgeLabel(SlashCommandSource source, BuildContext context) =>
       'slashCommands.source.${source.name}'.tr();
@@ -56,7 +49,7 @@ class SlashCommandItem extends StatelessWidget {
           children: [
             _SourceBadge(
               label: _badgeLabel(command.source, context),
-              color: _badgeColor(command.source),
+              color: command.source.badgeColor,
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(

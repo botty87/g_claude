@@ -43,7 +43,6 @@ class FileViewer extends StatelessWidget {
     return _PooledStack(
       activeId: activeId,
       activePath: activePath,
-      workspacePath: activeId,
       openPaths: openPaths,
     );
   }
@@ -53,13 +52,11 @@ class _PooledStack extends HookWidget {
   const _PooledStack({
     required this.activeId,
     required this.activePath,
-    required this.workspacePath,
     required this.openPaths,
   });
 
   final WorkspaceId activeId;
   final String activePath;
-  final String workspacePath;
   final List<String> openPaths;
 
   static const _maxLiveEditors = 10;
@@ -101,7 +98,7 @@ class _PooledStack extends HookWidget {
         for (final path in paths)
           KeyedSubtree(
             key: ValueKey('codeview-$path'),
-            child: CodeView(path: path, workspacePath: workspacePath),
+            child: CodeView(path: path),
           ),
       ],
     );

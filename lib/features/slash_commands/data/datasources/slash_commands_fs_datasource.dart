@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../../../core/utils/frontmatter.dart';
 import '../../domain/entities/slash_command.dart';
 import '../../domain/entities/slash_command_source.dart';
 
@@ -28,17 +29,20 @@ class SlashCommandsFsDataSource {
     Directory dir,
     SlashCommandSource source,
   ) async {
-    if (!dir.existsSync()) return const [];
     final results = <SlashCommand>[];
-    await for (final entity in dir.list(recursive: true, followLinks: false)) {
-      if (entity is! File) continue;
-      if (!entity.path.endsWith('.md')) continue;
-      try {
-        final cmd = await _parseCommandFile(entity, dir.path, source);
-        if (cmd != null) results.add(cmd);
-      } catch (e) {
-        _talker.warning('slash_commands: failed to parse ${entity.path}: $e');
+    try {
+      await for (final entity in dir.list(recursive: true, followLinks: false)) {
+        if (entity is! File) continue;
+        if (!entity.path.endsWith('.md')) continue;
+        try {
+          final cmd = await _parseCommandFile(entity, dir.path, source);
+          if (cmd != null) results.add(cmd);
+        } catch (e) {
+          _talker.warning('slash_commands: failed to parse ${entity.path}: $e');
+        }
       }
+    } on FileSystemException {
+      return const [];
     }
     return results;
   }
@@ -60,7 +64,7 @@ class SlashCommandsFsDataSource {
       return null;
     }
 
-    final frontmatter = _parseFrontmatter(content);
+    final frontmatter = parseFrontmatter(content);
     final description = frontmatter['description'] ?? name;
     final argumentHint = frontmatter['argument-hint'];
     final allowedToolsRaw = frontmatter['allowed-tools'];
@@ -79,24 +83,4 @@ class SlashCommandsFsDataSource {
     );
   }
 
-  Map<String, String> _parseFrontmatter(String content) {
-    if (!content.startsWith('---\n')) return const {};
-    final end = content.indexOf('\n---\n', 4);
-    if (end == -1) return const {};
-    final block = content.substring(4, end);
-    final result = <String, String>{};
-    for (final line in block.split('\n')) {
-      final colon = line.indexOf(':');
-      if (colon == -1) continue;
-      final key = line.substring(0, colon).trim();
-      var value = line.substring(colon + 1).trim();
-      if (value.startsWith('"') && value.endsWith('"')) {
-        value = value.substring(1, value.length - 1);
-      } else if (value.startsWith("'") && value.endsWith("'")) {
-        value = value.substring(1, value.length - 1);
-      }
-      if (key.isNotEmpty) result[key] = value;
-    }
-    return result;
-  }
 }

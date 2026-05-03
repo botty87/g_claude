@@ -11,6 +11,8 @@ import '../../domain/usecases/load_slash_commands.dart';
 part 'slash_commands_cubit.freezed.dart';
 part 'slash_commands_cubit.state.dart';
 
+final slashTriggerRegex = RegExp(r'^\s*\/[a-zA-Z0-9:_-]*$');
+
 @injectable
 class SlashCommandsCubit extends Cubit<SlashCommandsState> {
   SlashCommandsCubit(this._load, this._filter, this._talker)
@@ -19,8 +21,6 @@ class SlashCommandsCubit extends Cubit<SlashCommandsState> {
   final LoadSlashCommands _load;
   final FilterSlashCommands _filter;
   final Talker _talker;
-
-  static final _triggerRegex = RegExp(r'^\s*\/[a-zA-Z0-9:_-]*$');
 
   List<SlashCommand> get _all => switch (state) {
         SlashCommandsStateIdle(:final all) => all,
@@ -77,7 +77,7 @@ class SlashCommandsCubit extends Cubit<SlashCommandsState> {
 
   void onInputChanged(String text) {
     final lastLine = text.split('\n').last;
-    if (_triggerRegex.hasMatch(lastLine)) {
+    if (slashTriggerRegex.hasMatch(lastLine)) {
       final filter = lastLine.trimLeft();
       final all = _all;
       final filtered = _filter.call(all, filter);

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:path/path.dart' as p;
 import 'package:re_editor/re_editor.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:re_highlight/languages/dart.dart';
@@ -81,25 +80,6 @@ final Map<String, CodeHighlightThemeMode> _languageModes = {
   'ini': CodeHighlightThemeMode(mode: langIni),
 };
 
-bool _eventMatchesPath(
-  FileSystemEvent event,
-  String target,
-  String canonicalTarget,
-) {
-  final src = event.path;
-  if (p.equals(src, target) || p.canonicalize(src) == canonicalTarget) {
-    return true;
-  }
-  if (event is FileSystemMoveEvent) {
-    final dest = event.destination;
-    if (dest != null &&
-        (p.equals(dest, target) || p.canonicalize(dest) == canonicalTarget)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 // ---------------------------------------------------------------------------
 // CodeView
 // ---------------------------------------------------------------------------
@@ -108,11 +88,9 @@ class CodeView extends HookWidget {
   const CodeView({
     super.key,
     required this.path,
-    required this.workspacePath,
   });
 
   final String path;
-  final String workspacePath;
 
   @override
   Widget build(BuildContext context) {
@@ -155,12 +133,9 @@ class CodeView extends HookWidget {
     }, [reloadTick.value]);
 
     useEffect(() {
-      final watcher = getIt<WorkspaceFileWatcher>();
-      final canonicalSelf = p.canonicalize(path);
       Timer? debounce;
-      final sub = watcher.watch(workspacePath).listen((event) {
+      final sub = getIt<WorkspaceFileWatcher>().watchFile(path).listen((event) {
         if (event is FileSystemDeleteEvent) return;
-        if (!_eventMatchesPath(event, path, canonicalSelf)) return;
         debounce?.cancel();
         debounce = Timer(const Duration(milliseconds: 150), () {
           reloadTick.value = reloadTick.value + 1;
@@ -170,7 +145,7 @@ class CodeView extends HookWidget {
         debounce?.cancel();
         sub.cancel();
       };
-    }, [path, workspacePath]);
+    }, [path]);
 
     return switch (state.value) {
       _Loading() => const Center(
@@ -250,9 +225,16 @@ class _HighlightedView extends HookWidget {
   Widget build(BuildContext context) {
     final controller = useMemoized(
       () => CodeLineEditingController.fromText(content.content),
-      [content.path, content.content],
+      [content.path],
     );
     useEffect(() => controller.dispose, [controller]);
+
+    useEffect(() {
+      if (controller.text != content.content) {
+        controller.text = content.content;
+      }
+      return null;
+    }, [content.content]);
 
     final findController = useMemoized(() => CodeFindController(controller), [controller]);
     useEffect(() => findController.dispose, [findController]);

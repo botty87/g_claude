@@ -127,9 +127,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i880.ClaudeSettingsWriter>(
       () => _i880.ClaudeSettingsWriter(gh<_i207.Talker>()),
     );
-    gh.lazySingleton<_i340.McpListDataSource>(
-      () => _i340.McpListDataSource(gh<_i207.Talker>()),
-    );
     gh.lazySingleton<_i407.PermissionServer>(
       () => _i407.PermissionServer(gh<_i207.Talker>()),
       dispose: (i) => i.stop(),
@@ -142,9 +139,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i331.BlocObserver>(
       () => blocObserverModule.blocObserver(gh<_i207.Talker>()),
-    );
-    gh.lazySingleton<_i585.McpRepository>(
-      () => _i629.McpRepositoryImpl(gh<_i340.McpListDataSource>()),
     );
     gh.lazySingleton<_i266.SlashCommandsRepository>(
       () => _i773.SlashCommandsRepositoryImpl(
@@ -182,8 +176,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i268.WorkspaceRepository>(
       () => _i824.WorkspaceRepositoryImpl(gh<_i735.WorkspaceLocalDataSource>()),
     );
-    gh.factory<_i977.ListMcpServers>(
-      () => _i977.ListMcpServers(gh<_i585.McpRepository>()),
+    gh.lazySingleton<_i340.McpListDataSource>(
+      () => _i340.McpListDataSource(
+        gh<_i207.Talker>(),
+        gh<_i1073.ClaudeBinaryResolver>(),
+      ),
     );
     gh.factory<_i268.LoadClaudeMd>(
       () => _i268.LoadClaudeMd(gh<_i268.WorkspaceRepository>()),
@@ -213,6 +210,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i207.Talker>(),
       ),
     );
+    gh.lazySingleton<_i585.McpRepository>(
+      () => _i629.McpRepositoryImpl(gh<_i340.McpListDataSource>()),
+    );
     gh.factory<_i407.AuthenticateMcpServer>(
       () => _i407.AuthenticateMcpServer(gh<_i139.ClaudeRepository>()),
     );
@@ -232,6 +232,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i167.WorkspaceFileWatcher>(),
         gh<_i207.Talker>(),
       )..init(),
+    );
+    gh.factory<_i977.ListMcpServers>(
+      () => _i977.ListMcpServers(gh<_i585.McpRepository>()),
     );
     gh.factory<_i308.ListDirectory>(
       () => _i308.ListDirectory(gh<_i150.FileSystemRepository>()),

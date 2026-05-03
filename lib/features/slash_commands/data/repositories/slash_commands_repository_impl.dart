@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/either.dart';
+import '../../../../core/utils/frontmatter.dart';
 import '../../../claude/data/datasources/claude_binary_resolver.dart';
 import '../../../claude/domain/entities/claude_event.dart';
 import '../../domain/entities/slash_command.dart';
@@ -47,32 +48,29 @@ class SlashCommandsRepositoryImpl implements SlashCommandsRepository {
       final pluginByName = {for (final p in discovery.plugins) p.name: p};
       final skillSet = discovery.skills.toSet();
 
-      final results = <SlashCommand>[];
-
-      // Authoritative trigger list from CLI init.
-      for (final name in discovery.slashCommands) {
-        final cmd = await _buildCommand(
-          name: name,
-          isSkill: skillSet.contains(name),
-          userByName: userByName,
-          projectByName: projectByName,
-          pluginByName: pluginByName,
-        );
-        results.add(cmd);
-      }
-
-      // Include skills not appearing in slash_commands (defensive).
-      for (final s in discovery.skills) {
-        if (discovery.slashCommands.contains(s)) continue;
-        final cmd = await _buildCommand(
-          name: s,
-          isSkill: true,
-          userByName: userByName,
-          projectByName: projectByName,
-          pluginByName: pluginByName,
-        );
-        results.add(cmd);
-      }
+      final discoverySkillSet = discovery.slashCommands.toSet();
+      final results = await Future.wait([
+        ...discovery.slashCommands.map(
+          (name) => _buildCommand(
+            name: name,
+            isSkill: skillSet.contains(name),
+            userByName: userByName,
+            projectByName: projectByName,
+            pluginByName: pluginByName,
+          ),
+        ),
+        ...discovery.skills
+            .where((s) => !discoverySkillSet.contains(s))
+            .map(
+              (s) => _buildCommand(
+                name: s,
+                isSkill: true,
+                userByName: userByName,
+                projectByName: projectByName,
+                pluginByName: pluginByName,
+              ),
+            ),
+      ]);
 
       // Include any user/project FS commands that the CLI didn't surface
       // (e.g., binary unavailable / discovery failed).
@@ -135,54 +133,24 @@ class SlashCommandsRepositoryImpl implements SlashCommandsRepository {
     required String name,
   }) async {
     final trigger = '/$name';
-    if (isSkill) {
-      final skillFile = File(p.join(plugin.path, 'skills', subName, 'SKILL.md'));
-      final fm = await _readFrontmatter(skillFile);
-      return SlashCommand(
-        name: name,
-        trigger: trigger,
-        description: fm?['description'] ?? subName,
-        argumentHint: fm?['argument-hint'],
-        source: SlashCommandSource.skill,
-        filePath: skillFile.existsSync() ? skillFile.path : null,
-      );
-    }
-
-    final relPath = subName.replaceAll(':', p.separator);
-    final cmdFile = File(p.join(plugin.path, 'commands', '$relPath.md'));
-    final fm = await _readFrontmatter(cmdFile);
+    final file = isSkill
+        ? File(p.join(plugin.path, 'skills', subName, 'SKILL.md'))
+        : File(p.join(plugin.path, 'commands', '${subName.replaceAll(':', p.separator)}.md'));
+    final read = await _readFile(file);
+    final fm = read != null ? parseFrontmatter(read) : null;
     return SlashCommand(
       name: name,
       trigger: trigger,
       description: fm?['description'] ?? subName,
       argumentHint: fm?['argument-hint'],
-      source: SlashCommandSource.plugin,
-      filePath: cmdFile.existsSync() ? cmdFile.path : null,
+      source: isSkill ? SlashCommandSource.skill : SlashCommandSource.plugin,
+      filePath: read != null ? file.path : null,
     );
   }
 
-  Future<Map<String, String>?> _readFrontmatter(File file) async {
-    if (!file.existsSync()) return null;
+  Future<String?> _readFile(File file) async {
     try {
-      final content = await file.readAsString();
-      if (!content.startsWith('---\n')) return null;
-      final end = content.indexOf('\n---\n', 4);
-      if (end == -1) return null;
-      final block = content.substring(4, end);
-      final result = <String, String>{};
-      for (final line in block.split('\n')) {
-        final colon = line.indexOf(':');
-        if (colon == -1) continue;
-        final key = line.substring(0, colon).trim();
-        var value = line.substring(colon + 1).trim();
-        if (value.startsWith('"') && value.endsWith('"')) {
-          value = value.substring(1, value.length - 1);
-        } else if (value.startsWith("'") && value.endsWith("'")) {
-          value = value.substring(1, value.length - 1);
-        }
-        if (key.isNotEmpty) result[key] = value;
-      }
-      return result;
+      return await file.readAsString();
     } catch (_) {
       return null;
     }

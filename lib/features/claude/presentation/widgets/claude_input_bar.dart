@@ -37,8 +37,6 @@ class ClaudeInputBar extends HookWidget {
       status == ClaudeRunStatus.connecting ||
       status == ClaudeRunStatus.running;
 
-  static final _slashPrefixRegex = RegExp(r'^\s*\/[a-zA-Z0-9:_-]*$');
-
   @override
   Widget build(BuildContext context) {
     final controller = useTextEditingController();
@@ -331,7 +329,7 @@ class ClaudeInputBar extends HookWidget {
 void _stripSlashPrefix(TextEditingController controller) {
   final lines = controller.text.split('\n');
   final last = lines.last;
-  if (ClaudeInputBar._slashPrefixRegex.hasMatch(last)) {
+  if (slashTriggerRegex.hasMatch(last)) {
     lines[lines.length - 1] = '';
   }
   final newText = lines.join('\n');

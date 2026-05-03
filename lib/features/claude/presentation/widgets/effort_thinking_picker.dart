@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -10,6 +11,13 @@ import '../../../../core/utils/menu_position.dart';
 import '../../../../shared/widgets/hoverable.dart';
 import '../../domain/entities/claude_effort.dart';
 import '../../domain/entities/claude_thinking_mode.dart';
+
+Color _thinkingAccent(ClaudeThinkingMode m) => switch (m) {
+  ClaudeThinkingMode.off => AppColors.onSurfaceVariant,
+  ClaudeThinkingMode.think => AppColors.trafficMaximize,
+  ClaudeThinkingMode.thinkHard => AppColors.trafficMinimize,
+  ClaudeThinkingMode.ultrathink => AppColors.trafficClose,
+};
 
 class EffortThinkingPicker extends StatelessWidget {
   const EffortThinkingPicker({
@@ -49,7 +57,7 @@ class EffortThinkingPicker extends StatelessWidget {
                 Icon(
                   Symbols.bolt,
                   size: 12,
-                  color: _thinkingColor(currentThinking),
+                  color: _thinkingAccent(currentThinking),
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 Text(
@@ -72,13 +80,6 @@ class EffortThinkingPicker extends StatelessWidget {
       ),
     );
   }
-
-  Color _thinkingColor(ClaudeThinkingMode m) => switch (m) {
-    ClaudeThinkingMode.off => AppColors.onSurfaceVariant,
-    ClaudeThinkingMode.think => AppColors.trafficMaximize,
-    ClaudeThinkingMode.thinkHard => AppColors.trafficMinimize,
-    ClaudeThinkingMode.ultrathink => AppColors.trafficClose,
-  };
 
   void _showOverlay(BuildContext context) {
     final box = context.findRenderObject() as RenderBox?;
@@ -104,7 +105,7 @@ class EffortThinkingPicker extends StatelessWidget {
   }
 }
 
-class _OverlayContent extends StatefulWidget {
+class _OverlayContent extends HookWidget {
   const _OverlayContent({
     required this.currentEffort,
     required this.currentThinking,
@@ -118,15 +119,10 @@ class _OverlayContent extends StatefulWidget {
   final ValueChanged<ClaudeThinkingMode> onThinkingSelected;
 
   @override
-  State<_OverlayContent> createState() => _OverlayContentState();
-}
-
-class _OverlayContentState extends State<_OverlayContent> {
-  late ClaudeEffort _effort = widget.currentEffort;
-  late ClaudeThinkingMode _thinking = widget.currentThinking;
-
-  @override
   Widget build(BuildContext context) {
+    final effort = useState(currentEffort);
+    final thinking = useState(currentThinking);
+
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
@@ -136,20 +132,20 @@ class _OverlayContentState extends State<_OverlayContent> {
           _SectionLabel(label: 'claude.terminal.effort.label'.tr()),
           const SizedBox(height: AppSpacing.xs),
           _EffortSegments(
-            current: _effort,
+            current: effort.value,
             onSelected: (e) {
-              setState(() => _effort = e);
-              widget.onEffortSelected(e);
+              effort.value = e;
+              onEffortSelected(e);
             },
           ),
           const SizedBox(height: AppSpacing.md),
           _SectionLabel(label: 'claude.terminal.thinking.label'.tr()),
           const SizedBox(height: AppSpacing.xs),
           _ThinkingSegments(
-            current: _thinking,
+            current: thinking.value,
             onSelected: (t) {
-              setState(() => _thinking = t);
-              widget.onThinkingSelected(t);
+              thinking.value = t;
+              onThinkingSelected(t);
             },
           ),
         ],
@@ -269,7 +265,7 @@ class _ThinkingSegments extends StatelessWidget {
         final selected = current == t;
         final isFirst = t == ClaudeThinkingMode.values.first;
         final isLast = t == ClaudeThinkingMode.values.last;
-        final dotColor = _thinkingDotColor(t);
+        final dotColor = _thinkingAccent(t);
         return Expanded(
           child: MouseRegion(
             cursor: SystemMouseCursors.click,
@@ -349,10 +345,4 @@ class _ThinkingSegments extends StatelessWidget {
     );
   }
 
-  Color _thinkingDotColor(ClaudeThinkingMode m) => switch (m) {
-    ClaudeThinkingMode.off => AppColors.onSurfaceVariant,
-    ClaudeThinkingMode.think => AppColors.trafficMaximize,
-    ClaudeThinkingMode.thinkHard => AppColors.trafficMinimize,
-    ClaudeThinkingMode.ultrathink => AppColors.trafficClose,
-  };
 }
