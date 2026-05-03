@@ -12,8 +12,6 @@ abstract class Workspace with _$Workspace {
     required String path,
     required String name,
     String? claudeMd,
-    @Default(<SessionId>[]) List<SessionId> sessionIds,
-    SessionId? activeSessionId,
     required DateTime openedAt,
   }) = _Workspace;
 }

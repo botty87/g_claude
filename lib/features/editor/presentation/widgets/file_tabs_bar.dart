@@ -1,9 +1,9 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../shell/presentation/cubit/shell_cubit.dart';
@@ -33,6 +33,9 @@ class FileTabsBar extends HookWidget {
     }
 
     final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
+    final isSessionsActivity = context.select<ShellCubit, bool>(
+      (c) => c.state.selectedActivity == ActivityId.sessions,
+    );
 
     return Container(
       height: AppSpacing.toolbarHeight,
@@ -42,9 +45,9 @@ class FileTabsBar extends HookWidget {
       ),
       child: Row(
         children: [
-          const OpenFilesButton(),
+          if (!isSessionsActivity) const OpenFilesButton(),
           Expanded(
-            child: activeId == null
+            child: isSessionsActivity || activeId == null
                 ? const SizedBox.shrink()
                 : BlocConsumer<FileTabsCubit, FileTabsState>(
                     listenWhen: (prev, curr) =>
@@ -98,7 +101,7 @@ class _WorkspaceToggleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final workspaceOpen = context.select<ShellCubit, bool>((c) => c.state.workspaceOpen);
-    final action = workspaceOpen ? 'shell.workspace.toggleToFullscreen'.tr() : 'shell.workspace.toggleToWorkspace'.tr();
+    final action = workspaceOpen ? Locales.Shell.Workspace.toggleToFullscreen : Locales.Shell.Workspace.toggleToWorkspace;
     return Tooltip(
       message: '$action (⌘B)',
       child: IconButton(

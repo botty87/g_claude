@@ -1,10 +1,10 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -30,7 +30,7 @@ class OpenFilesButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadii.sm),
         ),
         child: Tooltip(
-          message: 'editor.openFiles.tooltip'.tr(),
+          message: Locales.Editor.OpenFiles.tooltip,
           child: const Icon(
             Symbols.list,
             size: 18,
@@ -117,7 +117,7 @@ class _OpenFilesPopover extends HookWidget {
                         autofocus: true,
                         style: AppTypography.bodyMain.copyWith(fontSize: 13),
                         decoration: InputDecoration(
-                          hintText: 'editor.openFiles.searchHint'.tr(),
+                          hintText: Locales.Editor.OpenFiles.searchHint,
                           hintStyle: AppTypography.bodyMain.copyWith(
                             fontSize: 13,
                             color: AppColors.onSurfaceVariant
@@ -176,19 +176,19 @@ class _OpenFilesList extends StatelessWidget {
       (c) => c.state.activeWorkspace,
     );
     if (active == null) {
-      return _placeholder('editor.openFiles.empty'.tr());
+      return _placeholder(Locales.Editor.OpenFiles.empty);
     }
     final files = context.select<FileTabsCubit, WorkspaceFiles?>(
       (c) => c.state.filesFor(active.id),
     );
     final paths = files?.openPaths ?? const <String>[];
     if (paths.isEmpty) {
-      return _placeholder('editor.openFiles.empty'.tr());
+      return _placeholder(Locales.Editor.OpenFiles.empty);
     }
     final filtered =
         paths.where((path) => _matches(path, active.path)).toList();
     if (filtered.isEmpty) {
-      return _placeholder('editor.openFiles.noMatches'.tr());
+      return _placeholder(Locales.Editor.OpenFiles.noMatches);
     }
     return ListView.builder(
       shrinkWrap: true,

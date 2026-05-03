@@ -9,6 +9,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import 'app.dart';
 import 'core/di/di.dart';
+import 'core/l10n/l10n.dart';
 import 'core/marionette/marionette_log_bridge.dart';
 import 'core/window/window_setup.dart';
 import 'features/editor/domain/usecases/read_file.dart';
@@ -88,9 +89,9 @@ Future<void> main() async {
 
   runApp(
     EasyLocalization(
-      supportedLocales: const [Locale('en'), Locale('it')],
+      supportedLocales: Locales.supportedLocales,
       path: 'assets/translations',
-      fallbackLocale: const Locale('en'),
+      fallbackLocale: Locales.fallbackLocale,
       useOnlyLangCode: true,
       child: App(),
     ),

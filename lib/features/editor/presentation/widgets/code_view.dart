@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:re_highlight/languages/dart.dart';
@@ -26,6 +25,7 @@ import 'package:re_highlight/languages/ini.dart';
 import 'package:re_highlight/styles/github-dark.dart' as hl_theme;
 
 import '../../../../core/di/di.dart';
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/error/failure_extensions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -181,7 +181,7 @@ class _ErrorView extends StatelessWidget {
       msg = _mapValidationMessage(f.message);
       caption = null;
     } else {
-      msg = 'editor.fileLoadError'.tr();
+      msg = Locales.Editor.fileLoadError;
       caption = f.toUserMessage();
     }
 
@@ -206,9 +206,9 @@ class _ErrorView extends StatelessWidget {
   }
 
   String _mapValidationMessage(String msg) {
-    if (msg.contains('file too large')) return 'editor.fileTooLarge'.tr();
-    if (msg.contains('binary')) return 'editor.binaryFile'.tr();
-    return 'editor.fileLoadError'.tr();
+    if (msg.contains('file too large')) return Locales.Editor.fileTooLarge;
+    if (msg.contains('binary')) return Locales.Editor.binaryFile;
+    return Locales.Editor.fileLoadError;
   }
 }
 

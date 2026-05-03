@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:collection/collection.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -10,6 +9,7 @@ import 'package:path/path.dart' as p;
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../../../core/l10n/l10n.dart';
 import '../../data/datasources/workspace_file_watcher.dart';
 import '../../data/datasources/workspaces_persistence_datasource.dart';
 import '../../domain/entities/workspace.dart';
@@ -51,7 +51,7 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
 
   Future<void> openFromPicker() async {
     final selected = await FilePicker.getDirectoryPath(
-      dialogTitle: 'workspace.picker.title'.tr(),
+      dialogTitle: Locales.Workspace.Picker.title,
     );
     if (selected == null) {
       _talker.debug('Workspace picker dismissed');

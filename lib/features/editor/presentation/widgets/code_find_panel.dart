@@ -1,8 +1,8 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:re_editor/re_editor.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -40,7 +40,7 @@ class CodeFindPanel extends StatelessWidget implements PreferredSizeWidget {
     }
     final result = value.result;
     final resultText = result == null
-        ? 'editor.find.noResults'.tr()
+        ? Locales.Editor.Find.noResults
         : '${result.index + 1} / ${result.matches.length}';
     final inputStyle = AppTypography.bodyMain.copyWith(
       fontSize: 13,
@@ -73,7 +73,7 @@ class CodeFindPanel extends StatelessWidget implements PreferredSizeWidget {
                     maxLines: 1,
                     style: inputStyle,
                     decoration: InputDecoration(
-                      hintText: 'editor.find.hint'.tr(),
+                      hintText: Locales.Editor.Find.hint,
                       hintStyle: inputStyle.copyWith(
                         color:
                             AppColors.onSurfaceVariant.withValues(alpha: 0.5),
@@ -86,13 +86,13 @@ class CodeFindPanel extends StatelessWidget implements PreferredSizeWidget {
                 _ToggleButton(
                   text: 'Aa',
                   active: value.option.caseSensitive,
-                  tooltip: 'editor.find.caseSensitive'.tr(),
+                  tooltip: Locales.Editor.Find.caseSensitive,
                   onTap: controller.toggleCaseSensitive,
                 ),
                 _ToggleButton(
                   text: '.*',
                   active: value.option.regex,
-                  tooltip: 'editor.find.regex'.tr(),
+                  tooltip: Locales.Editor.Find.regex,
                   onTap: controller.toggleRegex,
                 ),
                 const SizedBox(width: AppSpacing.xs),
@@ -106,17 +106,17 @@ class CodeFindPanel extends StatelessWidget implements PreferredSizeWidget {
                 const SizedBox(width: AppSpacing.xs),
                 _IconButton(
                   icon: Symbols.keyboard_arrow_up,
-                  tooltip: 'editor.find.previous'.tr(),
+                  tooltip: Locales.Editor.Find.previous,
                   onTap: result == null ? null : controller.previousMatch,
                 ),
                 _IconButton(
                   icon: Symbols.keyboard_arrow_down,
-                  tooltip: 'editor.find.next'.tr(),
+                  tooltip: Locales.Editor.Find.next,
                   onTap: result == null ? null : controller.nextMatch,
                 ),
                 _IconButton(
                   icon: Symbols.close,
-                  tooltip: 'editor.find.close'.tr(),
+                  tooltip: Locales.Editor.Find.close,
                   onTap: controller.close,
                 ),
               ],

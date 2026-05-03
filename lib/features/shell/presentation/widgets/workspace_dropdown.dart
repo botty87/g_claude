@@ -1,8 +1,8 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -42,7 +42,7 @@ class WorkspaceDropdown extends StatelessWidget {
               const SizedBox(width: AppSpacing.xs),
               Flexible(
                 child: Text(
-                  active?.name ?? 'workspace.dropdown.empty'.tr(),
+                  active?.name ?? Locales.Workspace.Dropdown.empty,
                   style: AppTypography.bodyMain.copyWith(fontSize: 12),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
@@ -112,7 +112,7 @@ class WorkspaceDropdown extends StatelessWidget {
                 size: 16, color: AppColors.onSurfaceVariant),
             const SizedBox(width: AppSpacing.sm),
             Text(
-              'workspace.dropdown.openFolder'.tr(),
+              Locales.Workspace.Dropdown.openFolder,
               style: AppTypography.bodyMain.copyWith(fontSize: 13),
             ),
           ],
@@ -182,7 +182,7 @@ class _WorkspaceMenuItem extends StatelessWidget {
             Hoverable(
               onTap: onClose,
               builder: (context, hover) => Tooltip(
-                message: 'workspace.dropdown.closeWorkspace'.tr(),
+                message: Locales.Workspace.Dropdown.closeWorkspace,
                 child: Container(
                   width: 18,
                   height: 18,

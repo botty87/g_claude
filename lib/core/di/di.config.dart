@@ -17,6 +17,8 @@ import 'package:talker_flutter/talker_flutter.dart' as _i207;
 
 import '../../features/claude/data/datasources/claude_binary_resolver.dart'
     as _i1073;
+import '../../features/claude/data/datasources/claude_history_datasource.dart'
+    as _i278;
 import '../../features/claude/data/datasources/claude_process_datasource.dart'
     as _i457;
 import '../../features/claude/data/datasources/claude_settings_writer.dart'
@@ -24,19 +26,39 @@ import '../../features/claude/data/datasources/claude_settings_writer.dart'
 import '../../features/claude/data/datasources/mcp_list_datasource.dart'
     as _i340;
 import '../../features/claude/data/datasources/permission_server.dart' as _i407;
+import '../../features/claude/data/datasources/sessions_database.dart'
+    as _i1060;
+import '../../features/claude/data/datasources/sessions_index_datasource.dart'
+    as _i627;
+import '../../features/claude/data/repositories/chat_history_repository_impl.dart'
+    as _i682;
 import '../../features/claude/data/repositories/claude_repository_impl.dart'
     as _i1009;
 import '../../features/claude/data/repositories/mcp_repository_impl.dart'
     as _i629;
+import '../../features/claude/domain/repositories/chat_history_repository.dart'
+    as _i875;
 import '../../features/claude/domain/repositories/claude_repository.dart'
     as _i139;
 import '../../features/claude/domain/repositories/mcp_repository.dart' as _i585;
 import '../../features/claude/domain/usecases/authenticate_mcp_server.dart'
     as _i407;
+import '../../features/claude/domain/usecases/delete_chat_session.dart'
+    as _i927;
+import '../../features/claude/domain/usecases/export_chat_session.dart'
+    as _i691;
 import '../../features/claude/domain/usecases/list_mcp_servers.dart' as _i977;
+import '../../features/claude/domain/usecases/load_chat_history.dart' as _i1009;
+import '../../features/claude/domain/usecases/load_session_messages.dart'
+    as _i992;
+import '../../features/claude/domain/usecases/refresh_sessions_index.dart'
+    as _i374;
+import '../../features/claude/domain/usecases/search_sessions.dart' as _i73;
 import '../../features/claude/domain/usecases/send_prompt.dart' as _i338;
 import '../../features/claude/domain/usecases/stop_run.dart' as _i328;
 import '../../features/claude/domain/usecases/toggle_mcp_server.dart' as _i920;
+import '../../features/claude/presentation/cubit/chat_history_cubit.dart'
+    as _i285;
 import '../../features/claude/presentation/cubit/claude_sessions_cubit.dart'
     as _i838;
 import '../../features/editor/data/datasources/file_content_datasource.dart'
@@ -90,6 +112,7 @@ import '../../features/workspace/presentation/cubit/workspaces_cubit.dart'
 import '../persistence/key_value_store.dart' as _i494;
 import '../router/app_router.dart' as _i81;
 import 'modules/bloc_observer_module.dart' as _i596;
+import 'modules/database_module.dart' as _i664;
 import 'modules/preferences_module.dart' as _i329;
 import 'modules/router_module.dart' as _i322;
 import 'modules/talker_module.dart' as _i185;
@@ -102,6 +125,7 @@ extension GetItInjectableX on _i174.GetIt {
   }) async {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final preferencesModule = _$PreferencesModule();
+    final databaseModule = _$DatabaseModule();
     final routerModule = _$RouterModule();
     final talkerModule = _$TalkerModule();
     final blocObserverModule = _$BlocObserverModule();
@@ -110,6 +134,10 @@ extension GetItInjectableX on _i174.GetIt {
       preResolve: true,
     );
     gh.factory<_i679.FilterSlashCommands>(() => _i679.FilterSlashCommands());
+    await gh.lazySingletonAsync<_i1060.SessionsDatabase>(
+      () => databaseModule.sessionsDatabase(),
+      preResolve: true,
+    );
     gh.lazySingleton<_i81.AppRouter>(() => routerModule.router);
     gh.lazySingleton<_i207.Talker>(() => talkerModule.talker);
     gh.lazySingleton<_i735.WorkspaceLocalDataSource>(
@@ -150,6 +178,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i676.LoadSlashCommands>(
       () => _i676.LoadSlashCommands(gh<_i266.SlashCommandsRepository>()),
     );
+    gh.lazySingleton<_i278.ClaudeHistoryDataSource>(
+      () => _i278.ClaudeHistoryDataSourceImpl(gh<_i207.Talker>()),
+    );
     gh.lazySingleton<_i457.ClaudeProcessDataSource>(
       () => _i457.ClaudeProcessDataSourceImpl(
         gh<_i207.Talker>(),
@@ -172,6 +203,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i622.ReadFile>(
       () => _i622.ReadFile(gh<_i1043.FileContentRepository>()),
+    );
+    gh.lazySingleton<_i627.SessionsIndexDataSource>(
+      () => _i627.SessionsIndexDataSourceImpl(
+        gh<_i1060.SessionsDatabase>(),
+        gh<_i278.ClaudeHistoryDataSource>(),
+      ),
     );
     gh.lazySingleton<_i268.WorkspaceRepository>(
       () => _i824.WorkspaceRepositoryImpl(gh<_i735.WorkspaceLocalDataSource>()),
@@ -225,6 +262,31 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i207.Talker>(),
       ),
     );
+    gh.lazySingleton<_i875.ChatHistoryRepository>(
+      () => _i682.ChatHistoryRepositoryImpl(
+        gh<_i627.SessionsIndexDataSource>(),
+        gh<_i278.ClaudeHistoryDataSource>(),
+        gh<_i207.Talker>(),
+      ),
+    );
+    gh.factory<_i927.DeleteChatSession>(
+      () => _i927.DeleteChatSession(gh<_i875.ChatHistoryRepository>()),
+    );
+    gh.factory<_i691.ExportChatSession>(
+      () => _i691.ExportChatSession(gh<_i875.ChatHistoryRepository>()),
+    );
+    gh.factory<_i1009.LoadChatHistory>(
+      () => _i1009.LoadChatHistory(gh<_i875.ChatHistoryRepository>()),
+    );
+    gh.factory<_i992.LoadSessionMessages>(
+      () => _i992.LoadSessionMessages(gh<_i875.ChatHistoryRepository>()),
+    );
+    gh.factory<_i374.RefreshSessionsIndex>(
+      () => _i374.RefreshSessionsIndex(gh<_i875.ChatHistoryRepository>()),
+    );
+    gh.factory<_i73.SearchSessions>(
+      () => _i73.SearchSessions(gh<_i875.ChatHistoryRepository>()),
+    );
     gh.lazySingleton<_i179.WorkspacesCubit>(
       () => _i179.WorkspacesCubit(
         gh<_i305.OpenWorkspace>(),
@@ -239,6 +301,21 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i308.ListDirectory>(
       () => _i308.ListDirectory(gh<_i150.FileSystemRepository>()),
     );
+    gh.lazySingleton<_i838.ClaudeSessionsCubit>(
+      () => _i838.ClaudeSessionsCubit(
+        gh<_i338.SendPrompt>(),
+        gh<_i328.StopRun>(),
+        gh<_i977.ListMcpServers>(),
+        gh<_i920.ToggleMcpServer>(),
+        gh<_i407.AuthenticateMcpServer>(),
+        gh<_i992.LoadSessionMessages>(),
+        gh<_i278.ClaudeHistoryDataSource>(),
+        gh<_i179.WorkspacesCubit>(),
+        gh<_i407.PermissionServer>(),
+        gh<_i460.SharedPreferences>(),
+        gh<_i207.Talker>(),
+      )..init(),
+    );
     gh.lazySingleton<_i648.FileTabsCubit>(
       () => _i648.FileTabsCubit(
         gh<_i179.WorkspacesCubit>(),
@@ -247,16 +324,16 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i207.Talker>(),
       )..init(),
     );
-    gh.lazySingleton<_i838.ClaudeSessionsCubit>(
-      () => _i838.ClaudeSessionsCubit(
-        gh<_i338.SendPrompt>(),
-        gh<_i328.StopRun>(),
-        gh<_i977.ListMcpServers>(),
-        gh<_i920.ToggleMcpServer>(),
-        gh<_i407.AuthenticateMcpServer>(),
+    gh.lazySingleton<_i285.ChatHistoryCubit>(
+      () => _i285.ChatHistoryCubit(
+        gh<_i1009.LoadChatHistory>(),
+        gh<_i992.LoadSessionMessages>(),
+        gh<_i374.RefreshSessionsIndex>(),
+        gh<_i927.DeleteChatSession>(),
+        gh<_i691.ExportChatSession>(),
+        gh<_i73.SearchSessions>(),
+        gh<_i278.ClaudeHistoryDataSource>(),
         gh<_i179.WorkspacesCubit>(),
-        gh<_i407.PermissionServer>(),
-        gh<_i460.SharedPreferences>(),
         gh<_i207.Talker>(),
       )..init(),
     );
@@ -281,6 +358,8 @@ extension GetItInjectableX on _i174.GetIt {
 }
 
 class _$PreferencesModule extends _i329.PreferencesModule {}
+
+class _$DatabaseModule extends _i664.DatabaseModule {}
 
 class _$RouterModule extends _i322.RouterModule {}
 

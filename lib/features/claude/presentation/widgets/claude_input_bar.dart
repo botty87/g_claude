@@ -8,6 +8,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/di/di.dart';
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -276,8 +277,8 @@ class ClaudeInputBar extends HookWidget {
                           isCollapsed: true,
                           border: InputBorder.none,
                           hintText: _isBusy
-                              ? 'claude.terminal.input.placeholderRunning'.tr()
-                              : 'claude.terminal.input.placeholder'.tr(),
+                              ? Locales.Claude.Terminal.Input.placeholderRunning
+                              : Locales.Claude.Terminal.Input.placeholder,
                           hintStyle: AppTypography.terminalCode.copyWith(
                             color: AppColors.outline,
                           ),

@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/utils/menu_position.dart';
 import '../../../../shared/widgets/hoverable.dart';
 import '../../domain/entities/claude_model.dart';
@@ -24,7 +25,7 @@ class ModelPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'claude.terminal.model.tooltip'.tr(),
+      message: Locales.Claude.Terminal.Model.tooltip,
       child: Hoverable(
         key: const ValueKey('claude_model_picker'),
         onTap: enabled ? () => _showMenu(context) : null,

@@ -171,6 +171,37 @@
       "removeTooltip": "Rimuovi comando"
     }
   },
+  "sessions": {
+    "list": {
+      "headerLabel": "SESSIONI",
+      "search": "Cerca nei messaggi...",
+      "empty": "Nessuna sessione",
+      "newChat": "Nuova chat",
+      "refresh": "Aggiorna",
+      "untitled": "Sessione senza titolo",
+      "relativeDate": {
+        "now": "Ora",
+        "minutesAgo": "{n} min fa",
+        "hoursAgo": "{n} h fa",
+        "yesterday": "Ieri"
+      }
+    },
+    "preview": {
+      "empty": "Seleziona una sessione per vederne l'anteprima",
+      "resume": "Riprendi questa sessione",
+      "resumeConfirmTitle": "Sostituire la chat corrente?",
+      "resumeConfirmBody": "La conversazione attuale di questo workspace verrà sostituita. Continuare?",
+      "resumeConfirmOk": "Riprendi",
+      "resumeConfirmCancel": "Annulla",
+      "delete": "Elimina",
+      "deleteConfirmTitle": "Eliminare la sessione?",
+      "deleteConfirmBody": "Il file della sessione verrà rimosso definitivamente dal disco. L'azione non è reversibile.",
+      "deleteConfirmOk": "Elimina",
+      "deleteConfirmCancel": "Annulla",
+      "export": "Esporta come Markdown",
+      "exportDone": "Sessione esportata in {path}"
+    }
+  },
   "editor": {
     "noFileOpen": "Nessun file aperto. Clicca un file nell'explorer per visualizzarlo.",
     "fileLoadError": "Impossibile leggere il file",

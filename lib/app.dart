@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/di/di.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'features/claude/presentation/cubit/chat_history_cubit.dart';
 import 'features/claude/presentation/cubit/claude_sessions_cubit.dart';
 import 'features/editor/presentation/cubit/file_tabs_cubit.dart';
 import 'features/explorer/presentation/cubit/explorer_cubit.dart';
@@ -26,6 +27,9 @@ class App extends StatelessWidget {
         BlocProvider<FileTabsCubit>.value(value: getIt<FileTabsCubit>()),
         BlocProvider<ClaudeSessionsCubit>.value(
           value: getIt<ClaudeSessionsCubit>(),
+        ),
+        BlocProvider<ChatHistoryCubit>.value(
+          value: getIt<ChatHistoryCubit>(),
         ),
       ],
       child: MaterialApp.router(

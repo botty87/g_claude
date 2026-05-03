@@ -171,6 +171,37 @@
       "removeTooltip": "Remove command"
     }
   },
+  "sessions": {
+    "list": {
+      "headerLabel": "SESSIONS",
+      "search": "Search messages...",
+      "empty": "No sessions yet",
+      "newChat": "New chat",
+      "refresh": "Refresh",
+      "untitled": "Untitled session",
+      "relativeDate": {
+        "now": "Now",
+        "minutesAgo": "{n} min ago",
+        "hoursAgo": "{n}h ago",
+        "yesterday": "Yesterday"
+      }
+    },
+    "preview": {
+      "empty": "Select a session to preview it here",
+      "resume": "Resume this session",
+      "resumeConfirmTitle": "Replace current chat?",
+      "resumeConfirmBody": "The current conversation in this workspace will be replaced. Continue?",
+      "resumeConfirmOk": "Resume",
+      "resumeConfirmCancel": "Cancel",
+      "delete": "Delete",
+      "deleteConfirmTitle": "Delete session?",
+      "deleteConfirmBody": "The session file will be permanently removed from disk. This cannot be undone.",
+      "deleteConfirmOk": "Delete",
+      "deleteConfirmCancel": "Cancel",
+      "export": "Export as Markdown",
+      "exportDone": "Session exported to {path}"
+    }
+  },
   "editor": {
     "noFileOpen": "No file open. Click a file in the explorer to view it.",
     "fileLoadError": "Cannot read file",
