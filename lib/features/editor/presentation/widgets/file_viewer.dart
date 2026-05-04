@@ -10,7 +10,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../cubit/file_tabs_cubit.dart';
-import 'code_view.dart';
+import 'file_preview.dart';
 
 /// Bounded LRU pool of mounted [CodeView]s, switched via [IndexedStack].
 ///
@@ -97,8 +97,8 @@ class _PooledStack extends HookWidget {
       children: [
         for (final path in paths)
           KeyedSubtree(
-            key: ValueKey('codeview-$path'),
-            child: CodeView(path: path),
+            key: ValueKey('preview-$path'),
+            child: FilePreview(path: path),
           ),
       ],
     );

@@ -291,6 +291,20 @@
       "close": "Chiudi",
       "caseSensitive": "Maiuscole/minuscole",
       "regex": "Regex"
+    },
+    "markdown": {
+      "toggleRendered": "Anteprima",
+      "toggleSource": "Sorgente"
+    },
+    "image": {
+      "loadError": "Impossibile caricare l'immagine"
+    },
+    "pdf": {
+      "loadError": "Impossibile caricare il PDF"
+    },
+    "unsupported": {
+      "title": "Anteprima non disponibile",
+      "revealInFinder": "Mostra nel Finder"
     }
   }
 }

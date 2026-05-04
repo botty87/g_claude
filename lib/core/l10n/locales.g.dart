@@ -514,11 +514,23 @@ class _Editor {
   /// Translations for find
   final Find = const _EditorFind._();
 
+  /// Translations for image
+  final Image = const _EditorImage._();
+
+  /// Translations for markdown
+  final Markdown = const _EditorMarkdown._();
+
   /// Translations for openFiles
   final OpenFiles = const _EditorOpenFiles._();
 
+  /// Translations for pdf
+  final Pdf = const _EditorPdf._();
+
   /// Translations for tab
   final Tab = const _EditorTab._();
+
+  /// Translations for unsupported
+  final Unsupported = const _EditorUnsupported._();
 
 }
 
@@ -535,6 +547,21 @@ class _EditorFind {
   String get regex => LocaleKeys.editor_find_regex.tr();
 }
 
+/// Nested class for image translations
+class _EditorImage {
+  const _EditorImage._();
+
+  String get loadError => LocaleKeys.editor_image_loadError.tr();
+}
+
+/// Nested class for markdown translations
+class _EditorMarkdown {
+  const _EditorMarkdown._();
+
+  String get toggleRendered => LocaleKeys.editor_markdown_toggleRendered.tr();
+  String get toggleSource => LocaleKeys.editor_markdown_toggleSource.tr();
+}
+
 /// Nested class for openFiles translations
 class _EditorOpenFiles {
   const _EditorOpenFiles._();
@@ -545,11 +572,26 @@ class _EditorOpenFiles {
   String get tooltip => LocaleKeys.editor_openFiles_tooltip.tr();
 }
 
+/// Nested class for pdf translations
+class _EditorPdf {
+  const _EditorPdf._();
+
+  String get loadError => LocaleKeys.editor_pdf_loadError.tr();
+}
+
 /// Nested class for tab translations
 class _EditorTab {
   const _EditorTab._();
 
   String get close => LocaleKeys.editor_tab_close.tr();
+}
+
+/// Nested class for unsupported translations
+class _EditorUnsupported {
+  const _EditorUnsupported._();
+
+  String get revealInFinder => LocaleKeys.editor_unsupported_revealInFinder.tr();
+  String get title => LocaleKeys.editor_unsupported_title.tr();
 }
 
 /// Nested class for sessions translations

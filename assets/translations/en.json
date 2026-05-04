@@ -291,6 +291,20 @@
       "close": "Close",
       "caseSensitive": "Match case",
       "regex": "Regex"
+    },
+    "markdown": {
+      "toggleRendered": "Preview",
+      "toggleSource": "Source"
+    },
+    "image": {
+      "loadError": "Cannot load image"
+    },
+    "pdf": {
+      "loadError": "Cannot load PDF"
+    },
+    "unsupported": {
+      "title": "Preview not available",
+      "revealInFinder": "Reveal in Finder"
     }
   }
 }

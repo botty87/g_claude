@@ -61,8 +61,11 @@ dependencies:
   # Layout
   multi_split_view: ^3.6.1
 
-  # Markdown rendering (predisposto per chat — non usato in sessione 1)
-  flutter_markdown: ^0.7.7+1
+  # Markdown rendering
+  flutter_markdown_plus: ^1.0.7
+
+  # PDF viewer
+  pdfrx: ^2.2.24
 
   # Localization
   easy_localization: ^3.0.8

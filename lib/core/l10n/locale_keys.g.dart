@@ -249,6 +249,16 @@ abstract class  LocaleKeys {
   static const editor_find_caseSensitive = 'editor.find.caseSensitive';
   static const editor_find_regex = 'editor.find.regex';
   static const editor_find = 'editor.find';
+  static const editor_markdown_toggleRendered = 'editor.markdown.toggleRendered';
+  static const editor_markdown_toggleSource = 'editor.markdown.toggleSource';
+  static const editor_markdown = 'editor.markdown';
+  static const editor_image_loadError = 'editor.image.loadError';
+  static const editor_image = 'editor.image';
+  static const editor_pdf_loadError = 'editor.pdf.loadError';
+  static const editor_pdf = 'editor.pdf';
+  static const editor_unsupported_title = 'editor.unsupported.title';
+  static const editor_unsupported_revealInFinder = 'editor.unsupported.revealInFinder';
+  static const editor_unsupported = 'editor.unsupported';
   static const editor = 'editor';
 
 }

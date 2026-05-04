@@ -62,6 +62,11 @@ class ShellCubit extends Cubit<ShellState> {
     emit(state.copyWith(sidePanelCollapsed: !state.sidePanelCollapsed));
   }
 
+  void setPaneSizes(Map<String, double> sizes) {
+    final next = {...state.paneSizes, ...sizes};
+    emit(state.copyWith(paneSizes: next));
+  }
+
   @override
   Future<void> close() async {
     await _tabsSub?.cancel();

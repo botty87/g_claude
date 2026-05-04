@@ -22,6 +22,11 @@ import 'side_panel.dart';
 class AppShellPage extends HookWidget {
   const AppShellPage({super.key});
 
+  // Stable across the two layout branches (workspace open vs fullscreen chat)
+  // and across MultiSplitView controller recreations. Without it, the pane
+  // remounts every Cmd+B toggle and loses scroll/state.
+  static final _claudePaneKey = GlobalKey(debugLabel: 'ClaudeTerminalPane');
+
   @override
   Widget build(BuildContext context) {
     final focusNode = useFocusNode();
@@ -70,12 +75,12 @@ class AppShellPage extends HookWidget {
             Expanded(
               child: workspaceOpen
                   ? Row(
-                      children: const [
-                        ActivityBar(),
-                        Expanded(child: _MainArea()),
+                      children: [
+                        const ActivityBar(),
+                        Expanded(child: _MainArea(claudePaneKey: _claudePaneKey)),
                       ],
                     )
-                  : const ClaudeTerminalPane(),
+                  : ClaudeTerminalPane(key: _claudePaneKey),
             ),
           ],
         ),
@@ -85,7 +90,9 @@ class AppShellPage extends HookWidget {
 }
 
 class _MainArea extends HookWidget {
-  const _MainArea();
+  const _MainArea({required this.claudePaneKey});
+
+  final Key claudePaneKey;
 
   static const _idSide = 'side';
   static const _idPreview = 'preview';
@@ -105,26 +112,62 @@ class _MainArea extends HookWidget {
     final sidePanelCollapsed = context.select<ShellCubit, bool>(
       (c) => c.state.sidePanelCollapsed,
     );
-    final hidesPreview = context.select<ShellCubit, bool>(
-      (c) => c.state.selectedActivity == ActivityId.logs,
+    final selectedActivity = context.select<ShellCubit, ActivityId>(
+      (c) => c.state.selectedActivity,
     );
+    final activeId = context.select<WorkspacesCubit, WorkspaceId?>(
+      (c) => c.state.activeIdOrNull,
+    );
+    final hasOpenFiles = context.select<FileTabsCubit, bool>(
+      (c) => activeId != null &&
+          (c.state.filesFor(activeId)?.openPaths.isNotEmpty ?? false),
+    );
+
+    final hidesPreview = selectedActivity == ActivityId.logs ||
+        (selectedActivity != ActivityId.sessions && !hasOpenFiles);
+
+    final savedSizes = context.read<ShellCubit>().state.paneSizes;
+
     final controller = useMemoized(
       () => MultiSplitViewController(
         areas: [
           if (!sidePanelCollapsed)
             Area(
               id: _idSide,
-              size: hidesPreview ? 660 : 280,
+              size: savedSizes[_idSide] ?? (hidesPreview ? 660 : 280),
               min: 200,
               max: hidesPreview ? 1100 : 480,
             ),
-          if (!hidesPreview) Area(id: _idPreview, size: 380, min: 320),
-          Area(id: _idClaude, size: 600, min: 360),
+          if (!hidesPreview)
+            Area(
+              id: _idPreview,
+              size: savedSizes[_idPreview] ?? 380,
+              min: 320,
+            ),
+          Area(
+            id: _idClaude,
+            size: savedSizes[_idClaude] ?? 600,
+            min: 360,
+          ),
         ],
       ),
       [sidePanelCollapsed, hidesPreview],
     );
     useEffect(() => controller.dispose, [controller]);
+
+    void persistSizes() {
+      final next = <String, double>{};
+      for (final area in controller.areas) {
+        final id = area.id;
+        final size = area.size;
+        if (id is String && size != null) {
+          next[id] = size;
+        }
+      }
+      if (next.isNotEmpty) {
+        context.read<ShellCubit>().setPaneSizes(next);
+      }
+    }
 
     final active = context.select<WorkspacesCubit, Workspace?>(
       (c) => c.state.activeWorkspace,
@@ -137,6 +180,7 @@ class _MainArea extends HookWidget {
       child: MultiSplitView(
         controller: controller,
         sizeOverflowPolicy: SizeOverflowPolicy.shrinkFirst,
+        onDividerDragEnd: (_) => persistSizes(),
         builder: (context, area) {
           switch (area.id) {
             case _idSide:
@@ -153,7 +197,7 @@ class _MainArea extends HookWidget {
                 },
               );
             case _idClaude:
-              return const ClaudeTerminalPane();
+              return ClaudeTerminalPane(key: claudePaneKey);
             default:
               return const SizedBox.shrink();
           }
