@@ -47,8 +47,7 @@ class AppShellPage extends HookWidget {
     bool closeActiveTab() {
       final activeId = context.read<WorkspacesCubit>().state.activeIdOrNull;
       if (activeId == null) return false;
-      final activePath =
-          context.read<FileTabsCubit>().state.filesFor(activeId)?.activePath;
+      final activePath = context.read<FileTabsCubit>().state.filesFor(activeId)?.activePath;
       if (activePath == null) return false;
       context.read<FileTabsCubit>().closeFile(activeId, activePath);
       return true;
@@ -57,8 +56,7 @@ class AppShellPage extends HookWidget {
     bool attachActiveEditor() {
       final activeId = context.read<WorkspacesCubit>().state.activeIdOrNull;
       if (activeId == null) return false;
-      final activePath =
-          context.read<FileTabsCubit>().state.filesFor(activeId)?.activePath;
+      final activePath = context.read<FileTabsCubit>().state.filesFor(activeId)?.activePath;
       if (activePath == null) return false;
       final sessions = context.read<ClaudeSessionsCubit>();
       final selection = getIt<ActiveEditorCubit>().snapshotFor(activeId);
@@ -70,23 +68,22 @@ class AppShellPage extends HookWidget {
       if (selection != null && !selection.isEmpty) {
         newAttachment = ChatAttachment(
           path: selection.path,
-          displayName:
-              '${p.basename(selection.path)}:${selection.startLine}-${selection.endLine}',
+          displayName: '${p.basename(selection.path)}:${selection.startLine}-${selection.endLine}',
           kind: ChatAttachmentKind.fileRange,
           startLine: selection.startLine,
           endLine: selection.endLine,
           snippet: selection.snippet,
         );
-        isDuplicate = currentAttachments.any((a) =>
-            a.kind == ChatAttachmentKind.fileRange &&
-            p.normalize(a.path) == p.normalize(selection.path) &&
-            a.startLine == selection.startLine &&
-            a.endLine == selection.endLine);
+        isDuplicate = currentAttachments.any(
+          (a) =>
+              a.kind == ChatAttachmentKind.fileRange &&
+              p.normalize(a.path) == p.normalize(selection.path) &&
+              a.startLine == selection.startLine &&
+              a.endLine == selection.endLine,
+        );
       } else {
         final norm = p.normalize(activePath);
-        isDuplicate = currentAttachments.any((a) =>
-            a.kind == ChatAttachmentKind.file &&
-            p.normalize(a.path) == norm);
+        isDuplicate = currentAttachments.any((a) => a.kind == ChatAttachmentKind.file && p.normalize(a.path) == norm);
         newAttachment = ChatAttachment(
           path: activePath,
           displayName: p.basename(activePath),
@@ -122,12 +119,8 @@ class AppShellPage extends HookWidget {
           SnackBar(
             content: Text(
               newAttachment.kind == ChatAttachmentKind.fileRange
-                  ? Locales.Shell.Shortcuts.attachedRange(
-                      name: newAttachment.displayName,
-                    )
-                  : Locales.Shell.Shortcuts.attachedFile(
-                      name: newAttachment.displayName,
-                    ),
+                  ? Locales.Shell.Shortcuts.attachedRange(name: newAttachment.displayName)
+                  : Locales.Shell.Shortcuts.attachedFile(name: newAttachment.displayName),
             ),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
@@ -143,9 +136,7 @@ class AppShellPage extends HookWidget {
       }
       final altPressed = HardwareKeyboard.instance.isAltPressed;
       if (event.logicalKey == LogicalKeyboardKey.keyK && altPressed) {
-        return attachActiveEditor()
-            ? KeyEventResult.handled
-            : KeyEventResult.ignored;
+        return attachActiveEditor() ? KeyEventResult.handled : KeyEventResult.ignored;
       }
       if (altPressed) return KeyEventResult.ignored;
       final handled = switch (event.logicalKey) {
@@ -156,9 +147,7 @@ class AppShellPage extends HookWidget {
       return handled ? KeyEventResult.handled : KeyEventResult.ignored;
     }
 
-    final workspaceOpen = context.select<ShellCubit, bool>(
-      (c) => c.state.workspaceOpen,
-    );
+    final workspaceOpen = context.select<ShellCubit, bool>((c) => c.state.workspaceOpen);
 
     return Focus(
       focusNode: focusNode,
@@ -206,22 +195,15 @@ class _MainArea extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sidePanelCollapsed = context.select<ShellCubit, bool>(
-      (c) => c.state.sidePanelCollapsed,
-    );
-    final selectedActivity = context.select<ShellCubit, ActivityId>(
-      (c) => c.state.selectedActivity,
-    );
-    final activeId = context.select<WorkspacesCubit, WorkspaceId?>(
-      (c) => c.state.activeIdOrNull,
-    );
+    final sidePanelCollapsed = context.select<ShellCubit, bool>((c) => c.state.sidePanelCollapsed);
+    final selectedActivity = context.select<ShellCubit, ActivityId>((c) => c.state.selectedActivity);
+    final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
     final hasOpenFiles = context.select<FileTabsCubit, bool>(
-      (c) => activeId != null &&
-          (c.state.filesFor(activeId)?.openPaths.isNotEmpty ?? false),
+      (c) => activeId != null && (c.state.filesFor(activeId)?.openPaths.isNotEmpty ?? false),
     );
 
-    final hidesPreview = selectedActivity == ActivityId.logs ||
-        (selectedActivity != ActivityId.sessions && !hasOpenFiles);
+    final hidesPreview =
+        selectedActivity == ActivityId.logs || (selectedActivity != ActivityId.sessions && !hasOpenFiles);
 
     final savedSizes = context.read<ShellCubit>().state.paneSizes;
 
@@ -235,17 +217,8 @@ class _MainArea extends HookWidget {
               min: 200,
               max: hidesPreview ? 1100 : 480,
             ),
-          if (!hidesPreview)
-            Area(
-              id: _idPreview,
-              size: savedSizes[_idPreview] ?? 380,
-              min: 320,
-            ),
-          Area(
-            id: _idClaude,
-            size: savedSizes[_idClaude] ?? 600,
-            min: 360,
-          ),
+          if (!hidesPreview) Area(id: _idPreview, size: savedSizes[_idPreview] ?? 380, min: 320),
+          Area(id: _idClaude, size: savedSizes[_idClaude] ?? 600, min: 360),
         ],
       ),
       [sidePanelCollapsed, hidesPreview],
@@ -266,9 +239,7 @@ class _MainArea extends HookWidget {
       }
     }
 
-    final active = context.select<WorkspacesCubit, Workspace?>(
-      (c) => c.state.activeWorkspace,
-    );
+    final active = context.select<WorkspacesCubit, Workspace?>((c) => c.state.activeWorkspace);
     if (active == null) {
       return const EmptyStateView();
     }
@@ -284,8 +255,7 @@ class _MainArea extends HookWidget {
               return const SidePanel();
             case _idPreview:
               return BlocBuilder<ShellCubit, ShellState>(
-                buildWhen: (p, c) =>
-                    p.selectedActivity != c.selectedActivity,
+                buildWhen: (p, c) => p.selectedActivity != c.selectedActivity,
                 builder: (context, state) {
                   if (state.selectedActivity == ActivityId.sessions) {
                     return const SessionPreviewView();

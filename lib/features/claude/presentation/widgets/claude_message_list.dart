@@ -279,23 +279,29 @@ class _ScrollToBottomFab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: Locales.Claude.Message.scrollToBottomTooltip,
-      child: Material(
-        color: AppColors.surfaceContainerHigh,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.full),
-          side: BorderSide(
-            color: AppColors.outlineVariant.withValues(alpha: 0.6),
-            width: 1,
-          ),
-        ),
-        elevation: 4,
-        shadowColor: Colors.black.withValues(alpha: 0.4),
-        child: InkWell(
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadii.full),
-          child: const Padding(
-            padding: EdgeInsets.all(AppSpacing.sm),
-            child: Icon(
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(AppRadii.full),
+              border: Border.all(
+                color: AppColors.outlineVariant.withValues(alpha: 0.6),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            child: const Icon(
               Symbols.keyboard_double_arrow_down,
               size: 20,
               color: AppColors.onSurface,
