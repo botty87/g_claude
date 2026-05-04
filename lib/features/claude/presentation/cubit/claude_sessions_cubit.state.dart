@@ -17,6 +17,7 @@ abstract class ClaudeSessionData with _$ClaudeSessionData {
     @Default(<String>[]) List<String> availableSkills,
     @Default(<String>{}) Set<String> disabledMcpServers,
     @Default(ChatInputDraft.empty) ChatInputDraft inputDraft,
+    @Default(false) bool allowAlwaysActive,
   }) = _ClaudeSessionData;
 }
 

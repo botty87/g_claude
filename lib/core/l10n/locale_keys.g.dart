@@ -140,6 +140,7 @@ abstract class  LocaleKeys {
   static const claude_permissionRequest_answeredAllowOnce = 'claude.permissionRequest.answeredAllowOnce';
   static const claude_permissionRequest_answeredAllowAlways = 'claude.permissionRequest.answeredAllowAlways';
   static const claude_permissionRequest_answeredDeny = 'claude.permissionRequest.answeredDeny';
+  static const claude_permissionRequest_inputLabel = 'claude.permissionRequest.inputLabel';
   static const claude_permissionRequest = 'claude.permissionRequest';
   static const claude = 'claude';
   static const workspace_picker_title = 'workspace.picker.title';

@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../../../core/utils/pretty_json.dart';
 import '../../domain/entities/claude_message.dart';
 
 class JsonlSessionMeta {
@@ -87,19 +88,7 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
           DateTime? lastMessageAt;
           int messageCount = 0;
 
-          final lines = entity.openRead().transform(utf8.decoder).transform(const LineSplitter());
-
-          await for (final line in lines) {
-            if (line.trim().isEmpty) continue;
-            Map<String, dynamic> entry;
-            try {
-              final decoded = jsonDecode(line);
-              if (decoded is! Map<String, dynamic>) continue;
-              entry = decoded;
-            } catch (_) {
-              continue;
-            }
-
+          await for (final entry in _readJsonl(entity)) {
             final type = entry['type'] as String?;
             final isSidechain = entry['isSidechain'] == true;
             final isMeta = entry['isMeta'] == true;
@@ -167,21 +156,11 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
     final pendingTools = <String, ClaudeMessageTool>{};
 
     try {
-      final lines = file.openRead().transform(utf8.decoder).transform(const LineSplitter());
-
-      await for (final line in lines) {
-        if (line.trim().isEmpty) continue;
-
-        Map<String, dynamic> entry;
-        try {
-          final decoded = jsonDecode(line);
-          if (decoded is! Map<String, dynamic>) continue;
-          entry = decoded;
-        } catch (e) {
-          _talker.warning('readSession: could not parse line in $sessionId: $e');
-          continue;
-        }
-
+      await for (final entry in _readJsonl(
+        file,
+        onParseError: (e) =>
+            _talker.warning('readSession: could not parse line in $sessionId: $e'),
+      )) {
         final type = entry['type'] as String?;
         if (type == 'queue-operation' || type == 'summary' || type == 'system') continue;
 
@@ -322,21 +301,8 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
     const maxBytes = 200 * 1024;
 
     try {
-      final lines = file.openRead().transform(utf8.decoder).transform(const LineSplitter());
-
-      await for (final line in lines) {
+      await for (final entry in _readJsonl(file)) {
         if (buf.length >= maxBytes) break;
-        if (line.trim().isEmpty) continue;
-
-        Map<String, dynamic> entry;
-        try {
-          final decoded = jsonDecode(line);
-          if (decoded is! Map<String, dynamic>) continue;
-          entry = decoded;
-        } catch (_) {
-          continue;
-        }
-
         final type = entry['type'] as String?;
         if (type == 'queue-operation' || type == 'summary' || type == 'system') continue;
         if (entry['isSidechain'] == true || entry['isMeta'] == true) continue;
@@ -423,7 +389,7 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
           buf.writeln();
           if (msg.input != null) {
             buf.writeln('```json');
-            buf.writeln(const JsonEncoder.withIndent('  ').convert(msg.input));
+            buf.writeln(prettyJson.convert(msg.input));
             buf.writeln('```');
             buf.writeln();
           }
@@ -510,5 +476,19 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
   String _truncateTitle(String s) {
     final cleaned = s.replaceAll(_whitespaceRe, ' ').trim();
     return cleaned.length <= 80 ? cleaned : cleaned.substring(0, 80);
+  }
+
+  Stream<Map<String, dynamic>> _readJsonl(File file, {void Function(Object)? onParseError}) async* {
+    final lines = file.openRead().transform(utf8.decoder).transform(const LineSplitter());
+    await for (final line in lines) {
+      if (line.trim().isEmpty) continue;
+      try {
+        final decoded = jsonDecode(line);
+        if (decoded is! Map<String, dynamic>) continue;
+        yield decoded;
+      } catch (e) {
+        onParseError?.call(e);
+      }
+    }
   }
 }

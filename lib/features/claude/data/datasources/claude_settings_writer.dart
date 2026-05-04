@@ -1,9 +1,10 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 import 'package:talker_flutter/talker_flutter.dart';
+
+import '../../../../core/utils/pretty_json.dart';
 
 /// Writes a temporary `settings.json` consumed by `claude -p --settings <path>`
 /// that wires every `PreToolUse` event to the local PermissionServer via curl.
@@ -38,7 +39,7 @@ class ClaudeSettingsWriter {
       },
     };
     await file.writeAsString(
-      const JsonEncoder.withIndent('  ').convert(content),
+      prettyJson.convert(content),
     );
     _path = file.path;
     _writtenForPort = port;

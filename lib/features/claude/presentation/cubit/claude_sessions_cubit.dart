@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/utils/either.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../data/datasources/claude_history_datasource.dart';
@@ -66,8 +67,6 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   /// Tracks which workspace owns each interactive permission request so the
   /// UI can route the answer back to the right session.
   final Map<String, String> _permissionRequestToWorkspace = {};
-  final Map<String, String> _permissionRequestToMessage = {};
-  bool _allowAlwaysActive = false;
 
   List<McpServer>? _mcpServersCache;
   DateTime? _mcpServersCachedAt;
@@ -189,7 +188,6 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     }
     final messageId = _genId('pr');
     _permissionRequestToWorkspace[req.requestId] = wid;
-    _permissionRequestToMessage[req.requestId] = messageId;
     _appendMessage(
       wid,
       ClaudeMessage.permissionRequest(
@@ -213,14 +211,14 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     }
     final session = state.sessions[wid];
     if (session == null) return PermissionDecision.allow;
-    return _decisionFor(session.permissionMode, req.toolName);
+    return _decisionFor(session, req.toolName);
   }
 
   PermissionDecision _decisionFor(
-    ClaudePermissionMode mode,
+    ClaudeSessionData session,
     String toolName,
   ) {
-    switch (mode) {
+    switch (session.permissionMode) {
       case ClaudePermissionMode.plan:
         return _readOnlyTools.contains(toolName)
             ? PermissionDecision.allow
@@ -229,7 +227,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       case ClaudePermissionMode.bypassPermissions:
         return PermissionDecision.allow;
       case ClaudePermissionMode.defaultMode:
-        if (_allowAlwaysActive || _readOnlyTools.contains(toolName)) {
+        if (session.allowAlwaysActive || _readOnlyTools.contains(toolName)) {
           return PermissionDecision.allow;
         }
         return PermissionDecision.ask;
@@ -410,9 +408,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       runStatus: ClaudeRunStatus.idle,
       lastError: null,
       stderrTail: const [],
+      allowAlwaysActive: false,
     );
     emit(state.copyWith(sessions: next));
-    _allowAlwaysActive = false;
     unawaited(_writeActiveSession(workspaceId, null));
   }
 
@@ -481,11 +479,14 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       break;
     }
     if (requestId == null) return;
-    if (decision == ClaudePermissionDecision.allowAlways) {
-      _allowAlwaysActive = true;
-    }
-    _emitSession(workspaceId, session.copyWith(messages: list));
-    _permissionRequestToMessage.remove(requestId);
+    final allowAlways = decision == ClaudePermissionDecision.allowAlways;
+    _emitSession(
+      workspaceId,
+      session.copyWith(
+        messages: list,
+        allowAlwaysActive: session.allowAlwaysActive || allowAlways,
+      ),
+    );
     _permissionRequestToWorkspace.remove(requestId);
     _claudeRepository.respondPermission(
       requestId: requestId,
@@ -910,7 +911,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       ...messages,
       ClaudeMessage.system(
         id: _genId('s'),
-        text: 'claude.message.completionStub',
+        text: LocaleKeys.claude_message_completionStub,
         createdAt: now,
       ),
     ];

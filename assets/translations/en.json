@@ -162,7 +162,8 @@
       "deny": "Deny",
       "answeredAllowOnce": "Allowed once",
       "answeredAllowAlways": "Always allowed",
-      "answeredDeny": "Denied"
+      "answeredDeny": "Denied",
+      "inputLabel": "INPUT"
     }
   },
   "workspace": {

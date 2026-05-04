@@ -49,6 +49,8 @@ class PermissionServer {
   final Map<String, Completer<PermissionDecision>> _pending = {};
   int _seq = 0;
 
+  static const _interactiveTimeout = Duration(minutes: 5);
+
   int? get port => _port;
 
   void setResolver(PermissionResolver resolver) => _resolver = resolver;
@@ -126,7 +128,15 @@ class PermissionServer {
         decision = PermissionDecision.deny;
       } else {
         handler(req);
-        decision = await completer.future;
+        try {
+          decision = await completer.future.timeout(_interactiveTimeout);
+        } on TimeoutException {
+          _talker.warning(
+            'PermissionServer: interactive request $requestId timed out — denying',
+          );
+          _pending.remove(requestId);
+          decision = PermissionDecision.deny;
+        }
       }
     }
 

@@ -243,6 +243,7 @@ class _ClaudePermissionRequest {
   String get answeredAllowOnce => LocaleKeys.claude_permissionRequest_answeredAllowOnce.tr();
   String get answeredDeny => LocaleKeys.claude_permissionRequest_answeredDeny.tr();
   String get deny => LocaleKeys.claude_permissionRequest_deny.tr();
+  String get inputLabel => LocaleKeys.claude_permissionRequest_inputLabel.tr();
   String subtitle({required String tool}) {
     return LocaleKeys.claude_permissionRequest_subtitle.tr(namedArgs: {
       'tool': tool,

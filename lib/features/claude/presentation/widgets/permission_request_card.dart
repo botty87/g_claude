@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -9,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/pretty_json.dart';
 import '../../domain/entities/claude_message.dart';
 
 /// Inline card asking the user to approve / deny a tool invocation surfaced
@@ -34,7 +33,7 @@ class PermissionRequestCard extends HookWidget {
     final encodedInput = useMemoized(
       () => message.toolInput.isEmpty
           ? ''
-          : const JsonEncoder.withIndent('  ').convert(message.toolInput),
+          : prettyJson.convert(message.toolInput),
       [message.toolInput],
     );
 
@@ -96,7 +95,7 @@ class PermissionRequestCard extends HookWidget {
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
-                    'INPUT',
+                    Locales.Claude.PermissionRequest.inputLabel,
                     style: AppTypography.bodyMain.copyWith(
                       color: AppColors.outline,
                       fontSize: 10,

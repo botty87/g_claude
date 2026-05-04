@@ -10,8 +10,6 @@ import '../../../../core/theme/app_typography.dart';
 import '../../domain/entities/claude_event.dart';
 import '../../domain/entities/claude_message.dart';
 
-const _kOtherSentinel = '__other__';
-
 /// Inline card asking the user to answer one or more `AskUserQuestion`
 /// questions emitted by Claude. After submission, collapses to show the
 /// chosen answers (read-only).
@@ -167,7 +165,7 @@ class _ActiveView extends HookWidget {
             ),
           ),
           _OptionTile(
-            option: const AskUserQuestionOption(label: _kOtherSentinel),
+            option: const AskUserQuestionOption(label: ''),
             selected: useOther.value[current.question] ?? false,
             onTap: toggleOther,
             customLabel: Locales.Claude.AskUser.otherOption,

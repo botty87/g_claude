@@ -162,7 +162,8 @@
       "deny": "Nega",
       "answeredAllowOnce": "Consentito una volta",
       "answeredAllowAlways": "Sempre consentito",
-      "answeredDeny": "Negato"
+      "answeredDeny": "Negato",
+      "inputLabel": "INPUT"
     }
   },
   "workspace": {

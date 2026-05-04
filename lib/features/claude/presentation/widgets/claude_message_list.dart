@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,6 +11,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/pretty_json.dart';
 import '../../domain/entities/claude_message.dart';
 import '../cubit/claude_sessions_cubit.dart';
 import 'ask_user_question_card.dart';
@@ -91,7 +90,7 @@ class ClaudeMessageList extends HookWidget {
         return Padding(
           key: ValueKey(item.key),
           padding: EdgeInsets.only(top: gap),
-          child: _ItemRenderer(item: item),
+          child: _ItemRenderer(item: item, workspaceId: workspaceId),
         );
       },
     );
@@ -107,7 +106,6 @@ class ClaudeMessageList extends HookWidget {
       if (m is ClaudeMessageUser) {
         items.add(_SingleItem(m));
         i++;
-        // Collect everything up to next user as a turn
         final tools = <ClaudeMessageTool>[];
         final others = <ClaudeMessage>[];
         while (i < all.length && all[i] is! ClaudeMessageUser) {
@@ -124,7 +122,6 @@ class ClaudeMessageList extends HookWidget {
           items.add(_SingleItem(o));
         }
       } else {
-        // Stray non-user prefix (rare): emit as-is
         if (m is ClaudeMessageTool) {
           items.add(_ToolGroupItem([m]));
         } else {
@@ -193,12 +190,14 @@ class _ToolGroupItem extends _Item {
 }
 
 class _ItemRenderer extends StatelessWidget {
-  const _ItemRenderer({required this.item});
+  const _ItemRenderer({required this.item, required this.workspaceId});
   final _Item item;
+  final String workspaceId;
   @override
   Widget build(BuildContext context) {
     return switch (item) {
-      _SingleItem(:final message) => _MessageItem(message: message),
+      _SingleItem(:final message) =>
+        _MessageItem(message: message, workspaceId: workspaceId),
       _ToolGroupItem(:final tools) => _ToolGroup(tools: tools),
     };
   }
@@ -243,9 +242,10 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _MessageItem extends StatelessWidget {
-  const _MessageItem({required this.message});
+  const _MessageItem({required this.message, required this.workspaceId});
 
   final ClaudeMessage message;
+  final String workspaceId;
 
   @override
   Widget build(BuildContext context) {
@@ -270,56 +270,54 @@ class _MessageItem extends StatelessWidget {
       ClaudeMessageSystem(:final text) => _SystemLine(text: text),
       final ClaudeMessageAskUserQuestion m => _AskUserQuestionItemWidget(
           message: m,
+          workspaceId: workspaceId,
         ),
       final ClaudeMessagePermissionRequest m => _PermissionRequestItemWidget(
           message: m,
+          workspaceId: workspaceId,
         ),
     };
   }
 }
 
 class _AskUserQuestionItemWidget extends StatelessWidget {
-  const _AskUserQuestionItemWidget({required this.message});
+  const _AskUserQuestionItemWidget({
+    required this.message,
+    required this.workspaceId,
+  });
 
   final ClaudeMessageAskUserQuestion message;
+  final String workspaceId;
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<ClaudeSessionsCubit>();
-    final wid = _findWorkspaceId(context);
     return AskUserQuestionCard(
       message: message,
-      onSubmit: (answers) {
-        if (wid == null) return;
-        cubit.answerAskUserQuestion(wid, message.id, answers);
-      },
+      onSubmit: (answers) =>
+          cubit.answerAskUserQuestion(workspaceId, message.id, answers),
     );
   }
 }
 
 class _PermissionRequestItemWidget extends StatelessWidget {
-  const _PermissionRequestItemWidget({required this.message});
+  const _PermissionRequestItemWidget({
+    required this.message,
+    required this.workspaceId,
+  });
 
   final ClaudeMessagePermissionRequest message;
+  final String workspaceId;
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<ClaudeSessionsCubit>();
-    final wid = _findWorkspaceId(context);
     return PermissionRequestCard(
       message: message,
-      onDecide: (decision) {
-        if (wid == null) return;
-        cubit.answerPermission(wid, message.id, decision);
-      },
+      onDecide: (decision) =>
+          cubit.answerPermission(workspaceId, message.id, decision),
     );
   }
-}
-
-String? _findWorkspaceId(BuildContext context) {
-  final ancestor =
-      context.findAncestorWidgetOfExactType<ClaudeMessageList>();
-  return ancestor?.workspaceId;
 }
 
 class _ToolGroup extends HookWidget {
@@ -331,9 +329,19 @@ class _ToolGroup extends HookWidget {
   Widget build(BuildContext context) {
     final expanded = useState(false);
 
-    final running = tools.where((t) => t.status == ClaudeToolStatus.running).length;
-    final errors = tools.where((t) => t.status == ClaudeToolStatus.error).length;
-    final done = tools.where((t) => t.status == ClaudeToolStatus.completed).length;
+    var running = 0;
+    var errors = 0;
+    var done = 0;
+    for (final t in tools) {
+      switch (t.status) {
+        case ClaudeToolStatus.running:
+          running++;
+        case ClaudeToolStatus.error:
+          errors++;
+        case ClaudeToolStatus.completed:
+          done++;
+      }
+    }
 
     final (headerIcon, headerColor) = _toolGroupHeaderIconAndColor(
       running: running,
@@ -848,8 +856,6 @@ class _ToolBody extends HookWidget {
     required this.maxHeight,
   });
 
-  static const _jsonEncoder = JsonEncoder.withIndent('  ');
-
   final Map<String, dynamic>? input;
   final String? output;
   final bool isError;
@@ -860,7 +866,7 @@ class _ToolBody extends HookWidget {
     final hasInput = input?.isNotEmpty ?? false;
     final hasOutput = output?.isNotEmpty ?? false;
     final encodedInput = useMemoized(
-      () => hasInput ? _jsonEncoder.convert(input) : '',
+      () => hasInput ? prettyJson.convert(input) : '',
       [input],
     );
 
@@ -970,11 +976,9 @@ class _SystemLine extends StatelessWidget {
 
   final String text;
 
-  static const _completionKey = 'claude.message.completionStub';
-
   @override
   Widget build(BuildContext context) {
-    final isCompletion = text == _completionKey;
+    final isCompletion = text == LocaleKeys.claude_message_completionStub;
     final rendered = isCompletion ? text.tr() : text;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
