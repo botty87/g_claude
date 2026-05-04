@@ -172,6 +172,13 @@ class ClaudeInputBar extends HookWidget {
 
     void submit() {
       final userText = controller.text.trim();
+      if (_isBusy) {
+        if (userText.isEmpty) return;
+        controller.clear();
+        sessionsCubit.clearInputDraft(workspaceId);
+        sessionsCubit.setQueuedPrompt(workspaceId, userText);
+        return;
+      }
       final chipPrefix =
           selectedChips.value.map((c) => c.trigger).join(' ');
       final attachmentTokens = attachmentList.value
@@ -243,7 +250,6 @@ class ClaudeInputBar extends HookWidget {
         if (HardwareKeyboard.instance.isShiftPressed) {
           return KeyEventResult.ignored;
         }
-        if (_isBusy) return KeyEventResult.handled;
         submit();
         return KeyEventResult.handled;
       }
@@ -310,7 +316,6 @@ class ClaudeInputBar extends HookWidget {
                         controller: controller,
                         focusNode: inputFocus,
                         autofocus: true,
-                        enabled: !_isBusy,
                         maxLines: 6,
                         minLines: 1,
                         textInputAction: TextInputAction.newline,
@@ -321,7 +326,7 @@ class ClaudeInputBar extends HookWidget {
                           isCollapsed: true,
                           border: InputBorder.none,
                           hintText: _isBusy
-                              ? Locales.Claude.Terminal.Input.placeholderRunning
+                              ? Locales.Claude.Terminal.Input.placeholderQueueing
                               : Locales.Claude.Terminal.Input.placeholder,
                           hintStyle: AppTypography.terminalCode.copyWith(
                             color: AppColors.outline,
@@ -347,7 +352,15 @@ class ClaudeInputBar extends HookWidget {
                     onTap: _isBusy ? () {} : pickFolder,
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  if (_isBusy)
+                  if (_isBusy && controller.text.trim().isNotEmpty)
+                    _ActionButton(
+                      key: const ValueKey('claude_input_queue'),
+                      icon: Symbols.schedule_send,
+                      tooltipKey: 'claude.terminal.input.queue.send',
+                      color: AppColors.primary,
+                      onTap: submit,
+                    )
+                  else if (_isBusy)
                     _ActionButton(
                       icon: Symbols.stop_circle,
                       tooltipKey: 'claude.terminal.input.stop',

@@ -40,6 +40,7 @@
       "input": {
         "placeholder": "Send a message to Claude…",
         "placeholderRunning": "Claude is responding… (press Cmd+. to stop)",
+        "placeholderQueueing": "Queue a message…",
         "stop": "Stop",
         "send": "Send",
         "attachments": {
@@ -47,6 +48,12 @@
           "addFolder": "Attach folder",
           "dropHint": "Drop files or folders here",
           "removeTooltip": "Remove attachment"
+        },
+        "queue": {
+          "label": "Queued",
+          "removeTooltip": "Remove queued message",
+          "editPlaceholder": "Edit queued message…",
+          "send": "Queue message"
         }
       },
       "actions": {

@@ -35,6 +35,7 @@ abstract class  LocaleKeys {
   static const claude_terminal_status = 'claude.terminal.status';
   static const claude_terminal_input_placeholder = 'claude.terminal.input.placeholder';
   static const claude_terminal_input_placeholderRunning = 'claude.terminal.input.placeholderRunning';
+  static const claude_terminal_input_placeholderQueueing = 'claude.terminal.input.placeholderQueueing';
   static const claude_terminal_input_stop = 'claude.terminal.input.stop';
   static const claude_terminal_input_send = 'claude.terminal.input.send';
   static const claude_terminal_input_attachments_addFile = 'claude.terminal.input.attachments.addFile';
@@ -42,6 +43,11 @@ abstract class  LocaleKeys {
   static const claude_terminal_input_attachments_dropHint = 'claude.terminal.input.attachments.dropHint';
   static const claude_terminal_input_attachments_removeTooltip = 'claude.terminal.input.attachments.removeTooltip';
   static const claude_terminal_input_attachments = 'claude.terminal.input.attachments';
+  static const claude_terminal_input_queue_label = 'claude.terminal.input.queue.label';
+  static const claude_terminal_input_queue_removeTooltip = 'claude.terminal.input.queue.removeTooltip';
+  static const claude_terminal_input_queue_editPlaceholder = 'claude.terminal.input.queue.editPlaceholder';
+  static const claude_terminal_input_queue_send = 'claude.terminal.input.queue.send';
+  static const claude_terminal_input_queue = 'claude.terminal.input.queue';
   static const claude_terminal_input = 'claude.terminal.input';
   static const claude_terminal_actions_clear = 'claude.terminal.actions.clear';
   static const claude_terminal_actions_newSession = 'claude.terminal.actions.newSession';

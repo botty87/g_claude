@@ -384,11 +384,15 @@ class _ClaudeTerminalInput {
   const _ClaudeTerminalInput._();
 
   String get placeholder => LocaleKeys.claude_terminal_input_placeholder.tr();
+  String get placeholderQueueing => LocaleKeys.claude_terminal_input_placeholderQueueing.tr();
   String get placeholderRunning => LocaleKeys.claude_terminal_input_placeholderRunning.tr();
   String get send => LocaleKeys.claude_terminal_input_send.tr();
   String get stop => LocaleKeys.claude_terminal_input_stop.tr();
   /// Translations for attachments
   final Attachments = const _ClaudeTerminalInputAttachments._();
+
+  /// Translations for queue
+  final Queue = const _ClaudeTerminalInputQueue._();
 
 }
 
@@ -400,6 +404,16 @@ class _ClaudeTerminalInputAttachments {
   String get addFolder => LocaleKeys.claude_terminal_input_attachments_addFolder.tr();
   String get dropHint => LocaleKeys.claude_terminal_input_attachments_dropHint.tr();
   String get removeTooltip => LocaleKeys.claude_terminal_input_attachments_removeTooltip.tr();
+}
+
+/// Nested class for queue translations
+class _ClaudeTerminalInputQueue {
+  const _ClaudeTerminalInputQueue._();
+
+  String get editPlaceholder => LocaleKeys.claude_terminal_input_queue_editPlaceholder.tr();
+  String get label => LocaleKeys.claude_terminal_input_queue_label.tr();
+  String get removeTooltip => LocaleKeys.claude_terminal_input_queue_removeTooltip.tr();
+  String get send => LocaleKeys.claude_terminal_input_queue_send.tr();
 }
 
 /// Nested class for mcp translations
