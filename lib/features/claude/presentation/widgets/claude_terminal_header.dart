@@ -9,6 +9,10 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
+import '../../domain/entities/claude_effort.dart';
+import '../../domain/entities/claude_model.dart';
+import '../../domain/entities/claude_permission_mode.dart';
+import '../../domain/entities/claude_thinking_mode.dart';
 import '../cubit/claude_sessions_cubit.dart';
 import '_enum_ui.dart';
 import 'effort_thinking_picker.dart';
@@ -17,22 +21,41 @@ import 'model_picker.dart';
 import 'permission_picker.dart';
 
 class ClaudeTerminalHeader extends StatelessWidget {
-  const ClaudeTerminalHeader({
-    super.key,
-    required this.workspaceId,
-    required this.session,
-  });
+  const ClaudeTerminalHeader({super.key, required this.workspaceId});
 
   final String workspaceId;
-  final ClaudeSessionData session;
-
-  bool get _isBusy =>
-      session.runStatus == ClaudeRunStatus.running ||
-      session.runStatus == ClaudeRunStatus.connecting;
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<ClaudeSessionsCubit>();
+    final runStatus = context.select<ClaudeSessionsCubit, ClaudeRunStatus>(
+      (c) => c.state.sessions[workspaceId]?.runStatus ?? ClaudeRunStatus.idle,
+    );
+    final model = context.select<ClaudeSessionsCubit, ClaudeModel>(
+      (c) => c.state.sessions[workspaceId]?.model ?? ClaudeModel.defaultModel,
+    );
+    final effort = context.select<ClaudeSessionsCubit, ClaudeEffort>(
+      (c) => c.state.sessions[workspaceId]?.effort ?? ClaudeEffort.defaultEffort,
+    );
+    final thinkingMode =
+        context.select<ClaudeSessionsCubit, ClaudeThinkingMode>(
+      (c) =>
+          c.state.sessions[workspaceId]?.thinkingMode ??
+          ClaudeThinkingMode.defaultMode,
+    );
+    final permissionMode =
+        context.select<ClaudeSessionsCubit, ClaudePermissionMode>(
+      (c) =>
+          c.state.sessions[workspaceId]?.permissionMode ??
+          ClaudePermissionMode.defaultChoice,
+    );
+    final hasMessages = context.select<ClaudeSessionsCubit, bool>(
+      (c) => (c.state.sessions[workspaceId]?.messages.isNotEmpty) ?? false,
+    );
+
+    final isBusy = runStatus == ClaudeRunStatus.running ||
+        runStatus == ClaudeRunStatus.connecting;
+
     return Container(
       height: AppSpacing.toolbarHeight,
       decoration: const BoxDecoration(
@@ -63,15 +86,15 @@ class ClaudeTerminalHeader extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ModelPicker(
-                        current: session.model,
-                        enabled: !_isBusy,
+                        current: model,
+                        enabled: !isBusy,
                         onSelected: (m) => cubit.setModel(workspaceId, m),
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       EffortThinkingPicker(
-                        currentEffort: session.effort,
-                        currentThinking: session.thinkingMode,
-                        enabled: !_isBusy,
+                        currentEffort: effort,
+                        currentThinking: thinkingMode,
+                        enabled: !isBusy,
                         onEffortSelected: (e) =>
                             cubit.setEffort(workspaceId, e),
                         onThinkingSelected: (t) =>
@@ -79,8 +102,8 @@ class ClaudeTerminalHeader extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       PermissionPicker(
-                        current: session.permissionMode,
-                        enabled: !_isBusy,
+                        current: permissionMode,
+                        enabled: !isBusy,
                         onSelected: (m) =>
                             cubit.setPermissionMode(workspaceId, m),
                       ),
@@ -91,9 +114,9 @@ class ClaudeTerminalHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              if (session.messages.isNotEmpty)
+              if (hasMessages)
                 Hoverable(
-                  onTap: _isBusy
+                  onTap: isBusy
                       ? null
                       : () => cubit.newSession(workspaceId),
                   builder: (context, hover) => Tooltip(
@@ -110,7 +133,7 @@ class ClaudeTerminalHeader extends StatelessWidget {
                       child: Icon(
                         Symbols.add_comment,
                         size: 14,
-                        color: _isBusy
+                        color: isBusy
                             ? AppColors.outline
                             : AppColors.onSurfaceVariant,
                       ),
@@ -118,10 +141,7 @@ class ClaudeTerminalHeader extends StatelessWidget {
                   ),
                 ),
               const SizedBox(width: AppSpacing.sm),
-              _StatusIndicator(
-                status: session.runStatus,
-                compact: compact,
-              ),
+              _StatusIndicator(status: runStatus, compact: compact),
             ],
           );
         },

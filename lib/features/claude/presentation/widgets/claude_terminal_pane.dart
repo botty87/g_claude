@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../../core/error/failures.dart';
 import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
@@ -13,6 +14,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../domain/entities/chat_attachment.dart';
+import '../../domain/entities/claude_message.dart';
 import '../cubit/claude_sessions_cubit.dart';
 import 'claude_input_bar.dart';
 import 'claude_message_list.dart';
@@ -28,27 +30,48 @@ class ClaudeTerminalPane extends HookWidget {
       (c) => c.state.activeIdOrNull,
     );
 
-    final session = context.select<ClaudeSessionsCubit, ClaudeSessionData?>(
-      (c) => c.state.sessionFor(activeId),
-    );
-
-    if (activeId == null || session == null) {
+    if (activeId == null) {
       return const _NoWorkspaceState();
     }
 
-    final isBusy = session.runStatus == ClaudeRunStatus.running ||
-        session.runStatus == ClaudeRunStatus.connecting;
-
-    final sessionsCubit = context.read<ClaudeSessionsCubit>();
-    final attachmentList = session.inputDraft.attachments;
-
-    void setAttachments(List<ChatAttachment> next) {
-      sessionsCubit.setInputDraft(
-        activeId,
-        session.inputDraft.copyWith(attachments: next),
-      );
+    final hasSession = context.select<ClaudeSessionsCubit, bool>(
+      (c) => c.state.sessions.containsKey(activeId),
+    );
+    if (!hasSession) {
+      return const _NoWorkspaceState();
     }
 
+    return _ClaudeTerminalPaneActive(
+      key: ValueKey('claude_pane_$activeId'),
+      workspaceId: activeId,
+    );
+  }
+}
+
+class _ClaudeTerminalPaneActive extends HookWidget {
+  const _ClaudeTerminalPaneActive({super.key, required this.workspaceId});
+
+  final String workspaceId;
+
+  @override
+  Widget build(BuildContext context) {
+    final runStatus = context.select<ClaudeSessionsCubit, ClaudeRunStatus>(
+      (c) => c.state.sessions[workspaceId]?.runStatus ?? ClaudeRunStatus.idle,
+    );
+    final messages = context.select<ClaudeSessionsCubit, List<ClaudeMessage>>(
+      (c) => c.state.sessions[workspaceId]?.messages ?? const [],
+    );
+    final lastError = context.select<ClaudeSessionsCubit, Failure?>(
+      (c) => c.state.sessions[workspaceId]?.lastError,
+    );
+    final stderrTail = context.select<ClaudeSessionsCubit, List<String>>(
+      (c) => c.state.sessions[workspaceId]?.stderrTail ?? const [],
+    );
+
+    final isBusy = runStatus == ClaudeRunStatus.running ||
+        runStatus == ClaudeRunStatus.connecting;
+
+    final sessionsCubit = context.read<ClaudeSessionsCubit>();
     final isHovering = useState(false);
 
     return DropTarget(
@@ -57,7 +80,10 @@ class ClaudeTerminalPane extends HookWidget {
       onDragExited: (_) => isHovering.value = false,
       onDragDone: (details) {
         if (isBusy) return;
-        final current = attachmentList;
+        final liveDraft =
+            sessionsCubit.state.sessions[workspaceId]?.inputDraft;
+        if (liveDraft == null) return;
+        final current = liveDraft.attachments;
         final existing = current.map((a) => p.normalize(a.path)).toSet();
         final additions = <ChatAttachment>[];
         for (final xfile in details.files) {
@@ -77,7 +103,10 @@ class ClaudeTerminalPane extends HookWidget {
           ));
         }
         if (additions.isNotEmpty) {
-          setAttachments([...current, ...additions]);
+          sessionsCubit.setInputDraft(
+            workspaceId,
+            liveDraft.copyWith(attachments: [...current, ...additions]),
+          );
         }
         isHovering.value = false;
       },
@@ -87,25 +116,25 @@ class ClaudeTerminalPane extends HookWidget {
             color: AppColors.surface,
             child: Column(
               children: [
-                ClaudeTerminalHeader(workspaceId: activeId, session: session),
+                ClaudeTerminalHeader(workspaceId: workspaceId),
                 _RunProgressBar(visible: isBusy),
                 Expanded(
                   child: ClaudeMessageList(
-                    workspaceId: activeId,
-                    messages: session.messages,
-                    status: session.runStatus,
-                    lastError: session.lastError,
-                    stderrTail: session.stderrTail,
+                    workspaceId: workspaceId,
+                    messages: messages,
+                    status: runStatus,
+                    lastError: lastError,
+                    stderrTail: stderrTail,
                   ),
                 ),
                 QueuedPromptCard(
-                  key: ValueKey('claude_queued_card_$activeId'),
-                  workspaceId: activeId,
+                  key: ValueKey('claude_queued_card_$workspaceId'),
+                  workspaceId: workspaceId,
                 ),
                 ClaudeInputBar(
-                  key: ValueKey('claude_input_bar_$activeId'),
-                  workspaceId: activeId,
-                  status: session.runStatus,
+                  key: ValueKey('claude_input_bar_$workspaceId'),
+                  workspaceId: workspaceId,
+                  status: runStatus,
                 ),
               ],
             ),

@@ -184,3 +184,40 @@ Widget interattivi devono avere `ValueKey<String>` quando serve test/automation.
 - No `print` — usa `talker.info`, `talker.error`.
 - No commenti narrativi in codice (lascia parlare il nome). Commenti solo per WHY non ovvi.
 - No test in fase scaffolding — verranno aggiunti quando logica diventa non triviale (parser NDJSON, permission resolver).
+- No mirror locale di stato cubit. Mai `useState<T>` / `ValueNotifier` per stato già nel cubit (vedi sezione "Lettura stato cubit"). Solo controller UI puri (`useTextEditingController`, `useFocusNode`, `useScrollController`) o stato strettamente effimero locale (hover, expanded toggle).
+
+## Lettura stato cubit (single source of truth + selettori granulari)
+
+**Regola 1 — single source of truth.** Lo stato di dominio vive nel cubit. La UI non lo duplica: legge sempre via `context.select` / `BlocBuilder` / `BlocSelector`. Mai un `useState`/`ValueNotifier` locale che mirroreggi un campo del cubit.
+
+**Regola 2 — selettori granulari, no oggetto-wrapper.** Mai selezionare l'intero `SessionData` / `WorkspaceData` / oggetto stato per poi accederne ai campi. Ogni campo che serve al widget = un `context.select` separato che ritorna il **minimo tipo possibile** (enum, scalare, lista, derivato booleano). Così il widget rebuilda solo quando cambia *quel* campo.
+
+```dart
+// SBAGLIATO — qualunque mutazione della session forza rebuild
+final session = context.select<ClaudeSessionsCubit, ClaudeSessionData?>(
+  (c) => c.state.sessionFor(id),
+);
+final isBusy = session?.runStatus == ClaudeRunStatus.running;
+
+// CORRETTO — rebuild solo quando il singolo campo cambia
+final runStatus = context.select<ClaudeSessionsCubit, ClaudeRunStatus>(
+  (c) => c.state.sessions[id]?.runStatus ?? ClaudeRunStatus.idle,
+);
+final hasMessages = context.select<ClaudeSessionsCubit, bool>(
+  (c) => (c.state.sessions[id]?.messages.isNotEmpty) ?? false,
+);
+```
+
+**Regola 3 — passa `workspaceId` (o id), non l'oggetto stato.** Ogni widget legge il proprio sotto-stato direttamente dal cubit. Non passare `session: ClaudeSessionData` come prop: forza il parent a selezionare l'intero oggetto e propaga i rebuild.
+
+**Regola 4 — callback leggono live.** Dentro `onPressed`, `onDragDone`, `controller.addListener` (registrato in `useEffect` con deps stabili) e simili long-lived listener, **non** chiudere su variabili locali di build che rappresentano stato cubit. Leggi live: `cubit.state.sessions[id]?.X`. Variabili da `context.select` catturate dal closure restano stale fino al rebuild → bug di sovrascrittura.
+
+**Regola 5 — uguaglianza per evitare rebuild inutili.** `context.select` rebuilda quando il valore selezionato cambia per `==`. Liste/mappe Dart usano identity equality di default: assicurati che il cubit, dove possibile, preservi la **stessa referenza** quando il contenuto non cambia (es. ritornare `state.X` invariato in `copyWith` se non si tocca quel campo). Se il valore selezionato è derivato (es. `messages.isNotEmpty`), il bool stabile evita rebuild.
+
+**Pattern di esempio canonico:** [claude_terminal_pane.dart](lib/features/claude/presentation/widgets/claude_terminal_pane.dart), [claude_terminal_header.dart](lib/features/claude/presentation/widgets/claude_terminal_header.dart), [queued_prompt_card.dart](lib/features/claude/presentation/widgets/queued_prompt_card.dart).
+
+**Code review checklist:**
+1. Ogni `context.select` ritorna un tipo già scalare / lista / bool? Se ritorna un oggetto stato wrapper → split in N selettori.
+2. Ogni `useState<T>` con `T` non triviale: lo stato è già nel cubit? Chi lo modifica fuori dal widget? Se sì a entrambe → eliminare hook.
+3. Ogni callback registrata in `useEffect` con deps stabili: legge variabili catturate da build? Se sì → leggere live dal cubit.
+4. Widget riceve un oggetto stato come prop? Se sì → ricevere solo l'`id` e leggere via `context.select`.
