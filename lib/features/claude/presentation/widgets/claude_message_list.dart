@@ -20,6 +20,7 @@ import 'user_bubble_chip.dart';
 
 const _kAnimDuration = Duration(milliseconds: 180);
 const _kToolBodyMaxHeight = 200.0;
+const _kStickThreshold = 48.0;
 
 (IconData, Color) _toolGroupHeaderIconAndColor({
   required int running,
@@ -49,8 +50,24 @@ class ClaudeMessageList extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final scrollController = useScrollController();
+    final stickToBottom = useState(true);
 
     useEffect(() {
+      void onScroll() {
+        if (!scrollController.hasClients) return;
+        final pos = scrollController.position;
+        final distanceFromBottom = pos.maxScrollExtent - pos.pixels;
+        final atBottom = distanceFromBottom <= _kStickThreshold;
+        if (stickToBottom.value != atBottom) {
+          stickToBottom.value = atBottom;
+        }
+      }
+      scrollController.addListener(onScroll);
+      return () => scrollController.removeListener(onScroll);
+    }, [scrollController]);
+
+    useEffect(() {
+      if (!stickToBottom.value) return null;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!scrollController.hasClients) return;
         scrollController.animateTo(
@@ -62,6 +79,20 @@ class ClaudeMessageList extends HookWidget {
       return null;
     }, [messages.length, _streamingTextSignature(messages)]);
 
+    final lastUserId = useMemoized(() {
+      for (var i = messages.length - 1; i >= 0; i--) {
+        final m = messages[i];
+        if (m is ClaudeMessageUser) return m.id;
+      }
+      return '';
+    }, [messages]);
+
+    useEffect(() {
+      if (lastUserId.isEmpty) return null;
+      stickToBottom.value = true;
+      return null;
+    }, [lastUserId]);
+
     if (messages.isEmpty && lastError == null) {
       return _EmptyState(status: status);
     }
@@ -71,29 +102,57 @@ class ClaudeMessageList extends HookWidget {
 
     final items = useMemoized(() => _buildItems(messages), [messages]);
 
-    return ListView.builder(
-      controller: scrollController,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.lg,
-      ),
-      itemCount: items.length + (hasError ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == items.length) {
-          return Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.lg),
-            child: _ErrorBanner(failure: lastError, stderrTail: stderrTail),
-          );
-        }
-        final item = items[index];
-        final previous = index > 0 ? items[index - 1] : null;
-        final gap = _gapBefore(previous, item);
-        return Padding(
-          key: ValueKey(item.key),
-          padding: EdgeInsets.only(top: gap),
-          child: _ItemRenderer(item: item, workspaceId: workspaceId),
-        );
-      },
+    return Stack(
+      children: [
+        ListView.builder(
+          controller: scrollController,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.lg,
+          ),
+          itemCount: items.length + (hasError ? 1 : 0),
+          itemBuilder: (context, index) {
+            if (index == items.length) {
+              return Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.lg),
+                child: _ErrorBanner(failure: lastError, stderrTail: stderrTail),
+              );
+            }
+            final item = items[index];
+            final previous = index > 0 ? items[index - 1] : null;
+            final gap = _gapBefore(previous, item);
+            return Padding(
+              key: ValueKey(item.key),
+              padding: EdgeInsets.only(top: gap),
+              child: _ItemRenderer(item: item, workspaceId: workspaceId),
+            );
+          },
+        ),
+        Positioned(
+          right: AppSpacing.lg,
+          bottom: AppSpacing.lg,
+          child: AnimatedSwitcher(
+            duration: _kAnimDuration,
+            transitionBuilder: (child, anim) => FadeTransition(
+              opacity: anim,
+              child: ScaleTransition(scale: anim, child: child),
+            ),
+            child: stickToBottom.value
+                ? const SizedBox.shrink()
+                : _ScrollToBottomFab(
+                    onTap: () {
+                      stickToBottom.value = true;
+                      if (!scrollController.hasClients) return;
+                      scrollController.animateTo(
+                        scrollController.position.maxScrollExtent,
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -201,6 +260,43 @@ class _ItemRenderer extends StatelessWidget {
         _MessageItem(message: message, workspaceId: workspaceId),
       _ToolGroupItem(:final tools) => _ToolGroup(tools: tools),
     };
+  }
+}
+
+class _ScrollToBottomFab extends StatelessWidget {
+  const _ScrollToBottomFab({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: Locales.Claude.Message.scrollToBottomTooltip,
+      child: Material(
+        color: AppColors.surfaceContainerHigh,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.full),
+          side: BorderSide(
+            color: AppColors.outlineVariant.withValues(alpha: 0.6),
+            width: 1,
+          ),
+        ),
+        elevation: 4,
+        shadowColor: Colors.black.withValues(alpha: 0.4),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadii.full),
+          child: const Padding(
+            padding: EdgeInsets.all(AppSpacing.sm),
+            child: Icon(
+              Symbols.keyboard_double_arrow_down,
+              size: 20,
+              color: AppColors.onSurface,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

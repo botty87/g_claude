@@ -138,7 +138,8 @@
       "toolGroupRunning": "{n} running",
       "toolGroupDone": "{n} done",
       "toolGroupErrors": "{n} errors",
-      "completionStub": "Task completed."
+      "completionStub": "Task completed.",
+      "scrollToBottomTooltip": "Scroll to latest"
     },
     "error": {
       "binaryNotFound": "Could not find the `claude` CLI on this system. Install it from https://claude.com/code or add it to PATH.",

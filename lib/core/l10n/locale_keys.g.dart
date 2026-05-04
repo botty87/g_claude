@@ -119,6 +119,7 @@ abstract class  LocaleKeys {
   static const claude_message_toolGroupDone = 'claude.message.toolGroupDone';
   static const claude_message_toolGroupErrors = 'claude.message.toolGroupErrors';
   static const claude_message_completionStub = 'claude.message.completionStub';
+  static const claude_message_scrollToBottomTooltip = 'claude.message.scrollToBottomTooltip';
   static const claude_message = 'claude.message';
   static const claude_error_binaryNotFound = 'claude.error.binaryNotFound';
   static const claude_error_spawnFailed = 'claude.error.spawnFailed';

@@ -259,6 +259,7 @@ class _ClaudeMessage {
 
   String get assistantLabel => LocaleKeys.claude_message_assistantLabel.tr();
   String get completionStub => LocaleKeys.claude_message_completionStub.tr();
+  String get scrollToBottomTooltip => LocaleKeys.claude_message_scrollToBottomTooltip.tr();
   String get systemLabel => LocaleKeys.claude_message_systemLabel.tr();
   String get toolCompleted => LocaleKeys.claude_message_toolCompleted.tr();
   String get toolError => LocaleKeys.claude_message_toolError.tr();
