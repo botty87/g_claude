@@ -105,16 +105,24 @@ class _MainArea extends HookWidget {
     final sidePanelCollapsed = context.select<ShellCubit, bool>(
       (c) => c.state.sidePanelCollapsed,
     );
+    final hidesPreview = context.select<ShellCubit, bool>(
+      (c) => c.state.selectedActivity == ActivityId.logs,
+    );
     final controller = useMemoized(
       () => MultiSplitViewController(
         areas: [
           if (!sidePanelCollapsed)
-            Area(id: _idSide, size: 280, min: 200, max: 480),
-          Area(id: _idPreview, size: 380, min: 320),
+            Area(
+              id: _idSide,
+              size: hidesPreview ? 660 : 280,
+              min: 200,
+              max: hidesPreview ? 1100 : 480,
+            ),
+          if (!hidesPreview) Area(id: _idPreview, size: 380, min: 320),
           Area(id: _idClaude, size: 600, min: 360),
         ],
       ),
-      [sidePanelCollapsed],
+      [sidePanelCollapsed, hidesPreview],
     );
     useEffect(() => controller.dispose, [controller]);
 

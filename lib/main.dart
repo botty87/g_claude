@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide AppLifecycleListener;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -11,7 +12,10 @@ import 'app.dart';
 import 'core/di/di.dart';
 import 'core/l10n/l10n.dart';
 import 'core/marionette/marionette_log_bridge.dart';
+import 'core/window/app_lifecycle_listener.dart';
 import 'core/window/window_setup.dart';
+import 'features/app_logs/data/datasources/talker_log_recorder.dart';
+import 'features/app_logs/domain/repositories/app_logs_repository.dart';
 import 'features/editor/domain/usecases/read_file.dart';
 import 'features/editor/presentation/cubit/file_tabs_cubit.dart';
 import 'features/explorer/presentation/cubit/explorer_cubit.dart';
@@ -19,6 +23,17 @@ import 'features/workspace/domain/entities/workspace.dart';
 import 'features/workspace/presentation/cubit/workspaces_cubit.dart';
 
 Future<void> main() async {
+  // Single zone for the whole app: bindings AND runApp must share the same
+  // zone, otherwise Flutter logs a "Zone mismatch". Talker is wired post-DI,
+  // so the zone error handler reads it lazily from getIt at firing time.
+  runZonedGuarded(_run, (error, stack) {
+    if (getIt.isRegistered<Talker>()) {
+      getIt<Talker>().handle(error, stack, 'Zone');
+    }
+  });
+}
+
+Future<void> _run() async {
   // Marionette debug-only AI agent driver. Tree-shaken in release; skipped
   // under flutter_test where TestWidgetsFlutterBinding owns the binding.
   const inFlutterTest = bool.hasEnvironment('FLUTTER_TEST');
@@ -38,10 +53,30 @@ Future<void> main() async {
     configureDependencies(),
   ]);
 
+  final talker = getIt<Talker>();
+
+  // Start the app-logs session BEFORE attaching subscribers so every Talker
+  // event during startup is bound to a session row in the DB.
+  final appLogsRepo = getIt<AppLogsRepository>();
+  await appLogsRepo.startSession(platform: Platform.operatingSystem);
+  await appLogsRepo.pruneOlderThan(const Duration(days: 30));
+  getIt<TalkerLogRecorder>().start();
+  await getIt<AppLifecycleListener>().attach();
+
+  // Route uncaught Flutter / async / zone errors through Talker so the recorder
+  // persists them with full stack trace.
+  FlutterError.onError = (details) {
+    talker.handle(details.exception, details.stack, 'FlutterError');
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    talker.handle(error, stack, 'PlatformDispatcher');
+    return true;
+  };
+
   // Forward Talker stream to Marionette before Bloc.observer attaches so the
   // log bridge captures Bloc transitions emitted by TalkerBlocObserver too.
   if (marionetteEnabled && marionetteLogCollector != null) {
-    MarionetteLogBridge(talker: getIt<Talker>(), collector: marionetteLogCollector).start();
+    MarionetteLogBridge(talker: talker, collector: marionetteLogCollector).start();
   }
 
   // Restore persisted state before BlocObserver attaches to avoid logging

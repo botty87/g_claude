@@ -44,6 +44,9 @@ abstract class Locales {
   /// Translations for app
   static const App = _App._();
 
+  /// Translations for appLogs
+  static const AppLogs = _AppLogs._();
+
   /// Translations for claude
   static const Claude = _Claude._();
 
@@ -69,6 +72,82 @@ class _App {
   const _App._();
 
   String get title => LocaleKeys.app_title.tr();
+}
+
+/// Nested class for appLogs translations
+class _AppLogs {
+  const _AppLogs._();
+
+  String get back => LocaleKeys.appLogs_back.tr();
+  String get deleteAll => LocaleKeys.appLogs_deleteAll.tr();
+  String get deleteAllConfirmBody => LocaleKeys.appLogs_deleteAllConfirmBody.tr();
+  String get deleteAllConfirmCancel => LocaleKeys.appLogs_deleteAllConfirmCancel.tr();
+  String get deleteAllConfirmOk => LocaleKeys.appLogs_deleteAllConfirmOk.tr();
+  String get deleteAllConfirmTitle => LocaleKeys.appLogs_deleteAllConfirmTitle.tr();
+  String get empty => LocaleKeys.appLogs_empty.tr();
+  String get title => LocaleKeys.appLogs_title.tr();
+  /// Translations for detail
+  final Detail = const _AppLogsDetail._();
+
+  /// Translations for session
+  final Session = const _AppLogsSession._();
+
+}
+
+/// Nested class for detail translations
+class _AppLogsDetail {
+  const _AppLogsDetail._();
+
+  String get empty => LocaleKeys.appLogs_detail_empty.tr();
+  String get exception => LocaleKeys.appLogs_detail_exception.tr();
+  String get filterLevel => LocaleKeys.appLogs_detail_filterLevel.tr();
+  String get search => LocaleKeys.appLogs_detail_search.tr();
+  String get stackTrace => LocaleKeys.appLogs_detail_stackTrace.tr();
+  /// Translations for level
+  final Level = const _AppLogsDetailLevel._();
+
+}
+
+/// Nested class for level translations
+class _AppLogsDetailLevel {
+  const _AppLogsDetailLevel._();
+
+  String get critical => LocaleKeys.appLogs_detail_level_critical.tr();
+  String get debug => LocaleKeys.appLogs_detail_level_debug.tr();
+  String get error => LocaleKeys.appLogs_detail_level_error.tr();
+  String get info => LocaleKeys.appLogs_detail_level_info.tr();
+  String get verbose => LocaleKeys.appLogs_detail_level_verbose.tr();
+  String get warning => LocaleKeys.appLogs_detail_level_warning.tr();
+}
+
+/// Nested class for session translations
+class _AppLogsSession {
+  const _AppLogsSession._();
+
+  String get delete => LocaleKeys.appLogs_session_delete.tr();
+  String get deleteConfirmBody => LocaleKeys.appLogs_session_deleteConfirmBody.tr();
+  String get deleteConfirmCancel => LocaleKeys.appLogs_session_deleteConfirmCancel.tr();
+  String get deleteConfirmOk => LocaleKeys.appLogs_session_deleteConfirmOk.tr();
+  String get deleteConfirmTitle => LocaleKeys.appLogs_session_deleteConfirmTitle.tr();
+  String errors({required String count}) {
+    return LocaleKeys.appLogs_session_errors.tr(namedArgs: {
+      'count': count,
+    });
+  }
+
+  String get inProgress => LocaleKeys.appLogs_session_inProgress.tr();
+  String total({required String count}) {
+    return LocaleKeys.appLogs_session_total.tr(namedArgs: {
+      'count': count,
+    });
+  }
+
+  String warnings({required String count}) {
+    return LocaleKeys.appLogs_session_warnings.tr(namedArgs: {
+      'count': count,
+    });
+  }
+
 }
 
 /// Nested class for claude translations
@@ -551,6 +630,7 @@ class _ShellActivity {
   String get comingLaterSuffix => LocaleKeys.shell_activity_comingLaterSuffix.tr();
   String get explorer => LocaleKeys.shell_activity_explorer.tr();
   String get git => LocaleKeys.shell_activity_git.tr();
+  String get logs => LocaleKeys.shell_activity_logs.tr();
   String get search => LocaleKeys.shell_activity_search.tr();
   String get sessions => LocaleKeys.shell_activity_sessions.tr();
   String get settings => LocaleKeys.shell_activity_settings.tr();
