@@ -8,5 +8,6 @@ abstract class ShellState with _$ShellState {
     required bool workspaceOpen,
     required bool sidePanelCollapsed,
     required ActivityId selectedActivity,
+    @Default(<String, double>{}) Map<String, double> paneSizes,
   }) = _ShellState;
 }

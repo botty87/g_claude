@@ -44,7 +44,7 @@ class ClaudeTerminalHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxWidth < 360;
+          final compact = constraints.maxWidth < 520;
           return Row(
             children: [
               Tooltip(
@@ -56,29 +56,41 @@ class ClaudeTerminalHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
-              ModelPicker(
-                current: session.model,
-                enabled: !_isBusy,
-                onSelected: (m) => cubit.setModel(workspaceId, m),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ModelPicker(
+                        current: session.model,
+                        enabled: !_isBusy,
+                        onSelected: (m) => cubit.setModel(workspaceId, m),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      EffortThinkingPicker(
+                        currentEffort: session.effort,
+                        currentThinking: session.thinkingMode,
+                        enabled: !_isBusy,
+                        onEffortSelected: (e) =>
+                            cubit.setEffort(workspaceId, e),
+                        onThinkingSelected: (t) =>
+                            cubit.setThinking(workspaceId, t),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      PermissionPicker(
+                        current: session.permissionMode,
+                        enabled: !_isBusy,
+                        onSelected: (m) =>
+                            cubit.setPermissionMode(workspaceId, m),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      McpPicker(workspaceId: workspaceId),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(width: AppSpacing.xs),
-              EffortThinkingPicker(
-                currentEffort: session.effort,
-                currentThinking: session.thinkingMode,
-                enabled: !_isBusy,
-                onEffortSelected: (e) => cubit.setEffort(workspaceId, e),
-                onThinkingSelected: (t) =>
-                    cubit.setThinking(workspaceId, t),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              PermissionPicker(
-                current: session.permissionMode,
-                enabled: !_isBusy,
-                onSelected: (m) => cubit.setPermissionMode(workspaceId, m),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              McpPicker(workspaceId: workspaceId),
-              const Spacer(),
+              const SizedBox(width: AppSpacing.sm),
               if (session.messages.isNotEmpty)
                 Hoverable(
                   onTap: _isBusy
