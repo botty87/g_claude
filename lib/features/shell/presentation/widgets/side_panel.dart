@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../app_logs/presentation/widgets/logs_view.dart';
 import '../../../claude/presentation/widgets/sessions_list_view.dart';
 import '../../../explorer/presentation/widgets/explorer_view.dart';
 import '../cubit/shell_cubit.dart';
@@ -26,6 +27,8 @@ class SidePanel extends StatelessWidget {
               return const ExplorerView();
             case ActivityId.sessions:
               return const SessionsListView();
+            case ActivityId.logs:
+              return const LogsView();
             case ActivityId.search:
             case ActivityId.git:
             case ActivityId.settings:

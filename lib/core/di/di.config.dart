@@ -15,6 +15,28 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import 'package:talker_flutter/talker_flutter.dart' as _i207;
 
+import '../../features/app_logs/data/datasources/app_logs_database.dart'
+    as _i126;
+import '../../features/app_logs/data/datasources/talker_log_recorder.dart'
+    as _i419;
+import '../../features/app_logs/data/repositories/app_logs_repository_impl.dart'
+    as _i413;
+import '../../features/app_logs/domain/repositories/app_logs_repository.dart'
+    as _i644;
+import '../../features/app_logs/domain/usecases/delete_session.dart' as _i609;
+import '../../features/app_logs/domain/usecases/end_app_session.dart' as _i847;
+import '../../features/app_logs/domain/usecases/prune_old_sessions.dart'
+    as _i894;
+import '../../features/app_logs/domain/usecases/start_app_session.dart'
+    as _i647;
+import '../../features/app_logs/domain/usecases/watch_log_sessions.dart'
+    as _i953;
+import '../../features/app_logs/domain/usecases/watch_session_entries.dart'
+    as _i41;
+import '../../features/app_logs/presentation/cubit/app_log_detail_cubit.dart'
+    as _i709;
+import '../../features/app_logs/presentation/cubit/app_logs_cubit.dart'
+    as _i148;
 import '../../features/claude/data/datasources/claude_binary_resolver.dart'
     as _i1073;
 import '../../features/claude/data/datasources/claude_history_datasource.dart'
@@ -111,6 +133,8 @@ import '../../features/workspace/presentation/cubit/workspaces_cubit.dart'
     as _i179;
 import '../persistence/key_value_store.dart' as _i494;
 import '../router/app_router.dart' as _i81;
+import '../window/app_lifecycle_listener.dart' as _i851;
+import 'modules/app_logs_database_module.dart' as _i436;
 import 'modules/bloc_observer_module.dart' as _i596;
 import 'modules/database_module.dart' as _i664;
 import 'modules/preferences_module.dart' as _i329;
@@ -125,6 +149,7 @@ extension GetItInjectableX on _i174.GetIt {
   }) async {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final preferencesModule = _$PreferencesModule();
+    final appLogsDatabaseModule = _$AppLogsDatabaseModule();
     final databaseModule = _$DatabaseModule();
     final routerModule = _$RouterModule();
     final talkerModule = _$TalkerModule();
@@ -134,17 +159,37 @@ extension GetItInjectableX on _i174.GetIt {
       preResolve: true,
     );
     gh.factory<_i679.FilterSlashCommands>(() => _i679.FilterSlashCommands());
+    await gh.lazySingletonAsync<_i126.AppLogsDatabase>(
+      () => appLogsDatabaseModule.appLogsDatabase(),
+      preResolve: true,
+    );
     await gh.lazySingletonAsync<_i1060.SessionsDatabase>(
       () => databaseModule.sessionsDatabase(),
       preResolve: true,
     );
     gh.lazySingleton<_i81.AppRouter>(() => routerModule.router);
     gh.lazySingleton<_i207.Talker>(() => talkerModule.talker);
+    gh.lazySingleton<_i644.AppLogsRepository>(
+      () => _i413.AppLogsRepositoryImpl(gh<_i126.AppLogsDatabase>()),
+    );
     gh.lazySingleton<_i735.WorkspaceLocalDataSource>(
       () => _i735.WorkspaceLocalDataSourceImpl(),
     );
     gh.lazySingleton<_i167.WorkspaceFileWatcher>(
       () => _i167.WorkspaceFileWatcherImpl(gh<_i207.Talker>()),
+    );
+    gh.lazySingleton<_i419.TalkerLogRecorder>(
+      () => _i419.TalkerLogRecorder(
+        gh<_i207.Talker>(),
+        gh<_i644.AppLogsRepository>(),
+      ),
+    );
+    gh.lazySingleton<_i851.AppLifecycleListener>(
+      () => _i851.AppLifecycleListener(
+        gh<_i419.TalkerLogRecorder>(),
+        gh<_i644.AppLogsRepository>(),
+        gh<_i207.Talker>(),
+      ),
     );
     gh.lazySingleton<_i630.FileContentDataSource>(
       () => _i630.FileContentDataSourceImpl(),
@@ -215,6 +260,24 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i268.WorkspaceRepository>(
       () => _i824.WorkspaceRepositoryImpl(gh<_i735.WorkspaceLocalDataSource>()),
+    );
+    gh.factory<_i609.DeleteSession>(
+      () => _i609.DeleteSession(gh<_i644.AppLogsRepository>()),
+    );
+    gh.factory<_i847.EndAppSession>(
+      () => _i847.EndAppSession(gh<_i644.AppLogsRepository>()),
+    );
+    gh.factory<_i894.PruneOldSessions>(
+      () => _i894.PruneOldSessions(gh<_i644.AppLogsRepository>()),
+    );
+    gh.factory<_i647.StartAppSession>(
+      () => _i647.StartAppSession(gh<_i644.AppLogsRepository>()),
+    );
+    gh.factory<_i953.WatchLogSessions>(
+      () => _i953.WatchLogSessions(gh<_i644.AppLogsRepository>()),
+    );
+    gh.factory<_i41.WatchSessionEntries>(
+      () => _i41.WatchSessionEntries(gh<_i644.AppLogsRepository>()),
     );
     gh.lazySingleton<_i340.McpListDataSource>(
       () => _i340.McpListDataSource(
@@ -290,6 +353,13 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i73.SearchSessions>(
       () => _i73.SearchSessions(gh<_i875.ChatHistoryRepository>()),
     );
+    gh.lazySingleton<_i148.AppLogsCubit>(
+      () => _i148.AppLogsCubit(
+        gh<_i953.WatchLogSessions>(),
+        gh<_i609.DeleteSession>(),
+        gh<_i644.AppLogsRepository>(),
+      )..init(),
+    );
     gh.lazySingleton<_i179.WorkspacesCubit>(
       () => _i179.WorkspacesCubit(
         gh<_i305.OpenWorkspace>(),
@@ -341,6 +411,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i207.Talker>(),
       )..init(),
     );
+    gh.lazySingleton<_i709.AppLogDetailCubit>(
+      () => _i709.AppLogDetailCubit(
+        gh<_i41.WatchSessionEntries>(),
+        gh<_i148.AppLogsCubit>(),
+      )..init(),
+    );
     gh.lazySingleton<_i68.ShellCubit>(
       () => _i68.ShellCubit(
         gh<_i648.FileTabsCubit>(),
@@ -362,6 +438,8 @@ extension GetItInjectableX on _i174.GetIt {
 }
 
 class _$PreferencesModule extends _i329.PreferencesModule {}
+
+class _$AppLogsDatabaseModule extends _i436.AppLogsDatabaseModule {}
 
 class _$DatabaseModule extends _i664.DatabaseModule {}
 

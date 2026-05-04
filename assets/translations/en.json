@@ -8,6 +8,7 @@
       "search": "Search",
       "git": "Source Control",
       "sessions": "Sessions",
+      "logs": "Logs",
       "settings": "Settings",
       "comingLaterSuffix": " (coming later)"
     },
@@ -222,6 +223,42 @@
       "deleteConfirmCancel": "Cancel",
       "export": "Export as Markdown",
       "exportDone": "Session exported to {path}"
+    }
+  },
+  "appLogs": {
+    "title": "App Logs",
+    "empty": "No sessions yet",
+    "deleteAll": "Delete all",
+    "deleteAllConfirmTitle": "Delete all logs?",
+    "deleteAllConfirmBody": "All recorded sessions and log entries will be permanently removed.",
+    "deleteAllConfirmOk": "Delete",
+    "deleteAllConfirmCancel": "Cancel",
+    "back": "Back",
+    "session": {
+      "inProgress": "in progress",
+      "errors": "{count} err",
+      "warnings": "{count} warn",
+      "total": "{count} entries",
+      "delete": "Delete session",
+      "deleteConfirmTitle": "Delete session?",
+      "deleteConfirmBody": "This session and its log entries will be permanently removed.",
+      "deleteConfirmOk": "Delete",
+      "deleteConfirmCancel": "Cancel"
+    },
+    "detail": {
+      "filterLevel": "Level",
+      "search": "Search messages",
+      "empty": "No log entries",
+      "exception": "Exception",
+      "stackTrace": "Stack trace",
+      "level": {
+        "debug": "Debug",
+        "info": "Info",
+        "warning": "Warning",
+        "error": "Error",
+        "critical": "Critical",
+        "verbose": "Verbose"
+      }
     }
   },
   "editor": {

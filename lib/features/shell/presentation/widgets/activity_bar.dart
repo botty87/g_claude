@@ -52,6 +52,13 @@ const _topEntries = [
     keyName: 'activity_sessions',
     isEnabled: true,
   ),
+  _ActivityEntry(
+    id: ActivityId.logs,
+    icon: Symbols.receipt_long,
+    tooltipKey: 'shell.activity.logs',
+    keyName: 'activity_logs',
+    isEnabled: true,
+  ),
 ];
 
 const _settingsEntry = _ActivityEntry(

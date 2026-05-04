@@ -14,7 +14,9 @@ App funzionale end-to-end. Feature attive:
 - **PermissionServer** (Shelf, localhost porta effimera): risolve permission mode (default/plan/acceptEdits/bypassPermissions) o emette `ClaudeMessage.permissionRequest` con UI card; risposta tramite `answerPermission` + `Completer<PermissionDecision>`.
 - **slash_commands**: palette nel input chat, comandi file-based (CLAUDE.md) + skill-based (da `sessionInit`), filtro live.
 
-Persistenza: `SharedPreferences` per workspace, tab editor, settings sessione, sessione attiva. Cronologia chat: JSONL on disk (`~/.claude/projects/`). `drift` dichiarato in `pubspec.yaml` ma non ancora usato.
+Persistenza: `SharedPreferences` per workspace, tab editor, settings sessione, sessione attiva. Cronologia chat: JSONL on disk (`~/.claude/projects/`). `drift` attivo per due DB SQLite in `getApplicationSupportDirectory()`: `g_claude_sessions.sqlite` (indice cronologia chat con FTS5) e `g_claude_app_logs.sqlite` (log Talker per sessione applicazione).
+
+- **app_logs**: subscribe a `talker.stream` via `TalkerLogRecorder` (batch flush 500ms), persiste ogni evento in `LogEntries` legato a `AppSessions` (creata al boot, chiusa via `windowManager` close listener). `FlutterError.onError` + `PlatformDispatcher.onError` + `runZonedGuarded(runApp)` redirigono eccezioni Flutter/async/uncaught a Talker. Retention 30 giorni. UI nella activity bar (entry "Logs") con filtro per livello.
 
 Bootstrap ([lib/main.dart](lib/main.dart)): Marionette (debug) → EasyLocalization + window + DI in parallelo → `MarionetteLogBridge` → restore `WorkspacesCubit` poi `FileTabsCubit` (orphan filter) → `Bloc.observer` → prewarm tab persistite (4 worker concorrenti) → `runApp`. Estensioni Marionette custom: `openWorkspace`, `closeWorkspace`, `setActiveWorkspace`.
 

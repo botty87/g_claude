@@ -8,6 +8,7 @@
       "search": "Cerca",
       "git": "Controllo versione",
       "sessions": "Sessioni",
+      "logs": "Log",
       "settings": "Impostazioni",
       "comingLaterSuffix": " (in arrivo)"
     },
@@ -222,6 +223,42 @@
       "deleteConfirmCancel": "Annulla",
       "export": "Esporta come Markdown",
       "exportDone": "Sessione esportata in {path}"
+    }
+  },
+  "appLogs": {
+    "title": "Log Applicazione",
+    "empty": "Nessuna sessione",
+    "deleteAll": "Elimina tutto",
+    "deleteAllConfirmTitle": "Eliminare tutti i log?",
+    "deleteAllConfirmBody": "Tutte le sessioni registrate e le voci di log verranno rimosse definitivamente.",
+    "deleteAllConfirmOk": "Elimina",
+    "deleteAllConfirmCancel": "Annulla",
+    "back": "Indietro",
+    "session": {
+      "inProgress": "in corso",
+      "errors": "{count} err",
+      "warnings": "{count} avv",
+      "total": "{count} voci",
+      "delete": "Elimina sessione",
+      "deleteConfirmTitle": "Eliminare la sessione?",
+      "deleteConfirmBody": "Questa sessione e le sue voci di log verranno rimosse definitivamente.",
+      "deleteConfirmOk": "Elimina",
+      "deleteConfirmCancel": "Annulla"
+    },
+    "detail": {
+      "filterLevel": "Livello",
+      "search": "Cerca messaggi",
+      "empty": "Nessuna voce",
+      "exception": "Eccezione",
+      "stackTrace": "Stack trace",
+      "level": {
+        "debug": "Debug",
+        "info": "Info",
+        "warning": "Avviso",
+        "error": "Errore",
+        "critical": "Critico",
+        "verbose": "Verbose"
+      }
     }
   },
   "editor": {

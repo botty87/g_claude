@@ -33,8 +33,10 @@ class FileTabsBar extends HookWidget {
     }
 
     final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
-    final isSessionsActivity = context.select<ShellCubit, bool>(
-      (c) => c.state.selectedActivity == ActivityId.sessions,
+    final hidesEditorTabs = context.select<ShellCubit, bool>(
+      (c) =>
+          c.state.selectedActivity == ActivityId.sessions ||
+          c.state.selectedActivity == ActivityId.logs,
     );
 
     return Container(
@@ -45,9 +47,9 @@ class FileTabsBar extends HookWidget {
       ),
       child: Row(
         children: [
-          if (!isSessionsActivity) const OpenFilesButton(),
+          if (!hidesEditorTabs) const OpenFilesButton(),
           Expanded(
-            child: isSessionsActivity || activeId == null
+            child: hidesEditorTabs || activeId == null
                 ? const SizedBox.shrink()
                 : BlocConsumer<FileTabsCubit, FileTabsState>(
                     listenWhen: (prev, curr) =>
