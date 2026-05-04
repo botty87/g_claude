@@ -37,6 +37,7 @@ abstract class  LocaleKeys {
   static const claude_terminal_input_placeholderRunning = 'claude.terminal.input.placeholderRunning';
   static const claude_terminal_input_placeholderQueueing = 'claude.terminal.input.placeholderQueueing';
   static const claude_terminal_input_stop = 'claude.terminal.input.stop';
+  static const claude_terminal_input_escConfirmStop = 'claude.terminal.input.escConfirmStop';
   static const claude_terminal_input_send = 'claude.terminal.input.send';
   static const claude_terminal_input_attachments_addFile = 'claude.terminal.input.attachments.addFile';
   static const claude_terminal_input_attachments_addFolder = 'claude.terminal.input.attachments.addFolder';

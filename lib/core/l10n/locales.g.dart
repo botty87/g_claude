@@ -383,6 +383,7 @@ class _ClaudeTerminalEffort {
 class _ClaudeTerminalInput {
   const _ClaudeTerminalInput._();
 
+  String get escConfirmStop => LocaleKeys.claude_terminal_input_escConfirmStop.tr();
   String get placeholder => LocaleKeys.claude_terminal_input_placeholder.tr();
   String get placeholderQueueing => LocaleKeys.claude_terminal_input_placeholderQueueing.tr();
   String get placeholderRunning => LocaleKeys.claude_terminal_input_placeholderRunning.tr();

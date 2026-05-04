@@ -62,6 +62,7 @@ class ClaudeInputBar extends HookWidget {
         useState<List<SlashCommand>>(initialDraft.selectedCommands);
     final attachmentList =
         useState<List<ChatAttachment>>(initialDraft.attachments);
+    final escArmedAt = useRef<DateTime?>(null);
 
     void persistDraft({
       String? text,
@@ -256,6 +257,38 @@ class ClaudeInputBar extends HookWidget {
       if (event.logicalKey == LogicalKeyboardKey.period &&
           HardwareKeyboard.instance.isMetaPressed) {
         if (_isBusy) sessionsCubit.stopRun();
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.escape) {
+        if (!_isBusy) {
+          escArmedAt.value = null;
+          return KeyEventResult.ignored;
+        }
+        final now = DateTime.now();
+        final armed = escArmedAt.value;
+        if (armed != null &&
+            now.difference(armed) <= const Duration(seconds: 3)) {
+          escArmedAt.value = null;
+          ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
+          sessionsCubit.stopRun();
+          return KeyEventResult.handled;
+        }
+        escArmedAt.value = now;
+        final messenger = ScaffoldMessenger.maybeOf(context);
+        messenger
+          ?..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(Locales.Claude.Terminal.Input.escConfirmStop),
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        Future<void>.delayed(const Duration(seconds: 3), () {
+          if (escArmedAt.value == now) {
+            escArmedAt.value = null;
+          }
+        });
         return KeyEventResult.handled;
       }
       return KeyEventResult.ignored;

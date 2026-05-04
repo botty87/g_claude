@@ -83,9 +83,9 @@ class ClaudeTerminalHeader extends StatelessWidget {
                 Hoverable(
                   onTap: _isBusy
                       ? null
-                      : () => cubit.clearConversation(workspaceId),
+                      : () => cubit.newSession(workspaceId),
                   builder: (context, hover) => Tooltip(
-                    message: Locales.Claude.Terminal.Actions.clear,
+                    message: Locales.Claude.Terminal.Actions.newSession,
                     child: Container(
                       width: 24,
                       height: 24,
@@ -96,7 +96,7 @@ class ClaudeTerminalHeader extends StatelessWidget {
                             BorderRadius.circular(AppRadii.sm),
                       ),
                       child: Icon(
-                        Symbols.delete_sweep,
+                        Symbols.add_comment,
                         size: 14,
                         color: _isBusy
                             ? AppColors.outline
