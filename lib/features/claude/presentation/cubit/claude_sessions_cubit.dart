@@ -15,6 +15,7 @@ import '../../../../core/utils/either.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../data/datasources/claude_history_datasource.dart';
 import '../../data/datasources/permission_server.dart';
+import '../../domain/entities/chat_attachment.dart';
 import '../../domain/entities/chat_input_draft.dart';
 import '../../domain/entities/claude_event.dart';
 import '../../domain/entities/claude_message.dart';
@@ -31,6 +32,7 @@ import '../../domain/usecases/load_session_messages.dart';
 import '../../domain/usecases/send_prompt.dart';
 import '../../domain/usecases/stop_run.dart';
 import '../../domain/usecases/toggle_mcp_server.dart';
+import '../../domain/utils/attachment_token.dart';
 
 part 'claude_sessions_cubit.freezed.dart';
 part 'claude_sessions_cubit.state.dart';
@@ -592,9 +594,16 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     Future.microtask(() => sendPrompt(workspaceId, queued.text));
   }
 
-  Future<void> sendPrompt(String workspaceId, String text) async {
+  Future<void> sendPrompt(
+    String workspaceId,
+    String text, {
+    List<String> slashTriggers = const [],
+    List<ChatAttachment> attachments = const [],
+  }) async {
     final trimmed = text.trim();
-    if (trimmed.isEmpty) return;
+    final hasContent =
+        trimmed.isNotEmpty || slashTriggers.isNotEmpty || attachments.isNotEmpty;
+    if (!hasContent) return;
     final session = state.sessions[workspaceId];
     if (session == null) {
       _talker.warning('sendPrompt for unknown workspace: $workspaceId');
@@ -605,16 +614,30 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       return;
     }
 
+    final concatParts = <String>[
+      if (slashTriggers.isNotEmpty) slashTriggers.join(' '),
+      if (attachments.isNotEmpty)
+        attachments.map((a) => formatAttachmentToken(a.path)).join(' '),
+      if (trimmed.isNotEmpty) trimmed,
+    ];
+    final concatPrompt = concatParts.join(' ');
+
     final cliPrompt = session.thinkingMode.keyword.isEmpty
-        ? trimmed
-        : '${session.thinkingMode.keyword} $trimmed';
+        ? concatPrompt
+        : '${session.thinkingMode.keyword} $concatPrompt';
 
     final now = DateTime.now();
     final userMsgId = _genId('u');
     final assistantMsgId = _genId('a');
     final messages = [
       ...session.messages,
-      ClaudeMessage.user(id: userMsgId, text: trimmed, createdAt: now),
+      ClaudeMessage.user(
+        id: userMsgId,
+        text: trimmed,
+        createdAt: now,
+        slashTriggers: slashTriggers,
+        attachments: attachments,
+      ),
       ClaudeMessage.assistant(
         id: assistantMsgId,
         text: '',

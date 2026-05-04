@@ -20,7 +20,6 @@ import '../../../slash_commands/presentation/widgets/slash_command_overlay.dart'
 import '../../domain/entities/chat_attachment.dart';
 import '../../domain/entities/chat_input_draft.dart';
 import '../cubit/claude_sessions_cubit.dart';
-import '../utils/attachment_token.dart';
 import 'attachment_chip_row.dart';
 
 class ClaudeInputBar extends HookWidget {
@@ -178,21 +177,22 @@ class ClaudeInputBar extends HookWidget {
         sessionsCubit.setQueuedPrompt(workspaceId, userText);
         return;
       }
-      final chipPrefix =
-          selectedChips.value.map((c) => c.trigger).join(' ');
-      final attachmentTokens =
-          attachments.map((a) => formatAttachmentToken(a.path)).join(' ');
-      final parts = <String>[
-        if (chipPrefix.isNotEmpty) chipPrefix,
-        if (attachmentTokens.isNotEmpty) attachmentTokens,
-        if (userText.isNotEmpty) userText,
-      ];
-      if (parts.isEmpty) return;
-      final prompt = parts.join(' ');
+      final triggers =
+          selectedChips.value.map((c) => c.trigger).toList(growable: false);
+      final hasContent = userText.isNotEmpty ||
+          triggers.isNotEmpty ||
+          attachments.isNotEmpty;
+      if (!hasContent) return;
+      final attachmentsSnapshot = List<ChatAttachment>.unmodifiable(attachments);
       controller.clear();
       selectedChips.value = const [];
       sessionsCubit.clearInputDraft(workspaceId);
-      sessionsCubit.sendPrompt(workspaceId, prompt);
+      sessionsCubit.sendPrompt(
+        workspaceId,
+        userText,
+        slashTriggers: triggers,
+        attachments: attachmentsSnapshot,
+      );
     }
 
     KeyEventResult onKey(FocusNode node, KeyEvent event) {

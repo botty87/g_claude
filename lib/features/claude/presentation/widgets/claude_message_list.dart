@@ -16,6 +16,7 @@ import '../../domain/entities/claude_message.dart';
 import '../cubit/claude_sessions_cubit.dart';
 import 'ask_user_question_card.dart';
 import 'permission_request_card.dart';
+import 'user_bubble_chip.dart';
 
 const _kAnimDuration = Duration(milliseconds: 180);
 const _kToolBodyMaxHeight = 200.0;
@@ -250,7 +251,7 @@ class _MessageItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (message) {
-      ClaudeMessageUser(:final text) => _UserBubble(text: text),
+      final ClaudeMessageUser m => _UserBubble(message: m),
       ClaudeMessageAssistant(:final text, :final isStreaming) =>
         _AssistantBlock(text: text, isStreaming: isStreaming),
       ClaudeMessageTool(
@@ -501,12 +502,15 @@ class _NestedToolCard extends StatelessWidget {
 }
 
 class _UserBubble extends StatelessWidget {
-  const _UserBubble({required this.text});
+  const _UserBubble({required this.message});
 
-  final String text;
+  final ClaudeMessageUser message;
 
   @override
   Widget build(BuildContext context) {
+    final hasChips =
+        message.slashTriggers.isNotEmpty || message.attachments.isNotEmpty;
+    final hasText = message.text.isNotEmpty;
     return Align(
       alignment: Alignment.centerRight,
       child: ConstrainedBox(
@@ -529,12 +533,31 @@ class _UserBubble extends StatelessWidget {
               width: 1,
             ),
           ),
-          child: SelectableText(
-            text,
-            style: AppTypography.bodyMain.copyWith(
-              color: AppColors.onSurface,
-              height: 1.45,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (hasChips)
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: [
+                    for (final t in message.slashTriggers)
+                      BubbleSlashChip(trigger: t),
+                    for (final a in message.attachments)
+                      BubbleAttachmentChip(attachment: a),
+                  ],
+                ),
+              if (hasChips && hasText) const SizedBox(height: AppSpacing.xs),
+              if (hasText)
+                SelectableText(
+                  message.text,
+                  style: AppTypography.bodyMain.copyWith(
+                    color: AppColors.onSurface,
+                    height: 1.45,
+                  ),
+                ),
+            ],
           ),
         ),
       ),

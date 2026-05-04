@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:g_claude/features/claude/presentation/utils/attachment_token.dart';
+import 'package:g_claude/features/claude/domain/utils/attachment_token.dart';
 
 void main() {
   group('formatAttachmentToken', () {
