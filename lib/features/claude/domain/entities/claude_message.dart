@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'chat_attachment.dart';
 import 'claude_event.dart';
 
 part 'claude_message.freezed.dart';
@@ -16,6 +17,8 @@ sealed class ClaudeMessage with _$ClaudeMessage {
     required String id,
     required String text,
     required DateTime createdAt,
+    @Default(<String>[]) List<String> slashTriggers,
+    @Default(<ChatAttachment>[]) List<ChatAttachment> attachments,
   }) = ClaudeMessageUser;
 
   const factory ClaudeMessage.assistant({
