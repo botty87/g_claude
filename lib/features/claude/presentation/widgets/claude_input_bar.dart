@@ -70,12 +70,15 @@ class ClaudeInputBar extends HookWidget {
       List<SlashCommand>? chips,
       List<ChatAttachment>? attachmentsOverride,
     }) {
+      final liveAttachments =
+          sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ??
+              const <ChatAttachment>[];
       sessionsCubit.setInputDraft(
         workspaceId,
         ChatInputDraft(
           text: text ?? controller.text,
           selectedCommands: chips ?? selectedChips.value,
-          attachments: attachmentsOverride ?? attachments,
+          attachments: attachmentsOverride ?? liveAttachments,
         ),
       );
     }
