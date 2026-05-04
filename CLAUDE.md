@@ -214,7 +214,7 @@ final hasMessages = context.select<ClaudeSessionsCubit, bool>(
 
 **Regola 5 — uguaglianza per evitare rebuild inutili.** `context.select` rebuilda quando il valore selezionato cambia per `==`. Liste/mappe Dart usano identity equality di default: assicurati che il cubit, dove possibile, preservi la **stessa referenza** quando il contenuto non cambia (es. ritornare `state.X` invariato in `copyWith` se non si tocca quel campo). Se il valore selezionato è derivato (es. `messages.isNotEmpty`), il bool stabile evita rebuild.
 
-**Pattern di esempio canonico:** [claude_terminal_pane.dart](lib/features/claude/presentation/widgets/claude_terminal_pane.dart), [claude_terminal_header.dart](lib/features/claude/presentation/widgets/claude_terminal_header.dart), [queued_prompt_card.dart](lib/features/claude/presentation/widgets/queued_prompt_card.dart).
+**Pattern di esempio canonico:** [claude_terminal_pane.dart](lib/features/claude/presentation/widgets/claude_terminal_pane.dart), [claude_terminal_header.dart](lib/features/claude/presentation/widgets/claude_terminal_header.dart), [queued_prompt_card.dart](lib/features/claude/presentation/widgets/queued_prompt_card.dart), [claude_input_bar.dart](lib/features/claude/presentation/widgets/claude_input_bar.dart).
 
 **Code review checklist:**
 1. Ogni `context.select` ritorna un tipo già scalare / lista / bool? Se ritorna un oggetto stato wrapper → split in N selettori.
