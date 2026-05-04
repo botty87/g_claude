@@ -63,6 +63,7 @@ dependencies:
 
   # Markdown rendering
   flutter_markdown_plus: ^1.0.7
+  markdown: ^7.3.0
 
   # PDF viewer
   pdfrx: ^2.2.24

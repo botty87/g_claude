@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,9 +13,15 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/pretty_json.dart';
+import '../../../../core/di/di.dart';
+import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
+import '../../../explorer/presentation/cubit/explorer_cubit.dart';
+import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../domain/entities/claude_message.dart';
 import '../cubit/claude_sessions_cubit.dart';
 import 'ask_user_question_card.dart';
+import 'clickable_code_builder.dart';
+import 'clickable_code_resolver.dart';
 import 'permission_request_card.dart';
 import 'user_bubble_chip.dart';
 
@@ -349,7 +356,11 @@ class _MessageItem extends StatelessWidget {
     return switch (message) {
       final ClaudeMessageUser m => _UserBubble(message: m),
       ClaudeMessageAssistant(:final text, :final isStreaming) =>
-        _AssistantBlock(text: text, isStreaming: isStreaming),
+        _AssistantBlock(
+          text: text,
+          isStreaming: isStreaming,
+          workspaceId: workspaceId,
+        ),
       ClaudeMessageTool(
         :final toolName,
         :final status,
@@ -661,15 +672,49 @@ class _UserBubble extends StatelessWidget {
   }
 }
 
-class _AssistantBlock extends StatelessWidget {
-  const _AssistantBlock({required this.text, required this.isStreaming});
+class _AssistantBlock extends HookWidget {
+  const _AssistantBlock({
+    required this.text,
+    required this.isStreaming,
+    required this.workspaceId,
+  });
 
   final String text;
   final bool isStreaming;
+  final String workspaceId;
 
   @override
   Widget build(BuildContext context) {
     final showPulse = text.isEmpty && isStreaming;
+
+    final cwd = context.select<WorkspacesCubit, String?>(
+      (c) => c.state.workspacesOrEmpty
+          .firstWhereOrNull((w) => w.id == workspaceId)
+          ?.path,
+    );
+    final tree = context.select<ExplorerCubit, WorkspaceTree?>(
+      (c) => c.state.trees[workspaceId],
+    );
+    final basenameIndex = useMemoized<Map<String, List<String>>>(
+      () => tree == null ? const {} : buildBasenameIndex(tree),
+      [tree],
+    );
+
+    final builders = useMemoized<Map<String, MarkdownElementBuilder>>(
+      () {
+        if (cwd == null) return const {};
+        return {
+          'code': ClickableCodeBuilder(
+            cwd: cwd,
+            basenameIndex: basenameIndex,
+            onTapPath: (absPath) =>
+                getIt<FileTabsCubit>().openFile(workspaceId, absPath),
+          ),
+        };
+      },
+      [cwd, basenameIndex, workspaceId],
+    );
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -689,6 +734,7 @@ class _AssistantBlock extends StatelessWidget {
                   selectable: true,
                   softLineBreak: true,
                   styleSheet: _markdownStyle,
+                  builders: builders,
                 ),
         ),
       ],
