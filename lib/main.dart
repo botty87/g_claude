@@ -11,6 +11,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import 'app.dart';
 import 'core/di/di.dart';
 import 'core/l10n/l10n.dart';
+import 'core/macos/macos_paste_bridge.dart';
 import 'core/marionette/marionette_log_bridge.dart';
 import 'core/window/app_lifecycle_listener.dart';
 import 'core/window/window_setup.dart';
@@ -46,6 +47,8 @@ Future<void> _run() async {
   } else {
     WidgetsFlutterBinding.ensureInitialized();
   }
+
+  MacosPasteBridge.instance.start();
 
   await Future.wait([
     EasyLocalization.ensureInitialized(),

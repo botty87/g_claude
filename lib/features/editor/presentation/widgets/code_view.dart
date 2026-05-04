@@ -249,6 +249,7 @@ class _HighlightedView extends HookWidget {
       child: CodeEditor(
         controller: controller,
         findController: findController,
+        readOnly: true,
         style: CodeEditorStyle(
           backgroundColor: AppColors.surface,
           textColor: AppColors.onSurface,
