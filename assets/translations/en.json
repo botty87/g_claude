@@ -42,6 +42,7 @@
         "placeholderRunning": "Claude is responding… (press Cmd+. to stop)",
         "placeholderQueueing": "Queue a message…",
         "stop": "Stop",
+        "escConfirmStop": "Press Esc again within 3s to stop",
         "send": "Send",
         "attachments": {
           "addFile": "Attach file",

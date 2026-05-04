@@ -42,6 +42,7 @@
         "placeholderRunning": "Claude sta rispondendo… (Cmd+. per fermare)",
         "placeholderQueueing": "Metti in coda un messaggio…",
         "stop": "Ferma",
+        "escConfirmStop": "Premi Esc di nuovo entro 3s per fermare",
         "send": "Invia",
         "attachments": {
           "addFile": "Allega file",
