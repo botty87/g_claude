@@ -23,6 +23,7 @@ import '../../domain/entities/claude_effort.dart';
 import '../../domain/entities/claude_permission_mode.dart';
 import '../../domain/entities/claude_thinking_mode.dart';
 import '../../domain/entities/mcp_server.dart';
+import '../../domain/entities/queued_prompt.dart';
 import '../../domain/repositories/claude_repository.dart';
 import '../../domain/usecases/list_mcp_servers.dart';
 import '../../domain/usecases/authenticate_mcp_server.dart';
@@ -527,6 +528,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
             runStatus: ClaudeRunStatus.idle,
             lastError: null,
             stderrTail: const [],
+            queuedPrompt: null,
           ),
         );
         unawaited(_writeActiveSession(workspaceId, sessionId));
@@ -536,6 +538,11 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
   Future<void> stopRun() async {
     if (_runningWorkspaceId == null) return;
+    final wid = _runningWorkspaceId!;
+    final s = state.sessions[wid];
+    if (s != null && s.queuedPrompt != null) {
+      _emitSession(wid, s.copyWith(queuedPrompt: null));
+    }
     await _stopRun.call();
   }
 
@@ -550,6 +557,39 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
   void clearInputDraft(String workspaceId) {
     setInputDraft(workspaceId, ChatInputDraft.empty);
+  }
+
+  void setQueuedPrompt(String workspaceId, String text) {
+    final trimmed = text.trim();
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+    if (trimmed.isEmpty) {
+      if (session.queuedPrompt == null) return;
+      _emitSession(workspaceId, session.copyWith(queuedPrompt: null));
+      return;
+    }
+    final existing = session.queuedPrompt;
+    final next = QueuedPrompt(
+      text: trimmed,
+      enqueuedAt: existing?.enqueuedAt ?? DateTime.now(),
+    );
+    if (existing == next) return;
+    _emitSession(workspaceId, session.copyWith(queuedPrompt: next));
+  }
+
+  void clearQueuedPrompt(String workspaceId) {
+    final session = state.sessions[workspaceId];
+    if (session == null || session.queuedPrompt == null) return;
+    _emitSession(workspaceId, session.copyWith(queuedPrompt: null));
+  }
+
+  void _drainQueuedPrompt(String workspaceId) {
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+    final queued = session.queuedPrompt;
+    if (queued == null) return;
+    _emitSession(workspaceId, session.copyWith(queuedPrompt: null));
+    Future.microtask(() => sendPrompt(workspaceId, queued.text));
   }
 
   Future<void> sendPrompt(String workspaceId, String text) async {
@@ -956,6 +996,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       }
     }
     _cleanupRun();
+    if (wid != null && status == ClaudeRunStatus.idle) {
+      _drainQueuedPrompt(wid);
+    }
   }
 
   void _cleanupRun() {

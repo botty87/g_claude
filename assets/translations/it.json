@@ -40,6 +40,7 @@
       "input": {
         "placeholder": "Invia un messaggio a Claude…",
         "placeholderRunning": "Claude sta rispondendo… (Cmd+. per fermare)",
+        "placeholderQueueing": "Metti in coda un messaggio…",
         "stop": "Ferma",
         "send": "Invia",
         "attachments": {
@@ -47,6 +48,12 @@
           "addFolder": "Allega cartella",
           "dropHint": "Trascina file o cartelle qui",
           "removeTooltip": "Rimuovi allegato"
+        },
+        "queue": {
+          "label": "In coda",
+          "removeTooltip": "Rimuovi messaggio in coda",
+          "editPlaceholder": "Modifica messaggio in coda…",
+          "send": "Metti in coda"
         }
       },
       "actions": {

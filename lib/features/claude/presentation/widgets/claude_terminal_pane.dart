@@ -17,6 +17,7 @@ import '../cubit/claude_sessions_cubit.dart';
 import 'claude_input_bar.dart';
 import 'claude_message_list.dart';
 import 'claude_terminal_header.dart';
+import 'queued_prompt_card.dart';
 
 class ClaudeTerminalPane extends HookWidget {
   const ClaudeTerminalPane({super.key});
@@ -96,6 +97,10 @@ class ClaudeTerminalPane extends HookWidget {
                     lastError: session.lastError,
                     stderrTail: session.stderrTail,
                   ),
+                ),
+                QueuedPromptCard(
+                  key: ValueKey('claude_queued_card_$activeId'),
+                  workspaceId: activeId,
                 ),
                 ClaudeInputBar(
                   key: ValueKey('claude_input_bar_$activeId'),
