@@ -5,9 +5,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 
+import 'package:path/path.dart' as p;
+
+import '../../../../core/di/di.dart';
+import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../claude/domain/entities/chat_attachment.dart';
+import '../../../claude/domain/entities/chat_input_draft.dart';
+import '../../../claude/presentation/cubit/claude_sessions_cubit.dart';
 import '../../../claude/presentation/widgets/claude_terminal_pane.dart';
 import '../../../claude/presentation/widgets/session_preview_view.dart';
+import '../../../editor/presentation/cubit/active_editor_cubit.dart';
 import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
 import '../../../editor/presentation/widgets/file_tabs_bar.dart';
 import '../../../editor/presentation/widgets/file_viewer.dart';
@@ -46,11 +54,100 @@ class AppShellPage extends HookWidget {
       return true;
     }
 
+    bool attachActiveEditor() {
+      final activeId = context.read<WorkspacesCubit>().state.activeIdOrNull;
+      if (activeId == null) return false;
+      final activePath =
+          context.read<FileTabsCubit>().state.filesFor(activeId)?.activePath;
+      if (activePath == null) return false;
+      final sessions = context.read<ClaudeSessionsCubit>();
+      final selection = getIt<ActiveEditorCubit>().snapshotFor(activeId);
+      final current = sessions.state.sessions[activeId]?.inputDraft;
+      final currentAttachments = current?.attachments ?? const <ChatAttachment>[];
+
+      final ChatAttachment newAttachment;
+      bool isDuplicate = false;
+      if (selection != null && !selection.isEmpty) {
+        newAttachment = ChatAttachment(
+          path: selection.path,
+          displayName:
+              '${p.basename(selection.path)}:${selection.startLine}-${selection.endLine}',
+          kind: ChatAttachmentKind.fileRange,
+          startLine: selection.startLine,
+          endLine: selection.endLine,
+          snippet: selection.snippet,
+        );
+        isDuplicate = currentAttachments.any((a) =>
+            a.kind == ChatAttachmentKind.fileRange &&
+            p.normalize(a.path) == p.normalize(selection.path) &&
+            a.startLine == selection.startLine &&
+            a.endLine == selection.endLine);
+      } else {
+        final norm = p.normalize(activePath);
+        isDuplicate = currentAttachments.any((a) =>
+            a.kind == ChatAttachmentKind.file &&
+            p.normalize(a.path) == norm);
+        newAttachment = ChatAttachment(
+          path: activePath,
+          displayName: p.basename(activePath),
+          kind: ChatAttachmentKind.file,
+        );
+      }
+
+      if (isDuplicate) {
+        ScaffoldMessenger.maybeOf(context)
+          ?..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(Locales.Shell.Shortcuts.alreadyAttached),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        return true;
+      }
+
+      sessions.setInputDraft(
+        activeId,
+        ChatInputDraft(
+          text: current?.text ?? '',
+          selectedCommands: current?.selectedCommands ?? const [],
+          attachments: [...currentAttachments, newAttachment],
+        ),
+      );
+
+      ScaffoldMessenger.maybeOf(context)
+        ?..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              newAttachment.kind == ChatAttachmentKind.fileRange
+                  ? Locales.Shell.Shortcuts.attachedRange(
+                      name: newAttachment.displayName,
+                    )
+                  : Locales.Shell.Shortcuts.attachedFile(
+                      name: newAttachment.displayName,
+                    ),
+            ),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      return true;
+    }
+
     KeyEventResult onKey(FocusNode node, KeyEvent event) {
       if (event is! KeyDownEvent) return KeyEventResult.ignored;
       if (!HardwareKeyboard.instance.isMetaPressed) {
         return KeyEventResult.ignored;
       }
+      final altPressed = HardwareKeyboard.instance.isAltPressed;
+      if (event.logicalKey == LogicalKeyboardKey.keyK && altPressed) {
+        return attachActiveEditor()
+            ? KeyEventResult.handled
+            : KeyEventResult.ignored;
+      }
+      if (altPressed) return KeyEventResult.ignored;
       final handled = switch (event.logicalKey) {
         LogicalKeyboardKey.keyB => toggleWorkspace(),
         LogicalKeyboardKey.keyW => closeActiveTab(),

@@ -36,7 +36,9 @@ class AttachmentChipRow extends StatelessWidget {
         children: [
           for (final attachment in attachments)
             AttachmentChip(
-              key: ValueKey('attachment_chip_${attachment.path.hashCode}'),
+              key: ValueKey(
+                'attachment_chip_${attachment.path.hashCode}_${attachment.startLine ?? 0}_${attachment.endLine ?? 0}',
+              ),
               attachment: attachment,
               onRemove: () => onRemove(attachment),
             ),

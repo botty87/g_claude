@@ -24,6 +24,11 @@
     "workspace": {
       "toggleToFullscreen": "Hide workspace, focus Claude",
       "toggleToWorkspace": "Show workspace"
+    },
+    "shortcuts": {
+      "attachedFile": "Attached {name}",
+      "attachedRange": "Attached lines {name}",
+      "alreadyAttached": "Already attached"
     }
   },
   "claude": {

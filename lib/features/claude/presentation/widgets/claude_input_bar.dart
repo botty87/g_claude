@@ -130,7 +130,10 @@ class ClaudeInputBar extends HookWidget {
       if (res == null) return;
       final current = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments
           ?? const <ChatAttachment>[];
-      final existing = current.map((a) => p.normalize(a.path)).toSet();
+      final existing = current
+          .where((a) => a.kind == ChatAttachmentKind.file)
+          .map((a) => p.normalize(a.path))
+          .toSet();
       final additions = <ChatAttachment>[];
       for (final f in res.files) {
         final path = f.path;
@@ -170,7 +173,14 @@ class ClaudeInputBar extends HookWidget {
     void removeAttachment(ChatAttachment a) {
       final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments
           ?? const <ChatAttachment>[];
-      persistDraft(attachmentsOverride: live.where((x) => x.path != a.path).toList());
+      persistDraft(
+        attachmentsOverride: live
+            .where((x) => !(x.path == a.path &&
+                x.kind == a.kind &&
+                x.startLine == a.startLine &&
+                x.endLine == a.endLine))
+            .toList(),
+      );
     }
 
     void submit() {

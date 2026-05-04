@@ -41,9 +41,11 @@ class AttachmentChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              attachment.kind == ChatAttachmentKind.directory
-                  ? Symbols.folder
-                  : Symbols.description,
+              switch (attachment.kind) {
+                ChatAttachmentKind.directory => Symbols.folder,
+                ChatAttachmentKind.fileRange => Symbols.code,
+                ChatAttachmentKind.file => Symbols.description,
+              },
               size: 12,
               color: color,
             ),

@@ -614,11 +614,28 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       return;
     }
 
+    final fileTokens = attachments
+        .where((a) => a.kind != ChatAttachmentKind.fileRange)
+        .map((a) => formatAttachmentToken(a.path))
+        .toList();
+    final rangeTokens = attachments
+        .where((a) => a.kind == ChatAttachmentKind.fileRange)
+        .map((a) => formatAttachmentToken(a.path))
+        .toList();
+    final rangeBlocks = attachments
+        .where((a) => a.kind == ChatAttachmentKind.fileRange)
+        .map((a) {
+      final header = '${a.path}:${a.startLine}-${a.endLine}';
+      final body = a.snippet ?? '';
+      return '```\n// $header\n$body\n```';
+    }).toList();
+
     final concatParts = <String>[
       if (slashTriggers.isNotEmpty) slashTriggers.join(' '),
-      if (attachments.isNotEmpty)
-        attachments.map((a) => formatAttachmentToken(a.path)).join(' '),
+      if (fileTokens.isNotEmpty) fileTokens.join(' '),
+      if (rangeTokens.isNotEmpty) rangeTokens.join(' '),
       if (trimmed.isNotEmpty) trimmed,
+      if (rangeBlocks.isNotEmpty) rangeBlocks.join('\n\n'),
     ];
     final concatPrompt = concatParts.join(' ');
 

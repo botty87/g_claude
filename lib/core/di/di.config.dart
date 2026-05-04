@@ -92,6 +92,8 @@ import '../../features/editor/data/repositories/file_content_repository_impl.dar
 import '../../features/editor/domain/repositories/file_content_repository.dart'
     as _i1043;
 import '../../features/editor/domain/usecases/read_file.dart' as _i622;
+import '../../features/editor/presentation/cubit/active_editor_cubit.dart'
+    as _i207;
 import '../../features/editor/presentation/cubit/file_tabs_cubit.dart' as _i648;
 import '../../features/explorer/data/datasources/file_system_datasource.dart'
     as _i12;
@@ -169,6 +171,7 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i81.AppRouter>(() => routerModule.router);
     gh.lazySingleton<_i207.Talker>(() => talkerModule.talker);
+    gh.lazySingleton<_i207.ActiveEditorCubit>(() => _i207.ActiveEditorCubit());
     gh.lazySingleton<_i644.AppLogsRepository>(
       () => _i413.AppLogsRepositoryImpl(gh<_i126.AppLogsDatabase>()),
     );

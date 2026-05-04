@@ -24,6 +24,10 @@ abstract class  LocaleKeys {
   static const shell_workspace_toggleToFullscreen = 'shell.workspace.toggleToFullscreen';
   static const shell_workspace_toggleToWorkspace = 'shell.workspace.toggleToWorkspace';
   static const shell_workspace = 'shell.workspace';
+  static const shell_shortcuts_attachedFile = 'shell.shortcuts.attachedFile';
+  static const shell_shortcuts_attachedRange = 'shell.shortcuts.attachedRange';
+  static const shell_shortcuts_alreadyAttached = 'shell.shortcuts.alreadyAttached';
+  static const shell_shortcuts = 'shell.shortcuts';
   static const shell = 'shell';
   static const claude_terminal_title = 'claude.terminal.title';
   static const claude_terminal_status_idle = 'claude.terminal.status.idle';

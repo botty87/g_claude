@@ -24,6 +24,11 @@
     "workspace": {
       "toggleToFullscreen": "Nascondi workspace, focus Claude",
       "toggleToWorkspace": "Mostra workspace"
+    },
+    "shortcuts": {
+      "attachedFile": "Allegato {name}",
+      "attachedRange": "Allegate righe {name}",
+      "alreadyAttached": "Già allegato"
     }
   },
   "claude": {

@@ -2,10 +2,14 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:talker_flutter/talker_flutter.dart';
+
+import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
+import '../cubit/active_editor_cubit.dart';
 import 'package:re_highlight/languages/dart.dart';
 import 'package:re_highlight/languages/json.dart';
 import 'package:re_highlight/languages/yaml.dart';
@@ -228,6 +232,20 @@ class _HighlightedView extends HookWidget {
       [content.path],
     );
     useEffect(() => controller.dispose, [controller]);
+
+    final activeEditor = getIt<ActiveEditorCubit>();
+    final workspaceId = context.select<WorkspacesCubit, String?>(
+      (c) => c.state.activeIdOrNull,
+    );
+    useEffect(() {
+      if (workspaceId == null) return null;
+      activeEditor.register(ActiveEditorRef(
+        workspaceId: workspaceId,
+        path: content.path,
+        controller: controller,
+      ));
+      return () => activeEditor.unregister(workspaceId, content.path);
+    }, [workspaceId, content.path, controller]);
 
     useEffect(() {
       if (controller.text != content.content) {

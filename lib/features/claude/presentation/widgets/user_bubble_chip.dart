@@ -31,9 +31,11 @@ class BubbleAttachmentChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const color = AppColors.tertiary;
-    final icon = attachment.kind == ChatAttachmentKind.directory
-        ? Symbols.folder
-        : Symbols.description;
+    final icon = switch (attachment.kind) {
+      ChatAttachmentKind.directory => Symbols.folder,
+      ChatAttachmentKind.fileRange => Symbols.code,
+      ChatAttachmentKind.file => Symbols.description,
+    };
     return Tooltip(
       message: attachment.path,
       waitDuration: const Duration(milliseconds: 400),

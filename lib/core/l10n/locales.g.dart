@@ -673,6 +673,9 @@ class _Shell {
   /// Translations for activity
   final Activity = const _ShellActivity._();
 
+  /// Translations for shortcuts
+  final Shortcuts = const _ShellShortcuts._();
+
   /// Translations for sidePanel
   final SidePanel = const _ShellSidePanel._();
 
@@ -692,6 +695,25 @@ class _ShellActivity {
   String get search => LocaleKeys.shell_activity_search.tr();
   String get sessions => LocaleKeys.shell_activity_sessions.tr();
   String get settings => LocaleKeys.shell_activity_settings.tr();
+}
+
+/// Nested class for shortcuts translations
+class _ShellShortcuts {
+  const _ShellShortcuts._();
+
+  String get alreadyAttached => LocaleKeys.shell_shortcuts_alreadyAttached.tr();
+  String attachedFile({required String name}) {
+    return LocaleKeys.shell_shortcuts_attachedFile.tr(namedArgs: {
+      'name': name,
+    });
+  }
+
+  String attachedRange({required String name}) {
+    return LocaleKeys.shell_shortcuts_attachedRange.tr(namedArgs: {
+      'name': name,
+    });
+  }
+
 }
 
 /// Nested class for sidePanel translations
