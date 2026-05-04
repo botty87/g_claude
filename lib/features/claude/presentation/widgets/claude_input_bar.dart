@@ -60,21 +60,22 @@ class ClaudeInputBar extends HookWidget {
     final link = useMemoized(LayerLink.new, const []);
     final selectedChips =
         useState<List<SlashCommand>>(initialDraft.selectedCommands);
-    final attachmentList =
-        useState<List<ChatAttachment>>(initialDraft.attachments);
+    final attachments = context.select<ClaudeSessionsCubit, List<ChatAttachment>>(
+      (c) => c.state.sessions[workspaceId]?.inputDraft.attachments ?? const [],
+    );
     final escArmedAt = useRef<DateTime?>(null);
 
     void persistDraft({
       String? text,
       List<SlashCommand>? chips,
-      List<ChatAttachment>? attachments,
+      List<ChatAttachment>? attachmentsOverride,
     }) {
       sessionsCubit.setInputDraft(
         workspaceId,
         ChatInputDraft(
           text: text ?? controller.text,
           selectedCommands: chips ?? selectedChips.value,
-          attachments: attachments ?? attachmentList.value,
+          attachments: attachmentsOverride ?? attachments,
         ),
       );
     }
@@ -123,7 +124,7 @@ class ClaudeInputBar extends HookWidget {
         type: FileType.any,
       );
       if (res == null) return;
-      final current = attachmentList.value;
+      final current = attachments;
       final existing = current.map((a) => p.normalize(a.path)).toSet();
       final additions = <ChatAttachment>[];
       for (final f in res.files) {
@@ -139,9 +140,7 @@ class ClaudeInputBar extends HookWidget {
         ));
       }
       if (additions.isNotEmpty) {
-        final next = [...current, ...additions];
-        attachmentList.value = next;
-        persistDraft(attachments: next);
+        persistDraft(attachmentsOverride: [...current, ...additions]);
       }
     }
 
@@ -149,26 +148,22 @@ class ClaudeInputBar extends HookWidget {
       if (_isBusy) return;
       final path = await FilePicker.getDirectoryPath();
       if (path == null) return;
-      final current = attachmentList.value;
+      final current = attachments;
       final norm = p.normalize(path);
       if (current.any((a) => p.normalize(a.path) == norm)) return;
-      final next = [
+      persistDraft(attachmentsOverride: [
         ...current,
         ChatAttachment(
           path: path,
           displayName: p.basename(path),
           kind: ChatAttachmentKind.directory,
         ),
-      ];
-      attachmentList.value = next;
-      persistDraft(attachments: next);
+      ]);
     }
 
     void removeAttachment(ChatAttachment a) {
-      final next =
-          attachmentList.value.where((x) => x.path != a.path).toList();
-      attachmentList.value = next;
-      persistDraft(attachments: next);
+      final next = attachments.where((x) => x.path != a.path).toList();
+      persistDraft(attachmentsOverride: next);
     }
 
     void submit() {
@@ -182,9 +177,8 @@ class ClaudeInputBar extends HookWidget {
       }
       final chipPrefix =
           selectedChips.value.map((c) => c.trigger).join(' ');
-      final attachmentTokens = attachmentList.value
-          .map((a) => formatAttachmentToken(a.path))
-          .join(' ');
+      final attachmentTokens =
+          attachments.map((a) => formatAttachmentToken(a.path)).join(' ');
       final parts = <String>[
         if (chipPrefix.isNotEmpty) chipPrefix,
         if (attachmentTokens.isNotEmpty) attachmentTokens,
@@ -194,7 +188,6 @@ class ClaudeInputBar extends HookWidget {
       final prompt = parts.join(' ');
       controller.clear();
       selectedChips.value = const [];
-      attachmentList.value = const [];
       sessionsCubit.clearInputDraft(workspaceId);
       sessionsCubit.sendPrompt(workspaceId, prompt);
     }
@@ -238,11 +231,9 @@ class ClaudeInputBar extends HookWidget {
           persistDraft(chips: next);
           return KeyEventResult.handled;
         }
-        if (attachmentList.value.isNotEmpty) {
-          final next = attachmentList.value
-              .sublist(0, attachmentList.value.length - 1);
-          attachmentList.value = next;
-          persistDraft(attachments: next);
+        if (attachments.isNotEmpty) {
+          final next = attachments.sublist(0, attachments.length - 1);
+          persistDraft(attachmentsOverride: next);
           return KeyEventResult.handled;
         }
       }
@@ -314,7 +305,7 @@ class ClaudeInputBar extends HookWidget {
             },
           ),
           AttachmentChipRow(
-            attachments: attachmentList.value,
+            attachments: attachments,
             onRemove: removeAttachment,
           ),
           Container(
