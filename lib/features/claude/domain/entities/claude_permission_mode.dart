@@ -11,6 +11,11 @@ enum ClaudePermissionMode {
 
   static const ClaudePermissionMode defaultChoice = ClaudePermissionMode.acceptEdits;
 
+  ClaudePermissionMode get next {
+    final list = ClaudePermissionMode.values;
+    return list[(index + 1) % list.length];
+  }
+
   bool get requiresHookServer => this == ClaudePermissionMode.defaultMode;
   bool get isBypass => this == ClaudePermissionMode.bypassPermissions;
 

@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,6 +13,9 @@ import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../claude/domain/entities/chat_attachment.dart';
 import '../../../claude/domain/entities/chat_input_draft.dart';
+import '../../../claude/domain/entities/claude_effort.dart';
+import '../../../claude/domain/entities/claude_permission_mode.dart';
+import '../../../claude/domain/entities/claude_thinking_mode.dart';
 import '../../../claude/presentation/cubit/claude_sessions_cubit.dart';
 import '../../../claude/presentation/widgets/claude_terminal_pane.dart';
 import '../../../claude/presentation/widgets/session_preview_view.dart';
@@ -51,6 +55,28 @@ class AppShellPage extends HookWidget {
       if (activePath == null) return false;
       context.read<FileTabsCubit>().closeFile(activeId, activePath);
       return true;
+    }
+
+    void showSnack(String text) {
+      ScaffoldMessenger.maybeOf(context)
+        ?..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(text),
+            duration: const Duration(milliseconds: 1500),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+    }
+
+    String? activeWorkspaceId() => context.read<WorkspacesCubit>().state.activeIdOrNull;
+
+    bool noWorkspaceGuard() {
+      if (activeWorkspaceId() == null) {
+        showSnack(Locales.Shell.Shortcuts.noActiveWorkspace);
+        return true;
+      }
+      return false;
     }
 
     bool attachActiveEditor() {
@@ -129,21 +155,121 @@ class AppShellPage extends HookWidget {
       return true;
     }
 
+    bool cycleEffort() {
+      if (noWorkspaceGuard()) return true;
+      final id = activeWorkspaceId()!;
+      final cubit = context.read<ClaudeSessionsCubit>();
+      final current = cubit.state.sessions[id]?.effort ?? ClaudeEffort.defaultEffort;
+      final next = current.next;
+      cubit.setEffort(id, next);
+      showSnack(Locales.Shell.Shortcuts.effortChanged(value: next.labelKey.tr()));
+      return true;
+    }
+
+    bool cycleThinking() {
+      if (noWorkspaceGuard()) return true;
+      final id = activeWorkspaceId()!;
+      final cubit = context.read<ClaudeSessionsCubit>();
+      final current = cubit.state.sessions[id]?.thinkingMode ?? ClaudeThinkingMode.defaultMode;
+      final next = current.next;
+      cubit.setThinking(id, next);
+      showSnack(Locales.Shell.Shortcuts.thinkingChanged(value: next.labelKey.tr()));
+      return true;
+    }
+
+    bool cyclePermission() {
+      if (noWorkspaceGuard()) return true;
+      final id = activeWorkspaceId()!;
+      final cubit = context.read<ClaudeSessionsCubit>();
+      final current = cubit.state.sessions[id]?.permissionMode ?? ClaudePermissionMode.defaultChoice;
+      final next = current.next;
+      cubit.setPermissionMode(id, next);
+      showSnack(Locales.Shell.Shortcuts.permissionChanged(value: next.labelKey.tr()));
+      return true;
+    }
+
+    bool setEffortDirect(ClaudeEffort e) {
+      if (noWorkspaceGuard()) return true;
+      final id = activeWorkspaceId()!;
+      context.read<ClaudeSessionsCubit>().setEffort(id, e);
+      showSnack(Locales.Shell.Shortcuts.effortChanged(value: e.labelKey.tr()));
+      return true;
+    }
+
+    bool setThinkingDirect(ClaudeThinkingMode m) {
+      if (noWorkspaceGuard()) return true;
+      final id = activeWorkspaceId()!;
+      context.read<ClaudeSessionsCubit>().setThinking(id, m);
+      showSnack(Locales.Shell.Shortcuts.thinkingChanged(value: m.labelKey.tr()));
+      return true;
+    }
+
+    bool setPermissionDirect(ClaudePermissionMode m) {
+      if (noWorkspaceGuard()) return true;
+      final id = activeWorkspaceId()!;
+      context.read<ClaudeSessionsCubit>().setPermissionMode(id, m);
+      showSnack(Locales.Shell.Shortcuts.permissionChanged(value: m.labelKey.tr()));
+      return true;
+    }
+
     KeyEventResult onKey(FocusNode node, KeyEvent event) {
       if (event is! KeyDownEvent) return KeyEventResult.ignored;
-      if (!HardwareKeyboard.instance.isMetaPressed) {
-        return KeyEventResult.ignored;
+      if (!HardwareKeyboard.instance.isMetaPressed) return KeyEventResult.ignored;
+
+      final shift = HardwareKeyboard.instance.isShiftPressed;
+      final alt = HardwareKeyboard.instance.isAltPressed;
+      final ctrl = HardwareKeyboard.instance.isControlPressed;
+      final key = event.logicalKey;
+
+      bool handled = false;
+
+      // Cmd+Opt+K
+      if (alt && !shift && !ctrl && key == LogicalKeyboardKey.keyK) {
+        handled = attachActiveEditor();
       }
-      final altPressed = HardwareKeyboard.instance.isAltPressed;
-      if (event.logicalKey == LogicalKeyboardKey.keyK && altPressed) {
-        return attachActiveEditor() ? KeyEventResult.handled : KeyEventResult.ignored;
+      // Cmd+B / Cmd+W
+      else if (!alt && !shift && !ctrl) {
+        handled = switch (key) {
+          LogicalKeyboardKey.keyB => toggleWorkspace(),
+          LogicalKeyboardKey.keyW => closeActiveTab(),
+          _ => false,
+        };
       }
-      if (altPressed) return KeyEventResult.ignored;
-      final handled = switch (event.logicalKey) {
-        LogicalKeyboardKey.keyB => toggleWorkspace(),
-        LogicalKeyboardKey.keyW => closeActiveTab(),
-        _ => false,
-      };
+      // Cmd+Shift — cycle letters + set thinking by digit
+      else if (shift && !alt && !ctrl) {
+        handled = switch (key) {
+          LogicalKeyboardKey.keyE => cycleEffort(),
+          LogicalKeyboardKey.keyT => cycleThinking(),
+          LogicalKeyboardKey.keyM => cyclePermission(),
+          LogicalKeyboardKey.digit1 => setThinkingDirect(ClaudeThinkingMode.off),
+          LogicalKeyboardKey.digit2 => setThinkingDirect(ClaudeThinkingMode.think),
+          LogicalKeyboardKey.digit3 => setThinkingDirect(ClaudeThinkingMode.thinkHard),
+          LogicalKeyboardKey.digit4 => setThinkingDirect(ClaudeThinkingMode.ultrathink),
+          _ => false,
+        };
+      }
+      // Cmd+Opt — set effort by digit
+      else if (alt && !shift && !ctrl) {
+        handled = switch (key) {
+          LogicalKeyboardKey.digit1 => setEffortDirect(ClaudeEffort.low),
+          LogicalKeyboardKey.digit2 => setEffortDirect(ClaudeEffort.medium),
+          LogicalKeyboardKey.digit3 => setEffortDirect(ClaudeEffort.high),
+          LogicalKeyboardKey.digit4 => setEffortDirect(ClaudeEffort.xhigh),
+          LogicalKeyboardKey.digit5 => setEffortDirect(ClaudeEffort.max),
+          _ => false,
+        };
+      }
+      // Cmd+Ctrl — set permission by digit
+      else if (ctrl && !shift && !alt) {
+        handled = switch (key) {
+          LogicalKeyboardKey.digit1 => setPermissionDirect(ClaudePermissionMode.defaultMode),
+          LogicalKeyboardKey.digit2 => setPermissionDirect(ClaudePermissionMode.plan),
+          LogicalKeyboardKey.digit3 => setPermissionDirect(ClaudePermissionMode.acceptEdits),
+          LogicalKeyboardKey.digit4 => setPermissionDirect(ClaudePermissionMode.bypassPermissions),
+          _ => false,
+        };
+      }
+
       return handled ? KeyEventResult.handled : KeyEventResult.ignored;
     }
 

@@ -28,7 +28,11 @@
     "shortcuts": {
       "attachedFile": "Allegato {name}",
       "attachedRange": "Allegate righe {name}",
-      "alreadyAttached": "Già allegato"
+      "alreadyAttached": "Già allegato",
+      "effortChanged": "Sforzo: {value}",
+      "thinkingChanged": "Pensiero: {value}",
+      "permissionChanged": "Modalità: {value}",
+      "noActiveWorkspace": "Nessun workspace attivo"
     }
   },
   "claude": {

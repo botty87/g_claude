@@ -714,6 +714,25 @@ class _ShellShortcuts {
     });
   }
 
+  String effortChanged({required String value}) {
+    return LocaleKeys.shell_shortcuts_effortChanged.tr(namedArgs: {
+      'value': value,
+    });
+  }
+
+  String get noActiveWorkspace => LocaleKeys.shell_shortcuts_noActiveWorkspace.tr();
+  String permissionChanged({required String value}) {
+    return LocaleKeys.shell_shortcuts_permissionChanged.tr(namedArgs: {
+      'value': value,
+    });
+  }
+
+  String thinkingChanged({required String value}) {
+    return LocaleKeys.shell_shortcuts_thinkingChanged.tr(namedArgs: {
+      'value': value,
+    });
+  }
+
 }
 
 /// Nested class for sidePanel translations

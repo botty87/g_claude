@@ -11,6 +11,11 @@ enum ClaudeThinkingMode {
 
   static const ClaudeThinkingMode defaultMode = ClaudeThinkingMode.off;
 
+  ClaudeThinkingMode get next {
+    final list = ClaudeThinkingMode.values;
+    return list[(index + 1) % list.length];
+  }
+
   static ClaudeThinkingMode fromName(String? name) {
     if (name == null) return defaultMode;
     for (final m in ClaudeThinkingMode.values) {

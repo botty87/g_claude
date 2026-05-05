@@ -27,6 +27,10 @@ abstract class  LocaleKeys {
   static const shell_shortcuts_attachedFile = 'shell.shortcuts.attachedFile';
   static const shell_shortcuts_attachedRange = 'shell.shortcuts.attachedRange';
   static const shell_shortcuts_alreadyAttached = 'shell.shortcuts.alreadyAttached';
+  static const shell_shortcuts_effortChanged = 'shell.shortcuts.effortChanged';
+  static const shell_shortcuts_thinkingChanged = 'shell.shortcuts.thinkingChanged';
+  static const shell_shortcuts_permissionChanged = 'shell.shortcuts.permissionChanged';
+  static const shell_shortcuts_noActiveWorkspace = 'shell.shortcuts.noActiveWorkspace';
   static const shell_shortcuts = 'shell.shortcuts';
   static const shell = 'shell';
   static const claude_terminal_title = 'claude.terminal.title';

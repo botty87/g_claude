@@ -12,6 +12,11 @@ enum ClaudeEffort {
 
   static const ClaudeEffort defaultEffort = ClaudeEffort.high;
 
+  ClaudeEffort get next {
+    final list = ClaudeEffort.values;
+    return list[(index + 1) % list.length];
+  }
+
   static ClaudeEffort fromName(String? name) {
     if (name == null) return defaultEffort;
     for (final e in ClaudeEffort.values) {

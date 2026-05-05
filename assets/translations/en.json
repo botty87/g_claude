@@ -28,7 +28,11 @@
     "shortcuts": {
       "attachedFile": "Attached {name}",
       "attachedRange": "Attached lines {name}",
-      "alreadyAttached": "Already attached"
+      "alreadyAttached": "Already attached",
+      "effortChanged": "Effort: {value}",
+      "thinkingChanged": "Thinking: {value}",
+      "permissionChanged": "Mode: {value}",
+      "noActiveWorkspace": "No active workspace"
     }
   },
   "claude": {
