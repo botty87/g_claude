@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 import 'package:talker_flutter/talker_flutter.dart';
@@ -46,13 +47,24 @@ abstract interface class ClaudeHistoryDataSource {
 
 @LazySingleton(as: ClaudeHistoryDataSource)
 class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
-  ClaudeHistoryDataSourceImpl(this._talker);
+  ClaudeHistoryDataSourceImpl(this._talker) : _projectsDirOverride = null;
+
+  /// Test-only constructor: pin the projects directory to an injected path
+  /// instead of resolving via `$HOME/.claude/projects`. Lets tests work on
+  /// real-shape JSONL fixtures inside a tmp dir without touching the user's
+  /// real history.
+  @visibleForTesting
+  ClaudeHistoryDataSourceImpl.withProjectsDir(this._talker, Directory projectsDir)
+      : _projectsDirOverride = projectsDir;
 
   final Talker _talker;
+  final Directory? _projectsDirOverride;
 
   static final _nonAlphanumeric = RegExp(r'[^a-zA-Z0-9]');
 
   Directory get _projectsDir {
+    final override = _projectsDirOverride;
+    if (override != null) return override;
     final home = Platform.environment['HOME'] ?? '';
     if (home.isEmpty) {
       _talker.warning('HOME env var not set; .claude/projects path resolution will fail');

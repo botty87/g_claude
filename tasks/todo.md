@@ -372,8 +372,39 @@ Coperti i contratti:
 
 **Outcome**: `flutter test` → **109 passed**. `dart analyze` → 0 issues.
 
-### B3
-_TBD_
+### B3 — JSONL history reader (DONE)
+
+**Strategia fixture**: il sandbox del harness ha bloccato la copia di file da `~/.claude/projects/` (sensitive-file guard). Pivot ad **all-synthetic**, ma con shape verificate via `jq` su file reali (top-level keys, type values, content variants — documentato in `test/fixtures/jsonl/synthetic/README.md`). Una fixture per concetto (no mega-fixture): 9 fixture mirate.
+
+**Fixture create** (tutte sotto `test/fixtures/jsonl/synthetic/`):
+- `text_only_session.jsonl` — user/assistant testo puro.
+- `tool_flow.jsonl` — tool_use + tool_result correlati.
+- `orphan_tool.jsonl` — tool_use senza tool_result (orphan).
+- `string_content_user.jsonl` — content come String (legacy).
+- `summary_fallback.jsonl` — title via fallback summary.
+- `slash_command_title.jsonl` — slash-command title rule.
+- `sidechain_meta_filter.jsonl` — filter isSidechain/isMeta.
+- `noise_filter.jsonl` — system/queue/permission/snapshot ignore.
+- `mixed_tool_result.jsonl` — tool_result content List.
+
+**Modifiche al codice di produzione**:
+- `ClaudeHistoryDataSourceImpl.withProjectsDir(talker, projectsDir)` — costruttore `@visibleForTesting` che pinna la projects dir senza dipendere da `$HOME`.
+
+**Test scritti**: `test/features/claude/data/datasources/claude_history_datasource_test.dart` — 30 test su 4 metodi pubblici (`encodeCwd`, `scanWorkspace`, `readSession`, `readFullText`, `deleteSession`, `exportSessionMarkdown`).
+
+Contratti pinnati:
+- **encodeCwd**: ogni non-alfanumerico → `-`. Whitespace, dots, slashes tutti convertiti uno-a-uno.
+- **scanWorkspace**: dir mancante → `[]`. Dir vuota → `[]`. File non `.jsonl` skippati. Title da primo user message → cleaned via xml-tag-regex + whitespace-normalize. Slash-command rule: drop `/cmd ` prefix, mantieni args. summary fallback se nessun user title. **isSidechain/isMeta filtrati** sia da messageCount sia da title candidate. Sort per `lastMessageAt` desc. Fallback a `fileMtime` quando nessun timestamp parseable.
+- **readSession**: emette tool TWICE — prima `running` (al tool_use), poi `completed` (al tool_result), con stesso `id`. Orphan tool (no result) → emesso a fine stream con status `error, isError: true`. Content shapes: String → user message diretto. List → text blocks concatenati con `\n`, tool_result correlati per `tool_use_id`. Lista mixed → JSON-encoded come output. is_error → propagato. Linee JSON malformate → loggate, non crash. system/queue/permission/snapshot/sidechain/meta tutti filtrati.
+- **readFullText**: 200KB cutoff. Solo testo da user/assistant blocks (NO tool_use/tool_result content). Joined con `\n`.
+- **deleteSession**: rimuove file presente. `FileSystemException` se assente.
+- **exportSessionMarkdown**: scrive markdown con sezioni User/Assistant/Tool, ritorna destinationPath, crea directory intermedie.
+
+**Bug emersi durante B3**: nessuno nel codice di produzione. Due errori miei, entrambi corretti **senza toccare il codice**:
+1. Default `encodedPath = 'test-workspace'` dimenticava il dash leading da `encodeCwd('/test/...')`. Corretto a `-test-workspace`.
+2. Test su `tool_flow` assumeva 1 tool message, ma il vero contratto è **2** (running + completed con stesso id). Test riformulato per descrivere il vero contratto del codice.
+
+**Outcome**: `flutter test` → **139 passed**. `dart analyze` → 0 issues.
 
 ### B4
 _TBD_

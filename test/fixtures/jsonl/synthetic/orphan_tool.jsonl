@@ -1,0 +1,2 @@
+{"type":"user","timestamp":"2026-04-01T10:00:00.000Z","uuid":"u-1","message":{"role":"user","content":"Read hello.txt"}}
+{"type":"assistant","timestamp":"2026-04-01T10:00:01.000Z","uuid":"a-1","message":{"id":"msg_001","role":"assistant","content":[{"type":"text","text":"Reading."},{"type":"tool_use","id":"tool_orphan","name":"Read","input":{"file_path":"/tmp/wd/missing.txt"}}]}}

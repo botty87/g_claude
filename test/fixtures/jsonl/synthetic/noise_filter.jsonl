@@ -1,0 +1,6 @@
+{"type":"permission-mode","permissionMode":"default","sessionId":"00000000-0000-0000-0000-000000000001"}
+{"type":"file-history-snapshot","messageId":"snap-1","snapshot":{"trackedFileBackups":{}}}
+{"type":"queue-operation","operation":"clear"}
+{"type":"system","subtype":"hook_response","content":"ignored"}
+{"type":"user","timestamp":"2026-04-01T10:00:00.000Z","uuid":"u-1","message":{"role":"user","content":"What's left?"}}
+{"type":"assistant","timestamp":"2026-04-01T10:00:01.000Z","uuid":"a-1","message":{"id":"msg_001","role":"assistant","content":[{"type":"text","text":"Just this reply."}]}}
