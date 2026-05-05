@@ -30,5 +30,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Clyde uses speech recognition for optional voice dictation in the chat input.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Clyde uses the microphone for optional voice dictation in the chat input.</string>
 </dict>
 </plist>
