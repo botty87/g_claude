@@ -4,7 +4,7 @@
 PRODUCT_NAME = Clyde
 
 // The application's bundle identifier (reverse-DNS Timeware).
-PRODUCT_BUNDLE_IDENTIFIER = it.timeware.gclaude
+PRODUCT_BUNDLE_IDENTIFIER = it.botty.clyde
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 Timeware Srl. All rights reserved.
