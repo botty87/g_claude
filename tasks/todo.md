@@ -406,8 +406,19 @@ Contratti pinnati:
 
 **Outcome**: `flutter test` → **139 passed**. `dart analyze` → 0 issues.
 
-### B4
-_TBD_
+### B4 — PermissionServer + ClaudeSettingsWriter (DONE)
+
+**Strategia**: bind di un Shelf server reale su loopback ephemeral port + POST HTTP reali, mirroring del wire protocol di produzione (curl dal subprocess). Più robusto che fakare `shelf.Request`.
+
+**Test**: 
+- `test/features/claude/data/datasources/permission_server_test.dart` — 16 test su routing (404 per GET, path != `/permission`), decisioni resolver-driven (allow/deny/ask con interactive handler), fallback safety (no resolver → allow, ask senza handler → deny), shape invariants (mai `updatedInput`), lifecycle (`start()` idempotente, `stop()` droppa connessioni in-flight).
+- `test/features/claude/data/datasources/claude_settings_writer_test.dart` — 5 test su shape JSON (hooks.PreToolUse con curl + matcher `*` + max-time 120), idempotenza per stessa porta (no rewrite), porta diversa → file nuovo.
+
+**Bug emersi durante B4** (documentati in `tasks/lessons.md`, NON fixati — contratto attuale):
+1. `PermissionServer.stop()` afferma di completare i pending con `deny`, ma chiude il server con `force: true`. La completion del completer arriva ma la response HTTP non viene mai serializzata: il caller riceve `HttpException`. Test pin-a il contratto reale.
+2. `PermissionServer` accetta body malformati restituendo `allow`. È la safety-net attuale ma nasconde bug upstream. Test pin-a il contratto attuale.
+
+**Outcome**: `flutter test` → **160 passed**. `dart analyze` → 0 issues.
 
 ### B5
 _TBD_

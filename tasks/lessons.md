@@ -43,3 +43,25 @@
 **Nei test**: non assertare `calls.length == completes.length`. Filtra i complete con `toolId != null` se vuoi correlazione 1:1.
 
 **Riferimento**: B2 — `test/features/claude/data/datasources/claude_process_datasource_normalize_test.dart`, scoperto sulla fixture `multiline_partial.ndjson`.
+
+## PermissionServer.stop() droppa connessioni HTTP in-flight invece di restituire deny
+
+**Pattern**: `PermissionServer.stop()` (linea 71-80) fa due cose: (a) completa tutti i `_pending` Completer con `deny`, (b) chiude il server con `force: true`. La forced close interrompe le connessioni TCP **prima** che shelf riesca a serializzare la response. Risultato: il caller HTTP riceve `HttpException: Connection closed before full header was received`, NON un response con `permissionDecision: deny`.
+
+**Sintomo**: in test si vede `HttpException` su una richiesta sospesa quando il server viene fermato. In produzione: il subprocess `claude` (via curl) riceve un errore di rete sul PreToolUse hook → tool fallisce.
+
+**Effetto reale**: accettabile perché `stop()` viene chiamato solo all'uscita app — il subprocess viene comunque ucciso. Ma il commento del codice dice "complete pending as deny", il che è solo metà vero (il completer viene completato, ma la response HTTP non arriva mai). È una **contraddizione tra intent e contratto osservabile**.
+
+**Possibile fix futuro**: in `stop()` chiudere il server con `force: false` e attendere lo svuotamento delle connessioni, oppure spostare il `force: true` dopo un breve delay che lasci shelf flushare. Non è un fix richiesto adesso (il subprocess muore comunque), è documentato nel test perché un futuro refactor non rompa silenziosamente.
+
+**Riferimento**: B4 — `test/features/claude/data/datasources/permission_server_test.dart`, test "stop() drops pending HTTP connections".
+
+## PermissionServer accetta body malformati con un default `allow` (open)
+
+**Pattern**: linea 100-103 — un POST con body non-JSON al `/permission` viene loggato come warning e produce un response con `permissionDecision: allow`. Il commento del codice non lo evidenzia ma è la safety-net attuale: meglio permissivo che bloccare il subprocess.
+
+**Trade-off**: nasconde bug upstream. Se in futuro si introduce un'origin diversa che invia bodies malformati, il comportamento di default `allow` può causare esecuzione di tool senza challenge.
+
+**Decisione consigliata** (da valutare separatamente, OUT da questo batch): cambiare il fallback a `deny` o ritornare 400. Il test attuale pin-a `allow` come contratto, quindi un cambio futuro deve aggiornare anche quel test.
+
+**Riferimento**: B4 — test "non-JSON body resolves to allow".
