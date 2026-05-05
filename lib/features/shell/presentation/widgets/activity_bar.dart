@@ -32,20 +32,6 @@ const _topEntries = [
     isEnabled: true,
   ),
   _ActivityEntry(
-    id: ActivityId.search,
-    icon: Symbols.search,
-    tooltipKey: 'shell.activity.search',
-    keyName: 'activity_search',
-    isEnabled: false,
-  ),
-  _ActivityEntry(
-    id: ActivityId.git,
-    icon: Symbols.fork_right,
-    tooltipKey: 'shell.activity.git',
-    keyName: 'activity_git',
-    isEnabled: false,
-  ),
-  _ActivityEntry(
     id: ActivityId.sessions,
     icon: Symbols.chat,
     tooltipKey: 'shell.activity.sessions',
@@ -60,14 +46,6 @@ const _topEntries = [
     isEnabled: true,
   ),
 ];
-
-const _settingsEntry = _ActivityEntry(
-  id: ActivityId.settings,
-  icon: Symbols.settings,
-  tooltipKey: 'shell.activity.settings',
-  keyName: 'activity_settings',
-  isEnabled: false,
-);
 
 class ActivityBar extends StatelessWidget {
   const ActivityBar({super.key});
@@ -91,8 +69,6 @@ class ActivityBar extends StatelessWidget {
       child: Column(
         children: [
           for (final e in _topEntries) _entryItem(context, e, selected),
-          const Spacer(),
-          _entryItem(context, _settingsEntry, selected),
         ],
       ),
     );
