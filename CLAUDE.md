@@ -159,9 +159,25 @@ class OpenWorkspace {
 
 ## Build
 
-- Codegen: `dart run build_runner build --delete-conflicting-outputs`
-- Run: `flutter run -d macos`
-- Analyze: `dart analyze` o `mcp__dart__analyze_files`
+Tutti i comandi frequenti sono in [justfile](justfile). Lista: `just` (o `just --list`).
+
+- **Run**: `just run` (debug macOS)
+- **Codegen**: `just gen` (build_runner) · `just gen-l10n` (Locales) · `just gen-all`
+- **Analyze**: `just analyze` (o `mcp__dart__analyze_files`)
+- **Format**: `just format` · check: `just format-check`
+- **Release macOS**: `just build-mac` (build + strip dei font Symbols inutilizzati, ~27MB risparmiati). `just build-mac-open` per aprire subito.
+- **Versioning**: `just version` · `just release-patch|minor|major` (bump + build + git tag).
+- **Quality gate**: `just check` (analyze + format-check) · `just ci` (anche test) · `just pre-commit`.
+- **Search**: `just search "<pattern>"` · `just search-feature claude "<pattern>"` · `just todos` · `just cubits`.
+- **Git**: `just git-status` · `just save "msg"` (commit+push) · `just push-new` (upstream).
+
+Note release macOS:
+- `just build-mac` usa `--no-tree-shake-icons` perché il tree-shaker Flutter non sottoinsiema gli assi delle variable font (`fill: 1`, `weight`, `grade` renderizzerebbero glyph invisibili sui `Symbols.X`).
+- Lo script `scripts/strip_unused_symbol_fonts.sh` tronca a 0 byte le varianti `MaterialSymbolsRounded.ttf` e `MaterialSymbolsSharp.ttf` (non usate, salviamo ~23MB) lasciando il file presente per il font registry.
+- Bundle finale ~85MB (vs 112MB no-strip, vs 76MB tree-shake-but-icons-broken).
+- Lancio da Finder richiede `signal(SIGPIPE, SIG_IGN)` in [AppDelegate.swift](macos/Runner/AppDelegate.swift) (stdout chiuso → write → SIGPIPE → kill in 226ms) e `NSSpeechRecognitionUsageDescription` + `NSMicrophoneUsageDescription` in [macos/Runner/Info.plist](macos/Runner/Info.plist) (macOS 26 prova `SFSpeechRecognizer` su `TextField` per dictation → TCC kill se assenti).
+
+FVM: il justfile usa `fvm flutter` / `fvm dart` (il progetto pinna stable via `.fvmrc`). Per eseguire i comandi senza FVM, sostituire i prefissi nelle prime righe del justfile.
 
 ## DI registrazione
 
