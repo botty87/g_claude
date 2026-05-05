@@ -67,6 +67,7 @@
           "screenshotPreviewDiscard": "Discard",
           "screenshotPreviewClose": "Close",
           "screenshotError": "Failed to capture screenshot",
+          "screenshotDisplayName": "Screenshot",
           "dropHint": "Drop files or folders here",
           "removeTooltip": "Remove attachment"
         },

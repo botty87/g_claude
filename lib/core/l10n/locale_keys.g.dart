@@ -60,6 +60,7 @@ abstract class  LocaleKeys {
   static const claude_terminal_input_attachments_screenshotPreviewDiscard = 'claude.terminal.input.attachments.screenshotPreviewDiscard';
   static const claude_terminal_input_attachments_screenshotPreviewClose = 'claude.terminal.input.attachments.screenshotPreviewClose';
   static const claude_terminal_input_attachments_screenshotError = 'claude.terminal.input.attachments.screenshotError';
+  static const claude_terminal_input_attachments_screenshotDisplayName = 'claude.terminal.input.attachments.screenshotDisplayName';
   static const claude_terminal_input_attachments_dropHint = 'claude.terminal.input.attachments.dropHint';
   static const claude_terminal_input_attachments_removeTooltip = 'claude.terminal.input.attachments.removeTooltip';
   static const claude_terminal_input_attachments = 'claude.terminal.input.attachments';

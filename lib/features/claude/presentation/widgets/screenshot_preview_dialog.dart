@@ -47,6 +47,7 @@ class ScreenshotPreviewDialog extends StatelessWidget {
                   child: Image.file(
                     File(imagePath),
                     fit: BoxFit.contain,
+                    cacheWidth: 1720,
                   ),
                 ),
               ),

@@ -67,6 +67,7 @@
           "screenshotPreviewDiscard": "Scarta",
           "screenshotPreviewClose": "Chiudi",
           "screenshotError": "Impossibile catturare lo screenshot",
+          "screenshotDisplayName": "Screenshot",
           "dropHint": "Trascina file o cartelle qui",
           "removeTooltip": "Rimuovi allegato"
         },

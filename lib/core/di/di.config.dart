@@ -172,7 +172,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i81.AppRouter>(() => routerModule.router);
     gh.lazySingleton<_i207.Talker>(() => talkerModule.talker);
-    gh.lazySingleton<_i656.ScreenshotService>(() => _i656.ScreenshotService());
     gh.lazySingleton<_i207.ActiveEditorCubit>(() => _i207.ActiveEditorCubit());
     gh.lazySingleton<_i644.AppLogsRepository>(
       () => _i413.AppLogsRepositoryImpl(gh<_i126.AppLogsDatabase>()),
@@ -198,6 +197,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i630.FileContentDataSource>(
       () => _i630.FileContentDataSourceImpl(),
+    );
+    gh.lazySingleton<_i656.ScreenshotService>(
+      () => _i656.ScreenshotService(gh<_i207.Talker>()),
     );
     gh.lazySingleton<_i1073.ClaudeBinaryResolver>(
       () => _i1073.ClaudeBinaryResolver(gh<_i207.Talker>()),

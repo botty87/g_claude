@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
@@ -200,7 +199,7 @@ class ClaudeInputBar extends HookWidget {
               builder: (_) => ScreenshotPreviewDialog(imagePath: path),
             );
             if (attach != true) {
-              unawaited(File(path).delete().catchError((_) => File(path)));
+              unawaited(getIt<ScreenshotService>().discard(path));
               return;
             }
           }
@@ -211,7 +210,8 @@ class ClaudeInputBar extends HookWidget {
             ...current,
             ChatAttachment(
               path: path,
-              displayName: 'Screenshot',
+              displayName: Locales
+                  .Claude.Terminal.Input.Attachments.screenshotDisplayName,
               kind: ChatAttachmentKind.imageCapture,
             ),
           ]);
@@ -248,6 +248,9 @@ class ClaudeInputBar extends HookWidget {
                 x.endLine == a.endLine))
             .toList(),
       );
+      if (a.kind == ChatAttachmentKind.imageCapture) {
+        unawaited(getIt<ScreenshotService>().discard(a.path));
+      }
     }
 
     void submit() {

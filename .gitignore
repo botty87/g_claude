@@ -46,3 +46,6 @@ app.*.map.json
 
 # FVM Version Cache
 .fvm/
+
+# Claude Code agent worktrees (local-only)
+.claude/worktrees/

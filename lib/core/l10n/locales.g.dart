@@ -413,6 +413,7 @@ class _ClaudeTerminalInputAttachments {
     });
   }
 
+  String get screenshotDisplayName => LocaleKeys.claude_terminal_input_attachments_screenshotDisplayName.tr();
   String get screenshotError => LocaleKeys.claude_terminal_input_attachments_screenshotError.tr();
   String get screenshotFullScreen => LocaleKeys.claude_terminal_input_attachments_screenshotFullScreen.tr();
   String get screenshotPickDisplay => LocaleKeys.claude_terminal_input_attachments_screenshotPickDisplay.tr();
