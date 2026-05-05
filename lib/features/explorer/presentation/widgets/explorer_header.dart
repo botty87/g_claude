@@ -7,7 +7,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
-import '../../../shell/presentation/cubit/shell_cubit.dart';
 import '../cubit/explorer_cubit.dart';
 
 class ExplorerHeader extends StatelessWidget {
@@ -41,15 +40,6 @@ class ExplorerHeader extends StatelessWidget {
             child: _HeaderIconButton(
               icon: Symbols.refresh,
               onTap: onRefresh,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          Tooltip(
-            message: Locales.Shell.SidePanel.collapse,
-            child: _HeaderIconButton(
-              icon: Symbols.left_panel_close,
-              onTap: () =>
-                  context.read<ShellCubit>().toggleSidePanelCollapsed(),
             ),
           ),
         ],

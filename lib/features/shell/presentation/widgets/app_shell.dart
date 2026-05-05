@@ -11,11 +11,14 @@ import 'package:path/path.dart' as p;
 import '../../../../core/di/di.dart';
 import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../app_logs/presentation/cubit/app_logs_cubit.dart';
+import '../../../app_logs/presentation/widgets/logs_view.dart';
 import '../../../claude/domain/entities/chat_attachment.dart';
 import '../../../claude/domain/entities/chat_input_draft.dart';
 import '../../../claude/domain/entities/claude_effort.dart';
 import '../../../claude/domain/entities/claude_permission_mode.dart';
 import '../../../claude/domain/entities/claude_thinking_mode.dart';
+import '../../../claude/presentation/cubit/chat_history_cubit.dart';
 import '../../../claude/presentation/cubit/claude_sessions_cubit.dart';
 import '../../../claude/presentation/widgets/claude_terminal_pane.dart';
 import '../../../claude/presentation/widgets/session_preview_view.dart';
@@ -310,6 +313,13 @@ class _MainArea extends HookWidget {
   static const _idPreview = 'preview';
   static const _idClaude = 'claude';
 
+  static const _sideMin = 200.0;
+  static const _sideMax = 480.0;
+  static const _sideDefault = 280.0;
+  static const _previewMin = 320.0;
+  static const _previewDefault = 380.0;
+  static const _claudeMin = 360.0;
+
   static final _splitTheme = MultiSplitViewThemeData(
     dividerThickness: 1,
     dividerHandleBuffer: 2,
@@ -321,33 +331,44 @@ class _MainArea extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sidePanelCollapsed = context.select<ShellCubit, bool>((c) => c.state.sidePanelCollapsed);
     final selectedActivity = context.select<ShellCubit, ActivityId>((c) => c.state.selectedActivity);
     final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
-    final hasOpenFiles = context.select<FileTabsCubit, bool>(
-      (c) => activeId != null && (c.state.filesFor(activeId)?.openPaths.isNotEmpty ?? false),
-    );
 
-    final hidesPreview =
-        selectedActivity == ActivityId.logs || (selectedActivity != ActivityId.sessions && !hasOpenFiles);
+    final hasPreviewItem = switch (selectedActivity) {
+      ActivityId.explorer => context.select<FileTabsCubit, bool>(
+          (c) => activeId != null && (c.state.filesFor(activeId)?.activePath != null),
+        ),
+      ActivityId.sessions => context.select<ChatHistoryCubit, bool>(
+          (c) => activeId != null && (c.state.historyFor(activeId)?.selectedId != null),
+        ),
+      ActivityId.logs => context.select<AppLogsCubit, bool>(
+          (c) => c.state.selectedSessionId != null,
+        ),
+      ActivityId.search ||
+      ActivityId.git ||
+      ActivityId.settings =>
+        false,
+    };
 
     final savedSizes = context.read<ShellCubit>().state.paneSizes;
 
     final controller = useMemoized(
-      () => MultiSplitViewController(
-        areas: [
-          if (!sidePanelCollapsed)
-            Area(
-              id: _idSide,
-              size: savedSizes[_idSide] ?? (hidesPreview ? 660 : 280),
-              min: 200,
-              max: hidesPreview ? 1100 : 480,
-            ),
-          if (!hidesPreview) Area(id: _idPreview, size: savedSizes[_idPreview] ?? 380, min: 320),
-          Area(id: _idClaude, size: savedSizes[_idClaude] ?? 600, min: 360),
-        ],
-      ),
-      [sidePanelCollapsed, hidesPreview],
+      () {
+        final savedSide = (savedSizes[_idSide] ?? _sideDefault).clamp(_sideMin, _sideMax);
+        return MultiSplitViewController(
+          areas: [
+            Area(id: _idSide, size: savedSide, min: _sideMin, max: _sideMax),
+            if (hasPreviewItem)
+              Area(
+                id: _idPreview,
+                size: savedSizes[_idPreview] ?? _previewDefault,
+                min: _previewMin,
+              ),
+            Area(id: _idClaude, flex: 1, min: _claudeMin),
+          ],
+        );
+      },
+      [hasPreviewItem],
     );
     useEffect(() => controller.dispose, [controller]);
 
@@ -380,15 +401,12 @@ class _MainArea extends HookWidget {
             case _idSide:
               return const SidePanel();
             case _idPreview:
-              return BlocBuilder<ShellCubit, ShellState>(
-                buildWhen: (p, c) => p.selectedActivity != c.selectedActivity,
-                builder: (context, state) {
-                  if (state.selectedActivity == ActivityId.sessions) {
-                    return const SessionPreviewView();
-                  }
-                  return const FileViewer();
-                },
-              );
+              return switch (selectedActivity) {
+                ActivityId.sessions => const SessionPreviewView(),
+                ActivityId.explorer => const FileViewer(),
+                ActivityId.logs => const LogsDetailView(),
+                _ => const SizedBox.shrink(),
+              };
             case _idClaude:
               return ClaudeTerminalPane(key: claudePaneKey);
             default:

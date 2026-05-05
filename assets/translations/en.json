@@ -17,7 +17,6 @@
       "refresh": "Refresh",
       "toggleHiddenShow": "Show hidden files",
       "toggleHiddenHide": "Hide hidden files",
-      "collapse": "Collapse panel",
       "emptyFolder": "Empty folder",
       "loadError": "Cannot read folder"
     },

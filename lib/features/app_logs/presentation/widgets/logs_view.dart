@@ -23,22 +23,6 @@ class LogsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AppLogsCubit, AppLogsState>(
-      buildWhen: (p, c) => p.selectedSessionId != c.selectedSessionId,
-      builder: (context, state) {
-        return state.selectedSessionId == null
-            ? const _SessionsList()
-            : const _Detail();
-      },
-    );
-  }
-}
-
-class _SessionsList extends StatelessWidget {
-  const _SessionsList();
-
-  @override
-  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -46,7 +30,9 @@ class _SessionsList extends StatelessWidget {
         Expanded(
           child: BlocBuilder<AppLogsCubit, AppLogsState>(
             buildWhen: (p, c) =>
-                p.sessions != c.sessions || p.loading != c.loading,
+                p.sessions != c.sessions ||
+                p.loading != c.loading ||
+                p.selectedSessionId != c.selectedSessionId,
             builder: (context, state) {
               if (state.loading && state.sessions.isEmpty) {
                 return const Center(
@@ -77,7 +63,7 @@ class _SessionsList extends StatelessWidget {
                   return LogSessionTile(
                     key: ValueKey<int>(s.id),
                     session: s,
-                    isSelected: false,
+                    isSelected: state.selectedSessionId == s.id,
                   );
                 },
               );
@@ -86,6 +72,141 @@ class _SessionsList extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class LogsDetailView extends HookWidget {
+  const LogsDetailView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final searchController = useTextEditingController();
+    final debounce = useRef<Timer?>(null);
+    useEffect(() {
+      void l() {
+        debounce.value?.cancel();
+        debounce.value = Timer(const Duration(milliseconds: 200), () {
+          if (context.mounted) {
+            context
+                .read<AppLogDetailCubit>()
+                .setSearch(searchController.text);
+          }
+        });
+      }
+
+      searchController.addListener(l);
+      return () {
+        debounce.value?.cancel();
+        searchController.removeListener(l);
+      };
+    }, [searchController]);
+
+    final session = context.select<AppLogsCubit, AppLogSession?>((c) {
+      final id = c.state.selectedSessionId;
+      if (id == null) return null;
+      for (final s in c.state.sessions) {
+        if (s.id == id) return s;
+      }
+      return null;
+    });
+
+    return Container(
+      color: AppColors.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            child: Text(
+              session == null ? Locales.AppLogs.title : _sessionLabel(session),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.sidebarLabel.copyWith(
+                color: AppColors.onSurface,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.xs,
+            ),
+            child: TextField(
+              controller: searchController,
+              decoration: InputDecoration(
+                hintText: Locales.AppLogs.Detail.search,
+                prefixIcon: const Icon(Symbols.search, size: 16),
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadii.sm),
+                ),
+              ),
+              style: AppTypography.bodyMain.copyWith(fontSize: 12),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: LogLevelFilterChips(),
+          ),
+          const Divider(height: 1, color: AppColors.outlineVariant),
+          Expanded(
+            child: BlocBuilder<AppLogDetailCubit, AppLogDetailState>(
+              buildWhen: (p, c) =>
+                  p.entries != c.entries || p.loading != c.loading,
+              builder: (context, state) {
+                if (state.loading && state.entries.isEmpty) {
+                  return const Center(
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+                }
+                if (state.entries.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Text(
+                      Locales.AppLogs.Detail.empty,
+                      style: AppTypography.bodyMain.copyWith(
+                        fontSize: 12,
+                        color:
+                            AppColors.onSurfaceVariant.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  itemCount: state.entries.length,
+                  itemBuilder: (context, i) {
+                    final e = state.entries[i];
+                    return LogEntryTile(
+                      key: ValueKey<int>(e.id),
+                      entry: e,
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _sessionLabel(AppLogSession s) {
+    final start = _fmt(s.startedAt);
+    return s.endedAt == null
+        ? '$start  ·  ${Locales.AppLogs.Session.inProgress}'
+        : start;
+  }
+
+  String _fmt(DateTime dt) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(dt.day)}/${two(dt.month)} ${two(dt.hour)}:${two(dt.minute)}';
   }
 }
 
@@ -169,147 +290,5 @@ class _IconButton extends StatelessWidget {
         );
       },
     );
-  }
-}
-
-class _Detail extends HookWidget {
-  const _Detail();
-
-  @override
-  Widget build(BuildContext context) {
-    final searchController = useTextEditingController();
-    final debounce = useRef<Timer?>(null);
-    useEffect(() {
-      void l() {
-        debounce.value?.cancel();
-        debounce.value = Timer(const Duration(milliseconds: 200), () {
-          if (context.mounted) {
-            context
-                .read<AppLogDetailCubit>()
-                .setSearch(searchController.text);
-          }
-        });
-      }
-
-      searchController.addListener(l);
-      return () {
-        debounce.value?.cancel();
-        searchController.removeListener(l);
-      };
-    }, [searchController]);
-
-    final session = context.select<AppLogsCubit, AppLogSession?>((c) {
-      final id = c.state.selectedSessionId;
-      if (id == null) return null;
-      for (final s in c.state.sessions) {
-        if (s.id == id) return s;
-      }
-      return null;
-    });
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.xs,
-          ),
-          child: Row(
-            children: [
-              _IconButton(
-                icon: Symbols.arrow_back,
-                onTap: () => context.read<AppLogsCubit>().clearSelection(),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: Text(
-                  session == null
-                      ? Locales.AppLogs.title
-                      : _sessionLabel(session),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.sidebarLabel.copyWith(
-                    color: AppColors.onSurface,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.xs,
-          ),
-          child: TextField(
-            controller: searchController,
-            decoration: InputDecoration(
-              hintText: Locales.AppLogs.Detail.search,
-              prefixIcon: const Icon(Symbols.search, size: 16),
-              isDense: true,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadii.sm),
-              ),
-            ),
-            style: AppTypography.bodyMain.copyWith(fontSize: 12),
-          ),
-        ),
-        const LogLevelFilterChips(),
-        const Divider(height: 1, color: AppColors.outlineVariant),
-        Expanded(
-          child: BlocBuilder<AppLogDetailCubit, AppLogDetailState>(
-            buildWhen: (p, c) =>
-                p.entries != c.entries || p.loading != c.loading,
-            builder: (context, state) {
-              if (state.loading && state.entries.isEmpty) {
-                return const Center(
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                );
-              }
-              if (state.entries.isEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Text(
-                    Locales.AppLogs.Detail.empty,
-                    style: AppTypography.bodyMain.copyWith(
-                      fontSize: 12,
-                      color:
-                          AppColors.onSurfaceVariant.withValues(alpha: 0.6),
-                    ),
-                  ),
-                );
-              }
-              return ListView.builder(
-                itemCount: state.entries.length,
-                itemBuilder: (context, i) {
-                  final e = state.entries[i];
-                  return LogEntryTile(
-                    key: ValueKey<int>(e.id),
-                    entry: e,
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _sessionLabel(AppLogSession s) {
-    final start = _fmt(s.startedAt);
-    return s.endedAt == null
-        ? '$start  ·  ${Locales.AppLogs.Session.inProgress}'
-        : start;
-  }
-
-  String _fmt(DateTime dt) {
-    String two(int n) => n.toString().padLeft(2, '0');
-    return '${two(dt.day)}/${two(dt.month)} ${two(dt.hour)}:${two(dt.minute)}';
   }
 }
