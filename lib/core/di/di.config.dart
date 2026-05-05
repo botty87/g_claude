@@ -83,6 +83,20 @@ import '../../features/claude/presentation/cubit/chat_history_cubit.dart'
     as _i285;
 import '../../features/claude/presentation/cubit/claude_sessions_cubit.dart'
     as _i838;
+import '../../features/dictation/data/datasources/apple_speech_data_source.dart'
+    as _i88;
+import '../../features/dictation/data/datasources/dictation_data_source.dart'
+    as _i893;
+import '../../features/dictation/data/repositories/dictation_repository_impl.dart'
+    as _i46;
+import '../../features/dictation/domain/repositories/dictation_repository.dart'
+    as _i454;
+import '../../features/dictation/domain/usecases/cancel_dictation.dart'
+    as _i335;
+import '../../features/dictation/domain/usecases/start_dictation.dart' as _i846;
+import '../../features/dictation/domain/usecases/stop_dictation.dart' as _i42;
+import '../../features/dictation/presentation/cubit/dictation_cubit.dart'
+    as _i1;
 import '../../features/editor/data/datasources/file_content_datasource.dart'
     as _i630;
 import '../../features/editor/data/datasources/file_tabs_persistence_datasource.dart'
@@ -174,6 +188,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i207.Talker>(() => talkerModule.talker);
     gh.lazySingleton<_i656.ScreenshotService>(() => _i656.ScreenshotService());
     gh.lazySingleton<_i207.ActiveEditorCubit>(() => _i207.ActiveEditorCubit());
+    gh.lazySingleton<_i893.DictationDataSource>(
+      () => _i88.AppleSpeechDataSource(gh<_i207.Talker>()),
+    );
     gh.lazySingleton<_i644.AppLogsRepository>(
       () => _i413.AppLogsRepositoryImpl(gh<_i126.AppLogsDatabase>()),
     );
@@ -214,6 +231,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i143.SlashCommandsFsDataSource>(
       () => _i143.SlashCommandsFsDataSource(gh<_i207.Talker>()),
+    );
+    gh.lazySingleton<_i454.DictationRepository>(
+      () => _i46.DictationRepositoryImpl(gh<_i893.DictationDataSource>()),
     );
     gh.lazySingleton<_i331.BlocObserver>(
       () => blocObserverModule.blocObserver(gh<_i207.Talker>()),
@@ -262,6 +282,15 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1060.SessionsDatabase>(),
         gh<_i278.ClaudeHistoryDataSource>(),
       ),
+    );
+    gh.factory<_i335.CancelDictation>(
+      () => _i335.CancelDictation(gh<_i454.DictationRepository>()),
+    );
+    gh.factory<_i846.StartDictation>(
+      () => _i846.StartDictation(gh<_i454.DictationRepository>()),
+    );
+    gh.factory<_i42.StopDictation>(
+      () => _i42.StopDictation(gh<_i454.DictationRepository>()),
     );
     gh.lazySingleton<_i268.WorkspaceRepository>(
       () => _i824.WorkspaceRepositoryImpl(gh<_i735.WorkspaceLocalDataSource>()),
@@ -357,6 +386,16 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i73.SearchSessions>(
       () => _i73.SearchSessions(gh<_i875.ChatHistoryRepository>()),
+    );
+    gh.lazySingleton<_i1.DictationCubit>(
+      () => _i1.DictationCubit(
+        gh<_i454.DictationRepository>(),
+        gh<_i846.StartDictation>(),
+        gh<_i42.StopDictation>(),
+        gh<_i335.CancelDictation>(),
+        gh<_i460.SharedPreferences>(),
+        gh<_i207.Talker>(),
+      )..init(),
     );
     gh.lazySingleton<_i148.AppLogsCubit>(
       () => _i148.AppLogsCubit(

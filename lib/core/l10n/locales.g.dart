@@ -393,6 +393,9 @@ class _ClaudeTerminalInput {
   /// Translations for attachments
   final Attachments = const _ClaudeTerminalInputAttachments._();
 
+  /// Translations for dictation
+  final Dictation = const _ClaudeTerminalInputDictation._();
+
   /// Translations for queue
   final Queue = const _ClaudeTerminalInputQueue._();
 
@@ -423,6 +426,33 @@ class _ClaudeTerminalInputAttachments {
   String get screenshotPreviewTitle => LocaleKeys.claude_terminal_input_attachments_screenshotPreviewTitle.tr();
   String get screenshotRegion => LocaleKeys.claude_terminal_input_attachments_screenshotRegion.tr();
   String get screenshotWindow => LocaleKeys.claude_terminal_input_attachments_screenshotWindow.tr();
+}
+
+/// Nested class for dictation translations
+class _ClaudeTerminalInputDictation {
+  const _ClaudeTerminalInputDictation._();
+
+  String backendError({required String message}) {
+    return LocaleKeys.claude_terminal_input_dictation_backendError.tr(namedArgs: {
+      'message': message,
+    });
+  }
+
+  String get modeMenuHold => LocaleKeys.claude_terminal_input_dictation_modeMenuHold.tr();
+  String get modeMenuTap => LocaleKeys.claude_terminal_input_dictation_modeMenuTap.tr();
+  String get noSpeechDetected => LocaleKeys.claude_terminal_input_dictation_noSpeechDetected.tr();
+  String get permissionDenied => LocaleKeys.claude_terminal_input_dictation_permissionDenied.tr();
+  String get tooltipIdleHold => LocaleKeys.claude_terminal_input_dictation_tooltipIdleHold.tr();
+  String get tooltipIdleTap => LocaleKeys.claude_terminal_input_dictation_tooltipIdleTap.tr();
+  String get tooltipListening => LocaleKeys.claude_terminal_input_dictation_tooltipListening.tr();
+  String get tooltipListeningTap => LocaleKeys.claude_terminal_input_dictation_tooltipListeningTap.tr();
+  String get tooltipUnavailable => LocaleKeys.claude_terminal_input_dictation_tooltipUnavailable.tr();
+  String unsupportedLanguage({required String language}) {
+    return LocaleKeys.claude_terminal_input_dictation_unsupportedLanguage.tr(namedArgs: {
+      'language': language,
+    });
+  }
+
 }
 
 /// Nested class for queue translations

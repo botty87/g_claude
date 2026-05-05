@@ -1,3 +1,47 @@
+# Voice dictation — STATO: PARCHEGGIATO
+
+> Lavoro completo su `feat/voice-dictation`, **non mergiare in main** finché i problemi sotto non sono risolti.
+
+## Phase 1 (Apple Speech) — bloccata da TCC al click mic
+
+- Codice end-to-end implementato (cubit, mic button, partial→controller, l10n IT/EN, entitlements, Info.plist).
+- `dart analyze` pulito, build debug + release passano.
+- **Problema runtime**: al primo click sul mic l'app va in `EXC_CRASH (SIGABRT)` dentro `__TCC_CRASHING_DUE_TO_PRIVACY_VIOLATION__` (`SFSpeechRecognizer.requestAuthorization`).
+- Crash ricorre sia da `flutter run` (parent = `dartvm` → `Code`/VSCode) sia da `flutter build macos --release` (release non si avvia).
+- Bundle id cambiato `it.timeware.gclaude` → `it.botty.gclaude` per igiene TCC, deployment target macOS 11+, Info.plist contiene `NSMicrophoneUsageDescription` + `NSSpeechRecognitionUsageDescription` (verificato via PlistBuddy nel binario builderizzato), entitlements include `com.apple.security.device.audio-input`. Nonostante questo, prompt permission non appare → SIGABRT immediato.
+- Issue Flutter upstream correlato: <https://github.com/flutter/flutter/issues/70374> (open).
+
+## Da indagare quando si riprende
+
+- Verificare se signing con Developer ID Application + notarization fa apparire il prompt sul Mac end-user (non testato perché certificato non disponibile).
+- Provare alternative Flutter packages: [`flutter_whisper_kit`](https://pub.dev/packages/flutter_whisper_kit) (WhisperKit Apple, on-device, no SFSpeechRecognizer → no TCC speech) o [`whisper_ggml_plus`](https://pub.dev/packages/whisper_ggml_plus) batch + [`record`](https://pub.dev/packages/record) per mic capture.
+- Eventualmente abbandonare `speech_to_text` se il bug TCC resta irrisolvibile senza Apple Developer Program.
+
+# Voice dictation — Phase 2 (Whisper opt-in, originalmente posticipato)
+
+> Da implementare quando arriva la **schermata impostazioni dedicata**, e solo dopo aver sbloccato Phase 1.
+
+## Goal
+
+Backend opt-in **Whisper offline** (`whisper_ggml_plus` + `record`) selezionabile dalle settings. Apple Speech rimane default.
+
+## Steps
+
+- [ ] Aggiungere deps: `whisper_ggml_plus: ^1.5.x`, `record: ^5.x` in `pubspec.yaml`.
+- [ ] Nuovo `WhisperDataSource implements DictationDataSource` in `lib/features/dictation/data/datasources/whisper_data_source.dart`. Mic capture via `record` → file WAV temp → `WhisperController.transcribe()`. **Niente streaming partial**: emettere singola `DictationPartial(isFinal: true)` a fine batch.
+- [ ] Repository impl: dispatcher su nuova chiave `dictation.v1.backend` (`appleSpeech` | `whisper`). Selettore tramite getIt named-injection o factory che legge prefs all'avvio.
+- [ ] UI selettore modello whisper (`tiny` / `base` / `small`) con download progress (`WhisperController.downloadModel()` + `modelProgressStream`).
+- [ ] Settings page (separato): toggle `backend` + selettore modello + download button.
+- [ ] Cubit: gestire fallback `currentPartial` vuoto durante listening con whisper (mostrare solo indicator, niente live text). Documentare in tooltip.
+- [ ] Failure: aggiungere `WhisperModelMissingFailure`, `WhisperDownloadFailure`.
+- [ ] Branch separato `feat/voice-dictation-whisper`.
+
+## Note
+
+Whisper batch ⇒ UX diversa: nessun feedback live nel TextField mentre l'utente parla. Solo l'indicator pulsante. A fine recording, il testo finale appare in un colpo. OK ma documentarlo nelle settings.
+
+---
+
 # Shortcut cycle + set diretti per Sforzo / Pensiero / Permission
 
 ## Scelta

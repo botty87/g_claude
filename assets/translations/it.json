@@ -75,6 +75,19 @@
           "removeTooltip": "Rimuovi messaggio in coda",
           "editPlaceholder": "Modifica messaggio in coda…",
           "send": "Metti in coda"
+        },
+        "dictation": {
+          "tooltipIdleHold": "Tieni premuto per dettare",
+          "tooltipIdleTap": "Tocca per dettare",
+          "tooltipListening": "Sto ascoltando… rilascia per inserire",
+          "tooltipListeningTap": "Sto ascoltando… tocca di nuovo per fermare",
+          "tooltipUnavailable": "Dettatura non disponibile",
+          "modeMenuHold": "Tieni premuto",
+          "modeMenuTap": "Tocca per attivare",
+          "permissionDenied": "Accesso al microfono negato. Concedilo in Impostazioni di Sistema.",
+          "noSpeechDetected": "Nessun parlato rilevato",
+          "unsupportedLanguage": "Lingua di dettatura {language} non supportata su questo Mac",
+          "backendError": "Dettatura fallita: {message}"
         }
       },
       "actions": {

@@ -52,3 +52,17 @@ class ParsingFailure extends Failure {
   final String message;
   const ParsingFailure(this.message);
 }
+
+class MicrophonePermissionFailure extends Failure {
+  const MicrophonePermissionFailure();
+}
+
+class DictationUnsupportedLanguageFailure extends Failure {
+  final String languageCode;
+  const DictationUnsupportedLanguageFailure(this.languageCode);
+}
+
+class DictationBackendFailure extends Failure {
+  final String message;
+  const DictationBackendFailure(this.message);
+}

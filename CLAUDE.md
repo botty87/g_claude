@@ -13,6 +13,7 @@ App funzionale end-to-end. Feature attive:
 - **claude**: subprocess `claude -p --output-format stream-json` per workspace. Parsing NDJSON in `ClaudeEvent` sealed (sessionInit, textChunk, toolCall, toolResult, permissionRequest, askUserQuestion, sessionDead, rateLimit, ecc.). Streaming testo con flush 16ms. Settings scritte in `~/.claude/settings.json`. History JSONL in `~/.claude/projects/{cwd-encoded}/{sessionid}.jsonl` con list/search/resume/export/delete. MCP toggle + auth per workspace. **AskUserQuestion interattivo disabilitato** (flag `askUserQuestionInteractiveEnabled = false`: upstream CLI non aspetta `tool_result`).
 - **PermissionServer** (Shelf, localhost porta effimera): risolve permission mode (default/plan/acceptEdits/bypassPermissions) o emette `ClaudeMessage.permissionRequest` con UI card; risposta tramite `answerPermission` + `Completer<PermissionDecision>`.
 - **slash_commands**: palette nel input chat, comandi file-based (CLAUDE.md) + skill-based (da `sessionInit`), filtro live.
+- **dictation**: bottone microfono in `ClaudeInputBar` (Phase 1, Apple Speech via `speech_to_text`). Hold-to-talk default + tap-toggle via right-click menu. Streaming partial inserito a cursor nel `TextEditingController`, ricostruito da `baseText`/`baseOffset`/`currentPartial` ad ogni emit. Auto-stop dopo 15s silenzio. Locale derivata da `EasyLocalization`. Whisper offline opt-in posticipato a Phase 2 (vedi `tasks/todo.md`). **Bug noto** `speech_to_text`: la prima richiesta di permission crasha se l'app macOS è lanciata da terminale VSCode → lanciare da Xcode o `flutter run -d macos` la prima volta. Entitlements: `com.apple.security.device.audio-input` + `NSMicrophoneUsageDescription` + `NSSpeechRecognitionUsageDescription`. Mode persistito in `SharedPreferences` chiave `dictation.v1.mode`.
 
 Persistenza: `SharedPreferences` per workspace, tab editor, settings sessione, sessione attiva. Cronologia chat: JSONL on disk (`~/.claude/projects/`). `drift` attivo per due DB SQLite in `getApplicationSupportDirectory()`: `g_claude_sessions.sqlite` (indice cronologia chat con FTS5) e `g_claude_app_logs.sqlite` (log Talker per sessione applicazione).
 
@@ -20,7 +21,7 @@ Persistenza: `SharedPreferences` per workspace, tab editor, settings sessione, s
 
 Bootstrap ([lib/main.dart](lib/main.dart)): Marionette (debug) → EasyLocalization + window + DI in parallelo → `MarionetteLogBridge` → restore `WorkspacesCubit` poi `FileTabsCubit` (orphan filter) → `Bloc.observer` → prewarm tab persistite (4 worker concorrenti) → `runApp`. Estensioni Marionette custom: `openWorkspace`, `closeWorkspace`, `setActiveWorkspace`.
 
-Cubit globali (in [lib/app.dart](lib/app.dart)): `WorkspacesCubit`, `ShellCubit`, `ExplorerCubit`, `FileTabsCubit`, `ClaudeSessionsCubit`, `ChatHistoryCubit`. Routing `auto_route` con singola route `AppShellRoute`.
+Cubit globali (in [lib/app.dart](lib/app.dart)): `WorkspacesCubit`, `ShellCubit`, `ExplorerCubit`, `FileTabsCubit`, `ClaudeSessionsCubit`, `ChatHistoryCubit`, `DictationCubit`. Routing `auto_route` con singola route `AppShellRoute`.
 
 Differito: tray icon + global hotkey (deps presenti), markdown rendering chat (`flutter_markdown` dep presente).
 

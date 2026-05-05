@@ -19,6 +19,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
+import '../../../dictation/presentation/cubit/dictation_cubit.dart';
+import '../../../dictation/presentation/widgets/dictation_mic_button.dart';
 import '../../../slash_commands/domain/entities/slash_command.dart';
 import '../../../slash_commands/presentation/cubit/slash_commands_cubit.dart';
 import '../../../slash_commands/presentation/widgets/slash_command_chip_row.dart';
@@ -73,6 +75,18 @@ class ClaudeInputBar extends HookWidget {
       (c) => c.state.sessions[workspaceId]?.inputDraft.attachments ?? const [],
     );
     final escArmedAt = useRef<DateTime?>(null);
+
+    final localeId = useMemoized(() {
+      final locale = context.locale;
+      if (locale.countryCode != null && locale.countryCode!.isNotEmpty) {
+        return '${locale.languageCode}-${locale.countryCode}';
+      }
+      return switch (locale.languageCode) {
+        'it' => 'it-IT',
+        'en' => 'en-US',
+        _ => '${locale.languageCode}-${locale.languageCode.toUpperCase()}',
+      };
+    }, [context.locale]);
 
     void persistDraft({
       String? text,
@@ -375,7 +389,33 @@ class ClaudeInputBar extends HookWidget {
       return KeyEventResult.ignored;
     }
 
-    return SlashCommandOverlay(
+    return BlocListener<DictationCubit, DictationState>(
+      listenWhen: (prev, curr) {
+        if (curr is DictationStateListening &&
+            curr.workspaceId == workspaceId) {
+          return true;
+        }
+        return prev is DictationStateListening &&
+            prev.workspaceId == workspaceId;
+      },
+      listener: (context, state) {
+        if (state is! DictationStateListening) return;
+        if (state.workspaceId != workspaceId) return;
+        final partial = state.currentPartial;
+        final base = state.baseText;
+        final off = state.baseOffset.clamp(0, base.length);
+        final newText = base.substring(0, off) + partial + base.substring(off);
+        final cursor = off + partial.length;
+        if (controller.text == newText &&
+            controller.selection.baseOffset == cursor) {
+          return;
+        }
+        controller.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(offset: cursor),
+        );
+      },
+      child: SlashCommandOverlay(
       link: link,
       cubit: slashCubit,
       excludedTriggers: selectedChips.map((c) => c.trigger).toSet(),
@@ -478,6 +518,13 @@ class ClaudeInputBar extends HookWidget {
                     onCapture: (mode, displayIndex) =>
                         runCapture(mode, context, displayIndex: displayIndex),
                   ),
+                  const SizedBox(width: AppSpacing.xs),
+                  DictationMicButton(
+                    workspaceId: workspaceId,
+                    controller: controller,
+                    localeId: localeId,
+                    disabled: _isBusy,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   if (_isBusy && controller.text.trim().isNotEmpty)
                     _ActionButton(
@@ -506,6 +553,7 @@ class ClaudeInputBar extends HookWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

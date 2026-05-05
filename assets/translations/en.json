@@ -75,6 +75,19 @@
           "removeTooltip": "Remove queued message",
           "editPlaceholder": "Edit queued message…",
           "send": "Queue message"
+        },
+        "dictation": {
+          "tooltipIdleHold": "Hold to dictate",
+          "tooltipIdleTap": "Tap to dictate",
+          "tooltipListening": "Listening… release to insert",
+          "tooltipListeningTap": "Listening… tap again to stop",
+          "tooltipUnavailable": "Dictation unavailable",
+          "modeMenuHold": "Hold to talk",
+          "modeMenuTap": "Tap to toggle",
+          "permissionDenied": "Microphone access denied. Grant it in System Settings.",
+          "noSpeechDetected": "No speech detected",
+          "unsupportedLanguage": "Dictation language {language} not supported on this Mac",
+          "backendError": "Dictation failed: {message}"
         }
       },
       "actions": {

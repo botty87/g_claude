@@ -9,6 +9,7 @@ import 'features/app_logs/presentation/cubit/app_log_detail_cubit.dart';
 import 'features/app_logs/presentation/cubit/app_logs_cubit.dart';
 import 'features/claude/presentation/cubit/chat_history_cubit.dart';
 import 'features/claude/presentation/cubit/claude_sessions_cubit.dart';
+import 'features/dictation/presentation/cubit/dictation_cubit.dart';
 import 'features/editor/presentation/cubit/file_tabs_cubit.dart';
 import 'features/explorer/presentation/cubit/explorer_cubit.dart';
 import 'features/shell/presentation/cubit/shell_cubit.dart';
@@ -37,6 +38,7 @@ class App extends StatelessWidget {
         BlocProvider<AppLogDetailCubit>.value(
           value: getIt<AppLogDetailCubit>(),
         ),
+        BlocProvider<DictationCubit>.value(value: getIt<DictationCubit>()),
       ],
       child: MaterialApp.router(
         title: 'Clyde',

@@ -30,5 +30,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Clyde uses the microphone to dictate prompts via voice input.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Clyde transcribes your speech into prompt text.</string>
 </dict>
 </plist>

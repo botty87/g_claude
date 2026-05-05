@@ -78,6 +78,9 @@ dependencies:
   # AI tooling — agent-driven UI inspection
   marionette_flutter: ^0.5.0
 
+  # Voice dictation (Apple Speech via system framework on macOS)
+  speech_to_text: ^7.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

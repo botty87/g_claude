@@ -1,0 +1,1 @@
+enum DictationMode { hold, tap }
