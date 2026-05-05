@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -370,6 +371,17 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
     final env = Map<String, String>.from(Platform.environment);
     return env;
   }
+
+  /// Test-only entry point for the NDJSON normalizer. Use real fixtures as
+  /// input — synthesizing JSON in a test re-encodes our assumptions about the
+  /// stream-json contract instead of the contract itself.
+  @visibleForTesting
+  Iterable<ClaudeEvent> normalizeForTest(Map<String, dynamic> raw) => _normalize(raw);
+
+  /// Resets the in-flight tool block tracker. Tests that reuse the same
+  /// instance across scenarios should call this between scenarios.
+  @visibleForTesting
+  void resetParserStateForTest() => _toolByIndex.clear();
 
   /// Maps a raw NDJSON object (per the `claude -p --output-format stream-json`
   /// contract) into a list of [ClaudeEvent]. May emit zero or more events.

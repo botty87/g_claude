@@ -31,3 +31,15 @@
 **Soluzione**: assert su `isAtSameMomentAs(...)`, non su `==`. Vale per tutti i test downstream che leggono timestamp da drift.
 
 **Riferimento**: B0 — `test/helpers/drift_in_memory_test.dart`.
+
+## Parser NDJSON: phantom `toolCallComplete` su chiusura blocchi text
+
+**Pattern**: il `claude -p --output-format stream-json --include-partial-messages` emette un `content_block_stop` per OGNI blocco chiuso, non solo per i `tool_use`. Il parser in `claude_process_datasource.dart:440-469` non distingue: emette `ClaudeEvent.toolCallComplete` su qualsiasi `content_block_stop`, anche quando il blocco è di tipo `text` (e quindi non è mai stato registrato in `_toolByIndex`). In quel caso emette `toolCallComplete(index=N, toolId=null, input=null)`.
+
+**Sintomo**: `events.where(toolCall).length == 1`, `events.where(toolCallComplete).length == 2` per una sessione con 1 tool call. Il "secondo" complete è il phantom dal `text` block che chiude l'assistant turn dopo il tool.
+
+**Effetto reale**: zero, perché il cubit filtra in `_handleEvent` linea ~777 con `if (toolId.isNotEmpty)` — i phantom vengono ignorati a downstream. Ma sono bytes inutili sullo stream e aggiungono rumore al test/debug. Non è un bug aperto: è il **contratto attuale** del parser.
+
+**Nei test**: non assertare `calls.length == completes.length`. Filtra i complete con `toolId != null` se vuoi correlazione 1:1.
+
+**Riferimento**: B2 — `test/features/claude/data/datasources/claude_process_datasource_normalize_test.dart`, scoperto sulla fixture `multiline_partial.ndjson`.
