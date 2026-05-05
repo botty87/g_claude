@@ -284,13 +284,15 @@
     "fileTooLarge": "File too large to preview",
     "binaryFile": "Binary file (preview not supported)",
     "tab": {
-      "close": "Close"
+      "close": "Close",
+      "closeAll": "Close all tabs"
     },
     "openFiles": {
       "tooltip": "Open files",
       "searchHint": "Search open files...",
       "empty": "No files open",
-      "noMatches": "No matches"
+      "noMatches": "No matches",
+      "closeAll": "Close all tabs"
     },
     "find": {
       "hint": "Find in file",

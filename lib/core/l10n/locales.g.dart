@@ -567,6 +567,7 @@ class _EditorMarkdown {
 class _EditorOpenFiles {
   const _EditorOpenFiles._();
 
+  String get closeAll => LocaleKeys.editor_openFiles_closeAll.tr();
   String get empty => LocaleKeys.editor_openFiles_empty.tr();
   String get noMatches => LocaleKeys.editor_openFiles_noMatches.tr();
   String get searchHint => LocaleKeys.editor_openFiles_searchHint.tr();
@@ -585,6 +586,7 @@ class _EditorTab {
   const _EditorTab._();
 
   String get close => LocaleKeys.editor_tab_close.tr();
+  String get closeAll => LocaleKeys.editor_tab_closeAll.tr();
 }
 
 /// Nested class for unsupported translations

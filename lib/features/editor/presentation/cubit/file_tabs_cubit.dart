@@ -182,6 +182,51 @@ class FileTabsCubit extends Cubit<FileTabsState> {
     emit(state.copyWith(perWorkspace: {...state.perWorkspace, id: next}));
   }
 
+  void reorderPinned(WorkspaceId id, String fromPath, String toPath) {
+    if (fromPath == toPath) return;
+    final files = state.perWorkspace[id];
+    if (files == null) return;
+    if (files.previewPath == fromPath || files.previewPath == toPath) return;
+    final fromIdx = files.openPaths.indexOf(fromPath);
+    final toIdx = files.openPaths.indexOf(toPath);
+    if (fromIdx < 0 || toIdx < 0) return;
+
+    final nextPaths = [...files.openPaths];
+    final moved = nextPaths.removeAt(fromIdx);
+    final insertIdx = fromIdx < toIdx ? toIdx : toIdx;
+    nextPaths.insert(insertIdx, moved);
+
+    final preview = files.previewPath;
+    if (preview != null) {
+      final previewIdx = files.openPaths.indexOf(preview);
+      final newPreviewIdx = nextPaths.indexOf(preview);
+      if (newPreviewIdx != previewIdx) {
+        nextPaths.remove(preview);
+        nextPaths.insert(previewIdx.clamp(0, nextPaths.length), preview);
+      }
+    }
+
+    _talker.debug('FileTabsCubit: reordered $fromPath → $toPath in workspace $id');
+    emit(state.copyWith(
+      perWorkspace: {
+        ...state.perWorkspace,
+        id: files.copyWith(openPaths: nextPaths),
+      },
+    ));
+  }
+
+  void closeAllFiles(WorkspaceId id) {
+    final files = state.perWorkspace[id];
+    if (files == null || files.openPaths.isEmpty) return;
+    _talker.debug('FileTabsCubit: closed all files in workspace $id');
+    emit(state.copyWith(
+      perWorkspace: {
+        ...state.perWorkspace,
+        id: const WorkspaceFiles(),
+      },
+    ));
+  }
+
   void setActiveFile(WorkspaceId id, String path) {
     final files = state.perWorkspace[id];
     if (files == null) return;

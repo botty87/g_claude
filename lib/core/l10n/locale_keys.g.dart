@@ -243,11 +243,13 @@ abstract class  LocaleKeys {
   static const editor_fileTooLarge = 'editor.fileTooLarge';
   static const editor_binaryFile = 'editor.binaryFile';
   static const editor_tab_close = 'editor.tab.close';
+  static const editor_tab_closeAll = 'editor.tab.closeAll';
   static const editor_tab = 'editor.tab';
   static const editor_openFiles_tooltip = 'editor.openFiles.tooltip';
   static const editor_openFiles_searchHint = 'editor.openFiles.searchHint';
   static const editor_openFiles_empty = 'editor.openFiles.empty';
   static const editor_openFiles_noMatches = 'editor.openFiles.noMatches';
+  static const editor_openFiles_closeAll = 'editor.openFiles.closeAll';
   static const editor_openFiles = 'editor.openFiles';
   static const editor_find_hint = 'editor.find.hint';
   static const editor_find_noResults = 'editor.find.noResults';

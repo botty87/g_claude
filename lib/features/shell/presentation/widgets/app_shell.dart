@@ -60,6 +60,15 @@ class AppShellPage extends HookWidget {
       return true;
     }
 
+    bool closeAllTabs() {
+      final activeId = context.read<WorkspacesCubit>().state.activeIdOrNull;
+      if (activeId == null) return false;
+      final files = context.read<FileTabsCubit>().state.filesFor(activeId);
+      if (files == null || files.openPaths.isEmpty) return false;
+      context.read<FileTabsCubit>().closeAllFiles(activeId);
+      return true;
+    }
+
     void showSnack(String text) {
       ScaffoldMessenger.maybeOf(context)
         ?..hideCurrentSnackBar()
@@ -241,6 +250,7 @@ class AppShellPage extends HookWidget {
       // Cmd+Shift — cycle letters + set thinking by digit
       else if (shift && !alt && !ctrl) {
         handled = switch (key) {
+          LogicalKeyboardKey.keyW => closeAllTabs(),
           LogicalKeyboardKey.keyE => cycleEffort(),
           LogicalKeyboardKey.keyT => cycleThinking(),
           LogicalKeyboardKey.keyM => cyclePermission(),

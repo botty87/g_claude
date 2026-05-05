@@ -8,6 +8,7 @@ Tabella completa delle shortcut globali dell'app `g_claude`. Tutte le shortcut s
 |---|---|---|
 | `Cmd+B` | Toggle pannello workspace (side panel collapse/expand) | [app_shell.dart](../lib/features/shell/presentation/widgets/app_shell.dart) |
 | `Cmd+W` | Chiudi tab editor attiva | [app_shell.dart](../lib/features/shell/presentation/widgets/app_shell.dart) |
+| `Cmd+Shift+W` | Chiudi tutte le tab dell'editor (workspace attivo) | [app_shell.dart](../lib/features/shell/presentation/widgets/app_shell.dart) |
 | `Cmd+Opt+K` | Allega file/selezione editor attivo all'input chat | [app_shell.dart](../lib/features/shell/presentation/widgets/app_shell.dart) |
 
 ## Chat / Claude session

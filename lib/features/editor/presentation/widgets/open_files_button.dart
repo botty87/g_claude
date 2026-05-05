@@ -145,6 +145,9 @@ class _OpenFilesPopover extends HookWidget {
                     ),
                     const Divider(
                         height: 1, color: AppColors.outlineVariant),
+                    const _CloseAllRow(),
+                    const Divider(
+                        height: 1, color: AppColors.outlineVariant),
                     Flexible(child: _OpenFilesList(query: query.value)),
                   ],
                 ),
@@ -218,6 +221,62 @@ class _OpenFilesList extends StatelessWidget {
           ),
         ),
       );
+}
+
+class _CloseAllRow extends StatelessWidget {
+  const _CloseAllRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final activeId = context.select<WorkspacesCubit, WorkspaceId?>(
+      (c) => c.state.activeIdOrNull,
+    );
+    final hasOpenFiles = context.select<FileTabsCubit, bool>(
+      (c) =>
+          activeId != null &&
+          ((c.state.filesFor(activeId)?.openPaths.isNotEmpty) ?? false),
+    );
+    if (activeId == null || !hasOpenFiles) return const SizedBox.shrink();
+    return Hoverable(
+      onTap: () {
+        context.read<FileTabsCubit>().closeAllFiles(activeId);
+        Navigator.of(context).pop();
+      },
+      builder: (context, hover) => Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        color: hover ? AppColors.glassHover : Colors.transparent,
+        child: Row(
+          children: [
+            Icon(
+              Symbols.close,
+              size: 14,
+              color: AppColors.onSurfaceVariant,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                Locales.Editor.OpenFiles.closeAll,
+                style: AppTypography.bodyMain.copyWith(
+                  fontSize: 13,
+                  color: AppColors.onSurface,
+                ),
+              ),
+            ),
+            Text(
+              '⌘⇧W',
+              style: AppTypography.bodyMain.copyWith(
+                fontSize: 11,
+                color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _OpenFileRow extends StatelessWidget {
