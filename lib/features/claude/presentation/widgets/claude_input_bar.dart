@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -180,8 +181,7 @@ class ClaudeInputBar extends HookWidget {
       );
       result.fold(
         (failure) {
-          if (failure is SubprocessFailure &&
-              failure.message == 'screenshot_cancelled') {
+          if (failure is ScreenshotCancelledFailure) {
             return;
           }
           ScaffoldMessenger.maybeOf(menuContext)?.showSnackBar(
@@ -200,9 +200,7 @@ class ClaudeInputBar extends HookWidget {
               builder: (_) => ScreenshotPreviewDialog(imagePath: path),
             );
             if (attach != true) {
-              try {
-                File(path).deleteSync();
-              } catch (_) {}
+              unawaited(File(path).delete().catchError((_) => File(path)));
               return;
             }
           }
@@ -543,8 +541,10 @@ class _ScreenshotMenu extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final controller = useMemoized(MenuController.new, const []);
-    final displays =
-        WidgetsBinding.instance.platformDispatcher.displays.toList();
+    final displays = useMemoized(
+      () => WidgetsBinding.instance.platformDispatcher.displays.toList(),
+      const [],
+    );
     final fullScreenLabel =
         Locales.Claude.Terminal.Input.Attachments.screenshotFullScreen;
 

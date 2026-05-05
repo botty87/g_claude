@@ -193,8 +193,7 @@ class FileTabsCubit extends Cubit<FileTabsState> {
 
     final nextPaths = [...files.openPaths];
     final moved = nextPaths.removeAt(fromIdx);
-    final insertIdx = fromIdx < toIdx ? toIdx : toIdx;
-    nextPaths.insert(insertIdx, moved);
+    nextPaths.insert(toIdx, moved);
 
     final preview = files.previewPath;
     if (preview != null) {

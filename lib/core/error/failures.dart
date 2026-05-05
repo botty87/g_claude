@@ -43,6 +43,10 @@ class SubprocessFailure extends Failure {
   const SubprocessFailure({required this.message, this.exitCode});
 }
 
+class ScreenshotCancelledFailure extends Failure {
+  const ScreenshotCancelledFailure();
+}
+
 /// NDJSON line from `claude` stdout could not be decoded into a known event.
 class ParsingFailure extends Failure {
   final String message;

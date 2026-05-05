@@ -30,27 +30,23 @@ class ScreenshotService {
 
       await Process.run('screencapture', args);
 
-      if (!File(pngPath).existsSync()) {
-        return const Left(SubprocessFailure(message: 'screenshot_cancelled'));
+      if (!await File(pngPath).exists()) {
+        return const Left(ScreenshotCancelledFailure());
       }
 
-      final jpegPath = await _compressToJpeg(pngPath);
+      final jpegPath = await _compressToJpeg(pngPath, id);
       return Right(jpegPath);
     } catch (e) {
       return Left(UnexpectedFailure('$e'));
     }
   }
 
-  Future<String> _compressToJpeg(String pngPath) async {
+  Future<String> _compressToJpeg(String pngPath, int id) async {
     final tmpDir = await getTemporaryDirectory();
-    final id = DateTime.now().millisecondsSinceEpoch;
     final jpegPath = '${tmpDir.path}/screenshot_${id}_c.jpg';
 
-    // Resample so the longer side is at most 1920px (proportional).
-    await Process.run('sips', ['-Z', '1920', pngPath]);
-
-    // Convert to JPEG at 75% quality.
     await Process.run('sips', [
+      '-Z', '1920',
       '-s', 'formatOptions', '75',
       '-s', 'format', 'jpeg',
       pngPath,
