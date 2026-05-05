@@ -327,8 +327,24 @@ Prima di partire con B0, conferma o redirigi:
 
 **Outcome**: `flutter test` → 33 tests passed. `dart analyze` → 0 issues.
 
-### B1
-_TBD_
+### B1 — Logica pura senza I/O (DONE)
+
+**File aggiunti**:
+- `test/core/utils/either_test.dart` — 9 test su `fold`, `left`/`right` getters (asserito che lanciano `Exception`, non `Error`), `isLeft`/`isRight`, e nullable type parameters (verificato che `Right(null)` resta Right e dispatcha sul ramo destro).
+- `test/core/utils/frontmatter_test.dart` — 13 test su delimiter (`---\n` + `\n---\n`), key/value, quote stripping (matched only), trim, lines without colon skipped, empty key dropped, valore con `:` interno preservato, duplicate keys (last wins). **Documentato come contratto attuale**: CRLF input non supportato.
+- `test/features/slash_commands/domain/usecases/filter_slash_commands_test.dart` — 16 test su tier ranking (post-colon > whole prefix > name-contains > desc-contains, mutuamente esclusivi), normalizzazione query (leading `/` strip via `replaceFirst`, lowercase, trim), passthrough (empty/whitespace/`/` only), stable order all'interno di un tier.
+- `test/features/claude/data/datasources/sessions_database_test.dart` — 12 test su `searchFtsIds`/`upsertSessionFts`/`deleteSessionFts`/`ftsIdsForWorkspace` con DB in-memory: empty/whitespace query → `[]` no SQL, prefix match single token, AND multi-token, workspace scoping, no crash su FTS5 metacaratteri (NOT/OR/AND/`*`/`(`/`+`/`"` interno), limit honored, upsert replace semantics, delete drops from search.
+
+**Bug emersi durante B1**:
+- Nessun bug nel codice di produzione. Tutti i contratti documentati passano al primo colpo.
+- Un mio errore di compilazione (variabile locale `contains` shadow-ava il matcher `contains()` di flutter_test). Risolto rinominando `containsOnly`.
+
+**Documentazione contratti rilevanti per i prossimi batch**:
+- `parseFrontmatter` ignora chiavi senza valore solo se chiave è vuota (linea col solo `:` viene scartata).
+- `FilterSlashCommands` usa `replaceFirst` sulla `/` iniziale: query `//foo` → `/foo` non matcha `foo`. Documentato.
+- `_escapeFtsQuery` quota ogni token con `"..."` e raddoppia i `"` interni: garantisce che ogni input utente è una query syntactically valid per FTS5, anche se semanticamente non matcha nulla.
+
+**Outcome**: `flutter test` → **82 passed** (66 esistenti + 16 nuovi su slash filter — il delta esatto nei singoli file: 9+13+16+12 = 50 nuovi, gli altri 33 erano i pre-esistenti). `dart analyze` → 0 issues.
 
 ### B2
 _TBD_
