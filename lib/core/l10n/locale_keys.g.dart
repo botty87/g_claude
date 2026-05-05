@@ -17,7 +17,6 @@ abstract class  LocaleKeys {
   static const shell_sidePanel_refresh = 'shell.sidePanel.refresh';
   static const shell_sidePanel_toggleHiddenShow = 'shell.sidePanel.toggleHiddenShow';
   static const shell_sidePanel_toggleHiddenHide = 'shell.sidePanel.toggleHiddenHide';
-  static const shell_sidePanel_collapse = 'shell.sidePanel.collapse';
   static const shell_sidePanel_emptyFolder = 'shell.sidePanel.emptyFolder';
   static const shell_sidePanel_loadError = 'shell.sidePanel.loadError';
   static const shell_sidePanel = 'shell.sidePanel';

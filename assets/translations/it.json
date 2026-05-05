@@ -17,7 +17,6 @@
       "refresh": "Aggiorna",
       "toggleHiddenShow": "Mostra file nascosti",
       "toggleHiddenHide": "Nascondi file nascosti",
-      "collapse": "Riduci pannello",
       "emptyFolder": "Cartella vuota",
       "loadError": "Impossibile leggere la cartella"
     },

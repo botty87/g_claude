@@ -739,7 +739,6 @@ class _ShellShortcuts {
 class _ShellSidePanel {
   const _ShellSidePanel._();
 
-  String get collapse => LocaleKeys.shell_sidePanel_collapse.tr();
   String get emptyFolder => LocaleKeys.shell_sidePanel_emptyFolder.tr();
   String get explorerLabel => LocaleKeys.shell_sidePanel_explorerLabel.tr();
   String get loadError => LocaleKeys.shell_sidePanel_loadError.tr();
