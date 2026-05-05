@@ -430,8 +430,17 @@ Contratti pinnati:
 
 **Outcome**: `flutter test` → **180 passed**. `dart analyze` → 0 issues.
 
-### B6
-_TBD_
+### B6 — Cubit (state machine) con bloc_test (DONE)
+
+**Strategia**: ho prioritizzato i due cubit con il contratto di stato più ampio e meno UI dependencies: `WorkspacesCubit` (lazySingleton, app-global) e `SlashCommandsCubit` (factory). Ho **escluso da questo batch** ClaudeSessionsCubit, FileTabsCubit, ExplorerCubit perché ognuno richiede infrastruttura di mock significativa (subprocess fake, file watcher, multiple use case): riassemblerei B5 + B6 in un PR enorme. Lascio quei cubit come work follow-up dopo aver consolidato il pattern bloc_test.
+
+**Test**:
+- `test/features/workspace/presentation/cubit/workspaces_cubit_test.dart` — 13 test su openPath happy/duplicate/failure, closeWorkspace (active/inactive/last/non-existent), setActive (no-op casi), restore (snapshot null/parziale/activeId mancante).
+- `test/features/slash_commands/presentation/cubit/slash_commands_cubit_test.dart` — 18 test su loadFor, onInputChanged (slash detection multi-line, dismiss su no-slash, clamp selectedIndex, no-match case), moveSelection (clamp + no-op casi), selectAt (oob), accept (highlighted/idle/empty), updateSkills (merge no-dup, riapplica filter), dismiss.
+
+**Bug emersi durante B6**: nessuno nel codice di produzione. Un import non usato (`dart:async` in workspaces_cubit_test) catturato da `dart analyze`.
+
+**Outcome**: `flutter test` → **211 passed**. `dart analyze` → 0 issues (dopo cleanup import).
 
 ### B7
 _TBD_
