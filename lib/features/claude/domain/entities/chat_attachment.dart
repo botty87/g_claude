@@ -2,7 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'chat_attachment.freezed.dart';
 
-enum ChatAttachmentKind { file, directory, fileRange }
+enum ChatAttachmentKind { file, directory, fileRange, imageCapture }
 
 @freezed
 abstract class ChatAttachment with _$ChatAttachment {

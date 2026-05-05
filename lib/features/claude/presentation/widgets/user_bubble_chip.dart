@@ -34,6 +34,7 @@ class BubbleAttachmentChip extends StatelessWidget {
     final icon = switch (attachment.kind) {
       ChatAttachmentKind.directory => Symbols.folder,
       ChatAttachmentKind.fileRange => Symbols.code,
+      ChatAttachmentKind.imageCapture => Symbols.add_a_photo,
       ChatAttachmentKind.file => Symbols.description,
     };
     return Tooltip(

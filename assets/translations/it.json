@@ -55,6 +55,18 @@
         "attachments": {
           "addFile": "Allega file",
           "addFolder": "Allega cartella",
+          "addScreenshot": "Screenshot",
+          "screenshotFullScreen": "Schermo intero",
+          "screenshotDisplay": "Display {index}",
+          "screenshotPickDisplay": "Scegli display",
+          "screenshotRegion": "Selezione area",
+          "screenshotWindow": "Selezione finestra",
+          "screenshotPreview": "Anteprima prima di allegare",
+          "screenshotPreviewTitle": "Anteprima screenshot",
+          "screenshotPreviewAttach": "Allega",
+          "screenshotPreviewDiscard": "Scarta",
+          "screenshotPreviewClose": "Chiudi",
+          "screenshotError": "Impossibile catturare lo screenshot",
           "dropHint": "Trascina file o cartelle qui",
           "removeTooltip": "Rimuovi allegato"
         },

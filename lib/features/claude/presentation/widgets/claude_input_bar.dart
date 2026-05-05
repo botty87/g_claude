@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -6,9 +8,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/di/di.dart';
+import '../../../../core/error/failures.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/macos/screenshot_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -21,6 +26,9 @@ import '../../domain/entities/chat_attachment.dart';
 import '../../domain/entities/chat_input_draft.dart';
 import '../cubit/claude_sessions_cubit.dart';
 import 'attachment_chip_row.dart';
+import 'screenshot_preview_dialog.dart';
+
+const _kScreenshotPreviewPrefKey = 'screenshot_preview_enabled';
 
 class ClaudeInputBar extends HookWidget {
   const ClaudeInputBar({
@@ -150,6 +158,67 @@ class ClaudeInputBar extends HookWidget {
       if (additions.isNotEmpty) {
         persistDraft(attachmentsOverride: [...current, ...additions]);
       }
+    }
+
+    final screenshotPreviewEnabled = useState(true);
+    useEffect(() {
+      SharedPreferences.getInstance().then((prefs) {
+        screenshotPreviewEnabled.value =
+            prefs.getBool(_kScreenshotPreviewPrefKey) ?? true;
+      });
+      return null;
+    }, const []);
+
+    Future<void> runCapture(
+      ScreenshotCaptureMode mode,
+      BuildContext menuContext, {
+      int? displayIndex,
+    }) async {
+      final result = await getIt<ScreenshotService>().capture(
+        mode,
+        displayIndex: displayIndex,
+      );
+      result.fold(
+        (failure) {
+          if (failure is SubprocessFailure &&
+              failure.message == 'screenshot_cancelled') {
+            return;
+          }
+          ScaffoldMessenger.maybeOf(menuContext)?.showSnackBar(
+            SnackBar(
+              content: Text(
+                Locales.Claude.Terminal.Input.Attachments.screenshotError,
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+        (path) async {
+          if (screenshotPreviewEnabled.value) {
+            final attach = await showDialog<bool>(
+              context: menuContext,
+              builder: (_) => ScreenshotPreviewDialog(imagePath: path),
+            );
+            if (attach != true) {
+              try {
+                File(path).deleteSync();
+              } catch (_) {}
+              return;
+            }
+          }
+          final current =
+              sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments
+              ?? const <ChatAttachment>[];
+          persistDraft(attachmentsOverride: [
+            ...current,
+            ChatAttachment(
+              path: path,
+              displayName: 'Screenshot',
+              kind: ChatAttachmentKind.imageCapture,
+            ),
+          ]);
+        },
+      );
     }
 
     Future<void> pickFolder() async {
@@ -397,6 +466,20 @@ class ClaudeInputBar extends HookWidget {
                     color: _isBusy ? AppColors.outline : AppColors.primary,
                     onTap: _isBusy ? () {} : pickFolder,
                   ),
+                  const SizedBox(width: AppSpacing.xs),
+                  _ScreenshotMenu(
+                    isBusy: _isBusy,
+                    previewEnabled: screenshotPreviewEnabled.value,
+                    onTogglePreview: () async {
+                      final next = !screenshotPreviewEnabled.value;
+                      screenshotPreviewEnabled.value = next;
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool(
+                          _kScreenshotPreviewPrefKey, next);
+                    },
+                    onCapture: (mode, displayIndex) =>
+                        runCapture(mode, context, displayIndex: displayIndex),
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   if (_isBusy && controller.text.trim().isNotEmpty)
                     _ActionButton(
@@ -441,6 +524,100 @@ void _stripSlashPrefix(TextEditingController controller) {
     text: newText,
     selection: TextSelection.collapsed(offset: newText.length),
   );
+}
+
+class _ScreenshotMenu extends HookWidget {
+  const _ScreenshotMenu({
+    required this.isBusy,
+    required this.previewEnabled,
+    required this.onTogglePreview,
+    required this.onCapture,
+  });
+
+  final bool isBusy;
+  final bool previewEnabled;
+  final Future<void> Function() onTogglePreview;
+  final Future<void> Function(ScreenshotCaptureMode mode, int? displayIndex)
+      onCapture;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = useMemoized(MenuController.new, const []);
+    final displays =
+        WidgetsBinding.instance.platformDispatcher.displays.toList();
+    final fullScreenLabel =
+        Locales.Claude.Terminal.Input.Attachments.screenshotFullScreen;
+
+    final menuChildren = <Widget>[
+      if (displays.length > 1)
+        SubmenuButton(
+          menuChildren: [
+            for (var i = 0; i < displays.length; i++)
+              MenuItemButton(
+                onPressed: () => onCapture(
+                  ScreenshotCaptureMode.fullScreen,
+                  i + 1,
+                ),
+                child: Text(
+                  Locales.Claude.Terminal.Input.Attachments
+                      .screenshotDisplay(index: '${i + 1}'),
+                ),
+              ),
+          ],
+          child: Text(fullScreenLabel),
+        )
+      else
+        MenuItemButton(
+          onPressed: () =>
+              onCapture(ScreenshotCaptureMode.fullScreen, null),
+          child: Text(fullScreenLabel),
+        ),
+      MenuItemButton(
+        onPressed: () => onCapture(ScreenshotCaptureMode.region, null),
+        child: Text(
+          Locales.Claude.Terminal.Input.Attachments.screenshotRegion,
+        ),
+      ),
+      MenuItemButton(
+        onPressed: () => onCapture(ScreenshotCaptureMode.window, null),
+        child: Text(
+          Locales.Claude.Terminal.Input.Attachments.screenshotWindow,
+        ),
+      ),
+      const Divider(height: 1),
+      MenuItemButton(
+        closeOnActivate: false,
+        leadingIcon: Icon(
+          previewEnabled ? Icons.check_box : Icons.check_box_outline_blank,
+          size: 18,
+        ),
+        onPressed: onTogglePreview,
+        child: Text(
+          Locales.Claude.Terminal.Input.Attachments.screenshotPreview,
+        ),
+      ),
+    ];
+
+    return MenuAnchor(
+      controller: controller,
+      menuChildren: menuChildren,
+      builder: (ctx, ctrl, _) => _ActionButton(
+        key: const ValueKey('claude_input_attach_screenshot'),
+        icon: Symbols.add_a_photo,
+        tooltipKey: 'claude.terminal.input.attachments.addScreenshot',
+        color: isBusy ? AppColors.outline : AppColors.primary,
+        onTap: isBusy
+            ? () {}
+            : () {
+                if (ctrl.isOpen) {
+                  ctrl.close();
+                } else {
+                  ctrl.open();
+                }
+              },
+      ),
+    );
+  }
 }
 
 class _ActionButton extends StatelessWidget {

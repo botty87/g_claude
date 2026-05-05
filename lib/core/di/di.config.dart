@@ -133,6 +133,7 @@ import '../../features/workspace/domain/usecases/load_claude_md.dart' as _i268;
 import '../../features/workspace/domain/usecases/open_workspace.dart' as _i305;
 import '../../features/workspace/presentation/cubit/workspaces_cubit.dart'
     as _i179;
+import '../macos/screenshot_service.dart' as _i656;
 import '../persistence/key_value_store.dart' as _i494;
 import '../router/app_router.dart' as _i81;
 import '../window/app_lifecycle_listener.dart' as _i851;
@@ -171,6 +172,7 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i81.AppRouter>(() => routerModule.router);
     gh.lazySingleton<_i207.Talker>(() => talkerModule.talker);
+    gh.lazySingleton<_i656.ScreenshotService>(() => _i656.ScreenshotService());
     gh.lazySingleton<_i207.ActiveEditorCubit>(() => _i207.ActiveEditorCubit());
     gh.lazySingleton<_i644.AppLogsRepository>(
       () => _i413.AppLogsRepositoryImpl(gh<_i126.AppLogsDatabase>()),

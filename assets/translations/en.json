@@ -55,6 +55,18 @@
         "attachments": {
           "addFile": "Attach file",
           "addFolder": "Attach folder",
+          "addScreenshot": "Screenshot",
+          "screenshotFullScreen": "Full Screen",
+          "screenshotDisplay": "Display {index}",
+          "screenshotPickDisplay": "Pick display",
+          "screenshotRegion": "Select Region",
+          "screenshotWindow": "Select Window",
+          "screenshotPreview": "Preview before attaching",
+          "screenshotPreviewTitle": "Screenshot Preview",
+          "screenshotPreviewAttach": "Attach",
+          "screenshotPreviewDiscard": "Discard",
+          "screenshotPreviewClose": "Close",
+          "screenshotError": "Failed to capture screenshot",
           "dropHint": "Drop files or folders here",
           "removeTooltip": "Remove attachment"
         },
