@@ -420,8 +420,15 @@ Contratti pinnati:
 
 **Outcome**: `flutter test` → **160 passed**. `dart analyze` → 0 issues.
 
-### B5
-_TBD_
+### B5 — Repository con datasource mockati (DONE)
+
+**Test**:
+- `test/features/editor/data/repositories/file_content_repository_impl_test.dart` — 14 test su LRU cache (30 entries / 10MB), mtime invalidation, in-flight coalesce, exception → Failure mapping (PathNotFoundException → NotFoundFailure, FileTooLargeException → ValidationFailure con size, BinaryFileException → ValidationFailure, generica → UnexpectedFailure).
+- `test/features/workspace/data/repositories/workspace_repository_impl_test.dart` — 8 test su openWorkspace happy path (path normalizzato come absolute, name=basename, claudeMd opzionale) + exception → Failure mapping + loadClaudeMd.
+
+**Bug emersi durante B5**: nessuno nel codice di produzione. Un errore mio (assert su `Failure.toString()` invece di castare al subtipo + leggere `.message`) — `Failure` non ha `toString()` override, default è `'Instance of XxxFailure'`. Test riformulati per leggere `(failure as ValidationFailure).message`.
+
+**Outcome**: `flutter test` → **180 passed**. `dart analyze` → 0 issues.
 
 ### B6
 _TBD_
