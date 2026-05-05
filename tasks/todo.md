@@ -1,93 +1,355 @@
-# Shortcut cycle + set diretti per Sforzo / Pensiero / Permission
+# Test coverage iniziale — piano
 
-## Scelta
+Branch: `tests/initial-coverage`
+Filosofia: i test descrivono il **comportamento atteso**. Se un test fallisce → si indaga prima il codice (potrebbe essere un bug vero); il test si modifica solo dopo aver confermato che il codice è corretto. **I test devono trovare bug**, non passare a tutti i costi.
 
-Opzione **B** dalla proposta. **No reverse cycle**. **Snackbar di conferma attiva**.
+## Principi guida (vincolanti per ogni batch)
 
-## Shortcut da implementare
+1. **Contratto, non metodo.** Ogni `test('...')` descrive un comportamento osservabile (es. *"quando arriva sessionDead con exitCode != 0, runStatus → sessionDead E stderrTail viene appeso E il queuedPrompt NON viene drained"*). MAI nominare il metodo interno (es. `test('_handleEvent')`).
+2. **Fixture reali, non sintetiche, dove possibile.** Per parser NDJSON e JSONL history: catturare output reale da `claude -p ...` e file reali da `~/.claude/projects/`, anonimizzare se servono path utente, salvare in `test/fixtures/`. Sintetizzare a mano = testare la nostra immaginazione del formato.
+3. **Distinguere contratti documentati da speculazioni.** Le note "probable bugs" emerse dall'esplorazione contengono entrambi: solo i contratti documentati (es. "tool result correlato per tool_use_id", "orphan tool a fine session marcato error", "FTS body limit 200KB") sono target validi. Gli scenari speculativi (es. "what if content_block_stop arriva prima di content_block_start") restano OUT salvo evidenza che accadano.
+4. **Coverage non è il target.** Misurare con `flutter test --coverage` + lcov per orientamento, ma il target è la copertura dei comportamenti rischiosi/critici, non la percentuale.
+5. **Niente test di pure presentation.** Token tema, GlassPane, dialog senza logica: skip (al massimo golden test, e solo su richiesta esplicita).
+6. **Niente test su data class banali.** `Failure`, freezed entity puri: testati indirettamente nei repository test.
 
-### Cycle (forward only)
+## Convenzioni stack
 
-| Shortcut | Azione | Loop |
-|---|---|---|
-| `Cmd+Shift+E` | cycle Sforzo | low → medium → high → xhigh → max → low |
-| `Cmd+Shift+T` | cycle Pensiero | off → think → thinkHard → ultrathink → off |
-| `Cmd+Shift+M` | cycle Permission | default → plan → acceptEdits → bypassPermissions → default |
+- **Mock**: `mocktail` (no codegen, idiomatico con freezed/sealed). Non `mockito`.
+- **Cubit**: `bloc_test` per `expectLater(emitsInOrder([...]))`.
+- **SharedPreferences**: `SharedPreferences.setMockInitialValues({...})` + `getInstance()`.
+- **Drift**: `NativeDatabase.memory()` per DB in-memory.
+- **EasyLocalization** in widget test: wrapper helper che precarica le translations e wrappa con `EasyLocalization` (altrimenti `Locales.X.y.tr()` esplode).
+- **Fixture**: `test/fixtures/{ndjson,jsonl,prefs,settings}/`.
+- **Helper**: `test/helpers/` per `pumpAppWidget()`, fake `Talker`, fake `WorkspacesCubit`, ecc.
 
-### Set diretti
+## Naming
 
-| Shortcut | Effort |
-|---|---|
-| `Cmd+Alt+1` | low |
-| `Cmd+Alt+2` | medium |
-| `Cmd+Alt+3` | high |
-| `Cmd+Alt+4` | xhigh |
-| `Cmd+Alt+5` | max |
+- File test: `<source_file_name>_test.dart` accanto al sorgente nella struttura speculare in `test/`.
+  - Es. `lib/features/claude/data/datasources/claude_process_datasource.dart` → `test/features/claude/data/datasources/claude_process_datasource_test.dart`.
+- `group('FooCubit', () { group('when X', () { test('emits Y', ...); }); })`.
+- `setUp()` per fake/mock setup, `tearDown()` per cleanup risorse.
 
-| Shortcut | Thinking |
-|---|---|
-| `Cmd+Shift+1` | off |
-| `Cmd+Shift+2` | think |
-| `Cmd+Shift+3` | thinkHard |
-| `Cmd+Shift+4` | ultrathink |
+---
 
-| Shortcut | Permission |
-|---|---|
-| `Cmd+Ctrl+1` | default |
-| `Cmd+Ctrl+2` | plan |
-| `Cmd+Ctrl+3` | acceptEdits |
-| `Cmd+Ctrl+4` | bypassPermissions |
+## Batch (PR/commit separati, mergeable indipendentemente)
 
-Totale: 17 binding.
+### B0 — Infrastruttura test [PREREQUISITO]
 
-## Steps
+**Obiettivo**: predisporre il terreno. Senza questo, i primi test non compilano.
 
-- [ ] **1. Helper next-cycle** in `lib/features/claude/domain/entities/`:
-  - aggiungi getter `ClaudeEffort get next` (wrap-around via `values[(index+1) % values.length]`)
-  - idem per `ClaudeThinkingMode` e `ClaudePermissionMode`
-- [ ] **2. Aggiungi chiavi i18n** in `assets/translations/{en,it}.json` sotto `shell.shortcuts`:
-  - `effortChanged` → `"Effort: {value}"` / `"Sforzo: {value}"`
-  - `thinkingChanged` → `"Thinking: {value}"` / `"Pensiero: {value}"`
-  - `permissionChanged` → `"Mode: {value}"` / `"Modalità: {value}"`
-  - `noActiveWorkspace` → `"No active workspace"` / `"Nessun workspace attivo"` (per snackbar quando shortcut premuta senza workspace)
-- [ ] **3. Rigenera l10n**: `dart run lib/core/l10n/tool/l10n_generate.dart`
-- [ ] **4. Estendi `onKey` in [app_shell.dart:132](lib/features/shell/presentation/widgets/app_shell.dart#L132)**:
-  - aggiungi 3 funzioni: `cycleEffort()`, `cycleThinking()`, `cyclePermission()`
-  - aggiungi 3 funzioni set parametriche: `setEffortDirect(ClaudeEffort)`, etc.
-  - tutte leggono `activeIdOrNull` live; se null → snackbar `noActiveWorkspace`, return false
-  - dopo set: snackbar floating 1.5s con label tradotta dell'enum (`Locales.X.tr(args: {value: ...})`)
-  - mappa key event:
-    - `Cmd+Shift` + KeyE/T/M → cycle relativi
-    - `Cmd+Alt` + Digit1..5 → setEffort
-    - `Cmd+Shift` + Digit1..4 → setThinking (occhio: differenziare da KeyE/T/M già su Cmd+Shift, distinti per `logicalKey`)
-    - `Cmd+Ctrl` (= `isControlPressed`) + Digit1..4 → setPermission
-- [ ] **5. Test manuale**:
-  - cycle ciascuna dimensione, verifica wrap-around al primo valore
-  - set diretti tutti
-  - snackbar mostra valore localizzato
-  - stato persiste dopo restart (già garantito dai setter cubit)
-  - shortcut con workspace nullo → snackbar `noActiveWorkspace`, niente crash
-- [ ] **6. Doc**: scrivi `docs/shortcuts.md` con tabella completa di tutte le shortcut app.
-- [ ] **7. Analyze**: `dart analyze`. Zero warning nuovi.
+- [ ] Aggiungere a `pubspec.yaml` (sezione `dev_dependencies`): `mocktail`, `bloc_test`, `drift_dev` (se non presente già), eventuale `clock` per controllare il tempo nei test con timer.
+- [ ] Creare struttura: `test/fixtures/`, `test/helpers/`.
+- [ ] Helper: `test/helpers/pump_app.dart` → wrapper widget test con `EasyLocalization` (caricamento translations da `assets/translations/` via `EasyLocalization.ensureInitialized()` mockato). Un primo smoke widget test (es. ricerca di una chiave `Locales.Workspace.emptyState.openFolder`) deve renderizzare senza errori.
+- [ ] Helper: `test/helpers/fakes.dart` → `FakeTalker` (no-op), `FakeFileSystem` per `dart:io` injectable se serve, factory `makeWorkspace(...)`, `makeClaudeMessage(...)`, `makeSlashCommand(...)`.
+- [ ] Helper: `test/helpers/drift_in_memory.dart` → costruisce SQLite in-memory per `SessionsDatabase` e `AppLogsDatabase`.
+- [ ] Aggiornare `CLAUDE.md`: rimuovere/aggiornare la riga *"No test in fase scaffolding..."* per riflettere la nuova policy (test obbligatori per logica pura e contratti comportamentali; widget test per componenti con drag&drop, sync controller↔cubit, decisioni utente).
+- [ ] Verificare che `just test` (o `flutter test`) giri a vuoto su `test/` (anche con un test placeholder che asserisce `1 + 1 == 2`).
 
-## Note implementazione
+**Definition of done**: `flutter test` esce 0, struttura dir creata, CLAUDE.md aggiornato.
 
-- **Conflitto digit Cmd+Shift**: `Cmd+Shift+E/T/M` (lettere) e `Cmd+Shift+1..4` (cifre) condividono modifier ma `logicalKey` distingue. Switch su `event.logicalKey` chiaro.
-- **Helpers i18n enum**: già esistono `Locales.Claude.Effort.low.tr()` etc. via `labelKey` enum. Per snackbar estrarre testo da `effort.labelKey.tr()` (consentito perché chiave dinamica da enum field, vedi CLAUDE.md eccezione).
-- **Bypass cycle**: utente ha confermato di non voler guardia. Bypass entra nel cycle normalmente.
-- **Single source of truth**: setter cubit emit + persist. Header pickers riceveranno update via `context.select` esistente. Zero modifiche UI esistenti.
-- **Scope shortcut**: stesso `Focus` di app_shell.dart (root). Non interferisce con TextField input bar (focus prende priorità su quello).
+---
 
-## Files toccati
+### B1 — Logica pura senza I/O
 
-- `lib/features/claude/domain/entities/claude_effort.dart` (+ getter)
-- `lib/features/claude/domain/entities/claude_thinking_mode.dart` (+ getter)
-- `lib/features/claude/domain/entities/claude_permission_mode.dart` (+ getter)
-- `lib/features/shell/presentation/widgets/app_shell.dart` (estensione `onKey`)
-- `assets/translations/en.json` + `assets/translations/it.json` (chiavi snackbar)
-- `lib/core/l10n/locales.g.dart` + `lib/core/l10n/locale_keys.g.dart` (rigenerati)
-- `docs/shortcuts.md` (nuovo)
+**Obiettivo**: validare la base. Test rapidi, zero mock, alto valore di smoke per l'infra B0.
 
-## Review
+- [ ] **`Either<L, R>`** (`lib/core/utils/either.dart`)
+  - Contratto: `Left.fold` chiama `ifLeft`, `Right.fold` chiama `ifRight`.
+  - Contratto: `Left.left` ritorna il valore, `Right.right` ritorna il valore.
+  - Contratto: accedere a `Left.right` (o `Right.left`) lancia eccezione documentata.
+  - Contratto: `isLeft`/`isRight` coerenti con la sottoclasse.
+  - Equality: due `Right(1)` sono uguali (se l'implementazione lo garantisce — verificare prima nel codice).
+- [ ] **`FilterSlashCommands`** (`lib/features/slash_commands/domain/usecases/filter_slash_commands.dart:7-39`)
+  - Contratto: filtro vuoto ritorna lista invariata.
+  - Contratto: ranking — match post-colon prefix prima di whole-trigger prefix prima di `name contains` prima di `description contains`.
+  - Contratto: case-insensitivity.
+  - Contratto: comando con trigger senza colon e query con colon non rompe.
+- [ ] **`parseFrontmatter`** (`lib/core/utils/frontmatter.dart:1-20`)
+  - Contratto: input senza prefisso `---\n` → `{}`.
+  - Contratto: blocco vuoto `---\n---\n` → `{}`.
+  - Contratto: chiavi/valori semplici, valori tra apici (singoli e doppi) → quote stripping.
+  - Contratto: chiave duplicata → ultimo valore vince (verificare prima nel codice).
+- [ ] **`SessionsDatabase._escapeFtsQuery`** (`lib/features/claude/data/datasources/sessions_database.dart:119-127`)
+  - Contratto: token singolo `hello` → `"hello"*`.
+  - Contratto: query multi-token → `"a"* "b"*`.
+  - Contratto: doppio apice nel token raddoppiato.
+  - Nota: se è privato, esporre via `@visibleForTesting` o testare indirettamente da `searchFtsIds()` con DB in-memory.
 
-_(da compilare a fine implementazione)_
+**Definition of done**: tutti i test passano, nessuna modifica al codice di produzione (se un test fallisce, si indaga il codice → potrebbe emergere il primo bug).
+
+---
+
+### B2 — Parser NDJSON / event normalization [ALTO VALORE]
+
+**Obiettivo**: il parser è la superficie più rischiosa dell'intera app. Una regressione qui rompe sessioni intere senza errore visibile.
+
+- [ ] **Cattura fixture reali**: lanciare 5–6 sessioni con `claude -p --output-format stream-json` su prompt diversi e salvare l'output:
+  - `test/fixtures/ndjson/simple_text.ndjson` — solo testo, nessun tool.
+  - `test/fixtures/ndjson/with_tool_call.ndjson` — un tool call (es. Read) con result.
+  - `test/fixtures/ndjson/with_permission.ndjson` — un PreToolUse che richiede permesso.
+  - `test/fixtures/ndjson/with_error.ndjson` — sessione che termina con errore.
+  - `test/fixtures/ndjson/with_rate_limit.ndjson` — se riproducibile, altrimenti sintetico marcato.
+  - `test/fixtures/ndjson/multiline_partial.ndjson` — tool call con input_json_delta su molti chunks.
+- [ ] **Test parser** (`claude_process_datasource_test.dart`):
+  - Per ogni fixture: leggere file → passare ogni riga al normalizer → asserire la sequenza di `ClaudeEvent` attesi (tipo + campi chiave).
+  - Contratti documentati:
+    - `system.init` → `ClaudeEvent.sessionInit` con sessionId, model, tools, skills, slashCommands, plugins (default vuoti se mancanti).
+    - `content_block_delta.text_delta` → `textChunk` con testo concatenato.
+    - `content_block_start.tool_use` → `toolCall` con toolId/name/index.
+    - `input_json_delta` → accumulato in `_ToolBlockState.partialJson`.
+    - `content_block_stop` su un tool aperto → `toolCallComplete` con input parsato.
+    - `user.tool_result` → `toolResult` con toolUseId + content flatten.
+    - `assistant.message` con content list di blocchi → `assistantMessage` con testo concatenato.
+    - `result.is_error == true` → `errorEvent`.
+    - `result` (success) → `taskComplete`.
+    - `rate_limit_event` → `rateLimit`.
+  - Edge case dal codice (NON speculazione, presenti come default `??`):
+    - sessionInit con `tools: null` → emit con `tools = []`.
+    - sessionInit con `model: null` → emit con `model = ''`.
+    - tool_result con content `String` → flatten letterale.
+    - tool_result con content `List<Map>` → flatten via type-specific (text/image).
+    - tool_result con content `null` → flatten = ''.
+    - Tipo evento sconosciuto → no emit, no crash (smoke test con riga `{"type":"foo_unknown"}`).
+    - Riga JSON non parsabile → loggata, parser continua sulla successiva.
+- [ ] **NON testare** (speculazioni dell'esplorazione, OUT salvo evidenza):
+  - `content_block_stop` prima di `content_block_start` (out-of-order).
+  - input_json_delta senza mai un content_block_stop terminale.
+  - Index collision tra tool concorrenti.
+
+**Definition of done**: parsing di tutte le fixture reali produce gli eventi attesi senza eccezioni.
+
+---
+
+### B3 — JSONL history reader [ALTO VALORE]
+
+**Obiettivo**: la cronologia chat è dati persistenti: corruzione qui = perdita dati per l'utente.
+
+- [ ] **Cattura fixture reali**: copiare 3–4 file reali da `~/.claude/projects/{cwd-encoded}/{sessionid}.jsonl`, anonimizzare path, salvare in `test/fixtures/jsonl/`.
+- [ ] **Test `ClaudeHistoryDataSource`** (`claude_history_datasource_test.dart`) — usare un'implementazione che accetta path radice via DI (o tmp dir):
+  - **`encodeCwd`** (linea 64): contratto regex (alfanumerico → `-`); test su path con spazi, unicode, `~`, dots.
+  - **`scanWorkspace`**:
+    - Directory inesistente → ritorna `[]`.
+    - Directory vuota → `[]`.
+    - File non `.jsonl` → ignorato.
+    - File JSONL malformato → onParseError invocato, scan continua.
+    - Sessione senza title né summary → title fallback (verificare a `''` o nome file).
+    - Sort per `lastMessageAt` decrescente.
+  - **`readSession`**:
+    - Messaggi user con content `String` → emesso come singolo testo.
+    - Messaggi user con content `List<block>` → blocchi text concatenati con newline.
+    - Messaggi assistant con multiple text blocks → concatenati.
+    - Tool block + tool_result correlati per `tool_use_id` → tool result attaccato al tool right.
+    - **Orphan tool** (tool senza result a fine sessione) → marcato con status error (contratto documentato).
+    - tool_result `String` content → usato come è.
+    - tool_result `List` content → JSON-encoded.
+    - tool_result `null` content → ''.
+  - **`readFullText`**:
+    - Limite 200KB (linea 301): contenuto totale > limite → troncamento, ritorno parziale (contratto da verificare nel codice).
+  - **`exportSessionMarkdown`**: smoke test su una fixture, output contiene marker user/assistant/tool, niente eccezioni.
+
+**Definition of done**: tutte le fixture reali parsano correttamente; orphan tool detection verificata.
+
+---
+
+### B4 — PermissionServer + ClaudeSettingsWriter
+
+**Obiettivo**: il server di permessi è il punto di sincronizzazione critico tra subprocess e UI. Difetti qui → comportamento incoerente del CLI o blocchi.
+
+- [ ] **`PermissionServer`** (`lib/features/claude/data/datasources/permission_server.dart`):
+  - Setup: avviare server reale su porta effimera (loopback), mandare richieste HTTP via `package:http` o `dart:io HttpClient`.
+  - Contratti:
+    - GET / altri path != `/permission` → 404.
+    - POST `/permission` con JSON valido + resolver registrato che ritorna `allow` → response 200, `permissionDecision == "allow"`.
+    - POST con resolver che ritorna `deny` → response 200, decision `deny`.
+    - POST con resolver che ritorna `ask`, interactive handler registrato che chiama `respond(requestId, allow)` → response `allow`.
+    - POST con resolver `ask` MA nessun interactive handler → response `deny` (fallback safety).
+    - POST senza resolver → response `allow` (default permissivo iniziale).
+    - POST con JSON malformato → response 200 con `allow` (osservare contratto attuale linea 100-102, eventualmente flaggare come weakness in `tasks/lessons.md`).
+    - Risposta MAI contiene `updatedInput` (invariante linea 150-155).
+    - Timeout interactive 5min: simulare con `fakeAsync` o `clock` injection — verificare che dopo timeout viene risposto `deny` e pending viene rimosso.
+    - `respond()` chiamato due volte con stesso requestId: secondo è no-op, niente eccezioni.
+- [ ] **`ClaudeSettingsWriter`** (`lib/features/claude/data/datasources/claude_settings_writer.dart`):
+  - Contratti:
+    - `ensure(port)` con porta nuova → crea file, ritorna path.
+    - `ensure(port)` con stessa porta → cache hit, stesso path, no riscrittura.
+    - File contiene struttura JSON con hook `PreToolUse` → comando curl con porta corretta.
+
+**Definition of done**: tutti gli scenari di decisione coperti, timeout testato deterministicamente.
+
+---
+
+### B5 — Repository con datasource mockati
+
+**Obiettivo**: validare la traduzione exception → Failure e la logica di caching/coalesce.
+
+- [ ] **`FileContentRepositoryImpl`** (`lib/features/editor/data/repositories/file_content_repository_impl.dart`):
+  - LRU cache: 30 entries → 31° eviction del LRU.
+  - Cache da 10MB: file totale > 10MB → eviction parziale.
+  - Mtime change → invalidazione: stesso path, mtime diverso → `_inFlight` reload, ritorna nuovo content.
+  - Concurrent reads stesso path: due call simultanee → datasource invocato 1 volta sola (`_inFlight` coalesce).
+  - File too large → `ValidationFailure`.
+  - Binary file → `ValidationFailure`.
+  - Path non esistente → `NotFoundFailure`.
+  - Eccezione generica datasource → `UnexpectedFailure`.
+- [ ] **`WorkspaceRepositoryImpl`** (`lib/features/workspace/data/repositories/workspace_repository_impl.dart`):
+  - `openWorkspace(path)` con path valido → `Right(Workspace)`.
+  - Path inesistente → `Left(NotFoundFailure)`.
+  - Path è file (non dir) → `Left(ValidationFailure)`.
+  - `loadClaudeMd(path)` → ritorna contenuto se esiste, `null` se no, mai eccezione bubble.
+- [ ] **`ChatHistoryRepositoryImpl`**:
+  - Mock `SessionsIndexDataSource` + `ClaudeHistoryDataSource`.
+  - Search → query passa via FTS, ritorno mappato a summary.
+  - Delete → file rimosso + index invalidato (verificare ordine).
+  - Export → ritorna path destinazione, errore I/O → `UnexpectedFailure`.
+
+**Definition of done**: tutte le mappature exception → Failure coperte.
+
+---
+
+### B6 — Cubit (state machine + integration con use case mockati)
+
+**Obiettivo**: i cubit sono il cuore del comportamento osservabile. Test qui = test del flusso utente.
+
+- [ ] **`WorkspacesCubit`** (`lib/features/workspace/presentation/cubit/workspaces_cubit.dart`):
+  - `openPath(path)` con path valido → emit `loaded` con il workspace + activeId aggiornato.
+  - `openPath(path)` con path già aperto → activeId aggiornato, lista invariata.
+  - `openPath(path)` con path invalido → emit `loaded` con `lastFailure`, lista invariata.
+  - `closeWorkspace(id)` su workspace attivo → activeId scivola al sibling (verificare regola: precedente? successivo?).
+  - `closeWorkspace(id)` ultimo workspace → activeId = null, stato torna `initial` (verificare nel codice).
+  - `restore()`: prefs con JSON valido → emit loaded; prefs corrotte → emit initial + log warning, no crash.
+  - Persistenza debounce 250ms (verificare in codice): rapide chiamate consecutive → 1 sola write a SharedPreferences.
+- [ ] **`FileTabsCubit`** (`lib/features/editor/presentation/cubit/file_tabs_cubit.dart`):
+  - `openFile(wsId, path)`: prima volta → preview path settato; seconda volta stesso file → activePath, niente pin.
+  - `pinFile(wsId, path)`: preview path → openPaths, previewPath cleared.
+  - `closeFile`: tab attivo → next tab attivo; ultimo tab → activePath null.
+  - `reorderPinned`: ordine cambia.
+  - **Orphan filter** (`restore()`): prefs con tab di workspace non più esistente → filtrati out.
+  - **Auto-close on delete** (file watcher, debounce 300ms): mock dello stream FileSystemEvent.delete → tab chiuso dopo 300ms.
+- [ ] **`ExplorerCubit`** (`lib/features/explorer/presentation/cubit/explorer_cubit.dart`):
+  - `ensureRootLoaded`: prima volta → carica + emit; seconda volta → no-op (cached).
+  - `toggleFolder`: prima volta su dir → loading=true → loaded con children; seconda volta → expanded toggle, niente reload.
+  - `revealPath`: 2 fasi — fase 1 sync expand cached, fase 2 async load missing, merge senza flicker.
+  - `refresh`: refresh root + tutte le dir espanse.
+- [ ] **`ClaudeSessionsCubit`** (`lib/features/claude/presentation/cubit/claude_sessions_cubit.dart`) — il più complesso:
+  - `sendPrompt(wsId, text, ...)` con session idle → runStatus=running, messaggio user appeso, stream subscribe.
+  - Stream emette `textChunk`: messaggio assistant streaming, testo accumulato (debounce 16ms).
+  - Stream emette `toolCall` poi `toolCallComplete`: tool message appeso con status running poi completed.
+  - Stream emette `toolResult`: tool message correlato per toolUseId, output settato.
+  - Stream emette `taskComplete`: runStatus=idle.
+  - Stream emette `errorEvent`: runStatus=error, lastError settato.
+  - Stream emette `sessionDead` con exitCode 0: runStatus=idle.
+  - Stream emette `sessionDead` con exitCode != 0: runStatus=sessionDead, stderrTail appeso, queuedPrompt NON drained.
+  - `setQueuedPrompt` durante run: testo memorizzato, drained al taskComplete (idle).
+  - `setQueuedPrompt` con text vuoto: clearQueuedPrompt.
+  - `stopRun`: kill subprocess, cleanup timer, runStatus=idle.
+  - `setModel/setPermissionMode/setEffort/setThinking`: emit + persist a SharedPreferences (round-trip).
+  - `toggleMcpServer(wsId, name, false)`: aggiunto a disabledMcpServers, persistito.
+  - `answerPermission(wsId, msgId, decision)`: trovato message permissionRequest non answered → answered=true + decision settata, PermissionServer.respond() invocato.
+  - Filtro tool per permissionMode=plan: tool write/edit filtrati (read-only).
+
+**Definition of done**: tutti i transition di stato verificati. Eventuale bug emerso (es. queuedPrompt drained su error) → fixarlo nel codice prima di toccare il test.
+
+---
+
+### B7 — Widget test mirati
+
+**Obiettivo**: verificare i contratti UI dei componenti dove la regressione è invisibile fino a che l'utente non la incontra. Particolare attenzione al pattern `single source of truth` (memoria `feedback_single_source_of_truth.md`).
+
+- [ ] **`QueuedPromptCard`** (`lib/features/claude/presentation/widgets/queued_prompt_card.dart`):
+  - Render solo se `queued != null && isBusy`.
+  - Edit text → `setQueuedPrompt(wsId, newText)` invocato sul cubit (verifica live read, no mirror locale).
+  - Tap remove icon → `clearQueuedPrompt(wsId)` invocato.
+  - State del cubit cambia esternamente → controller text aggiornato.
+- [ ] **`PermissionRequestCard`**:
+  - Render con `toolInput.isEmpty`: niente expand button.
+  - Render con `toolInput` non vuoto: tap expand → JSON visibile.
+  - Tap deny → `onDecide(deny)` chiamato.
+  - Tap allow once → `onDecide(allowOnce)`.
+  - Tap allow always → `onDecide(allowAlways)`.
+  - `message.answered == true` → render answered (icona + colore), pulsanti disabili.
+- [ ] **`ClaudeTerminalPane`** drag&drop:
+  - Drop di un file → `setInputDraft` invocato con `attachments` aggiornato (live read draft).
+  - Drop di un duplicato → no-op (filtro path già presente).
+  - Drop di una directory → `ChatAttachment(kind: directory)` creato.
+- [ ] **`Hoverable` double-tap debounce** (`lib/shared/widgets/hoverable.dart`):
+  - Tap singolo → `onTap` dopo `kDoubleTapTimeout`.
+  - Doppio tap entro `kDoubleTapTimeout` → `onDoubleTap` invocato, `onTap` NO.
+- [ ] **`FileTabsBar`** (`lib/features/editor/presentation/widgets/file_tabs_bar.dart`):
+  - openFiles vuoto → barra vuota.
+  - Cambio activePath → scroll animato (verificare via `controller.offset` cambio).
+  - Tap su tab → `setActiveFile()` invocato.
+  - Doppio click su preview tab → `pinFile()` invocato.
+
+**Definition of done**: ogni widget test usa il pattern `single source of truth` (no useState che mirroreggia stato cubit), e i mock cubit verificano gli scope dei rebuild.
+
+---
+
+## Out of scope (questo ciclo)
+
+- Integration test con subprocess `claude` reale (richiede CLI installata, non idempotente, OUT).
+- Golden test (UI styling). Da considerare in cicli successivi se richiesto.
+- Test su `AppColors`, `AppSpacing`, `AppRadii`, `AppTypography`. Sono costanti — niente da verificare.
+- Test su token Theme, GlassPane, modal puramente presentation.
+- Test su bootstrap `main.dart` (non testabile direttamente).
+- `_prewarmPersistedTabs` standalone: bonus se l'estraiamo da main.dart prima.
+
+---
+
+## Open questions per l'utente
+
+Prima di partire con B0, conferma o redirigi:
+
+1. **Ampiezza piano**: ok piano completo poi implementazione iterativa per batch (B0 → B1 → ... → B7), un commit per batch, advisor + review fra B2 e B3 (entrambi alto rischio)?
+2. **Fixture reali**: posso lanciare alcune sessioni `claude -p` reali per catturare NDJSON, o preferisci fornirmele tu? (Senza fixture reali in B2 il valore del test cala drasticamente.)
+3. **CLAUDE.md aggiornamento**: ok includerlo come task del B0?
+4. **Aggiornamento policy `lessons.md`**: ogni bug emerso da un test che fallisce e poi richiede fix del codice — lo capturiamo in `tasks/lessons.md` come pattern. Confermi?
+
+---
+
+## Review (da compilare a fine implementazione di ogni batch)
+
+### B0 — Infrastruttura test (DONE)
+
+**File aggiunti/modificati**:
+- `pubspec.yaml`: aggiunti `mocktail ^1.0.4`, `bloc_test ^10.0.0`, `fake_async ^1.3.1`.
+- `test/helpers/pump_app.dart`: wrapper `pumpAppWidget()` per widget test che richiedono `Locales.X.y.tr()`. Mocka `SharedPreferences` prima di `EasyLocalization.ensureInitialized()`.
+- `test/helpers/pump_app_test.dart`: smoke test che renderizza `Locales.App.title` e verifica risoluzione (`'Claude Code GUI'`); test sanity opposto che pin-a il contratto (la chiave letterale non deve apparire).
+- `test/helpers/fakes.dart`: factory `makeWorkspace(...)`.
+- `test/helpers/drift_in_memory.dart`: `makeAppLogsDb()`, `makeSessionsDb()` su `NativeDatabase.memory()`. Helper `collect()` per stream.
+- `test/helpers/drift_in_memory_test.dart`: smoke test insert/select round-trip + cascade FK + verifica creazione tabella FTS5.
+- `test/fixtures/{ndjson,jsonl,prefs,settings}/`: cartelle predisposte (vuote, popolate da B2/B3/B4).
+- `test/widget_test.dart`: rimosso (era placeholder `1+1==2`).
+- `CLAUDE.md`: rimossa la riga "No test in fase scaffolding"; aggiunta sezione **Test policy** con stack, naming, contratti vs metodi, regole "trovare bug".
+
+**Bug emersi durante B0** (catturati in `tasks/lessons.md`):
+1. `EasyLocalization` sotto `flutter_test` hanga indefinitamente se `SharedPreferences` non è mockato — `MissingPluginException` swallowed nel FutureBuilder, `pumpAndSettle` non si chiude, timeout 10 min senza errore visibile.
+2. Drift non preserva il flag UTC sui `DateTime`: `==` fallisce su round-trip insert/select. Usare `isAtSameMomentAs` per asserire l'istante.
+
+**Outcome**: `flutter test` → 33 tests passed. `dart analyze` → 0 issues.
+
+### B1
+_TBD_
+
+### B2
+_TBD_
+
+### B3
+_TBD_
+
+### B4
+_TBD_
+
+### B5
+_TBD_
+
+### B6
+_TBD_
+
+### B7
+_TBD_
+
+---
+
+## Archivio piani precedenti
+
+Il vecchio contenuto di questo file (Shortcut cycle + set diretti per Sforzo/Pensiero/Permission) è stato spostato/archiviato. Ripristinabile da git history (commit precedenti su `main`).
