@@ -24,6 +24,7 @@ abstract interface class ClaudeProcessDataSource {
     ClaudeModel? model,
     ClaudeEffort? effort,
     String? resumeSessionId,
+    List<String> imagePaths = const [],
   });
 
   Future<void> stop();
@@ -124,6 +125,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
     ClaudeModel? model,
     ClaudeEffort? effort,
     String? resumeSessionId,
+    List<String> imagePaths = const [],
   }) {
     final controller = StreamController<ClaudeEvent>();
 
@@ -207,11 +209,28 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
       });
 
       try {
+        final imageBlocks = <Map<String, Object>>[];
+        for (final path in imagePaths) {
+          try {
+            final bytes = await File(path).readAsBytes();
+            imageBlocks.add({
+              'type': 'image',
+              'source': {
+                'type': 'base64',
+                'media_type': 'image/jpeg',
+                'data': base64Encode(bytes),
+              },
+            });
+          } catch (e) {
+            _talker.warning('Failed to read screenshot image: $path ($e)');
+          }
+        }
         final payload = {
           'type': 'user',
           'message': {
             'role': 'user',
             'content': [
+              ...imageBlocks,
               {'type': 'text', 'text': prompt},
             ],
           },

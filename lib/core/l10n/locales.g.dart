@@ -404,8 +404,25 @@ class _ClaudeTerminalInputAttachments {
 
   String get addFile => LocaleKeys.claude_terminal_input_attachments_addFile.tr();
   String get addFolder => LocaleKeys.claude_terminal_input_attachments_addFolder.tr();
+  String get addScreenshot => LocaleKeys.claude_terminal_input_attachments_addScreenshot.tr();
   String get dropHint => LocaleKeys.claude_terminal_input_attachments_dropHint.tr();
   String get removeTooltip => LocaleKeys.claude_terminal_input_attachments_removeTooltip.tr();
+  String screenshotDisplay({required String index}) {
+    return LocaleKeys.claude_terminal_input_attachments_screenshotDisplay.tr(namedArgs: {
+      'index': index,
+    });
+  }
+
+  String get screenshotError => LocaleKeys.claude_terminal_input_attachments_screenshotError.tr();
+  String get screenshotFullScreen => LocaleKeys.claude_terminal_input_attachments_screenshotFullScreen.tr();
+  String get screenshotPickDisplay => LocaleKeys.claude_terminal_input_attachments_screenshotPickDisplay.tr();
+  String get screenshotPreview => LocaleKeys.claude_terminal_input_attachments_screenshotPreview.tr();
+  String get screenshotPreviewAttach => LocaleKeys.claude_terminal_input_attachments_screenshotPreviewAttach.tr();
+  String get screenshotPreviewClose => LocaleKeys.claude_terminal_input_attachments_screenshotPreviewClose.tr();
+  String get screenshotPreviewDiscard => LocaleKeys.claude_terminal_input_attachments_screenshotPreviewDiscard.tr();
+  String get screenshotPreviewTitle => LocaleKeys.claude_terminal_input_attachments_screenshotPreviewTitle.tr();
+  String get screenshotRegion => LocaleKeys.claude_terminal_input_attachments_screenshotRegion.tr();
+  String get screenshotWindow => LocaleKeys.claude_terminal_input_attachments_screenshotWindow.tr();
 }
 
 /// Nested class for queue translations

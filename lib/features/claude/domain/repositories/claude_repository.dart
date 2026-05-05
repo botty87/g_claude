@@ -16,6 +16,7 @@ abstract interface class ClaudeRepository {
     ClaudeModel? model,
     ClaudeEffort? effort,
     String? resumeSessionId,
+    List<String> imagePaths = const [],
   });
 
   /// Terminates the current run if any (best-effort).

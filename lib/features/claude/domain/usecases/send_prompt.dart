@@ -18,6 +18,7 @@ class SendPromptParams extends Equatable {
     this.model,
     this.effort,
     this.resumeSessionId,
+    this.imagePaths = const [],
   });
 
   final String cwd;
@@ -26,9 +27,10 @@ class SendPromptParams extends Equatable {
   final ClaudeModel? model;
   final ClaudeEffort? effort;
   final String? resumeSessionId;
+  final List<String> imagePaths;
 
   @override
-  List<Object?> get props => [cwd, prompt, mode, model, effort, resumeSessionId];
+  List<Object?> get props => [cwd, prompt, mode, model, effort, resumeSessionId, imagePaths];
 }
 
 @injectable
@@ -46,6 +48,7 @@ class SendPrompt implements StreamUseCase<ClaudeEvent, SendPromptParams> {
       model: params.model,
       effort: params.effort,
       resumeSessionId: params.resumeSessionId,
+      imagePaths: params.imagePaths,
     );
   }
 }

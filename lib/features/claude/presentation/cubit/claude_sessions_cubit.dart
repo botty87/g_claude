@@ -614,8 +614,13 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       return;
     }
 
+    final imagePaths = attachments
+        .where((a) => a.kind == ChatAttachmentKind.imageCapture)
+        .map((a) => a.path)
+        .toList();
+
     final fileTokens = attachments
-        .where((a) => a.kind != ChatAttachmentKind.fileRange)
+        .where((a) => a.kind != ChatAttachmentKind.fileRange && a.kind != ChatAttachmentKind.imageCapture)
         .map((a) => formatAttachmentToken(a.path))
         .toList();
     final rangeTokens = attachments
@@ -685,6 +690,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       model: session.model,
       effort: session.effort,
       resumeSessionId: session.claudeSessionId,
+      imagePaths: imagePaths,
     );
 
     _runSub = _sendPrompt.call(params).listen(
