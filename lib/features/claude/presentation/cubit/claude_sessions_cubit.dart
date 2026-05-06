@@ -497,12 +497,18 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     final sub = _sendPrompt.call(params).listen(
       (result) {
         result.fold(
-          (f) => failure = f,
+          (f) {
+            _talker.warning('[compact] event failure: $f');
+            failure = f;
+          },
           (event) {
+            _talker.debug('[compact] event: ${event.runtimeType}');
             if (event is ClaudeEventTextChunk) {
               buf.write(event.text);
             } else if (event is ClaudeEventAssistantMessage) {
               if (buf.isEmpty) buf.write(event.text);
+            } else if (event is ClaudeEventSessionDead) {
+              _talker.info('[compact] sessionDead exit=${event.exitCode}');
             }
           },
         );
@@ -513,11 +519,17 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         if (!completer.isCompleted) completer.complete();
       },
       onDone: () {
+        _talker.info('[compact] stream done; bufLen=${buf.length}');
         if (!completer.isCompleted) completer.complete();
       },
     );
 
-    await completer.future;
+    try {
+      await completer.future.timeout(const Duration(minutes: 3));
+    } on TimeoutException {
+      _talker.warning('[compact] timeout after 3min');
+      failure = const UnexpectedFailure('compact: timeout');
+    }
     await sub.cancel();
 
     _runningWorkspaceId = null;
