@@ -35,25 +35,27 @@ class ClaudeTerminalHeader extends StatelessWidget {
       (c) => c.state.sessions[workspaceId]?.model ?? ClaudeModel.defaultModel,
     );
     final effort = context.select<ClaudeSessionsCubit, ClaudeEffort>(
-      (c) => c.state.sessions[workspaceId]?.effort ?? ClaudeEffort.defaultEffort,
-    );
-    final thinkingMode =
-        context.select<ClaudeSessionsCubit, ClaudeThinkingMode>(
       (c) =>
-          c.state.sessions[workspaceId]?.thinkingMode ??
-          ClaudeThinkingMode.defaultMode,
+          c.state.sessions[workspaceId]?.effort ?? ClaudeEffort.defaultEffort,
     );
-    final permissionMode =
-        context.select<ClaudeSessionsCubit, ClaudePermissionMode>(
-      (c) =>
-          c.state.sessions[workspaceId]?.permissionMode ??
-          ClaudePermissionMode.defaultChoice,
-    );
+    final thinkingMode = context
+        .select<ClaudeSessionsCubit, ClaudeThinkingMode>(
+          (c) =>
+              c.state.sessions[workspaceId]?.thinkingMode ??
+              ClaudeThinkingMode.defaultMode,
+        );
+    final permissionMode = context
+        .select<ClaudeSessionsCubit, ClaudePermissionMode>(
+          (c) =>
+              c.state.sessions[workspaceId]?.permissionMode ??
+              ClaudePermissionMode.defaultChoice,
+        );
     final hasMessages = context.select<ClaudeSessionsCubit, bool>(
       (c) => (c.state.sessions[workspaceId]?.messages.isNotEmpty) ?? false,
     );
 
-    final isBusy = runStatus == ClaudeRunStatus.running ||
+    final isBusy =
+        runStatus == ClaudeRunStatus.running ||
         runStatus == ClaudeRunStatus.connecting;
 
     return Container(
@@ -116,19 +118,17 @@ class ClaudeTerminalHeader extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               if (hasMessages)
                 Hoverable(
-                  onTap: isBusy
-                      ? null
-                      : () => cubit.newSession(workspaceId),
+                  onTap: isBusy ? null : () => cubit.newSession(workspaceId),
                   builder: (context, hover) => Tooltip(
                     message: Locales.Claude.Terminal.Actions.newSession,
                     child: Container(
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color:
-                            hover ? AppColors.glassHover : Colors.transparent,
-                        borderRadius:
-                            BorderRadius.circular(AppRadii.sm),
+                        color: hover
+                            ? AppColors.glassHover
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(AppRadii.sm),
                       ),
                       child: Icon(
                         Symbols.add_comment,
@@ -140,6 +140,8 @@ class ClaudeTerminalHeader extends StatelessWidget {
                     ),
                   ),
                 ),
+              const SizedBox(width: AppSpacing.sm),
+              _ContextMeter(workspaceId: workspaceId),
               const SizedBox(width: AppSpacing.sm),
               _StatusIndicator(status: runStatus, compact: compact),
             ],
@@ -182,6 +184,103 @@ class _StatusIndicator extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ContextMeter extends StatelessWidget {
+  const _ContextMeter({required this.workspaceId});
+
+  final String workspaceId;
+
+  static String _fmt(int n) {
+    if (n >= 10000) return '${(n / 1000).toStringAsFixed(0)}k';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}k';
+    return '$n';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Granular selectors (CLAUDE.md): each field = one select, never the
+    // whole SessionUsage object, so rebuilds are scoped to the changed field.
+    final hasUsage = context.select<ClaudeSessionsCubit, bool>(
+      (c) => c.state.sessions[workspaceId]?.usage != null,
+    );
+    if (!hasUsage) return const SizedBox.shrink();
+
+    final contextTokens = context.select<ClaudeSessionsCubit, int>(
+      (c) => c.state.sessions[workspaceId]?.usage?.contextTokens ?? 0,
+    );
+    final inputTokens = context.select<ClaudeSessionsCubit, int>(
+      (c) => c.state.sessions[workspaceId]?.usage?.inputTokens ?? 0,
+    );
+    final cacheReadTokens = context.select<ClaudeSessionsCubit, int>(
+      (c) => c.state.sessions[workspaceId]?.usage?.cacheReadTokens ?? 0,
+    );
+    final cacheCreationTokens = context.select<ClaudeSessionsCubit, int>(
+      (c) => c.state.sessions[workspaceId]?.usage?.cacheCreationTokens ?? 0,
+    );
+    final outputTokens = context.select<ClaudeSessionsCubit, int>(
+      (c) => c.state.sessions[workspaceId]?.usage?.outputTokens ?? 0,
+    );
+    final limit = context.select<ClaudeSessionsCubit, int>(
+      (c) => (c.state.sessions[workspaceId]?.model ?? ClaudeModel.defaultModel)
+          .contextLimit,
+    );
+
+    final ratio = limit > 0 ? (contextTokens / limit).clamp(0.0, 1.0) : 0.0;
+    final pct = (ratio * 100).round();
+
+    final Color color;
+    if (ratio < 0.7) {
+      color = AppColors.primary;
+    } else if (ratio < 0.9) {
+      color = AppColors.tertiary;
+    } else {
+      color = AppColors.error;
+    }
+
+    final tooltip = Locales.Claude.Terminal.Context.tooltip(
+      input: _fmt(inputTokens),
+      cacheRead: _fmt(cacheReadTokens),
+      cacheCreation: _fmt(cacheCreationTokens),
+      output: _fmt(outputTokens),
+      total: _fmt(contextTokens),
+      limit: _fmt(limit),
+      pct: '$pct',
+    );
+
+    return Tooltip(
+      message: tooltip,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 100,
+            height: 4,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadii.sm),
+              child: Stack(
+                children: [
+                  Container(color: AppColors.outlineVariant),
+                  FractionallySizedBox(
+                    widthFactor: ratio,
+                    child: Container(color: color),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            '$pct%',
+            style: AppTypography.bodyMain.copyWith(
+              color: AppColors.outline,
+              fontSize: 11,
+            ),
+          ),
         ],
       ),
     );

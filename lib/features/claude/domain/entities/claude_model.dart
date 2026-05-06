@@ -26,3 +26,8 @@ enum ClaudeModel {
     return defaultModel;
   }
 }
+
+extension ClaudeModelContext on ClaudeModel {
+  /// Standard context window in tokens (200k for all current models).
+  int get contextLimit => 200000;
+}

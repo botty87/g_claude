@@ -344,6 +344,9 @@ class _ClaudeTerminal {
   /// Translations for actions
   final Actions = const _ClaudeTerminalActions._();
 
+  /// Translations for context
+  final Context = const _ClaudeTerminalContext._();
+
   /// Translations for effort
   final Effort = const _ClaudeTerminalEffort._();
 
@@ -373,6 +376,24 @@ class _ClaudeTerminalActions {
 
   String get clear => LocaleKeys.claude_terminal_actions_clear.tr();
   String get newSession => LocaleKeys.claude_terminal_actions_newSession.tr();
+}
+
+/// Nested class for context translations
+class _ClaudeTerminalContext {
+  const _ClaudeTerminalContext._();
+
+  String tooltip({required String input, required String cacheRead, required String cacheCreation, required String output, required String total, required String limit, required String pct}) {
+    return LocaleKeys.claude_terminal_context_tooltip.tr(namedArgs: {
+      'input': input,
+      'cacheRead': cacheRead,
+      'cacheCreation': cacheCreation,
+      'output': output,
+      'total': total,
+      'limit': limit,
+      'pct': pct,
+    });
+  }
+
 }
 
 /// Nested class for effort translations

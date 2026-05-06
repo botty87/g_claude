@@ -105,6 +105,8 @@ abstract class  LocaleKeys {
   static const claude_terminal_mcp_status_unknown = 'claude.terminal.mcp.status.unknown';
   static const claude_terminal_mcp_status = 'claude.terminal.mcp.status';
   static const claude_terminal_mcp = 'claude.terminal.mcp';
+  static const claude_terminal_context_tooltip = 'claude.terminal.context.tooltip';
+  static const claude_terminal_context = 'claude.terminal.context';
   static const claude_terminal = 'claude.terminal';
   static const claude_model_haiku = 'claude.model.haiku';
   static const claude_model_sonnet = 'claude.model.sonnet';

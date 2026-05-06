@@ -20,6 +20,7 @@ import '../../domain/entities/chat_input_draft.dart';
 import '../../domain/entities/claude_event.dart';
 import '../../domain/entities/claude_message.dart';
 import '../../domain/entities/claude_model.dart';
+import '../../domain/entities/session_usage.dart';
 import '../../domain/entities/claude_effort.dart';
 import '../../domain/entities/claude_permission_mode.dart';
 import '../../domain/entities/claude_thinking_mode.dart';
@@ -412,6 +413,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       lastError: null,
       stderrTail: const [],
       allowAlwaysActive: false,
+      usage: null,
     );
     emit(state.copyWith(sessions: next));
     unawaited(_writeActiveSession(workspaceId, null));
@@ -531,6 +533,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
             lastError: null,
             stderrTail: const [],
             queuedPrompt: null,
+            usage: null,
           ),
         );
         unawaited(_writeActiveSession(workspaceId, sessionId));
@@ -837,6 +840,26 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         // Surfaced via PermissionServer interactive handler — nothing to do
         // here. Kept exhaustive so the compiler enforces handling.
         break;
+
+      case ClaudeEventUsageUpdate(
+          :final inputTokens,
+          :final cacheReadTokens,
+          :final cacheCreationTokens,
+          :final outputTokens,
+        ):
+        final current = session.usage ?? const SessionUsage();
+        final updated = current.copyWith(
+          inputTokens: inputTokens ?? current.inputTokens,
+          cacheReadTokens: cacheReadTokens ?? current.cacheReadTokens,
+          cacheCreationTokens: cacheCreationTokens ?? current.cacheCreationTokens,
+          outputTokens: outputTokens ?? current.outputTokens,
+        );
+        if (updated == current) {
+          return;
+        }
+        final next = Map<String, ClaudeSessionData>.from(state.sessions);
+        next[wid] = session.copyWith(usage: updated);
+        emit(state.copyWith(sessions: next));
 
       case ClaudeEventSessionDead(:final exitCode, :final stderrTail):
         _flushStreamingChunks();

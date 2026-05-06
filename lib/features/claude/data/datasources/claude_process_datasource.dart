@@ -418,6 +418,30 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
         if (inner is! Map<String, dynamic>) return;
         final innerType = inner[_kType] as String?;
         switch (innerType) {
+          case 'message_start':
+            final message = inner[_kMessage];
+            if (message is Map<String, dynamic>) {
+              final usage = message['usage'];
+              if (usage is Map<String, dynamic>) {
+                yield ClaudeEvent.usageUpdate(
+                  inputTokens: (usage['input_tokens'] as num?)?.toInt(),
+                  cacheReadTokens: (usage['cache_read_input_tokens'] as num?)?.toInt(),
+                  cacheCreationTokens: (usage['cache_creation_input_tokens'] as num?)?.toInt(),
+                  outputTokens: (usage['output_tokens'] as num?)?.toInt(),
+                );
+              }
+            }
+            return;
+
+          case 'message_delta':
+            final usage = inner['usage'];
+            if (usage is Map<String, dynamic>) {
+              yield ClaudeEvent.usageUpdate(
+                outputTokens: (usage['output_tokens'] as num?)?.toInt(),
+              );
+            }
+            return;
+
           case 'content_block_delta':
             final delta = inner[_kDelta];
             if (delta is Map<String, dynamic>) {

@@ -19,6 +19,7 @@ abstract class ClaudeSessionData with _$ClaudeSessionData {
     @Default(ChatInputDraft.empty) ChatInputDraft inputDraft,
     @Default(false) bool allowAlwaysActive,
     QueuedPrompt? queuedPrompt,
+    SessionUsage? usage,
   }) = _ClaudeSessionData;
 }
 
@@ -27,7 +28,8 @@ abstract class ClaudeSessionsState with _$ClaudeSessionsState {
   const ClaudeSessionsState._();
 
   const factory ClaudeSessionsState({
-    @Default(<String, ClaudeSessionData>{}) Map<String, ClaudeSessionData> sessions,
+    @Default(<String, ClaudeSessionData>{})
+    Map<String, ClaudeSessionData> sessions,
   }) = _ClaudeSessionsState;
 
   ClaudeSessionData? sessionFor(String? workspaceId) {

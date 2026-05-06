@@ -120,6 +120,9 @@
           "needsAuth": "Richiede autenticazione",
           "unknown": "Sconosciuto"
         }
+      },
+      "context": {
+        "tooltip": "Input: {input} · Cache letta: {cacheRead} · Cache creata: {cacheCreation} · Output: {output}\nContext: {total} / {limit} ({pct}%)"
       }
     },
     "model": {

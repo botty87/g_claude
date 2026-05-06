@@ -120,6 +120,9 @@
           "needsAuth": "Needs authentication",
           "unknown": "Unknown"
         }
+      },
+      "context": {
+        "tooltip": "Input: {input} · Cache read: {cacheRead} · Cache creation: {cacheCreation} · Output: {output}\nContext: {total} / {limit} ({pct}%)"
       }
     },
     "model": {
