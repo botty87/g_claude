@@ -86,6 +86,10 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
   final Map<String, String> _sessionToWorkspace = {};
 
+  /// Per-workspace summary text waiting to be injected as bootstrap on the
+  /// next sendPrompt after a /compact. Cleared once consumed.
+  final Map<String, String> _pendingCompactBootstrap = {};
+
   static const _modelPrefix = 'claude.model.';
   static const _permPrefix = 'claude.permission.';
   static const _effortPrefix = 'claude.effort.';
@@ -405,6 +409,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     }
     final oldId = session.claudeSessionId;
     if (oldId != null) _sessionToWorkspace.remove(oldId);
+    _pendingCompactBootstrap.remove(workspaceId);
     final next = Map<String, ClaudeSessionData>.from(state.sessions);
     next[workspaceId] = session.copyWith(
       messages: const [],
@@ -564,6 +569,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       createdAt: DateTime.now(),
     );
 
+    _pendingCompactBootstrap[workspaceId] = summary;
     _emitSession(
       workspaceId,
       current.copyWith(
@@ -835,9 +841,13 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     ];
     final concatPrompt = concatParts.join(' ');
 
-    final cliPrompt = session.thinkingMode.keyword.isEmpty
+    final basePrompt = session.thinkingMode.keyword.isEmpty
         ? concatPrompt
         : '${session.thinkingMode.keyword} $concatPrompt';
+    final bootstrap = _pendingCompactBootstrap[workspaceId];
+    final cliPrompt = (bootstrap != null && bootstrap.isNotEmpty)
+        ? '<context-summary>\n$bootstrap\n</context-summary>\n\n$basePrompt'
+        : basePrompt;
 
     final now = DateTime.now();
     final userMsgId = _genId('u');
@@ -867,6 +877,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       stderrTail: const [],
     );
     emit(state.copyWith(sessions: next));
+    _pendingCompactBootstrap.remove(workspaceId);
 
     _talker.debug('[cc] u> ${_oneLine(_truncate(cliPrompt, 800))}');
 
