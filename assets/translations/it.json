@@ -42,9 +42,16 @@
         "idle": "Pronto",
         "connecting": "Connessione…",
         "running": "In esecuzione",
+        "compacting": "Compattazione…",
         "error": "Errore",
         "sessionDead": "Sessione terminata",
         "noWorkspace": "Apri un workspace per iniziare a chattare"
+      },
+      "compact": {
+        "cardTitle": "Conversazione compattata · {count} messaggi compressi",
+        "expand": "Espandi cronologia",
+        "collapse": "Comprimi cronologia",
+        "summaryHeader": "Riepilogo"
       },
       "input": {
         "placeholder": "Invia un messaggio a Claude…",

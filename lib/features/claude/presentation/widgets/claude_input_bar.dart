@@ -42,7 +42,8 @@ class ClaudeInputBar extends HookWidget {
 
   bool get _isBusy =>
       status == ClaudeRunStatus.connecting ||
-      status == ClaudeRunStatus.running;
+      status == ClaudeRunStatus.running ||
+      status == ClaudeRunStatus.compacting;
 
   @override
   Widget build(BuildContext context) {

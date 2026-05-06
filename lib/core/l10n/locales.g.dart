@@ -344,6 +344,9 @@ class _ClaudeTerminal {
   /// Translations for actions
   final Actions = const _ClaudeTerminalActions._();
 
+  /// Translations for compact
+  final Compact = const _ClaudeTerminalCompact._();
+
   /// Translations for context
   final Context = const _ClaudeTerminalContext._();
 
@@ -376,6 +379,21 @@ class _ClaudeTerminalActions {
 
   String get clear => LocaleKeys.claude_terminal_actions_clear.tr();
   String get newSession => LocaleKeys.claude_terminal_actions_newSession.tr();
+}
+
+/// Nested class for compact translations
+class _ClaudeTerminalCompact {
+  const _ClaudeTerminalCompact._();
+
+  String cardTitle({required String count}) {
+    return LocaleKeys.claude_terminal_compact_cardTitle.tr(namedArgs: {
+      'count': count,
+    });
+  }
+
+  String get expand => LocaleKeys.claude_terminal_compact_expand.tr();
+  String get collapse => LocaleKeys.claude_terminal_compact_collapse.tr();
+  String get summaryHeader => LocaleKeys.claude_terminal_compact_summaryHeader.tr();
 }
 
 /// Nested class for context translations
@@ -520,6 +538,7 @@ class _ClaudeTerminalPermissionWarning {
 class _ClaudeTerminalStatus {
   const _ClaudeTerminalStatus._();
 
+  String get compacting => LocaleKeys.claude_terminal_status_compacting.tr();
   String get connecting => LocaleKeys.claude_terminal_status_connecting.tr();
   String get error => LocaleKeys.claude_terminal_status_error.tr();
   String get idle => LocaleKeys.claude_terminal_status_idle.tr();

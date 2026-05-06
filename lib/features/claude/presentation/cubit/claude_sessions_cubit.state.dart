@@ -1,6 +1,6 @@
 part of 'claude_sessions_cubit.dart';
 
-enum ClaudeRunStatus { idle, connecting, running, error, sessionDead }
+enum ClaudeRunStatus { idle, connecting, running, compacting, error, sessionDead }
 
 @freezed
 abstract class ClaudeSessionData with _$ClaudeSessionData {

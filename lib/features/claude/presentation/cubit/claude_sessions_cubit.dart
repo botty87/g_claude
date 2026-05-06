@@ -421,6 +421,162 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
   void newSession(String workspaceId) => clearConversation(workspaceId);
 
+  /// Toggles the expanded state of a compact summary card.
+  void toggleCompactSummaryExpanded(String workspaceId, String messageId) {
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+    var changed = false;
+    final updated = [
+      for (final m in session.messages)
+        if (m is ClaudeMessageCompactSummary && m.id == messageId)
+          () {
+            changed = true;
+            return m.copyWith(expanded: !m.expanded);
+          }()
+        else
+          m,
+    ];
+    if (!changed) return;
+    _emitSession(workspaceId, session.copyWith(messages: updated));
+  }
+
+  /// Runs a one-shot summarization run against the current Claude session,
+  /// captures the assistant text, then emits a [ClaudeMessageCompactSummary]
+  /// that visually collapses the prior conversation. The CLI-side session is
+  /// dropped (next prompt will start a fresh `claude` session bootstrapped
+  /// with the summary as its first user turn).
+  Future<void> compactSession(String workspaceId) async {
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+    if (_runningWorkspaceId != null) {
+      _talker.warning('compactSession while another run is active; ignored');
+      return;
+    }
+    if (session.messages.isEmpty) {
+      _talker.info('compactSession: no messages to compact');
+      return;
+    }
+    final hiddenCount = session.messages.where((m) {
+      if (m is ClaudeMessageCompactSummary) return false;
+      return true;
+    }).length;
+    if (hiddenCount == 0) return;
+
+    _talker.info('Compacting session for workspace=$workspaceId');
+
+    final next = Map<String, ClaudeSessionData>.from(state.sessions);
+    next[workspaceId] = session.copyWith(
+      runStatus: ClaudeRunStatus.compacting,
+      lastError: null,
+      stderrTail: const [],
+    );
+    emit(state.copyWith(sessions: next));
+
+    _runningWorkspaceId = workspaceId;
+
+    const summaryPrompt =
+        'Summarize the conversation so far in a structured form. Cover: '
+        'user goals, decisions made, files read or modified, key findings, '
+        'open questions, and the next planned steps. Be precise and dense '
+        '— no pleasantries. Output only the summary.';
+
+    final params = SendPromptParams(
+      cwd: workspaceId,
+      prompt: summaryPrompt,
+      mode: session.permissionMode,
+      model: session.model,
+      effort: session.effort,
+      resumeSessionId: session.claudeSessionId,
+      imagePaths: const [],
+    );
+
+    final buf = StringBuffer();
+    Failure? failure;
+    final completer = Completer<void>();
+
+    final sub = _sendPrompt.call(params).listen(
+      (result) {
+        result.fold(
+          (f) => failure = f,
+          (event) {
+            if (event is ClaudeEventTextChunk) {
+              buf.write(event.text);
+            } else if (event is ClaudeEventAssistantMessage) {
+              if (buf.isEmpty) buf.write(event.text);
+            }
+          },
+        );
+      },
+      onError: (Object e, StackTrace st) {
+        _talker.error('Compact run errored', e, st);
+        failure = UnexpectedFailure('$e');
+        if (!completer.isCompleted) completer.complete();
+      },
+      onDone: () {
+        if (!completer.isCompleted) completer.complete();
+      },
+    );
+
+    await completer.future;
+    await sub.cancel();
+
+    _runningWorkspaceId = null;
+
+    final summary = buf.toString().trim();
+    final current = state.sessions[workspaceId];
+    if (current == null) return;
+
+    if (failure != null || summary.isEmpty) {
+      _emitSession(
+        workspaceId,
+        current.copyWith(
+          runStatus: ClaudeRunStatus.error,
+          lastError: failure ?? const UnexpectedFailure('compact: empty summary'),
+        ),
+      );
+      return;
+    }
+
+    final oldId = current.claudeSessionId;
+    if (oldId != null) _sessionToWorkspace.remove(oldId);
+
+    final summaryMessage = ClaudeMessage.compactSummary(
+      id: _genId('cs'),
+      summary: summary,
+      hiddenMessageCount: hiddenCount,
+      createdAt: DateTime.now(),
+    );
+
+    _emitSession(
+      workspaceId,
+      current.copyWith(
+        messages: [...current.messages, summaryMessage],
+        claudeSessionId: null,
+        runStatus: ClaudeRunStatus.idle,
+        usage: null,
+      ),
+    );
+    unawaited(_writeActiveSession(workspaceId, null));
+    _talker.info('Compact summary appended (hidden=$hiddenCount)');
+  }
+
+  _InterceptedCommand? _interceptedSlashCommand(
+    String text,
+    List<String> chips,
+  ) {
+    bool matches(String token, String name) =>
+        token == '/$name' || token.startsWith('/$name ');
+    final candidates = <String>[
+      ...chips,
+      if (text.startsWith('/')) text,
+    ];
+    for (final c in candidates) {
+      if (matches(c, 'compact')) return _InterceptedCommand.compact;
+      if (matches(c, 'clear')) return _InterceptedCommand.clear;
+    }
+    return null;
+  }
+
   Future<void> answerAskUserQuestion(
     String workspaceId,
     String messageId,
@@ -615,6 +771,21 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     if (_runningWorkspaceId != null) {
       _talker.warning('sendPrompt while another run in progress; ignored');
       return;
+    }
+
+    // Intercept client-side slash commands. The headless `claude -p` CLI does
+    // not interpret /compact, /clear, etc — they would otherwise be sent as
+    // plain text to the model.
+    final intercept = _interceptedSlashCommand(trimmed, slashTriggers);
+    if (intercept != null) {
+      switch (intercept) {
+        case _InterceptedCommand.clear:
+          clearConversation(workspaceId);
+          return;
+        case _InterceptedCommand.compact:
+          unawaited(compactSession(workspaceId));
+          return;
+      }
     }
 
     final imagePaths = attachments
@@ -1219,3 +1390,5 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     return super.close();
   }
 }
+
+enum _InterceptedCommand { compact, clear }

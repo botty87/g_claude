@@ -42,9 +42,16 @@
         "idle": "Idle",
         "connecting": "Connecting…",
         "running": "Running",
+        "compacting": "Compacting…",
         "error": "Error",
         "sessionDead": "Session ended",
         "noWorkspace": "Open a workspace to start chatting"
+      },
+      "compact": {
+        "cardTitle": "Conversation compacted · {count} messages collapsed",
+        "expand": "Expand history",
+        "collapse": "Collapse history",
+        "summaryHeader": "Summary"
       },
       "input": {
         "placeholder": "Send a message to Claude…",

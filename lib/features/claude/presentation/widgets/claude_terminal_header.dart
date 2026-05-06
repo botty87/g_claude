@@ -56,7 +56,8 @@ class ClaudeTerminalHeader extends StatelessWidget {
 
     final isBusy =
         runStatus == ClaudeRunStatus.running ||
-        runStatus == ClaudeRunStatus.connecting;
+        runStatus == ClaudeRunStatus.connecting ||
+        runStatus == ClaudeRunStatus.compacting;
 
     return Container(
       height: AppSpacing.toolbarHeight,

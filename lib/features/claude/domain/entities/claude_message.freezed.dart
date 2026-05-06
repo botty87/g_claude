@@ -87,7 +87,7 @@ extension ClaudeMessagePatterns on ClaudeMessage {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ClaudeMessageUser value)?  user,TResult Function( ClaudeMessageAssistant value)?  assistant,TResult Function( ClaudeMessageTool value)?  tool,TResult Function( ClaudeMessageSystem value)?  system,TResult Function( ClaudeMessageAskUserQuestion value)?  askUserQuestion,TResult Function( ClaudeMessagePermissionRequest value)?  permissionRequest,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ClaudeMessageUser value)?  user,TResult Function( ClaudeMessageAssistant value)?  assistant,TResult Function( ClaudeMessageTool value)?  tool,TResult Function( ClaudeMessageSystem value)?  system,TResult Function( ClaudeMessageAskUserQuestion value)?  askUserQuestion,TResult Function( ClaudeMessagePermissionRequest value)?  permissionRequest,TResult Function( ClaudeMessageCompactSummary value)?  compactSummary,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
@@ -96,7 +96,8 @@ return assistant(_that);case ClaudeMessageTool() when tool != null:
 return tool(_that);case ClaudeMessageSystem() when system != null:
 return system(_that);case ClaudeMessageAskUserQuestion() when askUserQuestion != null:
 return askUserQuestion(_that);case ClaudeMessagePermissionRequest() when permissionRequest != null:
-return permissionRequest(_that);case _:
+return permissionRequest(_that);case ClaudeMessageCompactSummary() when compactSummary != null:
+return compactSummary(_that);case _:
   return orElse();
 
 }
@@ -114,7 +115,7 @@ return permissionRequest(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ClaudeMessageUser value)  user,required TResult Function( ClaudeMessageAssistant value)  assistant,required TResult Function( ClaudeMessageTool value)  tool,required TResult Function( ClaudeMessageSystem value)  system,required TResult Function( ClaudeMessageAskUserQuestion value)  askUserQuestion,required TResult Function( ClaudeMessagePermissionRequest value)  permissionRequest,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ClaudeMessageUser value)  user,required TResult Function( ClaudeMessageAssistant value)  assistant,required TResult Function( ClaudeMessageTool value)  tool,required TResult Function( ClaudeMessageSystem value)  system,required TResult Function( ClaudeMessageAskUserQuestion value)  askUserQuestion,required TResult Function( ClaudeMessagePermissionRequest value)  permissionRequest,required TResult Function( ClaudeMessageCompactSummary value)  compactSummary,}){
 final _that = this;
 switch (_that) {
 case ClaudeMessageUser():
@@ -123,7 +124,8 @@ return assistant(_that);case ClaudeMessageTool():
 return tool(_that);case ClaudeMessageSystem():
 return system(_that);case ClaudeMessageAskUserQuestion():
 return askUserQuestion(_that);case ClaudeMessagePermissionRequest():
-return permissionRequest(_that);}
+return permissionRequest(_that);case ClaudeMessageCompactSummary():
+return compactSummary(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -137,7 +139,7 @@ return permissionRequest(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ClaudeMessageUser value)?  user,TResult? Function( ClaudeMessageAssistant value)?  assistant,TResult? Function( ClaudeMessageTool value)?  tool,TResult? Function( ClaudeMessageSystem value)?  system,TResult? Function( ClaudeMessageAskUserQuestion value)?  askUserQuestion,TResult? Function( ClaudeMessagePermissionRequest value)?  permissionRequest,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ClaudeMessageUser value)?  user,TResult? Function( ClaudeMessageAssistant value)?  assistant,TResult? Function( ClaudeMessageTool value)?  tool,TResult? Function( ClaudeMessageSystem value)?  system,TResult? Function( ClaudeMessageAskUserQuestion value)?  askUserQuestion,TResult? Function( ClaudeMessagePermissionRequest value)?  permissionRequest,TResult? Function( ClaudeMessageCompactSummary value)?  compactSummary,}){
 final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
@@ -146,7 +148,8 @@ return assistant(_that);case ClaudeMessageTool() when tool != null:
 return tool(_that);case ClaudeMessageSystem() when system != null:
 return system(_that);case ClaudeMessageAskUserQuestion() when askUserQuestion != null:
 return askUserQuestion(_that);case ClaudeMessagePermissionRequest() when permissionRequest != null:
-return permissionRequest(_that);case _:
+return permissionRequest(_that);case ClaudeMessageCompactSummary() when compactSummary != null:
+return compactSummary(_that);case _:
   return null;
 
 }
@@ -163,7 +166,7 @@ return permissionRequest(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String id,  String text,  DateTime createdAt,  List<String> slashTriggers,  List<ChatAttachment> attachments)?  user,TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult Function( String id,  String text,  DateTime createdAt)?  system,TResult Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)?  askUserQuestion,TResult Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)?  permissionRequest,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String id,  String text,  DateTime createdAt,  List<String> slashTriggers,  List<ChatAttachment> attachments)?  user,TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult Function( String id,  String text,  DateTime createdAt)?  system,TResult Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)?  askUserQuestion,TResult Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)?  permissionRequest,TResult Function( String id,  String summary,  int hiddenMessageCount,  DateTime createdAt,  bool expanded)?  compactSummary,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
 return user(_that.id,_that.text,_that.createdAt,_that.slashTriggers,_that.attachments);case ClaudeMessageAssistant() when assistant != null:
@@ -171,7 +174,8 @@ return assistant(_that.id,_that.text,_that.isStreaming,_that.createdAt);case Cla
 return tool(_that.id,_that.toolName,_that.status,_that.createdAt,_that.toolUseId,_that.input,_that.output,_that.isError);case ClaudeMessageSystem() when system != null:
 return system(_that.id,_that.text,_that.createdAt);case ClaudeMessageAskUserQuestion() when askUserQuestion != null:
 return askUserQuestion(_that.id,_that.toolUseId,_that.questions,_that.createdAt,_that.answers,_that.answered);case ClaudeMessagePermissionRequest() when permissionRequest != null:
-return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput,_that.createdAt,_that.decision,_that.answered);case _:
+return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput,_that.createdAt,_that.decision,_that.answered);case ClaudeMessageCompactSummary() when compactSummary != null:
+return compactSummary(_that.id,_that.summary,_that.hiddenMessageCount,_that.createdAt,_that.expanded);case _:
   return orElse();
 
 }
@@ -189,7 +193,7 @@ return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String id,  String text,  DateTime createdAt,  List<String> slashTriggers,  List<ChatAttachment> attachments)  user,required TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)  assistant,required TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)  tool,required TResult Function( String id,  String text,  DateTime createdAt)  system,required TResult Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)  askUserQuestion,required TResult Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)  permissionRequest,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String id,  String text,  DateTime createdAt,  List<String> slashTriggers,  List<ChatAttachment> attachments)  user,required TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)  assistant,required TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)  tool,required TResult Function( String id,  String text,  DateTime createdAt)  system,required TResult Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)  askUserQuestion,required TResult Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)  permissionRequest,required TResult Function( String id,  String summary,  int hiddenMessageCount,  DateTime createdAt,  bool expanded)  compactSummary,}) {final _that = this;
 switch (_that) {
 case ClaudeMessageUser():
 return user(_that.id,_that.text,_that.createdAt,_that.slashTriggers,_that.attachments);case ClaudeMessageAssistant():
@@ -197,7 +201,8 @@ return assistant(_that.id,_that.text,_that.isStreaming,_that.createdAt);case Cla
 return tool(_that.id,_that.toolName,_that.status,_that.createdAt,_that.toolUseId,_that.input,_that.output,_that.isError);case ClaudeMessageSystem():
 return system(_that.id,_that.text,_that.createdAt);case ClaudeMessageAskUserQuestion():
 return askUserQuestion(_that.id,_that.toolUseId,_that.questions,_that.createdAt,_that.answers,_that.answered);case ClaudeMessagePermissionRequest():
-return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput,_that.createdAt,_that.decision,_that.answered);}
+return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput,_that.createdAt,_that.decision,_that.answered);case ClaudeMessageCompactSummary():
+return compactSummary(_that.id,_that.summary,_that.hiddenMessageCount,_that.createdAt,_that.expanded);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -211,7 +216,7 @@ return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String id,  String text,  DateTime createdAt,  List<String> slashTriggers,  List<ChatAttachment> attachments)?  user,TResult? Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult? Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult? Function( String id,  String text,  DateTime createdAt)?  system,TResult? Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)?  askUserQuestion,TResult? Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)?  permissionRequest,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String id,  String text,  DateTime createdAt,  List<String> slashTriggers,  List<ChatAttachment> attachments)?  user,TResult? Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult? Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult? Function( String id,  String text,  DateTime createdAt)?  system,TResult? Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)?  askUserQuestion,TResult? Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)?  permissionRequest,TResult? Function( String id,  String summary,  int hiddenMessageCount,  DateTime createdAt,  bool expanded)?  compactSummary,}) {final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
 return user(_that.id,_that.text,_that.createdAt,_that.slashTriggers,_that.attachments);case ClaudeMessageAssistant() when assistant != null:
@@ -219,7 +224,8 @@ return assistant(_that.id,_that.text,_that.isStreaming,_that.createdAt);case Cla
 return tool(_that.id,_that.toolName,_that.status,_that.createdAt,_that.toolUseId,_that.input,_that.output,_that.isError);case ClaudeMessageSystem() when system != null:
 return system(_that.id,_that.text,_that.createdAt);case ClaudeMessageAskUserQuestion() when askUserQuestion != null:
 return askUserQuestion(_that.id,_that.toolUseId,_that.questions,_that.createdAt,_that.answers,_that.answered);case ClaudeMessagePermissionRequest() when permissionRequest != null:
-return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput,_that.createdAt,_that.decision,_that.answered);case _:
+return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput,_that.createdAt,_that.decision,_that.answered);case ClaudeMessageCompactSummary() when compactSummary != null:
+return compactSummary(_that.id,_that.summary,_that.hiddenMessageCount,_that.createdAt,_that.expanded);case _:
   return null;
 
 }
@@ -708,6 +714,80 @@ as String,toolInput: null == toolInput ? _self._toolInput : toolInput // ignore:
 as Map<String, dynamic>,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,decision: freezed == decision ? _self.decision : decision // ignore: cast_nullable_to_non_nullable
 as ClaudePermissionDecision?,answered: null == answered ? _self.answered : answered // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ClaudeMessageCompactSummary extends ClaudeMessage {
+  const ClaudeMessageCompactSummary({required this.id, required this.summary, required this.hiddenMessageCount, required this.createdAt, this.expanded = false}): super._();
+
+
+@override final  String id;
+ final  String summary;
+ final  int hiddenMessageCount;
+@override final  DateTime createdAt;
+@JsonKey() final  bool expanded;
+
+/// Create a copy of ClaudeMessage
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ClaudeMessageCompactSummaryCopyWith<ClaudeMessageCompactSummary> get copyWith => _$ClaudeMessageCompactSummaryCopyWithImpl<ClaudeMessageCompactSummary>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeMessageCompactSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.summary, summary) || other.summary == summary)&&(identical(other.hiddenMessageCount, hiddenMessageCount) || other.hiddenMessageCount == hiddenMessageCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.expanded, expanded) || other.expanded == expanded));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,summary,hiddenMessageCount,createdAt,expanded);
+
+@override
+String toString() {
+  return 'ClaudeMessage.compactSummary(id: $id, summary: $summary, hiddenMessageCount: $hiddenMessageCount, createdAt: $createdAt, expanded: $expanded)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ClaudeMessageCompactSummaryCopyWith<$Res> implements $ClaudeMessageCopyWith<$Res> {
+  factory $ClaudeMessageCompactSummaryCopyWith(ClaudeMessageCompactSummary value, $Res Function(ClaudeMessageCompactSummary) _then) = _$ClaudeMessageCompactSummaryCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String summary, int hiddenMessageCount, DateTime createdAt, bool expanded
+});
+
+
+
+
+}
+/// @nodoc
+class _$ClaudeMessageCompactSummaryCopyWithImpl<$Res>
+    implements $ClaudeMessageCompactSummaryCopyWith<$Res> {
+  _$ClaudeMessageCompactSummaryCopyWithImpl(this._self, this._then);
+
+  final ClaudeMessageCompactSummary _self;
+  final $Res Function(ClaudeMessageCompactSummary) _then;
+
+/// Create a copy of ClaudeMessage
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? summary = null,Object? hiddenMessageCount = null,Object? createdAt = null,Object? expanded = null,}) {
+  return _then(ClaudeMessageCompactSummary(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,summary: null == summary ? _self.summary : summary // ignore: cast_nullable_to_non_nullable
+as String,hiddenMessageCount: null == hiddenMessageCount ? _self.hiddenMessageCount : hiddenMessageCount // ignore: cast_nullable_to_non_nullable
+as int,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime,expanded: null == expanded ? _self.expanded : expanded // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

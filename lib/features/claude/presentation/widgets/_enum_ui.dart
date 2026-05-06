@@ -42,6 +42,8 @@ extension ClaudeRunStatusUi on ClaudeRunStatus {
         return AppColors.tertiary;
       case ClaudeRunStatus.running:
         return AppColors.secondary;
+      case ClaudeRunStatus.compacting:
+        return AppColors.tertiary;
       case ClaudeRunStatus.error:
       case ClaudeRunStatus.sessionDead:
         return AppColors.error;
@@ -56,6 +58,8 @@ extension ClaudeRunStatusUi on ClaudeRunStatus {
         return 'claude.terminal.status.connecting';
       case ClaudeRunStatus.running:
         return 'claude.terminal.status.running';
+      case ClaudeRunStatus.compacting:
+        return 'claude.terminal.status.compacting';
       case ClaudeRunStatus.error:
         return 'claude.terminal.status.error';
       case ClaudeRunStatus.sessionDead:

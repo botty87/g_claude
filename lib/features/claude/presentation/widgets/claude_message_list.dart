@@ -22,6 +22,7 @@ import '../cubit/claude_sessions_cubit.dart';
 import 'ask_user_question_card.dart';
 import 'clickable_code_builder.dart';
 import 'clickable_code_resolver.dart';
+import 'compact_summary_card.dart';
 import 'permission_request_card.dart';
 import 'user_bubble_chip.dart';
 
@@ -166,17 +167,18 @@ class ClaudeMessageList extends HookWidget {
   /// Groups consecutive tools into one [_ToolGroupItem] and emits user
   /// prompt → tool group → assistant text(s) per turn.
   List<_Item> _buildItems(List<ClaudeMessage> all) {
+    final visible = _applyCompactCollapse(all);
     final items = <_Item>[];
     var i = 0;
-    while (i < all.length) {
-      final m = all[i];
+    while (i < visible.length) {
+      final m = visible[i];
       if (m is ClaudeMessageUser) {
         items.add(_SingleItem(m));
         i++;
         final tools = <ClaudeMessageTool>[];
         final others = <ClaudeMessage>[];
-        while (i < all.length && all[i] is! ClaudeMessageUser) {
-          final t = all[i];
+        while (i < visible.length && visible[i] is! ClaudeMessageUser) {
+          final t = visible[i];
           if (t is ClaudeMessageTool) {
             tools.add(t);
           } else {
@@ -200,6 +202,21 @@ class ClaudeMessageList extends HookWidget {
     return items;
   }
 
+  /// Hides messages preceding the most recent collapsed compact-summary.
+  /// Expanded summaries are transparent: nothing is hidden.
+  List<ClaudeMessage> _applyCompactCollapse(List<ClaudeMessage> all) {
+    var lastCollapsed = -1;
+    for (var i = all.length - 1; i >= 0; i--) {
+      final m = all[i];
+      if (m is ClaudeMessageCompactSummary && !m.expanded) {
+        lastCollapsed = i;
+        break;
+      }
+    }
+    if (lastCollapsed < 0) return all;
+    return all.sublist(lastCollapsed);
+  }
+
   double _gapBefore(_Item? previous, _Item current) {
     if (previous == null) return 0;
     if (previous.role != current.role) return AppSpacing.lg;
@@ -216,7 +233,7 @@ class ClaudeMessageList extends HookWidget {
   }
 }
 
-enum _Role { user, assistant, tools, system, askUser, permission }
+enum _Role { user, assistant, tools, system, askUser, permission, compactSummary }
 
 sealed class _Item {
   const _Item();
@@ -235,6 +252,7 @@ class _SingleItem extends _Item {
         ClaudeMessageSystem() => _Role.system,
         ClaudeMessageAskUserQuestion() => _Role.askUser,
         ClaudeMessagePermissionRequest() => _Role.permission,
+        ClaudeMessageCompactSummary() => _Role.compactSummary,
       };
   @override
   String get key => switch (message) {
@@ -244,6 +262,7 @@ class _SingleItem extends _Item {
         ClaudeMessageSystem(:final id) => id,
         ClaudeMessageAskUserQuestion(:final id) => id,
         ClaudeMessagePermissionRequest(:final id) => id,
+        ClaudeMessageCompactSummary(:final id) => id,
       };
 }
 
@@ -390,7 +409,31 @@ class _MessageItem extends StatelessWidget {
           message: m,
           workspaceId: workspaceId,
         ),
+      final ClaudeMessageCompactSummary m => _CompactSummaryItemWidget(
+          message: m,
+          workspaceId: workspaceId,
+        ),
     };
+  }
+}
+
+class _CompactSummaryItemWidget extends StatelessWidget {
+  const _CompactSummaryItemWidget({
+    required this.message,
+    required this.workspaceId,
+  });
+
+  final ClaudeMessageCompactSummary message;
+  final String workspaceId;
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<ClaudeSessionsCubit>();
+    return CompactSummaryCard(
+      message: message,
+      onToggleExpanded: () =>
+          cubit.toggleCompactSummaryExpanded(workspaceId, message.id),
+    );
   }
 }
 

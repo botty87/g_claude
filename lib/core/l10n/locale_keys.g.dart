@@ -37,10 +37,16 @@ abstract class  LocaleKeys {
   static const claude_terminal_status_idle = 'claude.terminal.status.idle';
   static const claude_terminal_status_connecting = 'claude.terminal.status.connecting';
   static const claude_terminal_status_running = 'claude.terminal.status.running';
+  static const claude_terminal_status_compacting = 'claude.terminal.status.compacting';
   static const claude_terminal_status_error = 'claude.terminal.status.error';
   static const claude_terminal_status_sessionDead = 'claude.terminal.status.sessionDead';
   static const claude_terminal_status_noWorkspace = 'claude.terminal.status.noWorkspace';
   static const claude_terminal_status = 'claude.terminal.status';
+  static const claude_terminal_compact_cardTitle = 'claude.terminal.compact.cardTitle';
+  static const claude_terminal_compact_expand = 'claude.terminal.compact.expand';
+  static const claude_terminal_compact_collapse = 'claude.terminal.compact.collapse';
+  static const claude_terminal_compact_summaryHeader = 'claude.terminal.compact.summaryHeader';
+  static const claude_terminal_compact = 'claude.terminal.compact';
   static const claude_terminal_input_placeholder = 'claude.terminal.input.placeholder';
   static const claude_terminal_input_placeholderRunning = 'claude.terminal.input.placeholderRunning';
   static const claude_terminal_input_placeholderQueueing = 'claude.terminal.input.placeholderQueueing';
