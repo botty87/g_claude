@@ -29,6 +29,7 @@ class SidePanel extends StatelessWidget {
               return const SessionsListView();
             case ActivityId.logs:
               return const LogsView();
+            case ActivityId.terminal:
             case ActivityId.search:
             case ActivityId.git:
             case ActivityId.settings:

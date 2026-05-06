@@ -62,6 +62,9 @@ abstract class Locales {
   /// Translations for slashCommands
   static const SlashCommands = _SlashCommands._();
 
+  /// Translations for terminal
+  static const Terminal = _Terminal._();
+
   /// Translations for workspace
   static const Workspace = _Workspace._();
 
@@ -715,6 +718,7 @@ class _ShellActivity {
   String get search => LocaleKeys.shell_activity_search.tr();
   String get sessions => LocaleKeys.shell_activity_sessions.tr();
   String get settings => LocaleKeys.shell_activity_settings.tr();
+  String get terminal => LocaleKeys.shell_activity_terminal.tr();
 }
 
 /// Nested class for shortcuts translations
@@ -804,6 +808,38 @@ class _SlashCommandsSource {
   String get project => LocaleKeys.slashCommands_source_project.tr();
   String get skill => LocaleKeys.slashCommands_source_skill.tr();
   String get user => LocaleKeys.slashCommands_source_user.tr();
+}
+
+/// Nested class for terminal translations
+class _Terminal {
+  const _Terminal._();
+
+  String exited({required String code}) {
+    return LocaleKeys.terminal_exited.tr(namedArgs: {
+      'code': code,
+    });
+  }
+
+  String get noWorkspace => LocaleKeys.terminal_noWorkspace.tr();
+  String get restart => LocaleKeys.terminal_restart.tr();
+  String spawnFailed({required String message}) {
+    return LocaleKeys.terminal_spawnFailed.tr(namedArgs: {
+      'message': message,
+    });
+  }
+
+  String get starting => LocaleKeys.terminal_starting.tr();
+  /// Translations for menu
+  final Menu = const _TerminalMenu._();
+
+}
+
+/// Nested class for menu translations
+class _TerminalMenu {
+  const _TerminalMenu._();
+
+  String get copy => LocaleKeys.terminal_menu_copy.tr();
+  String get paste => LocaleKeys.terminal_menu_paste.tr();
 }
 
 /// Nested class for workspace translations

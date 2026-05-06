@@ -10,6 +10,7 @@ abstract class  LocaleKeys {
   static const shell_activity_git = 'shell.activity.git';
   static const shell_activity_sessions = 'shell.activity.sessions';
   static const shell_activity_logs = 'shell.activity.logs';
+  static const shell_activity_terminal = 'shell.activity.terminal';
   static const shell_activity_settings = 'shell.activity.settings';
   static const shell_activity_comingLaterSuffix = 'shell.activity.comingLaterSuffix';
   static const shell_activity = 'shell.activity';
@@ -251,6 +252,15 @@ abstract class  LocaleKeys {
   static const appLogs_detail_level = 'appLogs.detail.level';
   static const appLogs_detail = 'appLogs.detail';
   static const appLogs = 'appLogs';
+  static const terminal_noWorkspace = 'terminal.noWorkspace';
+  static const terminal_starting = 'terminal.starting';
+  static const terminal_exited = 'terminal.exited';
+  static const terminal_spawnFailed = 'terminal.spawnFailed';
+  static const terminal_restart = 'terminal.restart';
+  static const terminal_menu_copy = 'terminal.menu.copy';
+  static const terminal_menu_paste = 'terminal.menu.paste';
+  static const terminal_menu = 'terminal.menu';
+  static const terminal = 'terminal';
   static const editor_noFileOpen = 'editor.noFileOpen';
   static const editor_fileLoadError = 'editor.fileLoadError';
   static const editor_fileTooLarge = 'editor.fileTooLarge';

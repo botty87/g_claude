@@ -1,6 +1,6 @@
 part of 'shell_cubit.dart';
 
-enum ActivityId { explorer, search, git, sessions, logs, settings }
+enum ActivityId { explorer, search, git, sessions, logs, terminal, settings }
 
 @freezed
 abstract class ShellState with _$ShellState {
