@@ -254,34 +254,41 @@ class _ContextMeter extends StatelessWidget {
 
     return Tooltip(
       message: tooltip,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 100,
-            height: 4,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadii.sm),
-              child: Stack(
-                children: [
-                  Container(color: AppColors.outlineVariant),
-                  FractionallySizedBox(
-                    widthFactor: ratio,
-                    child: Container(color: color),
-                  ),
-                ],
+      child: SizedBox(
+        width: 22,
+        height: 22,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox.expand(
+              child: CircularProgressIndicator(
+                value: 1,
+                strokeWidth: 2,
+                valueColor:
+                    const AlwaysStoppedAnimation(AppColors.outlineVariant),
+                backgroundColor: Colors.transparent,
               ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            '$pct%',
-            style: AppTypography.bodyMain.copyWith(
-              color: AppColors.outline,
-              fontSize: 11,
+            SizedBox.expand(
+              child: CircularProgressIndicator(
+                value: ratio == 0 ? 0.0001 : ratio,
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation(color),
+                backgroundColor: Colors.transparent,
+                strokeCap: StrokeCap.round,
+              ),
             ),
-          ),
-        ],
+            Text(
+              '$pct',
+              style: AppTypography.bodyMain.copyWith(
+                color: AppColors.onSurfaceVariant,
+                fontSize: 8,
+                fontWeight: FontWeight.w600,
+                height: 1,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
