@@ -502,13 +502,16 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
             failure = f;
           },
           (event) {
-            _talker.debug('[compact] event: ${event.runtimeType}');
             if (event is ClaudeEventTextChunk) {
               buf.write(event.text);
             } else if (event is ClaudeEventAssistantMessage) {
               if (buf.isEmpty) buf.write(event.text);
-            } else if (event is ClaudeEventSessionDead) {
-              _talker.info('[compact] sessionDead exit=${event.exitCode}');
+            } else if (event is ClaudeEventTaskComplete ||
+                event is ClaudeEventErrorEvent ||
+                event is ClaudeEventSessionDead) {
+              // The subprocess often keeps stdin open after TaskComplete,
+              // so the stream never closes on its own — settle here.
+              if (!completer.isCompleted) completer.complete();
             }
           },
         );
@@ -519,7 +522,6 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         if (!completer.isCompleted) completer.complete();
       },
       onDone: () {
-        _talker.info('[compact] stream done; bufLen=${buf.length}');
         if (!completer.isCompleted) completer.complete();
       },
     );
@@ -531,6 +533,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       failure = const UnexpectedFailure('compact: timeout');
     }
     await sub.cancel();
+    // Ensure the spawned subprocess is killed; otherwise it sits idle
+    // holding stdin open and would block the next sendPrompt.
+    unawaited(_stopRun.call());
 
     _runningWorkspaceId = null;
 
