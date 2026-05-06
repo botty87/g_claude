@@ -21,7 +21,8 @@ import 'package:g_claude/features/claude/data/datasources/claude_process_datasou
 import 'package:g_claude/features/claude/data/datasources/claude_settings_writer.dart';
 import 'package:g_claude/features/claude/data/datasources/permission_server.dart';
 import 'package:g_claude/features/claude/domain/entities/claude_event.dart';
-import 'package:talker_flutter/talker_flutter.dart';
+
+import '../../../../helpers/fakes.dart';
 
 /// Reads an NDJSON fixture, returning the list of decoded JSON objects per
 /// line (skipping empty/whitespace lines, like the production stdout reader).
@@ -48,7 +49,7 @@ List<ClaudeEvent> _runFixture(ClaudeProcessDataSourceImpl parser, String relativ
 }
 
 ClaudeProcessDataSourceImpl _makeParser() {
-  final talker = Talker();
+  final talker = makeTestTalker();
   return ClaudeProcessDataSourceImpl(
     talker,
     PermissionServer(talker),

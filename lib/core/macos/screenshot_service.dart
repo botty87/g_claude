@@ -22,6 +22,9 @@ class ScreenshotService {
   }) async {
     try {
       final tmpDir = await getTemporaryDirectory();
+      if (!await tmpDir.exists()) {
+        await tmpDir.create(recursive: true);
+      }
       final id = DateTime.now().millisecondsSinceEpoch;
       final pngPath = '${tmpDir.path}/screenshot_$id.png';
 
@@ -36,10 +39,17 @@ class ScreenshotService {
 
       final result = await Process.run('screencapture', args);
 
+      if (result.exitCode != 0) {
+        _talker.warning(
+          'screencapture exit ${result.exitCode}: ${result.stderr}',
+        );
+        return const Left(ScreenshotCancelledFailure());
+      }
       if (!await File(pngPath).exists()) {
-        if (result.exitCode != 0) {
+        if (mode == ScreenshotCaptureMode.fullScreen) {
           _talker.warning(
-            'screencapture exit ${result.exitCode}: ${result.stderr}',
+            'screencapture exit 0 but no file at $pngPath. '
+            'stderr: ${result.stderr}',
           );
         }
         return const Left(ScreenshotCancelledFailure());

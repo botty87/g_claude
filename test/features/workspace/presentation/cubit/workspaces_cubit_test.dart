@@ -18,7 +18,8 @@ import 'package:g_claude/features/workspace/domain/entities/workspace.dart';
 import 'package:g_claude/features/workspace/domain/usecases/open_workspace.dart';
 import 'package:g_claude/features/workspace/presentation/cubit/workspaces_cubit.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:talker_flutter/talker_flutter.dart';
+
+import '../../../../helpers/fakes.dart';
 
 class _MockOpenWs extends Mock implements OpenWorkspace {}
 
@@ -55,7 +56,7 @@ void main() {
   });
 
   WorkspacesCubit make() {
-    final cubit = WorkspacesCubit(openWs, persistence, watcher, Talker());
+    final cubit = WorkspacesCubit(openWs, persistence, watcher, makeTestTalker());
     cubit.init();
     return cubit;
   }

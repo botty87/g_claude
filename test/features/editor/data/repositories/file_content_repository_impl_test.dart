@@ -199,14 +199,14 @@ void main() {
 
   group('readFile — LRU eviction by total bytes (10MB cap)', () {
     test('a cumulative size > 10MB evicts the oldest entry', () async {
-      // Two large entries, each 6MB → total 12MB. The oldest must be evicted.
+      // Eviction is driven by sizeBytes (the FileContent field), not by
+      // content.length — passing `bytes` is sufficient and avoids holding
+      // 12MB of strings live during the test run.
       const sixMb = 6 * 1024 * 1024;
       when(() => ds.readFile(path: '/p/big1.bin')).thenAnswer((_) async =>
-          _result('/p/big1.bin', 'x' * sixMb, DateTime.utc(2026, 1, 1),
-              bytes: sixMb));
+          _result('/p/big1.bin', 'x', DateTime.utc(2026, 1, 1), bytes: sixMb));
       when(() => ds.readFile(path: '/p/big2.bin')).thenAnswer((_) async =>
-          _result('/p/big2.bin', 'x' * sixMb, DateTime.utc(2026, 1, 1),
-              bytes: sixMb));
+          _result('/p/big2.bin', 'x', DateTime.utc(2026, 1, 1), bytes: sixMb));
 
       await repo.readFile(path: '/p/big1.bin');
       await repo.readFile(path: '/p/big2.bin');

@@ -10,12 +10,13 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:g_claude/features/claude/data/datasources/claude_settings_writer.dart';
-import 'package:talker_flutter/talker_flutter.dart';
+
+import '../../../../helpers/fakes.dart';
 
 void main() {
   group('ClaudeSettingsWriter.ensure', () {
     test('writes a real file at the returned path on first call', () async {
-      final w = ClaudeSettingsWriter(Talker());
+      final w = ClaudeSettingsWriter(makeTestTalker());
 
       final path = await w.ensure(12345);
 
@@ -24,7 +25,7 @@ void main() {
     });
 
     test('the file is valid JSON with a PreToolUse hook bound to the port', () async {
-      final w = ClaudeSettingsWriter(Talker());
+      final w = ClaudeSettingsWriter(makeTestTalker());
       final path = await w.ensure(12345);
       addTearDown(() => File(path).parent.deleteSync(recursive: true));
 
@@ -50,7 +51,7 @@ void main() {
 
     test('a second call with the same port reuses the cached path (no rewrite)',
         () async {
-      final w = ClaudeSettingsWriter(Talker());
+      final w = ClaudeSettingsWriter(makeTestTalker());
 
       final p1 = await w.ensure(12345);
       addTearDown(() => File(p1).parent.deleteSync(recursive: true));
@@ -66,7 +67,7 @@ void main() {
 
     test('a second call with a different port writes a NEW file at a new path',
         () async {
-      final w = ClaudeSettingsWriter(Talker());
+      final w = ClaudeSettingsWriter(makeTestTalker());
 
       final p1 = await w.ensure(12345);
       addTearDown(() => File(p1).parent.deleteSync(recursive: true));
@@ -88,7 +89,7 @@ void main() {
     });
 
     test('the written JSON has a single top-level "hooks" key with no extras', () async {
-      final w = ClaudeSettingsWriter(Talker());
+      final w = ClaudeSettingsWriter(makeTestTalker());
       final path = await w.ensure(12345);
       addTearDown(() => File(path).parent.deleteSync(recursive: true));
 
