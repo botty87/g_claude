@@ -166,7 +166,7 @@ Tutti i comandi frequenti sono in [justfile](justfile). Lista: `just` (o `just -
 - **Analyze**: `just analyze` (o `mcp__dart__analyze_files`)
 - **Format**: `just format` · check: `just format-check`
 - **Release macOS**: `just build-mac` (build + strip dei font Symbols inutilizzati, ~27MB risparmiati). `just build-mac-open` per aprire subito.
-- **Versioning**: `just version` · `just release-patch|minor|major` (bump + build + git tag).
+- **Versioning**: `just version` · `just bump-build` (solo build number) · `just release-build` (bump-build + build + commit, no tag) · `just release-patch|minor|major` (pre-flight su main pulito + bump + build + commit + tag + package zip in [release/](release/)`vX.Y.Z/`). Dopo edit `RELEASE_NOTES.md`, `just release-publish` committa metadata, pusha main + tag, crea GitHub Release con `.app.zip` come asset (binari NON in repo, solo metadata testuale; `release/**/*.zip` gitignored). `just release-push` per push manuale di main + tag senza creare release.
 - **Quality gate**: `just check` (analyze + format-check) · `just ci` (anche test) · `just pre-commit`.
 - **Search**: `just search "<pattern>"` · `just search-feature claude "<pattern>"` · `just todos` · `just cubits`.
 - **Git**: `just git-status` · `just save "msg"` (commit+push) · `just push-new` (upstream).

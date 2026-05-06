@@ -19,6 +19,7 @@ lib_path := project_root / "lib"
 features_path := lib_path / "features"
 l10n_tool := lib_path / "core" / "l10n" / "tool" / "l10n_generate.dart"
 release_app := project_root / "build" / "macos" / "Build" / "Products" / "Release" / "Clyde.app"
+release_dir := project_root / "release"
 strip_fonts_script := project_root / "scripts" / "strip_unused_symbol_fonts.sh"
 
 flutter := "fvm flutter"
@@ -77,8 +78,31 @@ build-mac-open: build-mac
 version:
     @grep '^version:' pubspec.yaml | sed 's/version: //'
 
-# Bump build number only (e.g. 1.0.0+1 → 1.0.0+2)
+# Pre-flight: ensure clean tree, branch=main, in sync with origin
 [private]
+release-guard:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    if [ "$branch" != "main" ]; then
+        echo "ERROR: must be on 'main', currently on '$branch'."
+        exit 1
+    fi
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "ERROR: working tree not clean. Commit or stash first."
+        git status --short
+        exit 1
+    fi
+    git fetch origin main --quiet
+    local_sha=$(git rev-parse HEAD)
+    remote_sha=$(git rev-parse origin/main)
+    if [ "$local_sha" != "$remote_sha" ]; then
+        echo "ERROR: local 'main' diverges from origin/main. Pull/push first."
+        exit 1
+    fi
+    echo "Pre-flight OK (clean main, in sync)."
+
+# Bump build number only (e.g. 1.0.0+1 → 1.0.0+2)
 bump-build:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -110,7 +134,17 @@ bump-version part:
     sed -i '' "s/^version: .*/version: ${new_version}/" pubspec.yaml
     echo "Version: ${current} → ${new_version}"
 
-# Commit version bump and create git tag (vX.Y.Z)
+# Commit pubspec bump only (no tag) — used by release-build
+[private]
+commit-bump:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ver=$(grep '^version:' pubspec.yaml | sed 's/version: //')
+    git add pubspec.yaml
+    git commit -m "build: bump build number to ${ver}"
+    echo "Committed: ${ver}"
+
+# Commit pubspec + create annotated tag vX.Y.Z (no push)
 tag:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -125,17 +159,124 @@ tag:
         echo "Committed and tagged: $tag"
     fi
 
-# Release build with build-number bump (no tag)
-release-build: bump-build build-mac
+# Package .app → zip + sha256 + draft release notes under release/vX.Y.Z/
+[private]
+package-release:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ver=$(grep '^version:' pubspec.yaml | sed 's/version: //')
+    tag="v${ver%%+*}"
+    out_dir="{{release_dir}}/${tag}"
+    zip_name="Clyde-${tag}-macos.zip"
+    mkdir -p "${out_dir}"
+    if [ ! -d "{{release_app}}" ]; then
+        echo "ERROR: {{release_app}} not found. Run 'just build-mac' first."
+        exit 1
+    fi
+    echo "Packaging ${zip_name}..."
+    rm -f "${out_dir}/${zip_name}"
+    ditto -c -k --sequesterRsrc --keepParent "{{release_app}}" "${out_dir}/${zip_name}"
+    ( cd "${out_dir}" && shasum -a 256 "${zip_name}" > SHA256SUMS.txt )
+    prev_tag=$(git describe --tags --abbrev=0 --exclude="${tag}" 2>/dev/null || echo "")
+    notes="${out_dir}/RELEASE_NOTES.md"
+    if [ -f "${notes}" ]; then
+        echo "RELEASE_NOTES.md already exists, leaving untouched."
+    else
+        {
+            echo "# Clyde ${tag}"
+            echo ""
+            echo "_Released $(date +%Y-%m-%d)_"
+            echo ""
+            echo "## Changes"
+            echo ""
+            if [ -n "${prev_tag}" ]; then
+                git log "${prev_tag}..HEAD" --pretty=format:'- %s' --no-merges
+                echo ""
+            else
+                echo "- Initial release."
+            fi
+            echo ""
+            echo "## Install (macOS)"
+            echo ""
+            echo "1. Download \`${zip_name}\` from this release."
+            echo "2. Unzip; move \`Clyde.app\` to \`/Applications\`."
+            echo "3. First launch: right-click → Open (unsigned build)."
+            echo ""
+            echo "## Checksum"
+            echo ""
+            echo '```'
+            cat "${out_dir}/SHA256SUMS.txt"
+            echo '```'
+        } > "${notes}"
+        echo "Draft notes: ${notes}"
+    fi
+    echo ""
+    echo "=== Packaging done ==="
+    du -sh "${out_dir}/${zip_name}"
+    echo "Zip:   ${out_dir}/${zip_name}"
+    echo "Notes: ${notes}"
+    echo ""
+    echo "Next: edit RELEASE_NOTES.md, then run 'just release-publish'"
 
-# Release patch (1.0.0 → 1.0.1) + build + tag
-release-patch: (bump-version "patch") build-mac tag
+# Release build (build-number bump + build + commit, no tag, no zip)
+release-build: release-guard bump-build build-mac commit-bump
 
-# Release minor (1.0.0 → 1.1.0) + build + tag
-release-minor: (bump-version "minor") build-mac tag
+# Release patch (1.0.0 → 1.0.1): bump + build + commit + tag + package
+release-patch: release-guard (bump-version "patch") build-mac tag package-release
 
-# Release major (1.0.0 → 2.0.0) + build + tag
-release-major: (bump-version "major") build-mac tag
+# Release minor (1.0.0 → 1.1.0)
+release-minor: release-guard (bump-version "minor") build-mac tag package-release
+
+# Release major (1.0.0 → 2.0.0)
+release-major: release-guard (bump-version "major") build-mac tag package-release
+
+# Publish: commit release notes/sha, push, create GitHub Release with zip asset
+release-publish:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ver=$(grep '^version:' pubspec.yaml | sed 's/version: //')
+    tag="v${ver%%+*}"
+    out_dir="{{release_dir}}/${tag}"
+    zip_path="${out_dir}/Clyde-${tag}-macos.zip"
+    notes="${out_dir}/RELEASE_NOTES.md"
+    if [ ! -f "${zip_path}" ] || [ ! -f "${notes}" ]; then
+        echo "ERROR: missing artifacts in ${out_dir}. Run a release-* recipe first."
+        exit 1
+    fi
+    if ! git rev-parse "${tag}" >/dev/null 2>&1; then
+        echo "ERROR: git tag ${tag} not found."
+        exit 1
+    fi
+    echo "Committing release metadata..."
+    git add "${out_dir}/SHA256SUMS.txt" "${notes}"
+    if [ -f "{{release_dir}}/README.md" ]; then
+        git add "{{release_dir}}/README.md"
+    fi
+    if ! git diff --cached --quiet; then
+        git commit -m "release: notes and checksum for ${tag}"
+    else
+        echo "No metadata changes to commit."
+    fi
+    echo "Pushing main + tags..."
+    git push origin main
+    git push origin "${tag}"
+    echo "Creating GitHub Release ${tag}..."
+    if gh release view "${tag}" >/dev/null 2>&1; then
+        echo "Release ${tag} already exists; uploading asset (clobber)."
+        gh release upload "${tag}" "${zip_path}" --clobber
+    else
+        gh release create "${tag}" \
+            --title "Clyde ${tag}" \
+            --notes-file "${notes}" \
+            "${zip_path}"
+    fi
+    echo ""
+    echo "=== Published ${tag} ==="
+
+# Push commits + all tags (no release creation)
+release-push:
+    git push origin main
+    git push origin --tags
 
 # ==============================================================================
 # CODE GENERATION

@@ -49,3 +49,7 @@ app.*.map.json
 
 # Claude Code agent worktrees (local-only)
 .claude/worktrees/
+
+# Release artifacts — binaries live on GitHub Releases, not in repo
+release/**/*.zip
+release/**/*.app/
