@@ -17,10 +17,11 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:g_claude/features/claude/data/datasources/permission_server.dart';
-import 'package:talker_flutter/talker_flutter.dart';
+
+import '../../../../helpers/fakes.dart';
 
 Future<({PermissionServer server, Uri base})> _start() async {
-  final server = PermissionServer(Talker());
+  final server = PermissionServer(makeTestTalker());
   final port = await server.start();
   return (server: server, base: Uri.parse('http://127.0.0.1:$port'));
 }
@@ -260,9 +261,8 @@ void main() {
 
   group('PermissionServer — response shape invariants', () {
     test('response body contains hookSpecificOutput.{hookEventName, permissionDecision} ONLY', () async {
-      // INVARIANT (lib/.../permission_server.dart:150-155): the response must
-      // never include `updatedInput`. Including extra keys silently corrupts
-      // schemas of UI tools like AskUserQuestion / EnterPlanMode. Pin it.
+      // The response must never include `updatedInput`: extra keys silently
+      // corrupt schemas of UI tools like AskUserQuestion / EnterPlanMode.
       final s = await _start();
       addTearDown(s.server.stop);
 

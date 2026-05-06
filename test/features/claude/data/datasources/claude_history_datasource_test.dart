@@ -13,21 +13,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:g_claude/features/claude/data/datasources/claude_history_datasource.dart';
 import 'package:g_claude/features/claude/domain/entities/claude_message.dart';
 import 'package:path/path.dart' as p;
-import 'package:talker_flutter/talker_flutter.dart';
+
+import '../../../../helpers/fakes.dart';
 
 const _fixturesRoot = 'test/fixtures/jsonl/synthetic';
+const _testCwd = '/test/workspace';
 
 /// Builds a `~/.claude/projects/`-shaped tmp directory containing the named
 /// fixtures, each placed under `{encodedPath}/{sessionId}.jsonl`.
 ///
-/// Returns the root directory plus the encodedPath + sessionId of the FIRST
-/// installed fixture so tests can read it back without re-deriving the names.
+/// `encodedPath` is derived live via `encodeCwd` so a regex change in the
+/// production encoder cannot silently desync the test fixture layout.
 Future<({Directory projectsDir, String encodedPath, String sessionId})>
     _stageFixtures(
   Map<String, String> fixtureToSessionId, {
-  // Matches `encodeCwd('/test/workspace')` (replace non-alphanumeric → '-').
-  String encodedPath = '-test-workspace',
+  String cwd = _testCwd,
 }) async {
+  final encodedPath = ClaudeHistoryDataSourceImpl(makeTestTalker()).encodeCwd(cwd);
   final tmp = await Directory.systemTemp.createTemp('g_claude_history_');
   final wsDir = Directory(p.join(tmp.path, encodedPath))..createSync(recursive: true);
 
@@ -47,7 +49,7 @@ Future<({Directory projectsDir, String encodedPath, String sessionId})>
 }
 
 ClaudeHistoryDataSourceImpl _makeDs(Directory projectsDir) {
-  return ClaudeHistoryDataSourceImpl.withProjectsDir(Talker(), projectsDir);
+  return ClaudeHistoryDataSourceImpl.withProjectsDir(makeTestTalker(), projectsDir);
 }
 
 void main() {
@@ -55,18 +57,18 @@ void main() {
 
   group('encodeCwd', () {
     test('replaces every non-alphanumeric character with a single dash', () {
-      final ds = ClaudeHistoryDataSourceImpl(Talker());
+      final ds = ClaudeHistoryDataSourceImpl(makeTestTalker());
       expect(ds.encodeCwd('/Users/foo/bar'), '-Users-foo-bar');
       expect(ds.encodeCwd('/tmp/wd'), '-tmp-wd');
     });
 
     test('preserves alphanumerics including digits', () {
-      final ds = ClaudeHistoryDataSourceImpl(Talker());
+      final ds = ClaudeHistoryDataSourceImpl(makeTestTalker());
       expect(ds.encodeCwd('/Dev/proj-2/src'), '-Dev-proj-2-src');
     });
 
     test('whitespace and dots are encoded as dashes (one per char)', () {
-      final ds = ClaudeHistoryDataSourceImpl(Talker());
+      final ds = ClaudeHistoryDataSourceImpl(makeTestTalker());
       expect(ds.encodeCwd('/path with spaces/foo.dart'),
           '-path-with-spaces-foo-dart');
     });

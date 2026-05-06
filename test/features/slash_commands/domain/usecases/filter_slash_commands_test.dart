@@ -14,18 +14,9 @@
 // must still pass for the same query producing the same ordered list.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:g_claude/features/slash_commands/domain/entities/slash_command.dart';
-import 'package:g_claude/features/slash_commands/domain/entities/slash_command_source.dart';
 import 'package:g_claude/features/slash_commands/domain/usecases/filter_slash_commands.dart';
 
-SlashCommand _cmd(String trigger, {String description = ''}) {
-  return SlashCommand(
-    name: trigger.replaceFirst('/', ''),
-    trigger: trigger,
-    description: description,
-    source: SlashCommandSource.user,
-  );
-}
+import '../../../../helpers/fakes.dart';
 
 void main() {
   late FilterSlashCommands subject;
@@ -36,7 +27,7 @@ void main() {
 
   group('FilterSlashCommands — empty / passthrough cases', () {
     test('empty filter returns the input list unchanged (same order, same length)', () {
-      final all = [_cmd('/foo'), _cmd('/bar'), _cmd('/baz')];
+      final all = [makeSlashCommand('/foo'), makeSlashCommand('/bar'), makeSlashCommand('/baz')];
 
       final out = subject(all, '');
 
@@ -45,12 +36,12 @@ void main() {
     });
 
     test('filter consisting only of "/" is treated as empty and returns all', () {
-      final all = [_cmd('/foo'), _cmd('/bar')];
+      final all = [makeSlashCommand('/foo'), makeSlashCommand('/bar')];
       expect(subject(all, '/'), all);
     });
 
     test('filter consisting only of whitespace is treated as empty', () {
-      final all = [_cmd('/foo'), _cmd('/bar')];
+      final all = [makeSlashCommand('/foo'), makeSlashCommand('/bar')];
       expect(subject(all, '   '), all);
     });
 
@@ -64,8 +55,8 @@ void main() {
       // "/git:commit" matches "co" via post-colon prefix.
       // "/commit"     matches "co" via whole-trigger prefix.
       // Post-colon must come first.
-      final post = _cmd('/git:commit');
-      final whole = _cmd('/commit');
+      final post = makeSlashCommand('/git:commit');
+      final whole = makeSlashCommand('/commit');
 
       final out = subject([whole, post], 'co');
 
@@ -73,8 +64,8 @@ void main() {
     });
 
     test('whole-trigger prefix wins over name-contains for the same query', () {
-      final prefix = _cmd('/commit');
-      final containsOnly = _cmd('/precommit');
+      final prefix = makeSlashCommand('/commit');
+      final containsOnly = makeSlashCommand('/precommit');
 
       final out = subject([containsOnly, prefix], 'co');
 
@@ -85,8 +76,8 @@ void main() {
     });
 
     test('name-contains wins over description-contains for the same query', () {
-      final nameMatch = _cmd('/precommit', description: 'something else');
-      final descMatch = _cmd('/foo', description: 'commit related');
+      final nameMatch = makeSlashCommand('/precommit', description: 'something else');
+      final descMatch = makeSlashCommand('/foo', description: 'commit related');
 
       final out = subject([descMatch, nameMatch], 'commit');
 
@@ -97,7 +88,7 @@ void main() {
     test('a command lands in at most one tier (else-if exclusivity)', () {
       // "/commit" satisfies wholePrefix AND nameContains for query "co". The
       // contract is exclusive — it must appear exactly once in the output.
-      final cmd = _cmd('/commit', description: 'co code');
+      final cmd = makeSlashCommand('/commit', description: 'co code');
 
       final out = subject([cmd], 'co');
 
@@ -108,51 +99,51 @@ void main() {
 
   group('FilterSlashCommands — query normalization', () {
     test('leading "/" in query is stripped before matching', () {
-      final cmd = _cmd('/commit');
+      final cmd = makeSlashCommand('/commit');
       expect(subject([cmd], '/com'), [cmd]);
     });
 
     test('only the FIRST leading "/" is stripped (replaceFirst)', () {
       // The implementation uses replaceFirst, so `//foo` becomes `/foo` and
       // will never prefix-match `foo`. Documented contract.
-      final cmd = _cmd('/foo');
+      final cmd = makeSlashCommand('/foo');
       expect(subject([cmd], '//foo'), isEmpty,
           reason: '"/foo" remaining after stripping one slash does not prefix-match "foo".');
     });
 
     test('query is lowercased before matching trigger and description', () {
-      final cmd = _cmd('/Commit', description: 'Commit changes');
+      final cmd = makeSlashCommand('/Commit', description: 'Commit changes');
       expect(subject([cmd], 'COM'), [cmd]);
     });
 
     test('trigger is lowercased before matching (case-insensitive trigger)', () {
-      final cmd = _cmd('/COMMIT');
+      final cmd = makeSlashCommand('/COMMIT');
       expect(subject([cmd], 'com'), [cmd]);
     });
 
     test('description match is case-insensitive', () {
-      final cmd = _cmd('/foo', description: 'COMMIT changes');
+      final cmd = makeSlashCommand('/foo', description: 'COMMIT changes');
       expect(subject([cmd], 'commit'), [cmd]);
     });
 
     test('query is trimmed before matching', () {
-      final cmd = _cmd('/commit');
+      final cmd = makeSlashCommand('/commit');
       expect(subject([cmd], '  commit  '), [cmd]);
     });
   });
 
   group('FilterSlashCommands — non-matches', () {
     test('a command with no name or description match is dropped', () {
-      final cmd = _cmd('/foo', description: 'bar');
+      final cmd = makeSlashCommand('/foo', description: 'bar');
       expect(subject([cmd], 'unrelated'), isEmpty);
     });
   });
 
   group('FilterSlashCommands — ordering across tiers', () {
     test('within a tier, the original input order is preserved', () {
-      final a = _cmd('/commit-a');
-      final b = _cmd('/commit-b');
-      final c = _cmd('/commit-c');
+      final a = makeSlashCommand('/commit-a');
+      final b = makeSlashCommand('/commit-b');
+      final c = makeSlashCommand('/commit-c');
 
       final out = subject([c, a, b], 'commit');
 

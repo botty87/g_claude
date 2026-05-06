@@ -10,24 +10,14 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:g_claude/core/error/failures.dart';
 import 'package:g_claude/core/utils/either.dart';
-import 'package:g_claude/features/slash_commands/domain/entities/slash_command.dart';
-import 'package:g_claude/features/slash_commands/domain/entities/slash_command_source.dart';
 import 'package:g_claude/features/slash_commands/domain/usecases/filter_slash_commands.dart';
 import 'package:g_claude/features/slash_commands/domain/usecases/load_slash_commands.dart';
 import 'package:g_claude/features/slash_commands/presentation/cubit/slash_commands_cubit.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:talker_flutter/talker_flutter.dart';
+
+import '../../../../helpers/fakes.dart';
 
 class _MockLoad extends Mock implements LoadSlashCommands {}
-
-SlashCommand _cmd(String trigger, {String description = ''}) {
-  return SlashCommand(
-    name: trigger.replaceFirst('/', ''),
-    trigger: trigger,
-    description: description,
-    source: SlashCommandSource.user,
-  );
-}
 
 void main() {
   late _MockLoad load;
@@ -38,7 +28,7 @@ void main() {
     filter = FilterSlashCommands(); // pure logic — use the real one.
   });
 
-  SlashCommandsCubit make() => SlashCommandsCubit(load, filter, Talker());
+  SlashCommandsCubit make() => SlashCommandsCubit(load, filter, makeTestTalker());
 
   group('loadFor', () {
     blocTest<SlashCommandsCubit, SlashCommandsState>(
@@ -46,8 +36,8 @@ void main() {
       build: () {
         when(() => load.call(workspaceCwd: any(named: 'workspaceCwd')))
             .thenAnswer((_) async => Right([
-                  _cmd('/foo', description: 'first'),
-                  _cmd('/bar', description: 'second'),
+                  makeSlashCommand('/foo', description: 'first'),
+                  makeSlashCommand('/bar', description: 'second'),
                 ]));
         return make();
       },
@@ -73,7 +63,7 @@ void main() {
     blocTest<SlashCommandsCubit, SlashCommandsState>(
       'a leading slash transitions to suggesting with filtered results',
       build: () => make(),
-      seed: () => SlashCommandsState.idle(all: [_cmd('/commit'), _cmd('/feature')]),
+      seed: () => SlashCommandsState.idle(all: [makeSlashCommand('/commit'), makeSlashCommand('/feature')]),
       act: (c) => c.onInputChanged('/co'),
       expect: () => [
         isA<SlashCommandsStateSuggesting>()
@@ -87,8 +77,8 @@ void main() {
       'text without a leading slash dismisses to idle (with current `all` preserved)',
       build: () => make(),
       seed: () => SlashCommandsState.suggesting(
-        all: [_cmd('/foo')],
-        filtered: [_cmd('/foo')],
+        all: [makeSlashCommand('/foo')],
+        filtered: [makeSlashCommand('/foo')],
         selectedIndex: 0,
         filter: '/f',
       ),
@@ -101,7 +91,7 @@ void main() {
     blocTest<SlashCommandsCubit, SlashCommandsState>(
       'multi-line input considers only the LAST line for slash detection',
       build: () => make(),
-      seed: () => SlashCommandsState.idle(all: [_cmd('/feature')]),
+      seed: () => SlashCommandsState.idle(all: [makeSlashCommand('/feature')]),
       act: (c) => c.onInputChanged('first line\nthen\n/fea'),
       expect: () => [
         isA<SlashCommandsStateSuggesting>()
@@ -113,8 +103,8 @@ void main() {
       'previous selectedIndex is preserved (clamped) when filtering changes the list',
       build: () => make(),
       seed: () => SlashCommandsState.suggesting(
-        all: [_cmd('/c1'), _cmd('/c2'), _cmd('/c3')],
-        filtered: [_cmd('/c1'), _cmd('/c2'), _cmd('/c3')],
+        all: [makeSlashCommand('/c1'), makeSlashCommand('/c2'), makeSlashCommand('/c3')],
+        filtered: [makeSlashCommand('/c1'), makeSlashCommand('/c2'), makeSlashCommand('/c3')],
         selectedIndex: 2,
         filter: '/c',
       ),
@@ -130,7 +120,7 @@ void main() {
     blocTest<SlashCommandsCubit, SlashCommandsState>(
       'no matches still emits suggesting with empty filtered + selectedIndex 0',
       build: () => make(),
-      seed: () => SlashCommandsState.idle(all: [_cmd('/foo')]),
+      seed: () => SlashCommandsState.idle(all: [makeSlashCommand('/foo')]),
       act: (c) => c.onInputChanged('/zzzzz'),
       expect: () => [
         isA<SlashCommandsStateSuggesting>()
@@ -145,8 +135,8 @@ void main() {
       'moveSelection wraps within bounds (clamp to last index)',
       build: () => make(),
       seed: () => SlashCommandsState.suggesting(
-        all: [_cmd('/a'), _cmd('/b'), _cmd('/c')],
-        filtered: [_cmd('/a'), _cmd('/b'), _cmd('/c')],
+        all: [makeSlashCommand('/a'), makeSlashCommand('/b'), makeSlashCommand('/c')],
+        filtered: [makeSlashCommand('/a'), makeSlashCommand('/b'), makeSlashCommand('/c')],
         selectedIndex: 1,
         filter: '/',
       ),
@@ -183,8 +173,8 @@ void main() {
       'selectAt within bounds updates selectedIndex',
       build: () => make(),
       seed: () => SlashCommandsState.suggesting(
-        all: [_cmd('/a'), _cmd('/b')],
-        filtered: [_cmd('/a'), _cmd('/b')],
+        all: [makeSlashCommand('/a'), makeSlashCommand('/b')],
+        filtered: [makeSlashCommand('/a'), makeSlashCommand('/b')],
         selectedIndex: 0,
         filter: '/',
       ),
@@ -198,8 +188,8 @@ void main() {
       'selectAt out-of-bounds is a no-op',
       build: () => make(),
       seed: () => SlashCommandsState.suggesting(
-        all: [_cmd('/a')],
-        filtered: [_cmd('/a')],
+        all: [makeSlashCommand('/a')],
+        filtered: [makeSlashCommand('/a')],
         selectedIndex: 0,
         filter: '/',
       ),
@@ -212,39 +202,42 @@ void main() {
   });
 
   group('accept', () {
-    test('returns the currently highlighted command in suggesting state', () {
-      final c = make();
-      c.emit(SlashCommandsState.suggesting(
-        all: [_cmd('/a'), _cmd('/b')],
-        filtered: [_cmd('/a'), _cmd('/b')],
+    blocTest<SlashCommandsCubit, SlashCommandsState>(
+      'returns the currently highlighted command in suggesting state',
+      build: () => make(),
+      seed: () => SlashCommandsState.suggesting(
+        all: [makeSlashCommand('/a'), makeSlashCommand('/b')],
+        filtered: [makeSlashCommand('/a'), makeSlashCommand('/b')],
         selectedIndex: 1,
         filter: '/',
-      ));
-      expect(c.accept()?.trigger, '/b');
-    });
+      ),
+      verify: (c) => expect(c.accept()?.trigger, '/b'),
+    );
 
-    test('returns null when state is idle', () {
-      final c = make();
-      expect(c.accept(), isNull);
-    });
+    blocTest<SlashCommandsCubit, SlashCommandsState>(
+      'returns null when state is idle',
+      build: () => make(),
+      verify: (c) => expect(c.accept(), isNull),
+    );
 
-    test('returns null when filtered is empty', () {
-      final c = make();
-      c.emit(SlashCommandsState.suggesting(
-        all: const [],
-        filtered: const [],
+    blocTest<SlashCommandsCubit, SlashCommandsState>(
+      'returns null when filtered is empty',
+      build: () => make(),
+      seed: () => const SlashCommandsState.suggesting(
+        all: [],
+        filtered: [],
         selectedIndex: 0,
         filter: '/zzz',
-      ));
-      expect(c.accept(), isNull);
-    });
+      ),
+      verify: (c) => expect(c.accept(), isNull),
+    );
   });
 
   group('updateSkills', () {
     blocTest<SlashCommandsCubit, SlashCommandsState>(
       'merges new skills (no duplicate triggers) into idle state',
       build: () => make(),
-      seed: () => SlashCommandsState.idle(all: [_cmd('/preexisting')]),
+      seed: () => SlashCommandsState.idle(all: [makeSlashCommand('/preexisting')]),
       act: (c) => c.updateSkills(['skill_a', 'skill_b', 'preexisting']),
       verify: (c) {
         final all = (c.state as SlashCommandsStateIdle).all;
@@ -258,8 +251,8 @@ void main() {
       'when in suggesting state, re-applies the active filter against the merged list',
       build: () => make(),
       seed: () => SlashCommandsState.suggesting(
-        all: [_cmd('/foo')],
-        filtered: [_cmd('/foo')],
+        all: [makeSlashCommand('/foo')],
+        filtered: [makeSlashCommand('/foo')],
         selectedIndex: 0,
         filter: '/sk',
       ),
@@ -277,8 +270,8 @@ void main() {
       'transitions to idle and preserves `all`',
       build: () => make(),
       seed: () => SlashCommandsState.suggesting(
-        all: [_cmd('/a')],
-        filtered: [_cmd('/a')],
+        all: [makeSlashCommand('/a')],
+        filtered: [makeSlashCommand('/a')],
         selectedIndex: 0,
         filter: '/',
       ),

@@ -36,12 +36,13 @@ class ScreenshotService {
 
       final result = await Process.run('screencapture', args);
 
+      if (result.exitCode != 0) {
+        _talker.warning(
+          'screencapture exit ${result.exitCode}: ${result.stderr}',
+        );
+        return const Left(ScreenshotCancelledFailure());
+      }
       if (!await File(pngPath).exists()) {
-        if (result.exitCode != 0) {
-          _talker.warning(
-            'screencapture exit ${result.exitCode}: ${result.stderr}',
-          );
-        }
         return const Left(ScreenshotCancelledFailure());
       }
 
