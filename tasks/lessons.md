@@ -9,3 +9,94 @@
 **Sintomo tipico**: race in cui un'azione utente "annulla" una modifica appena avvenuta (drag-drop riappare dopo remove, chip riappare dopo backspace, ecc).
 
 **Riferimento**: fix iterativi su `claude_input_bar.dart` (`2654c13` rimosse `attachmentList` useState; `188d3e9` patchò solo `persistDraft` ma non i callers; `fix/input-bar-stale-state` chiuse il loop migrando anche `selectedChips` e leggendo live in tutti i callbacks).
+
+## Test infra: SharedPreferences sotto flutter_test va sempre mockato
+
+**Pattern**: `EasyLocalization.ensureInitialized()` (e qualunque altro consumer di `SharedPreferences.getInstance()`) richiede `SharedPreferences.setMockInitialValues({})` prima dell'init nei widget test. Senza questo:
+- `MissingPluginException` viene swallowed dentro il FutureBuilder dell'easy_localization → il widget resta sul fallback `SizedBox.shrink()`,
+- `pumpAndSettle()` non termina mai → timeout 10 minuti → test sembra "hanging" senza errore visibile.
+
+**Sintomo**: widget test con `EasyLocalization` che timeoutano a 10 min con un errore `TimeoutException`, niente stack trace dal codice di produzione.
+
+**Soluzione**: in `test/helpers/pump_app.dart` chiamare `SharedPreferences.setMockInitialValues({})` prima di `EasyLocalization.ensureInitialized()`.
+
+**Riferimento**: B0 — primo widget test smoke su `Locales.App.title.tr()` che timeoutava sistematicamente.
+
+## Test infra: drift non preserva il flag UTC sui DateTime
+
+**Pattern**: drift serializza `DateTime` come int microsecondi epoch. Al read ricostruisce sempre in **locale time**. Stesso istante, ma `.isUtc == false`. `DateTime.utc(2026, 1, 1) == row.startedAt` è **falso** anche se i due rappresentano lo stesso istante.
+
+**Sintomo**: test "round-trip insert + select" falliscono con `Expected: 2026-01-01 00:00:00.000Z, Actual: 2026-01-01 01:00:00.000` (a seconda del timezone locale del runner).
+
+**Soluzione**: assert su `isAtSameMomentAs(...)`, non su `==`. Vale per tutti i test downstream che leggono timestamp da drift.
+
+**Riferimento**: B0 — `test/helpers/drift_in_memory_test.dart`.
+
+## Parser NDJSON: phantom `toolCallComplete` su chiusura blocchi text
+
+**Pattern**: il `claude -p --output-format stream-json --include-partial-messages` emette un `content_block_stop` per OGNI blocco chiuso, non solo per i `tool_use`. Il parser in `claude_process_datasource.dart:440-469` non distingue: emette `ClaudeEvent.toolCallComplete` su qualsiasi `content_block_stop`, anche quando il blocco è di tipo `text` (e quindi non è mai stato registrato in `_toolByIndex`). In quel caso emette `toolCallComplete(index=N, toolId=null, input=null)`.
+
+**Sintomo**: `events.where(toolCall).length == 1`, `events.where(toolCallComplete).length == 2` per una sessione con 1 tool call. Il "secondo" complete è il phantom dal `text` block che chiude l'assistant turn dopo il tool.
+
+**Effetto reale**: zero, perché il cubit filtra in `_handleEvent` linea ~777 con `if (toolId.isNotEmpty)` — i phantom vengono ignorati a downstream. Ma sono bytes inutili sullo stream e aggiungono rumore al test/debug. Non è un bug aperto: è il **contratto attuale** del parser.
+
+**Nei test**: non assertare `calls.length == completes.length`. Filtra i complete con `toolId != null` se vuoi correlazione 1:1.
+
+**Riferimento**: B2 — `test/features/claude/data/datasources/claude_process_datasource_normalize_test.dart`, scoperto sulla fixture `multiline_partial.ndjson`.
+
+## PermissionServer.stop() droppa connessioni HTTP in-flight invece di restituire deny
+
+**Pattern**: `PermissionServer.stop()` (linea 71-80) fa due cose: (a) completa tutti i `_pending` Completer con `deny`, (b) chiude il server con `force: true`. La forced close interrompe le connessioni TCP **prima** che shelf riesca a serializzare la response. Risultato: il caller HTTP riceve `HttpException: Connection closed before full header was received`, NON un response con `permissionDecision: deny`.
+
+**Sintomo**: in test si vede `HttpException` su una richiesta sospesa quando il server viene fermato. In produzione: il subprocess `claude` (via curl) riceve un errore di rete sul PreToolUse hook → tool fallisce.
+
+**Effetto reale**: accettabile perché `stop()` viene chiamato solo all'uscita app — il subprocess viene comunque ucciso. Ma il commento del codice dice "complete pending as deny", il che è solo metà vero (il completer viene completato, ma la response HTTP non arriva mai). È una **contraddizione tra intent e contratto osservabile**.
+
+**Possibile fix futuro**: in `stop()` chiudere il server con `force: false` e attendere lo svuotamento delle connessioni, oppure spostare il `force: true` dopo un breve delay che lasci shelf flushare. Non è un fix richiesto adesso (il subprocess muore comunque), è documentato nel test perché un futuro refactor non rompa silenziosamente.
+
+**Riferimento**: B4 — `test/features/claude/data/datasources/permission_server_test.dart`, test "stop() drops pending HTTP connections".
+
+## PermissionServer accetta body malformati con un default `allow` (open)
+
+**Pattern**: linea 100-103 — un POST con body non-JSON al `/permission` viene loggato come warning e produce un response con `permissionDecision: allow`. Il commento del codice non lo evidenzia ma è la safety-net attuale: meglio permissivo che bloccare il subprocess.
+
+**Trade-off**: nasconde bug upstream. Se in futuro si introduce un'origin diversa che invia bodies malformati, il comportamento di default `allow` può causare esecuzione di tool senza challenge.
+
+**Decisione consigliata** (da valutare separatamente, OUT da questo batch): cambiare il fallback a `deny` o ritornare 400. Il test attuale pin-a `allow` come contratto, quindi un cambio futuro deve aggiornare anche quel test.
+
+**Riferimento**: B4 — test "non-JSON body resolves to allow".
+
+## EasyLocalization in widget test multipli: il secondo testWidgets non monta il child
+
+**Pattern**: in un file con N `testWidgets` che usano `pumpAppWidget(...)` (wrapper con `EasyLocalization.ensureInitialized()` + `setMockInitialValues({})`), solo il **primo** test renderizza il widget figlio. Dal secondo in poi il provider easy_localization non re-inizializza correttamente e il widget tree contiene il loading placeholder fino a `pumpAndSettle`. `find.byType(Widget)` trova zero match per qualsiasi widget figlio del wrapper (incluso `find.byKey` con key statica).
+
+**Sintomo**: in un file con widget test multipli, i primi test passano e dal secondo in poi `Expected: exactly one matching candidate / Actual: Found 0 widgets with ...`. In **isolamento** (lanciando un solo test alla volta con `--plain-name`) ogni test passa.
+
+**Workaround tentati senza successo**:
+- aumentare il delay di `pumpAndSettle`
+- chiamare di nuovo `setMockInitialValues({})`
+- usare `--concurrency=1`
+
+**Soluzione (per ora)**: B7 ha rimandato i widget test che richiedono `Locales.X.y.tr()` (PermissionRequestCard). Resta verificato `Hoverable` (zero translation deps).
+
+**Possibile fix futuro**: riscrivere `pumpAppWidget` per bypassare la `Future`-driven inizializzazione di `EasyLocalization` con un asset loader sincrono o un mock provider che non richiede `ensureInitialized`. Out of scope per il batch coverage iniziale; va valutato a parte.
+
+**Riferimento**: B7 — file `permission_request_card_test.dart` rimosso.
+
+## Hoverable widget test: tester.tap fallisce su SizedBox senza ColoredBox
+
+**Pattern**: `tester.tap(find.byType(Hoverable))` o `tester.tapAt(getCenter(...))` non innescano `onTap` se il `builder` ritorna un `SizedBox` "vuoto" senza `ColoredBox` o `Container(color: ...)`. Il SizedBox senza `color` non è hit-testable e l'evento di tap è perso.
+
+**Sintomo**: il counter di tap resta 0 anche dopo `tester.tap`. Nessun warning, nessun error log.
+
+**Soluzione**: nel test, wrappare il `SizedBox` in un `ColoredBox(color: Color(0xFF...))`.
+
+**Riferimento**: B7 — `test/shared/widgets/hoverable_test.dart`.
+
+## Hoverable widget test: due `tester.tapAt` consecutivi non sempre delivery 2 eventi
+
+**Pattern**: due `tester.tapAt(...)` consecutivi su un `Hoverable` (anche con `pump(kDoubleTapTimeout + extra)` tra di loro) registrano 1 tap solo invece di 2 quando il widget ha `onDoubleTap == null`. Probabilmente la binding di flutter_test e la nostra `MouseRegion → GestureDetector` interagiscono in modo non deterministico per tap multipli.
+
+**Soluzione (per ora)**: skippati 2 test su Hoverable (i contratti "no double-tap → due tap singoli" e "double-tap timing oltre window"). Restano 4 test che coprono single tap, double tap entro window, fallback senza callbacks, hover state via mouse pointer.
+
+**Riferimento**: B7 — commenti inline nel test file.

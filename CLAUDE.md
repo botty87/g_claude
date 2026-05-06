@@ -199,8 +199,32 @@ Widget interattivi devono avere `ValueKey<String>` quando serve test/automation.
 - No stringhe UI hardcoded — sempre via `Locales.X.y` (vedi sezione Localization). Aggiungere chiave a entrambi `en.json` e `it.json` insieme, poi rigenerare con `dart run lib/core/l10n/tool/l10n_generate.dart`.
 - No `print` — usa `talker.info`, `talker.error`.
 - No commenti narrativi in codice (lascia parlare il nome). Commenti solo per WHY non ovvi.
-- No test in fase scaffolding — verranno aggiunti quando logica diventa non triviale (parser NDJSON, permission resolver).
 - No mirror locale di stato cubit. Mai `useState<T>` / `ValueNotifier` per stato già nel cubit (vedi sezione "Lettura stato cubit"). Solo controller UI puri (`useTextEditingController`, `useFocusNode`, `useScrollController`) o stato strettamente effimero locale (hover, expanded toggle).
+
+## Test policy
+
+I test sono **obbligatori** per:
+1. **Logica pura** (parser, ranking, escape, mappature) — unit test puri Dart, zero mock.
+2. **State machine dei cubit** (transizioni di stato osservabili) — `bloc_test` con use-case e datasource mockati via `mocktail`.
+3. **Repository** (mappatura eccezione → `Failure`) — datasource mockato.
+4. **Widget con contratto comportamentale** (drag&drop, sync controller↔cubit, decisioni utente) — widget test con cubit mockati, **single source of truth** rispettato (no `useState` che mirroreggia stato cubit).
+
+I test **descrivono il comportamento atteso**: il nome del test descrive il contratto osservabile (*"quando arriva sessionDead con exitCode != 0, runStatus diventa sessionDead E stderrTail viene appeso"*), mai il metodo interno (*"`test('_handleEvent')`"* è da rifiutare in review).
+
+**Quando un test fallisce**: indagare prima il codice di produzione — può essere un bug vero. Si tocca il test solo dopo aver confermato che il codice è corretto.
+
+Test **non richiesti** (skip salvo richiesta esplicita):
+- Token tema (`AppColors`, `AppSpacing`, ecc.) — sono costanti.
+- Widget puramente decorativi (`GlassPane`, dialog senza logica).
+- `Failure` come unità — testati indirettamente nei repository test.
+
+**Stack di test**:
+- `mocktail` per i mock (no codegen). `bloc_test` per `expectLater(emitsInOrder([...]))`. `fake_async` per controllare timer.
+- `SharedPreferences.setMockInitialValues({...})` + `getInstance()` per le prefs.
+- `NativeDatabase.memory()` per drift.
+- Helper in `test/helpers/`: `pumpAppWidget(...)` per avere `EasyLocalization` in tree, `makeWorkspace(...)` per factory, `makeAppLogsDb()`/`makeSessionsDb()` per DB in-memory.
+- Fixture reali in `test/fixtures/{ndjson,jsonl,prefs,settings}/` — **mai** sintetiche per parser di output di Claude.
+- Naming: `test/<path-speculare-a-lib>/<file>_test.dart`. Group con il nome del contratto, non del metodo.
 
 ## Lettura stato cubit (single source of truth + selettori granulari)
 

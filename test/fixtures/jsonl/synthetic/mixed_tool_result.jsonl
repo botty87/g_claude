@@ -1,0 +1,3 @@
+{"type":"user","timestamp":"2026-04-01T10:00:00.000Z","uuid":"u-1","message":{"role":"user","content":"Run a tool that returns structured data"}}
+{"type":"assistant","timestamp":"2026-04-01T10:00:01.000Z","uuid":"a-1","message":{"id":"msg_001","role":"assistant","content":[{"type":"tool_use","id":"tool_struct","name":"FetchData","input":{"key":"value"}}]}}
+{"type":"user","timestamp":"2026-04-01T10:00:02.000Z","uuid":"u-2","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"tool_struct","content":[{"type":"text","text":"first"},{"type":"text","text":"second"}],"is_error":false}]}}
