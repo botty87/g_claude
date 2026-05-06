@@ -26,6 +26,7 @@ import '../../../editor/presentation/cubit/active_editor_cubit.dart';
 import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
 import '../../../editor/presentation/widgets/file_tabs_bar.dart';
 import '../../../editor/presentation/widgets/file_viewer.dart';
+import '../../../terminal/presentation/widgets/terminal_pane.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../../workspace/presentation/widgets/empty_state_view.dart';
@@ -322,6 +323,7 @@ class _MainArea extends HookWidget {
   static const _idSide = 'side';
   static const _idPreview = 'preview';
   static const _idClaude = 'claude';
+  static const _idTerminal = 'terminal';
 
   static const _sideMin = 200.0;
   static const _sideMax = 480.0;
@@ -329,6 +331,8 @@ class _MainArea extends HookWidget {
   static const _previewMin = 320.0;
   static const _previewDefault = 380.0;
   static const _claudeMin = 360.0;
+  static const _terminalMin = 320.0;
+  static const _terminalDefault = 480.0;
 
   static final _splitTheme = MultiSplitViewThemeData(
     dividerThickness: 1,
@@ -354,6 +358,7 @@ class _MainArea extends HookWidget {
       ActivityId.logs => context.select<AppLogsCubit, bool>(
           (c) => c.state.selectedSessionId != null,
         ),
+      ActivityId.terminal ||
       ActivityId.search ||
       ActivityId.git ||
       ActivityId.settings =>
@@ -361,24 +366,36 @@ class _MainArea extends HookWidget {
     };
 
     final savedSizes = context.read<ShellCubit>().state.paneSizes;
+    final showTerminal = selectedActivity == ActivityId.terminal;
 
     final controller = useMemoized(
       () {
         final savedSide = (savedSizes[_idSide] ?? _sideDefault).clamp(_sideMin, _sideMax);
         return MultiSplitViewController(
           areas: [
-            Area(id: _idSide, size: savedSide, min: _sideMin, max: _sideMax),
-            if (hasPreviewItem)
+            // Terminal mode dedicates the full main area to terminal+Claude;
+            // the side panel and preview are skipped.
+            if (showTerminal) ...[
               Area(
-                id: _idPreview,
-                size: savedSizes[_idPreview] ?? _previewDefault,
-                min: _previewMin,
+                id: _idTerminal,
+                size: savedSizes[_idTerminal] ?? _terminalDefault,
+                min: _terminalMin,
               ),
-            Area(id: _idClaude, flex: 1, min: _claudeMin),
+              Area(id: _idClaude, flex: 1, min: _claudeMin),
+            ] else ...[
+              Area(id: _idSide, size: savedSide, min: _sideMin, max: _sideMax),
+              if (hasPreviewItem)
+                Area(
+                  id: _idPreview,
+                  size: savedSizes[_idPreview] ?? _previewDefault,
+                  min: _previewMin,
+                ),
+              Area(id: _idClaude, flex: 1, min: _claudeMin),
+            ],
           ],
         );
       },
-      [hasPreviewItem],
+      [hasPreviewItem, showTerminal],
     );
     useEffect(() => controller.dispose, [controller]);
 
@@ -419,6 +436,8 @@ class _MainArea extends HookWidget {
               };
             case _idClaude:
               return ClaudeTerminalPane(key: claudePaneKey);
+            case _idTerminal:
+              return const TerminalPane();
             default:
               return const SizedBox.shrink();
           }

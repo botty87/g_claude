@@ -9,6 +9,7 @@
       "git": "Controllo versione",
       "sessions": "Sessioni",
       "logs": "Log",
+      "terminal": "Terminale",
       "settings": "Impostazioni",
       "comingLaterSuffix": " (in arrivo)"
     },
@@ -289,6 +290,17 @@
         "critical": "Critico",
         "verbose": "Verbose"
       }
+    }
+  },
+  "terminal": {
+    "noWorkspace": "Apri un workspace per avviare una shell",
+    "starting": "Avvio shell…",
+    "exited": "Processo terminato (codice {code})",
+    "spawnFailed": "Impossibile avviare la shell: {message}",
+    "restart": "Riavvia shell",
+    "menu": {
+      "copy": "Copia",
+      "paste": "Incolla"
     }
   },
   "editor": {

@@ -9,6 +9,7 @@
       "git": "Source Control",
       "sessions": "Sessions",
       "logs": "Logs",
+      "terminal": "Terminal",
       "settings": "Settings",
       "comingLaterSuffix": " (coming later)"
     },
@@ -289,6 +290,17 @@
         "critical": "Critical",
         "verbose": "Verbose"
       }
+    }
+  },
+  "terminal": {
+    "noWorkspace": "Open a workspace to start a shell",
+    "starting": "Starting shell…",
+    "exited": "Process exited (code {code})",
+    "spawnFailed": "Failed to start shell: {message}",
+    "restart": "Restart shell",
+    "menu": {
+      "copy": "Copy",
+      "paste": "Paste"
     }
   },
   "editor": {

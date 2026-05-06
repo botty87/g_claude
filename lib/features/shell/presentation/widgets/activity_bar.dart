@@ -45,6 +45,13 @@ const _topEntries = [
     keyName: 'activity_logs',
     isEnabled: true,
   ),
+  _ActivityEntry(
+    id: ActivityId.terminal,
+    icon: Symbols.terminal,
+    tooltipKey: 'shell.activity.terminal',
+    keyName: 'activity_terminal',
+    isEnabled: true,
+  ),
 ];
 
 class ActivityBar extends StatelessWidget {

@@ -119,6 +119,11 @@ import '../../features/slash_commands/domain/usecases/load_slash_commands.dart'
     as _i676;
 import '../../features/slash_commands/presentation/cubit/slash_commands_cubit.dart'
     as _i742;
+import '../../features/terminal/data/datasources/pty_datasource.dart' as _i216;
+import '../../features/terminal/data/datasources/pty_datasource_impl.dart'
+    as _i96;
+import '../../features/terminal/presentation/cubit/terminal_sessions_cubit.dart'
+    as _i916;
 import '../../features/workspace/data/datasources/workspace_file_watcher.dart'
     as _i167;
 import '../../features/workspace/data/datasources/workspace_local_datasource.dart'
@@ -175,6 +180,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i207.ActiveEditorCubit>(() => _i207.ActiveEditorCubit());
     gh.lazySingleton<_i644.AppLogsRepository>(
       () => _i413.AppLogsRepositoryImpl(gh<_i126.AppLogsDatabase>()),
+    );
+    gh.lazySingleton<_i216.PtyDataSource>(
+      () => _i96.PtyDataSourceImpl(gh<_i207.Talker>()),
     );
     gh.lazySingleton<_i735.WorkspaceLocalDataSource>(
       () => _i735.WorkspaceLocalDataSourceImpl(),
@@ -422,6 +430,13 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i709.AppLogDetailCubit(
         gh<_i41.WatchSessionEntries>(),
         gh<_i148.AppLogsCubit>(),
+      )..init(),
+    );
+    gh.lazySingleton<_i916.TerminalSessionsCubit>(
+      () => _i916.TerminalSessionsCubit(
+        gh<_i216.PtyDataSource>(),
+        gh<_i179.WorkspacesCubit>(),
+        gh<_i207.Talker>(),
       )..init(),
     );
     gh.lazySingleton<_i68.ShellCubit>(

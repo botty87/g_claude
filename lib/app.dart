@@ -12,6 +12,7 @@ import 'features/claude/presentation/cubit/claude_sessions_cubit.dart';
 import 'features/editor/presentation/cubit/file_tabs_cubit.dart';
 import 'features/explorer/presentation/cubit/explorer_cubit.dart';
 import 'features/shell/presentation/cubit/shell_cubit.dart';
+import 'features/terminal/presentation/cubit/terminal_sessions_cubit.dart';
 import 'features/workspace/presentation/cubit/workspaces_cubit.dart';
 
 class App extends StatelessWidget {
@@ -36,6 +37,9 @@ class App extends StatelessWidget {
         BlocProvider<AppLogsCubit>.value(value: getIt<AppLogsCubit>()),
         BlocProvider<AppLogDetailCubit>.value(
           value: getIt<AppLogDetailCubit>(),
+        ),
+        BlocProvider<TerminalSessionsCubit>.value(
+          value: getIt<TerminalSessionsCubit>(),
         ),
       ],
       child: MaterialApp.router(
