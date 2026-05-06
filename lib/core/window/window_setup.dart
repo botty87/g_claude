@@ -7,8 +7,7 @@ Future<void> setupWindow() async {
 
   const options = WindowOptions(
     size: Size(1280, 800),
-    minimumSize: Size(900, 600),
-    center: true,
+    minimumSize: Size(500, 400),
     title: 'Clyde',
     titleBarStyle: TitleBarStyle.normal,
   );
