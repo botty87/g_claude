@@ -10,7 +10,14 @@ _Released 2026-05-06_
 
 1. Download `Clyde-v1.0.1-macos.zip` from this release.
 2. Unzip; move `Clyde.app` to `/Applications`.
-3. First launch: right-click → Open (unsigned build).
+3. Remove the quarantine attribute (required, app is unsigned):
+
+   ```bash
+   xattr -cr /Applications/Clyde.app
+   ```
+
+   Without this step macOS shows "Clyde is damaged and can't be opened".
+4. Launch normally (double-click).
 
 ## Checksum
 

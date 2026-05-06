@@ -200,7 +200,14 @@ package-release:
             echo ""
             echo "1. Download \`${zip_name}\` from this release."
             echo "2. Unzip; move \`Clyde.app\` to \`/Applications\`."
-            echo "3. First launch: right-click → Open (unsigned build)."
+            echo "3. Remove the quarantine attribute (required, app is unsigned):"
+            echo ""
+            echo '   ```bash'
+            echo "   xattr -cr /Applications/Clyde.app"
+            echo '   ```'
+            echo ""
+            echo "   Without this step macOS shows \"Clyde is damaged and can't be opened\"."
+            echo "4. Launch normally (double-click)."
             echo ""
             echo "## Checksum"
             echo ""
