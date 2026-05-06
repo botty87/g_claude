@@ -480,10 +480,17 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _runningWorkspaceId = workspaceId;
 
     const summaryPrompt =
-        'Summarize the conversation so far in a structured form. Cover: '
-        'user goals, decisions made, files read or modified, key findings, '
-        'open questions, and the next planned steps. Be precise and dense '
-        '— no pleasantries. Output only the summary.';
+        'Produce a faithful first-person recap of OUR conversation so far, '
+        'so that a future instance of you can pick it up seamlessly. Write '
+        'in this exact form:\n\n'
+        '1. What the user asked, in their own framing (paraphrase each turn).\n'
+        '2. What you (the assistant) answered or did, including any tools you '
+        'ran and their relevant results.\n'
+        '3. Any decisions, preferences, or constraints the user expressed.\n'
+        '4. Open threads or next steps that were discussed.\n\n'
+        'Be dense, concrete, no pleasantries. Do NOT describe the project as '
+        'if you were a new assistant looking at it — describe the conversation '
+        'as a continuous shared history. Output ONLY the recap.';
 
     final params = SendPromptParams(
       cwd: workspaceId,
@@ -846,7 +853,14 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         : '${session.thinkingMode.keyword} $concatPrompt';
     final bootstrap = _pendingCompactBootstrap[workspaceId];
     final cliPrompt = (bootstrap != null && bootstrap.isNotEmpty)
-        ? '<context-summary>\n$bootstrap\n</context-summary>\n\n$basePrompt'
+        ? 'The following is a recap of our prior conversation (compacted to '
+            'save context). Treat it as already-shared history between us — '
+            'do NOT say you have no prior context, do NOT re-introduce '
+            'yourself, just continue naturally from where it left off.\n\n'
+            '<prior-conversation-recap>\n'
+            '$bootstrap\n'
+            '</prior-conversation-recap>\n\n'
+            'My next message:\n\n$basePrompt'
         : basePrompt;
 
     final now = DateTime.now();
