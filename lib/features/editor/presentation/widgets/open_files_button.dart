@@ -31,11 +31,7 @@ class OpenFilesButton extends StatelessWidget {
         ),
         child: Tooltip(
           message: Locales.Editor.OpenFiles.tooltip,
-          child: const Icon(
-            Symbols.list,
-            size: 18,
-            color: AppColors.onSurfaceVariant,
-          ),
+          child: const Icon(Symbols.list, size: 18, color: AppColors.onSurfaceVariant),
         ),
       ),
     );
@@ -44,13 +40,9 @@ class OpenFilesButton extends StatelessWidget {
   void _showPopover(BuildContext context) {
     final renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
-    final overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox?;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
     if (overlay == null) return;
-    final position = renderBox.localToGlobal(
-      renderBox.size.bottomLeft(Offset.zero),
-      ancestor: overlay,
-    );
+    final position = renderBox.localToGlobal(renderBox.size.bottomLeft(Offset.zero), ancestor: overlay);
     final workspacesCubit = context.read<WorkspacesCubit>();
     final fileTabsCubit = context.read<FileTabsCubit>();
     showDialog<void>(
@@ -83,6 +75,7 @@ class _OpenFilesPopover extends HookWidget {
         if (q == query.value) return;
         query.value = q;
       }
+
       searchCtrl.addListener(listener);
       return () => searchCtrl.removeListener(listener);
     }, [searchCtrl]);
@@ -90,10 +83,7 @@ class _OpenFilesPopover extends HookWidget {
     return Stack(
       children: [
         Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => Navigator.of(context).pop(),
-          ),
+          child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: () => Navigator.of(context).pop()),
         ),
         Positioned(
           left: anchor.dx,
@@ -120,34 +110,28 @@ class _OpenFilesPopover extends HookWidget {
                           hintText: Locales.Editor.OpenFiles.searchHint,
                           hintStyle: AppTypography.bodyMain.copyWith(
                             fontSize: 13,
-                            color: AppColors.onSurfaceVariant
-                                .withValues(alpha: 0.5),
+                            color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
                           ),
                           prefixIcon: const Icon(Symbols.search, size: 16),
                           isDense: true,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadii.sm),
-                            borderSide: const BorderSide(
-                                color: AppColors.outlineVariant, width: 1),
+                            borderSide: const BorderSide(color: AppColors.outlineVariant, width: 1),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadii.sm),
-                            borderSide: const BorderSide(
-                                color: AppColors.outlineVariant, width: 1),
+                            borderSide: const BorderSide(color: AppColors.outlineVariant, width: 1),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadii.sm),
-                            borderSide: const BorderSide(
-                                color: AppColors.brandIndigo, width: 1),
+                            borderSide: const BorderSide(color: AppColors.brandIndigo, width: 1),
                           ),
                         ),
                       ),
                     ),
-                    const Divider(
-                        height: 1, color: AppColors.outlineVariant),
+                    const Divider(height: 1, color: AppColors.outlineVariant),
                     const _CloseAllRow(),
-                    const Divider(
-                        height: 1, color: AppColors.outlineVariant),
+                    const Divider(height: 1, color: AppColors.outlineVariant),
                     Flexible(child: _OpenFilesList(query: query.value)),
                   ],
                 ),
@@ -175,21 +159,16 @@ class _OpenFilesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = context.select<WorkspacesCubit, Workspace?>(
-      (c) => c.state.activeWorkspace,
-    );
+    final active = context.select<WorkspacesCubit, Workspace?>((c) => c.state.activeWorkspace);
     if (active == null) {
       return _placeholder(Locales.Editor.OpenFiles.empty);
     }
-    final files = context.select<FileTabsCubit, WorkspaceFiles?>(
-      (c) => c.state.filesFor(active.id),
-    );
+    final files = context.select<FileTabsCubit, WorkspaceFiles?>((c) => c.state.filesFor(active.id));
     final paths = files?.openPaths ?? const <String>[];
     if (paths.isEmpty) {
       return _placeholder(Locales.Editor.OpenFiles.empty);
     }
-    final filtered =
-        paths.where((path) => _matches(path, active.path)).toList();
+    final filtered = paths.where((path) => _matches(path, active.path)).toList();
     if (filtered.isEmpty) {
       return _placeholder(Locales.Editor.OpenFiles.noMatches);
     }
@@ -210,17 +189,14 @@ class _OpenFilesList extends StatelessWidget {
   }
 
   Widget _placeholder(String message) => Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Center(
-          child: Text(
-            message,
-            style: AppTypography.bodyMain.copyWith(
-              fontSize: 13,
-              color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
-            ),
-          ),
-        ),
-      );
+    padding: const EdgeInsets.all(AppSpacing.lg),
+    child: Center(
+      child: Text(
+        message,
+        style: AppTypography.bodyMain.copyWith(fontSize: 13, color: AppColors.onSurfaceVariant.withValues(alpha: 0.6)),
+      ),
+    ),
+  );
 }
 
 class _CloseAllRow extends StatelessWidget {
@@ -228,13 +204,9 @@ class _CloseAllRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeId = context.select<WorkspacesCubit, WorkspaceId?>(
-      (c) => c.state.activeIdOrNull,
-    );
+    final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
     final hasOpenFiles = context.select<FileTabsCubit, bool>(
-      (c) =>
-          activeId != null &&
-          ((c.state.filesFor(activeId)?.openPaths.isNotEmpty) ?? false),
+      (c) => activeId != null && ((c.state.filesFor(activeId)?.openPaths.isNotEmpty) ?? false),
     );
     if (activeId == null || !hasOpenFiles) return const SizedBox.shrink();
     return Hoverable(
@@ -243,26 +215,16 @@ class _CloseAllRow extends StatelessWidget {
         Navigator.of(context).pop();
       },
       builder: (context, hover) => Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.xs,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
         color: hover ? AppColors.glassHover : Colors.transparent,
         child: Row(
           children: [
-            Icon(
-              Symbols.close,
-              size: 14,
-              color: AppColors.onSurfaceVariant,
-            ),
+            Icon(Symbols.close, size: 14, color: AppColors.onSurfaceVariant),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 Locales.Editor.OpenFiles.closeAll,
-                style: AppTypography.bodyMain.copyWith(
-                  fontSize: 13,
-                  color: AppColors.onSurface,
-                ),
+                style: AppTypography.bodyMain.copyWith(fontSize: 13, color: AppColors.onSurface),
               ),
             ),
             Text(
@@ -304,22 +266,15 @@ class _OpenFileRow extends StatelessWidget {
         Navigator.of(context).pop();
       },
       builder: (context, hover) => Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.xs,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
         color: isActive
             ? AppColors.surface
             : hover
-                ? AppColors.glassHover
-                : Colors.transparent,
+            ? AppColors.glassHover
+            : Colors.transparent,
         child: Row(
           children: [
-            Icon(
-              Symbols.description,
-              size: 14,
-              color: AppColors.onSurfaceVariant,
-            ),
+            Icon(Symbols.description, size: 14, color: AppColors.onSurfaceVariant),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
@@ -330,10 +285,8 @@ class _OpenFileRow extends StatelessWidget {
                     filename,
                     style: AppTypography.bodyMain.copyWith(
                       fontSize: 13,
-                      fontWeight:
-                          isActive ? FontWeight.w600 : FontWeight.w400,
-                      fontStyle:
-                          isPreview ? FontStyle.italic : FontStyle.normal,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                      fontStyle: isPreview ? FontStyle.italic : FontStyle.normal,
                       color: AppColors.onSurface,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -343,8 +296,7 @@ class _OpenFileRow extends StatelessWidget {
                     relative,
                     style: AppTypography.bodyMain.copyWith(
                       fontSize: 11,
-                      color: AppColors.onSurfaceVariant
-                          .withValues(alpha: 0.6),
+                      color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
                     ),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,

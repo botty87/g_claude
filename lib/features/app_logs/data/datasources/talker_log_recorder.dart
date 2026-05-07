@@ -32,14 +32,16 @@ class TalkerLogRecorder {
     for (final t in _selfNoiseTokens) {
       if (msg.contains(t)) return;
     }
-    _buffer.add(AppLogEntryDraft(
-      time: data.time,
-      level: parseAppLogLevel(data.logLevel?.name),
-      title: data.title,
-      message: msg,
-      exception: data.exception?.toString(),
-      stackTrace: data.stackTrace?.toString(),
-    ));
+    _buffer.add(
+      AppLogEntryDraft(
+        time: data.time,
+        level: parseAppLogLevel(data.logLevel?.name),
+        title: data.title,
+        message: msg,
+        exception: data.exception?.toString(),
+        stackTrace: data.stackTrace?.toString(),
+      ),
+    );
     _flushTimer ??= Timer(_flushDelay, _flush);
   }
 

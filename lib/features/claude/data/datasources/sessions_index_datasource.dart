@@ -30,9 +30,9 @@ class SessionsIndexDataSourceImpl implements SessionsIndexDataSource {
   @override
   Future<List<SessionRow>> getByIds(List<String> ids, String workspaceId) async {
     if (ids.isEmpty) return [];
-    final rows = await (_db.select(_db.sessions)
-          ..where((s) => s.workspaceId.equals(workspaceId) & s.id.isIn(ids)))
-        .get();
+    final rows = await (_db.select(
+      _db.sessions,
+    )..where((s) => s.workspaceId.equals(workspaceId) & s.id.isIn(ids))).get();
     final byId = {for (final r in rows) r.id: r};
     return [
       for (final id in ids)
@@ -47,9 +47,7 @@ class SessionsIndexDataSourceImpl implements SessionsIndexDataSource {
     final ftsIds = await _db.ftsIdsForWorkspace(workspaceId);
 
     await _db.transaction(() async {
-      final existing = await (_db.select(_db.sessions)
-            ..where((s) => s.workspaceId.equals(workspaceId)))
-          .get();
+      final existing = await (_db.select(_db.sessions)..where((s) => s.workspaceId.equals(workspaceId))).get();
 
       final existingById = {for (final row in existing) row.id: row};
       final metaIds = {for (final m in metas) m.id};
@@ -61,7 +59,9 @@ class SessionsIndexDataSourceImpl implements SessionsIndexDataSource {
         final ftsAbsent = !ftsIds.contains(meta.id);
 
         if (row == null || mtimeChanged || sizeChanged) {
-          await _db.into(_db.sessions).insertOnConflictUpdate(
+          await _db
+              .into(_db.sessions)
+              .insertOnConflictUpdate(
                 SessionsCompanion.insert(
                   id: meta.id,
                   workspaceId: workspaceId,
@@ -74,25 +74,11 @@ class SessionsIndexDataSourceImpl implements SessionsIndexDataSource {
                   fileMtime: meta.fileMtime,
                 ),
               );
-          final body = await _history.readFullText(
-            encodedPath: meta.encodedPath,
-            sessionId: meta.id,
-          );
-          await _db.upsertSessionFts(
-            sessionId: meta.id,
-            workspaceId: workspaceId,
-            body: body,
-          );
+          final body = await _history.readFullText(encodedPath: meta.encodedPath, sessionId: meta.id);
+          await _db.upsertSessionFts(sessionId: meta.id, workspaceId: workspaceId, body: body);
         } else if (ftsAbsent) {
-          final body = await _history.readFullText(
-            encodedPath: meta.encodedPath,
-            sessionId: meta.id,
-          );
-          await _db.upsertSessionFts(
-            sessionId: meta.id,
-            workspaceId: workspaceId,
-            body: body,
-          );
+          final body = await _history.readFullText(encodedPath: meta.encodedPath, sessionId: meta.id);
+          await _db.upsertSessionFts(sessionId: meta.id, workspaceId: workspaceId, body: body);
         }
       }
 

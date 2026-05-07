@@ -39,11 +39,8 @@ sealed class ClaudeMessage with _$ClaudeMessage {
     @Default(false) bool isError,
   }) = ClaudeMessageTool;
 
-  const factory ClaudeMessage.system({
-    required String id,
-    required String text,
-    required DateTime createdAt,
-  }) = ClaudeMessageSystem;
+  const factory ClaudeMessage.system({required String id, required String text, required DateTime createdAt}) =
+      ClaudeMessageSystem;
 
   /// Inline interactive card that asks the user to answer one or more
   /// questions emitted by Claude via the `AskUserQuestion` tool. The card

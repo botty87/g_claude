@@ -42,7 +42,9 @@ List<ClaudeEvent> _runFixture(ClaudeProcessDataSourceImpl parser, String relativ
   parser.resetParserStateForTest();
   final events = <ClaudeEvent>[];
   for (final raw in _readFixture(relativePath)) {
-    if (raw['type'] == 'control_response') continue; // matches production filter
+    if (raw['type'] == 'control_response') {
+      continue; // matches production filter
+    }
     events.addAll(parser.normalizeForTest(raw));
   }
   return events;
@@ -93,17 +95,16 @@ void main() {
       // Indirect contract: among the raw fixture lines we have hook envelopes;
       // they must not contribute to the event list. We assert by counting:
       // the only `system` lines that produce events are the `init` ones.
-      final initLines = _readFixture('simple_text.ndjson').where(
-        (raw) => raw['type'] == 'system' && raw['subtype'] == 'init',
-      );
+      final initLines = _readFixture(
+        'simple_text.ndjson',
+      ).where((raw) => raw['type'] == 'system' && raw['subtype'] == 'init');
       final initEvents = events.whereType<ClaudeEventSessionInit>();
       expect(initEvents.length, initLines.length);
     });
 
     test('emits at least one textChunk for the assistant streaming text', () {
       final chunks = events.whereType<ClaudeEventTextChunk>();
-      expect(chunks, isNotEmpty,
-          reason: 'A non-empty assistant reply must produce textChunks.');
+      expect(chunks, isNotEmpty, reason: 'A non-empty assistant reply must produce textChunks.');
       // Every emitted textChunk has non-empty text — the parser short-circuits
       // empty deltas (line 415).
       for (final c in chunks) {
@@ -141,8 +142,11 @@ void main() {
           orElse: () => throw StateError('no toolCallComplete for index ${call.index}'),
         );
         final completeIdx = events.indexOf(matchComplete);
-        expect(completeIdx, greaterThan(callIdx),
-            reason: 'toolCallComplete[index=${call.index}] must come AFTER its toolCall.');
+        expect(
+          completeIdx,
+          greaterThan(callIdx),
+          reason: 'toolCallComplete[index=${call.index}] must come AFTER its toolCall.',
+        );
       }
     });
 
@@ -151,8 +155,7 @@ void main() {
       final completes = events.whereType<ClaudeEventToolCallComplete>().toList();
       for (final call in calls) {
         final match = completes.firstWhere((c) => c.index == call.index);
-        expect(match.toolId, call.toolId,
-            reason: 'parser must thread toolId through _toolByIndex.');
+        expect(match.toolId, call.toolId, reason: 'parser must thread toolId through _toolByIndex.');
       }
     });
 
@@ -161,8 +164,7 @@ void main() {
       // parser sets input=null when partialJson is empty or jsonDecode fails.
       final completes = events.whereType<ClaudeEventToolCallComplete>().toList();
       final withInput = completes.where((c) => c.input != null);
-      expect(withInput, isNotEmpty,
-          reason: 'A real Read tool call streams its arguments via input_json_delta.');
+      expect(withInput, isNotEmpty, reason: 'A real Read tool call streams its arguments via input_json_delta.');
     });
 
     test('emits a toolResult correlated by toolUseId to the toolCall', () {
@@ -172,8 +174,11 @@ void main() {
 
       for (final result in results) {
         final hasMatchingCall = calls.any((c) => c.toolId == result.toolUseId);
-        expect(hasMatchingCall, isTrue,
-            reason: 'Every toolResult.toolUseId should match some emitted toolCall.toolId.');
+        expect(
+          hasMatchingCall,
+          isTrue,
+          reason: 'Every toolResult.toolUseId should match some emitted toolCall.toolId.',
+        );
       }
     });
 
@@ -217,8 +222,11 @@ void main() {
 
     test('emits many toolCallUpdate events, one per input_json_delta line', () {
       // Captured fixture has hundreds of input_json_delta envelopes.
-      expect(toolCallUpdateCount, greaterThan(50),
-          reason: 'Streaming a large tool argument must surface as many toolCallUpdate events.');
+      expect(
+        toolCallUpdateCount,
+        greaterThan(50),
+        reason: 'Streaming a large tool argument must surface as many toolCallUpdate events.',
+      );
     });
 
     test('every toolCallUpdate is bracketed by a preceding toolCall and a matching toolCallComplete', () {
@@ -249,10 +257,12 @@ void main() {
         for (final update in updates) {
           if (update.toolId == call.toolId) {
             final upIdx = events.indexOf(update);
-            expect(upIdx, greaterThan(callIdx),
-                reason: 'update for ${call.toolId} must come AFTER its toolCall');
-            expect(upIdx, lessThan(completeIdx),
-                reason: 'update for ${call.toolId} must come BEFORE its toolCallComplete');
+            expect(upIdx, greaterThan(callIdx), reason: 'update for ${call.toolId} must come AFTER its toolCall');
+            expect(
+              upIdx,
+              lessThan(completeIdx),
+              reason: 'update for ${call.toolId} must come BEFORE its toolCallComplete',
+            );
           }
         }
       }
@@ -269,8 +279,7 @@ void main() {
       }
       // We expect at least one phantom in this fixture (the text block stop
       // that follows the Write tool_use closing).
-      expect(phantoms, isNotEmpty,
-          reason: 'multiline_partial fixture has a content_block_stop on a text block.');
+      expect(phantoms, isNotEmpty, reason: 'multiline_partial fixture has a content_block_stop on a text block.');
     });
 
     test('toolCallComplete.input contains the FULL accumulated JSON, not a partial', () {
@@ -278,11 +287,8 @@ void main() {
       // expected keys for a Write tool call.
       final completes = events.whereType<ClaudeEventToolCallComplete>().toList();
       expect(completes, isNotEmpty);
-      final hasFullInput = completes.any(
-        (c) => c.input != null && c.input!.containsKey('file_path'),
-      );
-      expect(hasFullInput, isTrue,
-          reason: 'A real Write tool call must end with a fully-decoded input map.');
+      final hasFullInput = completes.any((c) => c.input != null && c.input!.containsKey('file_path'));
+      expect(hasFullInput, isTrue, reason: 'A real Write tool call must end with a fully-decoded input map.');
     });
   });
 
@@ -315,17 +321,11 @@ void main() {
     });
 
     test('a stream_event whose `event` field is not a Map is silently ignored', () {
-      expect(
-        parser.normalizeForTest({'type': 'stream_event', 'event': 'not-a-map'}),
-        isEmpty,
-      );
+      expect(parser.normalizeForTest({'type': 'stream_event', 'event': 'not-a-map'}), isEmpty);
     });
 
     test('a system envelope without subtype=init emits zero events', () {
-      expect(
-        parser.normalizeForTest({'type': 'system', 'subtype': 'hook_response'}),
-        isEmpty,
-      );
+      expect(parser.normalizeForTest({'type': 'system', 'subtype': 'hook_response'}), isEmpty);
     });
 
     test('sessionInit with missing fields fills in safe defaults', () {
@@ -392,12 +392,7 @@ void main() {
         'type': 'user',
         'message': {
           'content': [
-            {
-              'type': 'tool_result',
-              'tool_use_id': 'tool_xyz',
-              'content': 'error message',
-              'is_error': true,
-            },
+            {'type': 'tool_result', 'tool_use_id': 'tool_xyz', 'content': 'error message', 'is_error': true},
           ],
         },
       }).toList();

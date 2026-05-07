@@ -586,15 +586,43 @@ void _generateNestedClassContent(
 /// Dart reserved words that cannot be used as identifiers.
 /// When a JSON key collides with one, append a `$` suffix to make it valid.
 const _dartReservedWords = <String>{
-  'assert', 'break', 'case', 'catch', 'class', 'const', 'continue', 'default',
-  'do', 'else', 'enum', 'extends', 'false', 'final', 'finally', 'for', 'if',
-  'in', 'is', 'new', 'null', 'rethrow', 'return', 'super', 'switch', 'this',
-  'throw', 'true', 'try', 'var', 'void', 'while', 'with',
+  'assert',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'default',
+  'do',
+  'else',
+  'enum',
+  'extends',
+  'false',
+  'final',
+  'finally',
+  'for',
+  'if',
+  'in',
+  'is',
+  'new',
+  'null',
+  'rethrow',
+  'return',
+  'super',
+  'switch',
+  'this',
+  'throw',
+  'true',
+  'try',
+  'var',
+  'void',
+  'while',
+  'with',
 };
 
 /// Returns a safe Dart identifier for a JSON key. Reserved words get `$` suffix.
-String _safeIdentifier(String key) =>
-    _dartReservedWords.contains(key) ? '$key\$' : key;
+String _safeIdentifier(String key) => _dartReservedWords.contains(key) ? '$key\$' : key;
 
 /// Capitalizes the first letter of a string
 String _capitalize(String s) {

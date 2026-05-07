@@ -11,9 +11,6 @@ class LoadSessionMessages {
 
   final ChatHistoryRepository _repo;
 
-  Future<Either<Failure, List<ClaudeMessage>>> call({
-    required String encodedPath,
-    required String sessionId,
-  }) =>
+  Future<Either<Failure, List<ClaudeMessage>>> call({required String encodedPath, required String sessionId}) =>
       _repo.loadMessages(encodedPath: encodedPath, sessionId: sessionId);
 }

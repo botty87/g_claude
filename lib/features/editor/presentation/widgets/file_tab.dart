@@ -28,12 +28,7 @@ class FileTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tab = _TabBody(
-      workspaceId: workspaceId,
-      path: path,
-      isActive: isActive,
-      isPreview: isPreview,
-    );
+    final tab = _TabBody(workspaceId: workspaceId, path: path, isActive: isActive, isPreview: isPreview);
 
     if (isPreview) {
       return tab;
@@ -42,16 +37,13 @@ class FileTab extends StatelessWidget {
     return DragTarget<String>(
       onWillAcceptWithDetails: (details) {
         if (details.data == path) return false;
-        final files =
-            context.read<FileTabsCubit>().state.filesFor(workspaceId);
+        final files = context.read<FileTabsCubit>().state.filesFor(workspaceId);
         if (files == null) return false;
         if (files.previewPath == details.data) return false;
         return files.openPaths.contains(details.data);
       },
       onAcceptWithDetails: (details) {
-        context
-            .read<FileTabsCubit>()
-            .reorderPinned(workspaceId, details.data, path);
+        context.read<FileTabsCubit>().reorderPinned(workspaceId, details.data, path);
       },
       builder: (context, candidate, rejected) {
         final hovering = candidate.isNotEmpty;
@@ -81,10 +73,7 @@ class FileTab extends StatelessWidget {
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(AppRadii.sm),
-                        border: Border.all(
-                          color: AppColors.brandIndigo,
-                          width: 1.5,
-                        ),
+                        border: Border.all(color: AppColors.brandIndigo, width: 1.5),
                       ),
                     ),
                   ),
@@ -115,22 +104,15 @@ class _TabBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Hoverable(
-      onTap: interactive
-          ? () => context
-              .read<FileTabsCubit>()
-              .setActiveFile(workspaceId, path)
-          : null,
-      onDoubleTap: interactive && isPreview
-          ? () => context.read<FileTabsCubit>().pinFile(workspaceId, path)
-          : null,
+      onTap: interactive ? () => context.read<FileTabsCubit>().setActiveFile(workspaceId, path) : null,
+      onDoubleTap: interactive && isPreview ? () => context.read<FileTabsCubit>().pinFile(workspaceId, path) : null,
       builder: (context, hover) {
         final fill = isActive
             ? AppColors.surface
             : hover
-                ? AppColors.glassHover
-                : Colors.transparent;
-        final textColor =
-            isActive ? AppColors.onSurface : AppColors.onSurfaceVariant;
+            ? AppColors.glassHover
+            : Colors.transparent;
+        final textColor = isActive ? AppColors.onSurface : AppColors.onSurfaceVariant;
         return Container(
           height: AppSpacing.toolbarHeight,
           margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -138,11 +120,7 @@ class _TabBody extends StatelessWidget {
           decoration: BoxDecoration(
             color: fill,
             borderRadius: BorderRadius.circular(AppRadii.sm),
-            border: isActive
-                ? const Border(
-                    bottom: BorderSide(color: AppColors.brandIndigo, width: 2),
-                  )
-                : null,
+            border: isActive ? const Border(bottom: BorderSide(color: AppColors.brandIndigo, width: 2)) : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -159,29 +137,17 @@ class _TabBody extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               if (interactive)
                 Tooltip(
-                  message: isActive
-                      ? '${Locales.Editor.Tab.close} (⌘W)'
-                      : Locales.Editor.Tab.close,
+                  message: isActive ? '${Locales.Editor.Tab.close} (⌘W)' : Locales.Editor.Tab.close,
                   child: Hoverable(
-                    onTap: () => context
-                        .read<FileTabsCubit>()
-                        .closeFile(workspaceId, path),
+                    onTap: () => context.read<FileTabsCubit>().closeFile(workspaceId, path),
                     builder: (context, closeHover) => Container(
                       width: 18,
                       height: 18,
                       decoration: BoxDecoration(
-                        color: closeHover
-                            ? AppColors.glassHover
-                            : Colors.transparent,
+                        color: closeHover ? AppColors.glassHover : Colors.transparent,
                         borderRadius: BorderRadius.circular(AppRadii.sm),
                       ),
-                      child: Icon(
-                        Symbols.close,
-                        size: 14,
-                        color: textColor.withValues(
-                          alpha: closeHover ? 1.0 : 0.6,
-                        ),
-                      ),
+                      child: Icon(Symbols.close, size: 14, color: textColor.withValues(alpha: closeHover ? 1.0 : 0.6)),
                     ),
                   ),
                 ),

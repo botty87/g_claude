@@ -18,10 +18,9 @@ void main() {
       final db = makeAppLogsDb();
       addTearDown(db.close);
 
-      final id = await db.into(db.appSessions).insert(AppSessionsCompanion.insert(
-            startedAt: DateTime.utc(2026, 1, 1),
-            platform: 'test',
-          ));
+      final id = await db
+          .into(db.appSessions)
+          .insert(AppSessionsCompanion.insert(startedAt: DateTime.utc(2026, 1, 1), platform: 'test'));
 
       final row = await (db.select(db.appSessions)..where((s) => s.id.equals(id))).getSingle();
       expect(row.platform, 'test');
@@ -39,22 +38,28 @@ void main() {
       final db = makeAppLogsDb();
       addTearDown(db.close);
 
-      final sessionId = await db.into(db.appSessions).insert(AppSessionsCompanion.insert(
-            startedAt: DateTime.utc(2026, 1, 1),
-            platform: 'test',
-          ));
-      await db.into(db.logEntries).insert(LogEntriesCompanion.insert(
-            sessionId: sessionId,
-            time: DateTime.utc(2026, 1, 1),
-            level: 'info',
-            message: 'hello',
-          ));
+      final sessionId = await db
+          .into(db.appSessions)
+          .insert(AppSessionsCompanion.insert(startedAt: DateTime.utc(2026, 1, 1), platform: 'test'));
+      await db
+          .into(db.logEntries)
+          .insert(
+            LogEntriesCompanion.insert(
+              sessionId: sessionId,
+              time: DateTime.utc(2026, 1, 1),
+              level: 'info',
+              message: 'hello',
+            ),
+          );
 
       await (db.delete(db.appSessions)..where((s) => s.id.equals(sessionId))).go();
 
       final remaining = await db.select(db.logEntries).get();
-      expect(remaining, isEmpty,
-          reason: 'FK cascade must remove orphan log_entries when the parent session is deleted.');
+      expect(
+        remaining,
+        isEmpty,
+        reason: 'FK cascade must remove orphan log_entries when the parent session is deleted.',
+      );
     });
   });
 
@@ -65,9 +70,9 @@ void main() {
 
       // The migration creates the FTS5 virtual table at onCreate. If the helper
       // skipped migrations, this raw query would fail with "no such table".
-      final result = await db.customSelect(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='sessions_fts'",
-      ).get();
+      final result = await db
+          .customSelect("SELECT name FROM sqlite_master WHERE type='table' AND name='sessions_fts'")
+          .get();
       expect(result, hasLength(1));
     });
   });

@@ -13,11 +13,7 @@ abstract interface class WorkspaceLocalDataSource {
 
 @LazySingleton(as: WorkspaceLocalDataSource)
 class WorkspaceLocalDataSourceImpl implements WorkspaceLocalDataSource {
-  static const _candidates = [
-    'CLAUDE.md',
-    'claude.md',
-    'Claude.md',
-  ];
+  static const _candidates = ['CLAUDE.md', 'claude.md', 'Claude.md'];
 
   @override
   Future<void> ensureDirectoryExists(String path) async {

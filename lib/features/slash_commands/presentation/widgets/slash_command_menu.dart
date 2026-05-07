@@ -49,11 +49,7 @@ class SlashCommandMenu extends HookWidget {
           padding: const EdgeInsets.all(12),
           child: Text(
             Locales.SlashCommands.empty,
-            style: AppTypography.bodyMain.copyWith(
-              fontSize: 12,
-              color: AppColors.outline,
-              fontStyle: FontStyle.italic,
-            ),
+            style: AppTypography.bodyMain.copyWith(fontSize: 12, color: AppColors.outline, fontStyle: FontStyle.italic),
           ),
         ),
       );
@@ -64,10 +60,7 @@ class SlashCommandMenu extends HookWidget {
 
     return GlassPane(
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 560,
-          maxHeight: height,
-        ),
+        constraints: BoxConstraints(maxWidth: 560, maxHeight: height),
         child: ListView.builder(
           controller: controller,
           padding: EdgeInsets.zero,

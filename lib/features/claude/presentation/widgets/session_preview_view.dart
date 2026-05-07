@@ -22,9 +22,7 @@ class SessionPreviewView extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = context.select<WorkspacesCubit, Workspace?>(
-      (c) => c.state.activeWorkspace,
-    );
+    final active = context.select<WorkspacesCubit, Workspace?>((c) => c.state.activeWorkspace);
     if (active == null) return const SizedBox.shrink();
 
     return BlocBuilder<ChatHistoryCubit, ChatHistoryState>(
@@ -34,9 +32,7 @@ class SessionPreviewView extends HookWidget {
         if (h == null || h.selectedId == null) {
           return const _EmptyPreview();
         }
-        final summary = h.sessions.firstWhereOrNull(
-          (s) => s.id == h.selectedId,
-        );
+        final summary = h.sessions.firstWhereOrNull((s) => s.id == h.selectedId);
         if (summary == null) return const _EmptyPreview();
 
         return Column(
@@ -46,11 +42,7 @@ class SessionPreviewView extends HookWidget {
             Expanded(
               child: h.previewLoading
                   ? const Center(
-                      child: SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
+                      child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
                     )
                   : ClaudeMessageList(
                       workspaceId: active.id,
@@ -75,10 +67,7 @@ class _EmptyPreview extends StatelessWidget {
     return Center(
       child: Text(
         Locales.Sessions.Preview.empty,
-        style: AppTypography.bodyMain.copyWith(
-          color: AppColors.outline,
-          fontSize: 13,
-        ),
+        style: AppTypography.bodyMain.copyWith(color: AppColors.outline, fontSize: 13),
         textAlign: TextAlign.center,
       ),
     );
@@ -86,10 +75,7 @@ class _EmptyPreview extends StatelessWidget {
 }
 
 class _PreviewToolbar extends StatelessWidget {
-  const _PreviewToolbar({
-    required this.workspace,
-    required this.summary,
-  });
+  const _PreviewToolbar({required this.workspace, required this.summary});
 
   final Workspace workspace;
   final ChatSessionSummary summary;
@@ -100,8 +86,7 @@ class _PreviewToolbar extends StatelessWidget {
     final sessionsCubit = context.read<ClaudeSessionsCubit>();
     final historyCubit = context.read<ChatHistoryCubit>();
 
-    final liveMessages =
-        sessionsCubit.state.sessionFor(workspace.id)?.messages ?? const [];
+    final liveMessages = sessionsCubit.state.sessionFor(workspace.id)?.messages ?? const [];
 
     if (liveMessages.isNotEmpty) {
       final confirmed = await showDialog<bool>(
@@ -141,21 +126,12 @@ class _PreviewToolbar extends StatelessWidget {
     if (path == null) return;
     if (!context.mounted) return;
 
-    final result = await historyCubit.export(
-      workspace.id,
-      summary.id,
-      summary.encodedPath,
-      path,
-    );
+    final result = await historyCubit.export(workspace.id, summary.id, summary.encodedPath, path);
     if (!context.mounted) return;
     if (result != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            Locales.Sessions.Preview.exportDone(path: result),
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(Locales.Sessions.Preview.exportDone(path: result))));
     }
   }
 
@@ -182,8 +158,7 @@ class _PreviewToolbar extends StatelessWidget {
     );
     if (confirmed != true) return;
 
-    final liveSessionId =
-        sessionsCubit.state.sessionFor(workspace.id)?.claudeSessionId;
+    final liveSessionId = sessionsCubit.state.sessionFor(workspace.id)?.claudeSessionId;
 
     await historyCubit.delete(workspace.id, summary.id, summary.encodedPath);
     if (!context.mounted) return;
@@ -218,10 +193,7 @@ class _PreviewToolbar extends StatelessWidget {
                 ),
                 Text(
                   _dateFmt.format(summary.lastMessageAt.toLocal()),
-                  style: AppTypography.bodyMain.copyWith(
-                    color: AppColors.outline,
-                    fontSize: 11,
-                  ),
+                  style: AppTypography.bodyMain.copyWith(color: AppColors.outline, fontSize: 11),
                 ),
               ],
             ),

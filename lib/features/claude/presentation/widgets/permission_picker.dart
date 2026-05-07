@@ -12,12 +12,7 @@ import '../../domain/entities/claude_permission_mode.dart';
 import '_enum_ui.dart';
 
 class PermissionPicker extends StatelessWidget {
-  const PermissionPicker({
-    super.key,
-    required this.current,
-    required this.onSelected,
-    this.enabled = true,
-  });
+  const PermissionPicker({super.key, required this.current, required this.onSelected, this.enabled = true});
 
   final ClaudePermissionMode current;
   final ValueChanged<ClaudePermissionMode> onSelected;
@@ -33,16 +28,11 @@ class PermissionPicker extends StatelessWidget {
         builder: (context, hover) {
           return Container(
             height: 24,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             decoration: BoxDecoration(
               color: hover ? AppColors.glassHover : Colors.transparent,
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: AppColors.outlineVariant,
-                width: 1,
-              ),
+              border: Border.all(color: AppColors.outlineVariant, width: 1),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -53,14 +43,11 @@ class PermissionPicker extends StatelessWidget {
                   current.labelKey.tr(),
                   style: AppTypography.bodyMain.copyWith(
                     fontSize: 11,
-                    color: enabled
-                        ? AppColors.onSurface
-                        : AppColors.outline,
+                    color: enabled ? AppColors.onSurface : AppColors.outline,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
-                const Icon(Symbols.expand_more,
-                    size: 12, color: AppColors.onSurfaceVariant),
+                const Icon(Symbols.expand_more, size: 12, color: AppColors.onSurfaceVariant),
               ],
             ),
           );
@@ -93,8 +80,7 @@ class PermissionPicker extends StatelessWidget {
                   m.labelKey.tr(),
                   style: AppTypography.bodyMain.copyWith(
                     fontSize: 12,
-                    fontWeight:
-                        m == current ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: m == current ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
               ],

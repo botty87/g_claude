@@ -11,12 +11,7 @@ import '../../../../shared/widgets/hoverable.dart';
 import '../../domain/entities/claude_model.dart';
 
 class ModelPicker extends StatelessWidget {
-  const ModelPicker({
-    super.key,
-    required this.current,
-    required this.onSelected,
-    this.enabled = true,
-  });
+  const ModelPicker({super.key, required this.current, required this.onSelected, this.enabled = true});
 
   final ClaudeModel current;
   final ValueChanged<ClaudeModel> onSelected;
@@ -32,35 +27,26 @@ class ModelPicker extends StatelessWidget {
         builder: (context, hover) {
           return Container(
             height: 24,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             decoration: BoxDecoration(
               color: hover ? AppColors.glassHover : Colors.transparent,
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: AppColors.outlineVariant,
-                width: 1,
-              ),
+              border: Border.all(color: AppColors.outlineVariant, width: 1),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Symbols.smart_toy,
-                    size: 12, color: AppColors.onSurfaceVariant),
+                const Icon(Symbols.smart_toy, size: 12, color: AppColors.onSurfaceVariant),
                 const SizedBox(width: AppSpacing.xs),
                 Text(
                   current.labelKey.tr(),
                   style: AppTypography.bodyMain.copyWith(
                     fontSize: 11,
-                    color: enabled
-                        ? AppColors.onSurface
-                        : AppColors.outline,
+                    color: enabled ? AppColors.onSurface : AppColors.outline,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
-                const Icon(Symbols.expand_more,
-                    size: 12, color: AppColors.onSurfaceVariant),
+                const Icon(Symbols.expand_more, size: 12, color: AppColors.onSurfaceVariant),
               ],
             ),
           );
@@ -86,17 +72,14 @@ class ModelPicker extends StatelessWidget {
                 Icon(
                   m == current ? Symbols.check : Symbols.smart_toy,
                   size: 14,
-                  color: m == current
-                      ? AppColors.brandIndigo
-                      : AppColors.onSurfaceVariant,
+                  color: m == current ? AppColors.brandIndigo : AppColors.onSurfaceVariant,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
                   m.labelKey.tr(),
                   style: AppTypography.bodyMain.copyWith(
                     fontSize: 12,
-                    fontWeight:
-                        m == current ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: m == current ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
               ],

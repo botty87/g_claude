@@ -12,9 +12,6 @@ class SearchSessions {
 
   final ChatHistoryRepository _repo;
 
-  Future<Either<Failure, List<ChatSessionSummary>>> call(
-    WorkspaceId workspaceId,
-    String query,
-  ) =>
+  Future<Either<Failure, List<ChatSessionSummary>>> call(WorkspaceId workspaceId, String query) =>
       _repo.searchSessions(workspaceId, query);
 }

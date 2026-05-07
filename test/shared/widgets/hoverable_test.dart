@@ -19,18 +19,17 @@ void main() {
     var taps = 0;
     var doubleTaps = 0;
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: Hoverable(
-          onTap: () => taps++,
-          onDoubleTap: () => doubleTaps++,
-          builder: (_, _) => const ColoredBox(
-            color: Color(0xFFCCCCCC),
-            child: SizedBox(width: 100, height: 100),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Hoverable(
+            onTap: () => taps++,
+            onDoubleTap: () => doubleTaps++,
+            builder: (_, _) => const ColoredBox(color: Color(0xFFCCCCCC), child: SizedBox(width: 100, height: 100)),
           ),
         ),
       ),
-    ));
+    );
 
     await tester.tapAt(tester.getCenter(find.byType(Hoverable)));
     // Wait past the double-tap window — there is no second tap, so onTap
@@ -41,24 +40,21 @@ void main() {
     expect(doubleTaps, 0);
   });
 
-  testWidgets(
-      'two taps within kDoubleTapTimeout fire onTap once + onDoubleTap once',
-      (tester) async {
+  testWidgets('two taps within kDoubleTapTimeout fire onTap once + onDoubleTap once', (tester) async {
     var taps = 0;
     var doubleTaps = 0;
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: Hoverable(
-          onTap: () => taps++,
-          onDoubleTap: () => doubleTaps++,
-          builder: (_, _) => const ColoredBox(
-            color: Color(0xFFCCCCCC),
-            child: SizedBox(width: 100, height: 100),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Hoverable(
+            onTap: () => taps++,
+            onDoubleTap: () => doubleTaps++,
+            builder: (_, _) => const ColoredBox(color: Color(0xFFCCCCCC), child: SizedBox(width: 100, height: 100)),
           ),
         ),
       ),
-    ));
+    );
 
     await tester.tapAt(tester.getCenter(find.byType(Hoverable)));
     // Second tap within the window — the implementation: first tap calls
@@ -85,46 +81,44 @@ void main() {
   // behavior is verified manually in the running app and indirectly by the
   // first test (single tap fires onTap once with onDoubleTap registered).
 
-  testWidgets('without onTap and onDoubleTap, GestureDetector receives onTap=null',
-      (tester) async {
+  testWidgets('without onTap and onDoubleTap, GestureDetector receives onTap=null', (tester) async {
     // Pin the contract: when both callbacks are null, the widget builds
     // without crashing and absorbs taps without dispatching anything.
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: Hoverable(
-          builder: (_, _) => const ColoredBox(
-            color: Color(0xFFCCCCCC),
-            child: SizedBox(width: 100, height: 100),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Hoverable(
+            builder: (_, _) => const ColoredBox(color: Color(0xFFCCCCCC), child: SizedBox(width: 100, height: 100)),
           ),
         ),
       ),
-    ));
+    );
 
     await tester.tapAt(tester.getCenter(find.byType(Hoverable)));
     // No assertion on a callback — the contract is "no crash".
   });
 
-  testWidgets('builder receives hover=true on enter, hover=false on exit',
-      (tester) async {
+  testWidgets('builder receives hover=true on enter, hover=false on exit', (tester) async {
     final hoverStates = <bool>[];
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: Hoverable(
-          builder: (_, hover) {
-            hoverStates.add(hover);
-            return const SizedBox(width: 100, height: 100);
-          },
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Hoverable(
+            builder: (_, hover) {
+              hoverStates.add(hover);
+              return const SizedBox(width: 100, height: 100);
+            },
+          ),
         ),
       ),
-    ));
+    );
 
     // Initial build: hover starts at false.
     expect(hoverStates.last, isFalse);
 
     // Move pointer over the widget.
-    final gesture =
-        await tester.createGesture(kind: PointerDeviceKind.mouse);
+    final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
     addTearDown(gesture.removePointer);
     await gesture.addPointer(location: Offset.zero);
     await gesture.moveTo(tester.getCenter(find.byType(Hoverable)));

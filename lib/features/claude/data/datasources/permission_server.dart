@@ -26,9 +26,7 @@ class PermissionRequest {
 /// Resolver result. Either auto-decide (allow/deny) immediately or hand off
 /// to interactive UI (`ask`); when `ask` is returned the server suspends the
 /// HTTP response until [PermissionServer.respond] completes the request.
-typedef PermissionResolver = Future<PermissionDecision> Function(
-  PermissionRequest request,
-);
+typedef PermissionResolver = Future<PermissionDecision> Function(PermissionRequest request);
 
 /// Local HTTP listener that Claude Code invokes from its `PreToolUse` hook
 /// (configured via the `--settings` file). The resolver is set by the cubit
@@ -57,8 +55,7 @@ class PermissionServer {
 
   /// Registers a callback invoked when the resolver returns `ask` — the
   /// caller is responsible for showing UI and eventually calling [respond].
-  void setInteractiveHandler(void Function(PermissionRequest) handler) =>
-      _interactiveHandler = handler;
+  void setInteractiveHandler(void Function(PermissionRequest) handler) => _interactiveHandler = handler;
 
   Future<int> start() async {
     if (_port != null) return _port!;
@@ -107,23 +104,18 @@ class PermissionServer {
       requestId: requestId,
       sessionId: payload['session_id'] as String? ?? '',
       toolName: payload['tool_name'] as String? ?? '',
-      toolInput:
-          (payload['tool_input'] as Map?)?.cast<String, dynamic>() ?? const {},
+      toolInput: (payload['tool_input'] as Map?)?.cast<String, dynamic>() ?? const {},
     );
 
     final resolver = _resolver;
-    var decision = resolver != null
-        ? await resolver(req)
-        : PermissionDecision.allow;
+    var decision = resolver != null ? await resolver(req) : PermissionDecision.allow;
 
     if (decision == PermissionDecision.ask) {
       final completer = Completer<PermissionDecision>();
       _pending[requestId] = completer;
       final handler = _interactiveHandler;
       if (handler == null) {
-        _talker.warning(
-          'PermissionServer: ask returned but no interactive handler — denying',
-        );
+        _talker.warning('PermissionServer: ask returned but no interactive handler — denying');
         _pending.remove(requestId);
         decision = PermissionDecision.deny;
       } else {
@@ -131,9 +123,7 @@ class PermissionServer {
         try {
           decision = await completer.future.timeout(_interactiveTimeout);
         } on TimeoutException {
-          _talker.warning(
-            'PermissionServer: interactive request $requestId timed out — denying',
-          );
+          _talker.warning('PermissionServer: interactive request $requestId timed out — denying');
           _pending.remove(requestId);
           decision = PermissionDecision.deny;
         }
@@ -157,15 +147,11 @@ class PermissionServer {
   shelf.Response _ok(PermissionDecision decision) {
     return shelf.Response.ok(
       jsonEncode({
-        'hookSpecificOutput': {
-          'hookEventName': 'PreToolUse',
-          'permissionDecision': decision.name,
-        },
+        'hookSpecificOutput': {'hookEventName': 'PreToolUse', 'permissionDecision': decision.name},
       }),
       headers: {'Content-Type': 'application/json'},
     );
   }
 
-  String _short(String s) =>
-      s.isEmpty ? '?' : s.substring(0, s.length.clamp(0, 8));
+  String _short(String s) => s.isEmpty ? '?' : s.substring(0, s.length.clamp(0, 8));
 }

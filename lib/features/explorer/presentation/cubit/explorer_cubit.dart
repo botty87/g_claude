@@ -62,12 +62,14 @@ class ExplorerCubit extends Cubit<ExplorerState> {
 
   void _attachWatcher(Workspace w) {
     if (_fsSubs.containsKey(w.id)) return;
-    _fsSubs[w.id] = _fileWatcher.watch(w.path).listen(
-      (event) => _onFsEvent(w, event),
-      onError: (Object e, StackTrace st) {
-        _talker.error('ExplorerCubit: watcher error for ${w.path}', e, st);
-      },
-    );
+    _fsSubs[w.id] = _fileWatcher
+        .watch(w.path)
+        .listen(
+          (event) => _onFsEvent(w, event),
+          onError: (Object e, StackTrace st) {
+            _talker.error('ExplorerCubit: watcher error for ${w.path}', e, st);
+          },
+        );
   }
 
   void _detachWatcher(WorkspaceId id) {
@@ -102,13 +104,10 @@ class ExplorerCubit extends Cubit<ExplorerState> {
   void _scheduleRefresh(WorkspaceId id, String parent) {
     final key = '$id::$parent';
     _refreshTimers[key]?.cancel();
-    _refreshTimers[key] = Timer(
-      const Duration(milliseconds: _refreshDebounceMs),
-      () {
-        _refreshTimers.remove(key);
-        unawaited(_refreshFolder(id, parent));
-      },
-    );
+    _refreshTimers[key] = Timer(const Duration(milliseconds: _refreshDebounceMs), () {
+      _refreshTimers.remove(key);
+      unawaited(_refreshFolder(id, parent));
+    });
   }
 
   Future<void> _refreshFolder(WorkspaceId id, String parent) async {
@@ -117,9 +116,7 @@ class ExplorerCubit extends Cubit<ExplorerState> {
     final result = await _listDirectory(path: parent);
     result.fold(
       (failure) {
-        _talker.debug(
-          'ExplorerCubit: watcher refresh skipped $parent: $failure',
-        );
+        _talker.debug('ExplorerCubit: watcher refresh skipped $parent: $failure');
       },
       (nodes) {
         final current = state.trees[id];
@@ -144,8 +141,7 @@ class ExplorerCubit extends Cubit<ExplorerState> {
       final added = newPaths.difference(known);
       _knownOpenPaths[id] = newPaths;
       if (added.isEmpty) continue;
-      final workspace = _workspacesCubit.state.workspacesOrEmpty
-          .firstWhereOrNull((w) => w.id == id);
+      final workspace = _workspacesCubit.state.workspacesOrEmpty.firstWhereOrNull((w) => w.id == id);
       if (workspace == null) continue;
       for (final path in added) {
         unawaited(prewarmReveal(id, workspace.path, path));
@@ -177,9 +173,7 @@ class ExplorerCubit extends Cubit<ExplorerState> {
     if (tree != null && tree.children.containsKey(rootPath)) return;
 
     final current = tree ?? const WorkspaceTree();
-    final withLoading = current.copyWith(
-      loading: {...current.loading, rootPath},
-    );
+    final withLoading = current.copyWith(loading: {...current.loading, rootPath});
     emit(state.copyWith(trees: {...state.trees, id: withLoading}));
 
     final result = await _listDirectory(path: rootPath);
@@ -210,18 +204,14 @@ class ExplorerCubit extends Cubit<ExplorerState> {
 
     if (tree.expanded.contains(absPath)) {
       // Collapse — keep children cached for fast re-expand
-      final collapsed = tree.copyWith(
-        expanded: tree.expanded.difference({absPath}),
-      );
+      final collapsed = tree.copyWith(expanded: tree.expanded.difference({absPath}));
       emit(state.copyWith(trees: {...state.trees, id: collapsed}));
       return;
     }
 
     if (tree.children.containsKey(absPath)) {
       // Already cached — just expand
-      final expanded = tree.copyWith(
-        expanded: {...tree.expanded, absPath},
-      );
+      final expanded = tree.copyWith(expanded: {...tree.expanded, absPath});
       emit(state.copyWith(trees: {...state.trees, id: expanded}));
       return;
     }
@@ -265,9 +255,7 @@ class ExplorerCubit extends Cubit<ExplorerState> {
     result.fold(
       (failure) {
         _talker.error('ExplorerCubit: failed to refresh root $rootPath', failure);
-        final afterError = tree.copyWith(
-          errors: {...tree.errors, rootPath: failure},
-        );
+        final afterError = tree.copyWith(errors: {...tree.errors, rootPath: failure});
         emit(state.copyWith(trees: {...state.trees, id: afterError}));
       },
       (nodes) async {
@@ -277,18 +265,13 @@ class ExplorerCubit extends Cubit<ExplorerState> {
         );
         emit(state.copyWith(trees: {...state.trees, id: refreshed}));
 
-        final subPaths = tree.expanded
-            .where((p) => p != rootPath)
-            .toList(growable: false);
+        final subPaths = tree.expanded.where((p) => p != rootPath).toList(growable: false);
         if (subPaths.isEmpty) return;
-        final subResults = await Future.wait(
-          subPaths.map((p) => _listDirectory(path: p)),
-        );
+        final subResults = await Future.wait(subPaths.map((p) => _listDirectory(path: p)));
         final mergedChildren = {...refreshed.children};
         for (var i = 0; i < subPaths.length; i++) {
           subResults[i].fold(
-            (failure) => _talker
-                .debug('ExplorerCubit: refresh skipping ${subPaths[i]}: $failure'),
+            (failure) => _talker.debug('ExplorerCubit: refresh skipping ${subPaths[i]}: $failure'),
             (subNodes) => mergedChildren[subPaths[i]] = subNodes,
           );
         }
@@ -316,12 +299,7 @@ class ExplorerCubit extends Cubit<ExplorerState> {
   Future<void> prewarmReveal(WorkspaceId id, String rootPath, String targetPath) =>
       _revealInternal(id, rootPath, targetPath, select: false);
 
-  Future<void> _revealInternal(
-    WorkspaceId id,
-    String rootPath,
-    String targetPath, {
-    required bool select,
-  }) async {
+  Future<void> _revealInternal(WorkspaceId id, String rootPath, String targetPath, {required bool select}) async {
     if (targetPath == rootPath) return;
     if (!p.isWithin(rootPath, targetPath)) {
       _talker.debug('ExplorerCubit.revealPath: $targetPath outside $rootPath');
@@ -345,12 +323,8 @@ class ExplorerCubit extends Cubit<ExplorerState> {
       parents.add(current);
     }
 
-    final cached = parents
-        .where((path) => initialTree.children.containsKey(path))
-        .toList(growable: false);
-    final missing = parents
-        .where((path) => !initialTree.children.containsKey(path))
-        .toList(growable: false);
+    final cached = parents.where((path) => initialTree.children.containsKey(path)).toList(growable: false);
+    final missing = parents.where((path) => !initialTree.children.containsKey(path)).toList(growable: false);
 
     // Phase 1 (sync, optimistic) — applies only to user-driven reveals.
     // Expand the parents we already have in cache and commit selection
@@ -362,10 +336,7 @@ class ExplorerCubit extends Cubit<ExplorerState> {
       final hasNewExpanded = immediateExpanded.length != initialTree.expanded.length;
       final hasNewSelection = initialTree.selectedPath != targetPath;
       if (hasNewExpanded || hasNewSelection) {
-        final immediate = initialTree.copyWith(
-          expanded: immediateExpanded,
-          selectedPath: targetPath,
-        );
+        final immediate = initialTree.copyWith(expanded: immediateExpanded, selectedPath: targetPath);
         emit(state.copyWith(trees: {...state.trees, id: immediate}));
       }
     }
@@ -373,16 +344,12 @@ class ExplorerCubit extends Cubit<ExplorerState> {
     if (missing.isEmpty) return; // nothing to load — phase 1 already committed
 
     // Phase 2 (async) — load missing parents in parallel, then commit.
-    final results = await Future.wait(
-      missing.map((path) => _listDirectory(path: path)),
-    );
+    final results = await Future.wait(missing.map((path) => _listDirectory(path: path)));
     final loaded = <String, List<FileNode>>{};
     for (var i = 0; i < missing.length; i++) {
       final path = missing[i];
       results[i].fold(
-        (failure) => _talker.debug(
-          'ExplorerCubit.revealPath: failed to load $path: $failure',
-        ),
+        (failure) => _talker.debug('ExplorerCubit.revealPath: failed to load $path: $failure'),
         (nodes) => loaded[path] = nodes,
       );
     }
@@ -403,14 +370,8 @@ class ExplorerCubit extends Cubit<ExplorerState> {
       return; // phase 1 already covered everything reachable
     }
 
-    final mergedChildren = <String, List<FileNode>>{
-      ...treeNow.children,
-      ...loaded,
-    };
-    final mergedExpanded = <String>{
-      ...treeNow.expanded,
-      ...reachableExpanded,
-    };
+    final mergedChildren = <String, List<FileNode>>{...treeNow.children, ...loaded};
+    final mergedExpanded = <String>{...treeNow.expanded, ...reachableExpanded};
 
     final next = treeNow.copyWith(
       children: mergedChildren,

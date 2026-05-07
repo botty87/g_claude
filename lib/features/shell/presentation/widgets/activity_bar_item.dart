@@ -35,9 +35,7 @@ class ActivityBarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tooltipMessage = isEnabled
-        ? tooltip
-        : '$tooltip${Locales.Shell.Activity.comingLaterSuffix}';
+    final tooltipMessage = isEnabled ? tooltip : '$tooltip${Locales.Shell.Activity.comingLaterSuffix}';
     return Tooltip(
       message: tooltipMessage,
       child: Hoverable(
@@ -48,10 +46,7 @@ class ActivityBarItem extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
-                color: _fillColor(hover),
-                borderRadius: BorderRadius.circular(AppRadii.md),
-              ),
+              decoration: BoxDecoration(color: _fillColor(hover), borderRadius: BorderRadius.circular(AppRadii.md)),
               child: Icon(icon, size: 20, color: _iconColor(hover)),
             ),
             if (isActive)

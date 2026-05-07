@@ -21,10 +21,7 @@ class GlassPane extends StatelessWidget {
         ? const [BoxShadow(color: Color(0x265C5AE7), blurRadius: 20)] // 0.15 alpha
         : const <BoxShadow>[];
     return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.all(Radius.circular(AppRadii.lg)),
-        boxShadow: shadows,
-      ),
+      decoration: BoxDecoration(borderRadius: const BorderRadius.all(Radius.circular(AppRadii.lg)), boxShadow: shadows),
       child: ClipRRect(
         borderRadius: const BorderRadius.all(Radius.circular(AppRadii.lg)),
         child: BackdropFilter(

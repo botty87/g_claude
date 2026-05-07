@@ -21,9 +21,8 @@ abstract class WorkspaceHistory with _$WorkspaceHistory {
 abstract class ChatHistoryState with _$ChatHistoryState {
   const ChatHistoryState._();
 
-  const factory ChatHistoryState({
-    @Default(<String, WorkspaceHistory>{}) Map<String, WorkspaceHistory> byWorkspace,
-  }) = _ChatHistoryState;
+  const factory ChatHistoryState({@Default(<String, WorkspaceHistory>{}) Map<String, WorkspaceHistory> byWorkspace}) =
+      _ChatHistoryState;
 
   WorkspaceHistory? historyFor(String? workspaceId) {
     if (workspaceId == null) return null;

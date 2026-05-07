@@ -11,9 +11,6 @@ class RefreshSessionsIndex {
 
   final ChatHistoryRepository _repo;
 
-  Future<Either<Failure, void>> call({
-    required WorkspaceId workspaceId,
-    required String workspaceCwd,
-  }) =>
+  Future<Either<Failure, void>> call({required WorkspaceId workspaceId, required String workspaceCwd}) =>
       _repo.refreshIndex(workspaceId: workspaceId, workspaceCwd: workspaceCwd);
 }

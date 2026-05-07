@@ -20,12 +20,8 @@ part 'workspaces_cubit.state.dart';
 
 @lazySingleton
 class WorkspacesCubit extends Cubit<WorkspacesState> {
-  WorkspacesCubit(
-    this._openWorkspace,
-    this._persistence,
-    this._fileWatcher,
-    this._talker,
-  ) : super(const WorkspacesState.initial());
+  WorkspacesCubit(this._openWorkspace, this._persistence, this._fileWatcher, this._talker)
+    : super(const WorkspacesState.initial());
 
   final OpenWorkspace _openWorkspace;
   final WorkspacesPersistenceDataSource _persistence;
@@ -50,9 +46,7 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
   String _normalize(String path) => p.normalize(p.absolute(path));
 
   Future<void> openFromPicker() async {
-    final selected = await FilePicker.getDirectoryPath(
-      dialogTitle: Locales.Workspace.Picker.title,
-    );
+    final selected = await FilePicker.getDirectoryPath(dialogTitle: Locales.Workspace.Picker.title);
     if (selected == null) {
       _talker.debug('Workspace picker dismissed');
       return;
@@ -77,17 +71,10 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     result.fold(
       (failure) {
         _talker.error('Failed to open workspace: $normalized', failure);
-        emit(WorkspacesState.loaded(
-          workspaces: existing,
-          activeId: state.activeIdOrNull,
-          lastFailure: failure,
-        ));
+        emit(WorkspacesState.loaded(workspaces: existing, activeId: state.activeIdOrNull, lastFailure: failure));
       },
       (workspace) {
-        emit(WorkspacesState.loaded(
-          workspaces: [...existing, workspace],
-          activeId: workspace.id,
-        ));
+        emit(WorkspacesState.loaded(workspaces: [...existing, workspace], activeId: workspace.id));
         final ms = DateTime.now().difference(start).inMilliseconds;
         _talker.info('Workspace opened: ${workspace.name} (${ms}ms, claudeMd=${workspace.claudeMd != null})');
       },
@@ -131,16 +118,15 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
         emit(const WorkspacesState.loaded());
         return;
       }
-      final results = await Future.wait(snapshot.workspaces.map((entry) async {
-        final r = await _openWorkspace(path: entry.path);
-        return r.fold(
-          (failure) {
+      final results = await Future.wait(
+        snapshot.workspaces.map((entry) async {
+          final r = await _openWorkspace(path: entry.path);
+          return r.fold((failure) {
             _talker.info('Skipped restoring workspace ${entry.path}: $failure');
             return null;
-          },
-          (ws) => ws.copyWith(openedAt: entry.openedAt),
-        );
-      }));
+          }, (ws) => ws.copyWith(openedAt: entry.openedAt));
+        }),
+      );
       final restored = results.whereType<Workspace>().toList(growable: false);
       var activeId = snapshot.activeId;
       if (activeId == null || !restored.any((w) => w.id == activeId)) {
@@ -157,17 +143,14 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     final s = state;
     if (s is! WorkspacesStateLoaded) return;
     try {
-      await _persistence.write(PersistedWorkspaces(
-        activeId: s.activeId,
-        workspaces: s.workspaces
-            .map((w) => PersistedWorkspaceEntry(
-                  id: w.id,
-                  path: w.path,
-                  name: w.name,
-                  openedAt: w.openedAt,
-                ))
-            .toList(growable: false),
-      ));
+      await _persistence.write(
+        PersistedWorkspaces(
+          activeId: s.activeId,
+          workspaces: s.workspaces
+              .map((w) => PersistedWorkspaceEntry(id: w.id, path: w.path, name: w.name, openedAt: w.openedAt))
+              .toList(growable: false),
+        ),
+      );
     } catch (e, st) {
       _talker.error('Failed to persist workspaces', e, st);
     }

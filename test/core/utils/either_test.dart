@@ -24,8 +24,7 @@ void main() {
       });
 
       expect(out, 'left:boom');
-      expect(ifRightCalls, isEmpty,
-          reason: 'fold must short-circuit on the matching branch.');
+      expect(ifRightCalls, isEmpty, reason: 'fold must short-circuit on the matching branch.');
     });
 
     test('Right dispatches to ifRight and never invokes ifLeft', () {

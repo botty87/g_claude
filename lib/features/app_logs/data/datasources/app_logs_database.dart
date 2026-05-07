@@ -21,8 +21,7 @@ class AppSessions extends Table {
 @DataClassName('LogEntryRow')
 class LogEntries extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get sessionId =>
-      integer().references(AppSessions, #id, onDelete: KeyAction.cascade)();
+  IntColumn get sessionId => integer().references(AppSessions, #id, onDelete: KeyAction.cascade)();
   DateTimeColumn get time => dateTime()();
   TextColumn get level => text()();
   TextColumn get title => text().nullable()();
@@ -45,19 +44,15 @@ class AppLogsDatabase extends _$AppLogsDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        beforeOpen: (details) async {
-          // FK constraints are OFF by default in SQLite. Required for cascade
-          // deletes on log_entries when a session is removed.
-          await customStatement('PRAGMA foreign_keys = ON');
-        },
-        onCreate: (m) async {
-          await m.createAll();
-          await customStatement(
-            'CREATE INDEX idx_log_entries_session_time ON log_entries(session_id, time)',
-          );
-          await customStatement(
-            'CREATE INDEX idx_app_sessions_started ON app_sessions(started_at DESC)',
-          );
-        },
-      );
+    beforeOpen: (details) async {
+      // FK constraints are OFF by default in SQLite. Required for cascade
+      // deletes on log_entries when a session is removed.
+      await customStatement('PRAGMA foreign_keys = ON');
+    },
+    onCreate: (m) async {
+      await m.createAll();
+      await customStatement('CREATE INDEX idx_log_entries_session_time ON log_entries(session_id, time)');
+      await customStatement('CREATE INDEX idx_app_sessions_started ON app_sessions(started_at DESC)');
+    },
+  );
 }

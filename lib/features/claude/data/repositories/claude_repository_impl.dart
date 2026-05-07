@@ -42,9 +42,7 @@ class ClaudeRepositoryImpl implements ClaudeRepository {
         yield Right(event);
       }
     } on ClaudeBinaryNotFoundException {
-      yield const Left(SubprocessFailure(
-        message: 'binary_not_found',
-      ));
+      yield const Left(SubprocessFailure(message: 'binary_not_found'));
     } on ClaudeSpawnException catch (e) {
       yield Left(SubprocessFailure(message: e.message));
     } catch (e) {
@@ -56,10 +54,7 @@ class ClaudeRepositoryImpl implements ClaudeRepository {
   Future<void> stop() => _datasource.stop();
 
   @override
-  Future<Either<Failure, void>> toggleMcpServer({
-    required String serverName,
-    required bool enabled,
-  }) async {
+  Future<Either<Failure, void>> toggleMcpServer({required String serverName, required bool enabled}) async {
     try {
       await _datasource.sendControlRequest(
         subtype: 'mcp_toggle',
@@ -82,11 +77,7 @@ class ClaudeRepositoryImpl implements ClaudeRepository {
     bool isError = false,
   }) async {
     try {
-      await _datasource.sendToolResult(
-        toolUseId: toolUseId,
-        content: content,
-        isError: isError,
-      );
+      await _datasource.sendToolResult(toolUseId: toolUseId, content: content, isError: isError);
       return const Right(null);
     } on StateError catch (e) {
       return Left(SubprocessFailure(message: e.message));
@@ -96,23 +87,16 @@ class ClaudeRepositoryImpl implements ClaudeRepository {
   }
 
   @override
-  void respondPermission({
-    required String requestId,
-    required ClaudePermissionDecision decision,
-  }) {
+  void respondPermission({required String requestId, required ClaudePermissionDecision decision}) {
     final mapped = switch (decision) {
-      ClaudePermissionDecision.allowOnce ||
-      ClaudePermissionDecision.allowAlways =>
-        PermissionDecision.allow,
+      ClaudePermissionDecision.allowOnce || ClaudePermissionDecision.allowAlways => PermissionDecision.allow,
       ClaudePermissionDecision.deny => PermissionDecision.deny,
     };
     _permissionServer.respond(requestId, mapped);
   }
 
   @override
-  Future<Either<Failure, String?>> authenticateMcpServer({
-    required String serverName,
-  }) async {
+  Future<Either<Failure, String?>> authenticateMcpServer({required String serverName}) async {
     try {
       final response = await _datasource.sendControlRequest(
         subtype: 'mcp_authenticate',

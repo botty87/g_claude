@@ -19,8 +19,7 @@ class PdfView extends StatelessWidget {
         path,
         params: PdfViewerParams(
           backgroundColor: AppColors.surfaceContainerLowest,
-          errorBannerBuilder: (context, error, stackTrace, documentRef) =>
-              _ErrorView(),
+          errorBannerBuilder: (context, error, stackTrace, documentRef) => _ErrorView(),
         ),
       ),
     );
@@ -36,10 +35,7 @@ class _ErrorView extends StatelessWidget {
         children: [
           const Icon(Symbols.error_outline, color: AppColors.error, size: 32),
           const SizedBox(height: 8),
-          Text(
-            Locales.Editor.Pdf.loadError,
-            style: AppTypography.bodyMain.copyWith(color: AppColors.onSurfaceVariant),
-          ),
+          Text(Locales.Editor.Pdf.loadError, style: AppTypography.bodyMain.copyWith(color: AppColors.onSurfaceVariant)),
         ],
       ),
     );

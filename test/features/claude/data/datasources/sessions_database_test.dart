@@ -98,10 +98,7 @@ void main() {
       await db.upsertSessionFts(sessionId: 's1', workspaceId: 'w1', body: 'plain text');
 
       // No throw on an embedded quote: graceful empty result.
-      expect(
-        await db.searchFtsIds(workspaceId: 'w1', query: 'he"llo'),
-        isEmpty,
-      );
+      expect(await db.searchFtsIds(workspaceId: 'w1', query: 'he"llo'), isEmpty);
     });
 
     test('user query with FTS5 operator-like characters does not crash', () async {

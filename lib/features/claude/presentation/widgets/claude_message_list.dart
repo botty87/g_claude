@@ -30,10 +30,7 @@ const _kAnimDuration = Duration(milliseconds: 180);
 const _kToolBodyMaxHeight = 200.0;
 const _kStickThreshold = 48.0;
 
-(IconData, Color) _toolGroupHeaderIconAndColor({
-  required int running,
-  required int errors,
-}) {
+(IconData, Color) _toolGroupHeaderIconAndColor({required int running, required int errors}) {
   if (errors > 0) return (Symbols.error, AppColors.error);
   if (running > 0) return (Symbols.sync, AppColors.tertiary);
   return (Symbols.check_circle, AppColors.outline);
@@ -70,6 +67,7 @@ class ClaudeMessageList extends HookWidget {
           stickToBottom.value = atBottom;
         }
       }
+
       scrollController.addListener(onScroll);
       return () => scrollController.removeListener(onScroll);
     }, [scrollController]);
@@ -105,8 +103,7 @@ class ClaudeMessageList extends HookWidget {
       return _EmptyState(status: status);
     }
 
-    final hasError =
-        status == ClaudeRunStatus.error || status == ClaudeRunStatus.sessionDead;
+    final hasError = status == ClaudeRunStatus.error || status == ClaudeRunStatus.sessionDead;
 
     final items = useMemoized(() => _buildItems(messages), [messages]);
 
@@ -114,10 +111,7 @@ class ClaudeMessageList extends HookWidget {
       children: [
         ListView.builder(
           controller: scrollController,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.lg,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.lg),
           itemCount: items.length + (hasError ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == items.length) {
@@ -246,24 +240,24 @@ class _SingleItem extends _Item {
   final ClaudeMessage message;
   @override
   _Role get role => switch (message) {
-        ClaudeMessageUser() => _Role.user,
-        ClaudeMessageAssistant() => _Role.assistant,
-        ClaudeMessageTool() => _Role.tools,
-        ClaudeMessageSystem() => _Role.system,
-        ClaudeMessageAskUserQuestion() => _Role.askUser,
-        ClaudeMessagePermissionRequest() => _Role.permission,
-        ClaudeMessageCompactSummary() => _Role.compactSummary,
-      };
+    ClaudeMessageUser() => _Role.user,
+    ClaudeMessageAssistant() => _Role.assistant,
+    ClaudeMessageTool() => _Role.tools,
+    ClaudeMessageSystem() => _Role.system,
+    ClaudeMessageAskUserQuestion() => _Role.askUser,
+    ClaudeMessagePermissionRequest() => _Role.permission,
+    ClaudeMessageCompactSummary() => _Role.compactSummary,
+  };
   @override
   String get key => switch (message) {
-        ClaudeMessageUser(:final id) => id,
-        ClaudeMessageAssistant(:final id) => id,
-        ClaudeMessageTool(:final id) => id,
-        ClaudeMessageSystem(:final id) => id,
-        ClaudeMessageAskUserQuestion(:final id) => id,
-        ClaudeMessagePermissionRequest(:final id) => id,
-        ClaudeMessageCompactSummary(:final id) => id,
-      };
+    ClaudeMessageUser(:final id) => id,
+    ClaudeMessageAssistant(:final id) => id,
+    ClaudeMessageTool(:final id) => id,
+    ClaudeMessageSystem(:final id) => id,
+    ClaudeMessageAskUserQuestion(:final id) => id,
+    ClaudeMessagePermissionRequest(:final id) => id,
+    ClaudeMessageCompactSummary(:final id) => id,
+  };
 }
 
 class _ToolGroupItem extends _Item {
@@ -282,8 +276,7 @@ class _ItemRenderer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (item) {
-      _SingleItem(:final message) =>
-        _MessageItem(message: message, workspaceId: workspaceId),
+      _SingleItem(:final message) => _MessageItem(message: message, workspaceId: workspaceId),
       _ToolGroupItem(:final tools) => _ToolGroup(tools: tools),
     };
   }
@@ -307,24 +300,13 @@ class _ScrollToBottomFab extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(AppRadii.full),
-              border: Border.all(
-                color: AppColors.outlineVariant.withValues(alpha: 0.6),
-                width: 1,
-              ),
+              border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.6), width: 1),
               boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 2)),
               ],
             ),
             padding: const EdgeInsets.all(AppSpacing.sm),
-            child: const Icon(
-              Symbols.keyboard_double_arrow_down,
-              size: 20,
-              color: AppColors.onSurface,
-            ),
+            child: const Icon(Symbols.keyboard_double_arrow_down, size: 20, color: AppColors.onSurface),
           ),
         ),
       ),
@@ -357,10 +339,7 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Text(
               Locales.Claude.Empty.hint,
-              style: AppTypography.bodyMain.copyWith(
-                color: AppColors.outline,
-                fontSize: 12,
-              ),
+              style: AppTypography.bodyMain.copyWith(color: AppColors.outline, fontSize: 12),
               textAlign: TextAlign.center,
             ),
           ],
@@ -380,48 +359,28 @@ class _MessageItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (message) {
       final ClaudeMessageUser m => _UserBubble(message: m),
-      ClaudeMessageAssistant(:final text, :final isStreaming) =>
-        _AssistantBlock(
-          text: text,
-          isStreaming: isStreaming,
-          workspaceId: workspaceId,
-        ),
-      ClaudeMessageTool(
-        :final toolName,
-        :final status,
-        :final input,
-        :final output,
-        :final isError,
-      ) =>
-        _ToolCard(
-          toolName: toolName,
-          status: status,
-          input: input,
-          output: output,
-          isError: isError,
-        ),
+      ClaudeMessageAssistant(:final text, :final isStreaming) => _AssistantBlock(
+        text: text,
+        isStreaming: isStreaming,
+        workspaceId: workspaceId,
+      ),
+      ClaudeMessageTool(:final toolName, :final status, :final input, :final output, :final isError) => _ToolCard(
+        toolName: toolName,
+        status: status,
+        input: input,
+        output: output,
+        isError: isError,
+      ),
       ClaudeMessageSystem(:final text) => _SystemLine(text: text),
-      final ClaudeMessageAskUserQuestion m => _AskUserQuestionItemWidget(
-          message: m,
-          workspaceId: workspaceId,
-        ),
-      final ClaudeMessagePermissionRequest m => _PermissionRequestItemWidget(
-          message: m,
-          workspaceId: workspaceId,
-        ),
-      final ClaudeMessageCompactSummary m => _CompactSummaryItemWidget(
-          message: m,
-          workspaceId: workspaceId,
-        ),
+      final ClaudeMessageAskUserQuestion m => _AskUserQuestionItemWidget(message: m, workspaceId: workspaceId),
+      final ClaudeMessagePermissionRequest m => _PermissionRequestItemWidget(message: m, workspaceId: workspaceId),
+      final ClaudeMessageCompactSummary m => _CompactSummaryItemWidget(message: m, workspaceId: workspaceId),
     };
   }
 }
 
 class _CompactSummaryItemWidget extends StatelessWidget {
-  const _CompactSummaryItemWidget({
-    required this.message,
-    required this.workspaceId,
-  });
+  const _CompactSummaryItemWidget({required this.message, required this.workspaceId});
 
   final ClaudeMessageCompactSummary message;
   final String workspaceId;
@@ -431,17 +390,13 @@ class _CompactSummaryItemWidget extends StatelessWidget {
     final cubit = context.read<ClaudeSessionsCubit>();
     return CompactSummaryCard(
       message: message,
-      onToggleExpanded: () =>
-          cubit.toggleCompactSummaryExpanded(workspaceId, message.id),
+      onToggleExpanded: () => cubit.toggleCompactSummaryExpanded(workspaceId, message.id),
     );
   }
 }
 
 class _AskUserQuestionItemWidget extends StatelessWidget {
-  const _AskUserQuestionItemWidget({
-    required this.message,
-    required this.workspaceId,
-  });
+  const _AskUserQuestionItemWidget({required this.message, required this.workspaceId});
 
   final ClaudeMessageAskUserQuestion message;
   final String workspaceId;
@@ -451,17 +406,13 @@ class _AskUserQuestionItemWidget extends StatelessWidget {
     final cubit = context.read<ClaudeSessionsCubit>();
     return AskUserQuestionCard(
       message: message,
-      onSubmit: (answers) =>
-          cubit.answerAskUserQuestion(workspaceId, message.id, answers),
+      onSubmit: (answers) => cubit.answerAskUserQuestion(workspaceId, message.id, answers),
     );
   }
 }
 
 class _PermissionRequestItemWidget extends StatelessWidget {
-  const _PermissionRequestItemWidget({
-    required this.message,
-    required this.workspaceId,
-  });
+  const _PermissionRequestItemWidget({required this.message, required this.workspaceId});
 
   final ClaudeMessagePermissionRequest message;
   final String workspaceId;
@@ -471,8 +422,7 @@ class _PermissionRequestItemWidget extends StatelessWidget {
     final cubit = context.read<ClaudeSessionsCubit>();
     return PermissionRequestCard(
       message: message,
-      onDecide: (decision) =>
-          cubit.answerPermission(workspaceId, message.id, decision),
+      onDecide: (decision) => cubit.answerPermission(workspaceId, message.id, decision),
     );
   }
 }
@@ -500,10 +450,7 @@ class _ToolGroup extends HookWidget {
       }
     }
 
-    final (headerIcon, headerColor) = _toolGroupHeaderIconAndColor(
-      running: running,
-      errors: errors,
-    );
+    final (headerIcon, headerColor) = _toolGroupHeaderIconAndColor(running: running, errors: errors);
 
     final summary = _summary(running: running, done: done, errors: errors);
 
@@ -521,102 +468,78 @@ class _ToolGroup extends HookWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppRadii.md),
             child: AnimatedContainer(
-          duration: _kAnimDuration,
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLow.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(AppRadii.md),
-            border: Border.all(
-              color: AppColors.outlineVariant.withValues(alpha: 0.4),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              InkWell(
-                onTap: () => expanded.value = !expanded.value,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        headerIcon,
-                        size: 14,
-                        color: headerColor,
-                        fill: errors == 0 && running == 0 ? 1 : 0,
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        Locales.Claude.Message.toolGroupTitle(count: '${tools.length}'),
-                        style: AppTypography.bodyMain.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: Text(
-                          summary,
-                          style: AppTypography.bodyMain.copyWith(
-                            color: AppColors.outline,
-                            fontSize: 11,
-                            fontStyle: FontStyle.italic,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      AnimatedRotation(
-                        duration: _kAnimDuration,
-                        turns: expanded.value ? 0.5 : 0,
-                        child: Icon(
-                          Symbols.expand_more,
-                          size: 16,
-                          color: AppColors.outline.withValues(alpha: 0.8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              duration: _kAnimDuration,
+              curve: Curves.easeOutCubic,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerLow.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(AppRadii.md),
+                border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.4), width: 1),
               ),
-              ClipRect(
-                child: AnimatedSize(
-                  duration: _kAnimDuration,
-                  curve: Curves.easeOutCubic,
-                  alignment: Alignment.topCenter,
-                  child: expanded.value
-                      ? Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.sm,
-                            0,
-                            AppSpacing.sm,
-                            AppSpacing.sm,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  InkWell(
+                    onTap: () => expanded.value = !expanded.value,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                      child: Row(
+                        children: [
+                          Icon(headerIcon, size: 14, color: headerColor, fill: errors == 0 && running == 0 ? 1 : 0),
+                          const SizedBox(width: AppSpacing.sm),
+                          Text(
+                            Locales.Claude.Message.toolGroupTitle(count: '${tools.length}'),
+                            style: AppTypography.bodyMain.copyWith(
+                              color: AppColors.onSurfaceVariant,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.2,
+                            ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const Divider(
-                                height: AppSpacing.sm,
-                                thickness: 0.5,
-                                color: AppColors.outlineVariant,
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              summary,
+                              style: AppTypography.bodyMain.copyWith(
+                                color: AppColors.outline,
+                                fontSize: 11,
+                                fontStyle: FontStyle.italic,
                               ),
-                              for (var i = 0; i < tools.length; i++) ...[
-                                if (i > 0) const SizedBox(height: AppSpacing.xs),
-                                _NestedToolCard(tool: tools[i]),
-                              ],
-                            ],
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        )
-                      : const SizedBox(width: double.infinity, height: 0),
-                ),
+                          AnimatedRotation(
+                            duration: _kAnimDuration,
+                            turns: expanded.value ? 0.5 : 0,
+                            child: Icon(Symbols.expand_more, size: 16, color: AppColors.outline.withValues(alpha: 0.8)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  ClipRect(
+                    child: AnimatedSize(
+                      duration: _kAnimDuration,
+                      curve: Curves.easeOutCubic,
+                      alignment: Alignment.topCenter,
+                      child: expanded.value
+                          ? Padding(
+                              padding: const EdgeInsets.fromLTRB(AppSpacing.sm, 0, AppSpacing.sm, AppSpacing.sm),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  const Divider(height: AppSpacing.sm, thickness: 0.5, color: AppColors.outlineVariant),
+                                  for (var i = 0; i < tools.length; i++) ...[
+                                    if (i > 0) const SizedBox(height: AppSpacing.xs),
+                                    _NestedToolCard(tool: tools[i]),
+                                  ],
+                                ],
+                              ),
+                            )
+                          : const SizedBox(width: double.infinity, height: 0),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
             ),
           ),
         ),
@@ -664,18 +587,14 @@ class _UserBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasChips =
-        message.slashTriggers.isNotEmpty || message.attachments.isNotEmpty;
+    final hasChips = message.slashTriggers.isNotEmpty || message.attachments.isNotEmpty;
     final hasText = message.text.isNotEmpty;
     return Align(
       alignment: Alignment.centerRight,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 560),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerHigh,
             borderRadius: const BorderRadius.only(
@@ -684,10 +603,7 @@ class _UserBubble extends StatelessWidget {
               bottomLeft: Radius.circular(12),
               bottomRight: Radius.circular(4),
             ),
-            border: Border.all(
-              color: AppColors.outlineVariant.withValues(alpha: 0.6),
-              width: 1,
-            ),
+            border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.6), width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -698,20 +614,15 @@ class _UserBubble extends StatelessWidget {
                   spacing: 4,
                   runSpacing: 4,
                   children: [
-                    for (final t in message.slashTriggers)
-                      BubbleSlashChip(trigger: t),
-                    for (final a in message.attachments)
-                      BubbleAttachmentChip(attachment: a),
+                    for (final t in message.slashTriggers) BubbleSlashChip(trigger: t),
+                    for (final a in message.attachments) BubbleAttachmentChip(attachment: a),
                   ],
                 ),
               if (hasChips && hasText) const SizedBox(height: AppSpacing.xs),
               if (hasText)
                 SelectableText(
                   message.text,
-                  style: AppTypography.bodyMain.copyWith(
-                    color: AppColors.onSurface,
-                    height: 1.45,
-                  ),
+                  style: AppTypography.bodyMain.copyWith(color: AppColors.onSurface, height: 1.45),
                 ),
             ],
           ),
@@ -722,11 +633,7 @@ class _UserBubble extends StatelessWidget {
 }
 
 class _AssistantBlock extends HookWidget {
-  const _AssistantBlock({
-    required this.text,
-    required this.isStreaming,
-    required this.workspaceId,
-  });
+  const _AssistantBlock({required this.text, required this.isStreaming, required this.workspaceId});
 
   final String text;
   final bool isStreaming;
@@ -737,42 +644,31 @@ class _AssistantBlock extends HookWidget {
     final showPulse = text.isEmpty && isStreaming;
 
     final cwd = context.select<WorkspacesCubit, String?>(
-      (c) => c.state.workspacesOrEmpty
-          .firstWhereOrNull((w) => w.id == workspaceId)
-          ?.path,
+      (c) => c.state.workspacesOrEmpty.firstWhereOrNull((w) => w.id == workspaceId)?.path,
     );
-    final tree = context.select<ExplorerCubit, WorkspaceTree?>(
-      (c) => c.state.trees[workspaceId],
-    );
+    final tree = context.select<ExplorerCubit, WorkspaceTree?>((c) => c.state.trees[workspaceId]);
     final basenameIndex = useMemoized<Map<String, List<String>>>(
       () => tree == null ? const {} : buildBasenameIndex(tree),
       [tree],
     );
 
-    final builders = useMemoized<Map<String, MarkdownElementBuilder>>(
-      () {
-        if (cwd == null) return const {};
-        return {
-          'code': ClickableCodeBuilder(
-            cwd: cwd,
-            basenameIndex: basenameIndex,
-            onTapPath: (absPath) =>
-                getIt<FileTabsCubit>().openFile(workspaceId, absPath),
-          ),
-        };
-      },
-      [cwd, basenameIndex, workspaceId],
-    );
+    final builders = useMemoized<Map<String, MarkdownElementBuilder>>(() {
+      if (cwd == null) return const {};
+      return {
+        'code': ClickableCodeBuilder(
+          cwd: cwd,
+          basenameIndex: basenameIndex,
+          onTapPath: (absPath) => getIt<FileTabsCubit>().openFile(workspaceId, absPath),
+        ),
+      };
+    }, [cwd, basenameIndex, workspaceId]);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 8),
-          child: _StepBullet(
-            color: AppColors.primary,
-            pulsing: showPulse,
-          ),
+          child: _StepBullet(color: AppColors.primary, pulsing: showPulse),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -792,10 +688,7 @@ class _AssistantBlock extends HookWidget {
 }
 
 class _StepBullet extends HookWidget {
-  const _StepBullet({
-    required this.color,
-    this.pulsing = false,
-  });
+  const _StepBullet({required this.color, this.pulsing = false});
 
   static const double _size = 7;
 
@@ -811,9 +704,7 @@ class _StepBullet extends HookWidget {
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       );
     }
-    final controller = useAnimationController(
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
+    final controller = useAnimationController(duration: const Duration(milliseconds: 900))..repeat(reverse: true);
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) {
@@ -839,70 +730,37 @@ class _StepBullet extends HookWidget {
 final MarkdownStyleSheet _markdownStyle = _buildMarkdownStyle();
 
 MarkdownStyleSheet _buildMarkdownStyle() {
-  final body = AppTypography.bodyMain.copyWith(
-    color: AppColors.onSurface,
-    height: 1.55,
-  );
-  final code = AppTypography.terminalCode.copyWith(
-    color: AppColors.onSurface,
-    fontSize: 12.5,
-    height: 1.5,
-  );
+  final body = AppTypography.bodyMain.copyWith(color: AppColors.onSurface, height: 1.55);
+  final code = AppTypography.terminalCode.copyWith(color: AppColors.onSurface, fontSize: 12.5, height: 1.5);
   return MarkdownStyleSheet(
     p: body,
     h1: body.copyWith(fontSize: 18, fontWeight: FontWeight.w700, height: 1.3),
     h2: body.copyWith(fontSize: 16, fontWeight: FontWeight.w700, height: 1.3),
     h3: body.copyWith(fontSize: 14, fontWeight: FontWeight.w700, height: 1.35),
-    strong: body.copyWith(
-      color: AppColors.onSurface,
-      fontWeight: FontWeight.w700,
-    ),
+    strong: body.copyWith(color: AppColors.onSurface, fontWeight: FontWeight.w700),
     em: body.copyWith(fontStyle: FontStyle.italic),
     blockquote: body.copyWith(color: AppColors.onSurfaceVariant),
     blockquoteDecoration: BoxDecoration(
-      border: Border(
-        left: BorderSide(
-          color: AppColors.primary.withValues(alpha: 0.5),
-          width: 3,
-        ),
-      ),
+      border: Border(left: BorderSide(color: AppColors.primary.withValues(alpha: 0.5), width: 3)),
     ),
     blockquotePadding: const EdgeInsets.only(left: AppSpacing.md),
     listBullet: body,
     listIndent: 22,
-    code: code.copyWith(
-      backgroundColor: AppColors.surfaceContainerLow,
-      color: AppColors.tertiary,
-    ),
+    code: code.copyWith(backgroundColor: AppColors.surfaceContainerLow, color: AppColors.tertiary),
     codeblockPadding: const EdgeInsets.all(AppSpacing.md),
     codeblockDecoration: BoxDecoration(
       color: AppColors.surfaceContainerLowest,
       borderRadius: BorderRadius.circular(AppRadii.md),
-      border: Border.all(
-        color: AppColors.outlineVariant.withValues(alpha: 0.5),
-      ),
+      border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
     ),
-    a: body.copyWith(
-      color: AppColors.secondary,
-      decoration: TextDecoration.underline,
-    ),
+    a: body.copyWith(color: AppColors.secondary, decoration: TextDecoration.underline),
     horizontalRuleDecoration: BoxDecoration(
-      border: Border(
-        top: BorderSide(
-          color: AppColors.outlineVariant.withValues(alpha: 0.6),
-        ),
-      ),
+      border: Border(top: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.6))),
     ),
     tableHead: body.copyWith(fontWeight: FontWeight.w700),
     tableBody: body,
-    tableBorder: TableBorder.all(
-      color: AppColors.outlineVariant.withValues(alpha: 0.4),
-      width: 1,
-    ),
-    tableCellsPadding: const EdgeInsets.symmetric(
-      horizontal: AppSpacing.sm,
-      vertical: AppSpacing.xs,
-    ),
+    tableBorder: TableBorder.all(color: AppColors.outlineVariant.withValues(alpha: 0.4), width: 1),
+    tableCellsPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
     pPadding: EdgeInsets.zero,
     h1Padding: const EdgeInsets.only(top: AppSpacing.sm),
     h2Padding: const EdgeInsets.only(top: AppSpacing.sm),
@@ -930,25 +788,12 @@ class _ToolCard extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final expanded = useState(false);
-    final hasBody =
-        (input?.isNotEmpty ?? false) || (output?.isNotEmpty ?? false);
+    final hasBody = (input?.isNotEmpty ?? false) || (output?.isNotEmpty ?? false);
 
     final (icon, color, toolLabel) = switch (status) {
-      ClaudeToolStatus.running => (
-          Symbols.sync,
-          AppColors.tertiary,
-          Locales.Claude.Message.toolRunning,
-        ),
-      ClaudeToolStatus.completed => (
-          Symbols.check_circle,
-          AppColors.outline,
-          Locales.Claude.Message.toolCompleted,
-        ),
-      ClaudeToolStatus.error => (
-          Symbols.error,
-          AppColors.error,
-          Locales.Claude.Message.toolError,
-        ),
+      ClaudeToolStatus.running => (Symbols.sync, AppColors.tertiary, Locales.Claude.Message.toolRunning),
+      ClaudeToolStatus.completed => (Symbols.check_circle, AppColors.outline, Locales.Claude.Message.toolCompleted),
+      ClaudeToolStatus.error => (Symbols.error, AppColors.error, Locales.Claude.Message.toolError),
     };
 
     final card = ClipRRect(
@@ -959,92 +804,72 @@ class _ToolCard extends HookWidget {
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: AppColors.outlineVariant.withValues(alpha: 0.4),
-            width: 1,
-          ),
+          border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.4), width: 1),
         ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              InkWell(
-                onTap: hasBody ? () => expanded.value = !expanded.value : null,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xs,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        icon,
-                        size: 12,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              onTap: hasBody ? () => expanded.value = !expanded.value : null,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, size: 12, color: color, fill: status == ClaudeToolStatus.completed ? 1 : 0),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      Locales.Claude.Message.toolPrefix,
+                      style: AppTypography.bodyMain.copyWith(
+                        color: AppColors.outline,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      toolName,
+                      style: AppTypography.terminalCode.copyWith(
                         color: color,
-                        fill: status == ClaudeToolStatus.completed ? 1 : 0,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
                       ),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      toolLabel,
+                      style: AppTypography.bodyMain.copyWith(
+                        color: AppColors.outline,
+                        fontSize: 10.5,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    if (hasBody) ...[
                       const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        Locales.Claude.Message.toolPrefix,
-                        style: AppTypography.bodyMain.copyWith(
-                          color: AppColors.outline,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.3,
-                        ),
+                      AnimatedRotation(
+                        duration: _kAnimDuration,
+                        turns: expanded.value ? 0.5 : 0,
+                        child: Icon(Symbols.expand_more, size: 14, color: AppColors.outline.withValues(alpha: 0.8)),
                       ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        toolName,
-                        style: AppTypography.terminalCode.copyWith(
-                          color: color,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        toolLabel,
-                        style: AppTypography.bodyMain.copyWith(
-                          color: AppColors.outline,
-                          fontSize: 10.5,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                      if (hasBody) ...[
-                        const SizedBox(width: AppSpacing.sm),
-                        AnimatedRotation(
-                          duration: _kAnimDuration,
-                          turns: expanded.value ? 0.5 : 0,
-                          child: Icon(
-                            Symbols.expand_more,
-                            size: 14,
-                            color: AppColors.outline.withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
                     ],
-                  ),
+                  ],
                 ),
               ),
-              ClipRect(
-                child: AnimatedSize(
-                  duration: _kAnimDuration,
-                  curve: Curves.easeOutCubic,
-                  alignment: Alignment.topCenter,
-                  child: expanded.value && hasBody
-                      ? _ToolBody(
-                          input: input,
-                          output: output,
-                          isError: isError,
-                          maxHeight: _kToolBodyMaxHeight,
-                        )
-                      : const SizedBox(width: double.infinity, height: 0),
-                ),
+            ),
+            ClipRect(
+              child: AnimatedSize(
+                duration: _kAnimDuration,
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: expanded.value && hasBody
+                    ? _ToolBody(input: input, output: output, isError: isError, maxHeight: _kToolBodyMaxHeight)
+                    : const SizedBox(width: double.infinity, height: 0),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
       ),
     );
     if (!padded) return card;
@@ -1063,12 +888,7 @@ class _ToolCard extends HookWidget {
 }
 
 class _ToolBody extends HookWidget {
-  const _ToolBody({
-    required this.input,
-    required this.output,
-    required this.isError,
-    required this.maxHeight,
-  });
+  const _ToolBody({required this.input, required this.output, required this.isError, required this.maxHeight});
 
   final Map<String, dynamic>? input;
   final String? output;
@@ -1079,19 +899,11 @@ class _ToolBody extends HookWidget {
   Widget build(BuildContext context) {
     final hasInput = input?.isNotEmpty ?? false;
     final hasOutput = output?.isNotEmpty ?? false;
-    final encodedInput = useMemoized(
-      () => hasInput ? prettyJson.convert(input) : '',
-      [input],
-    );
+    final encodedInput = useMemoized(() => hasInput ? prettyJson.convert(input) : '', [input]);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.sm,
-        0,
-        AppSpacing.sm,
-        AppSpacing.sm,
-      ),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.sm, 0, AppSpacing.sm, AppSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1105,9 +917,7 @@ class _ToolBody extends HookWidget {
           if (hasInput && hasOutput) const SizedBox(height: AppSpacing.xs),
           if (hasOutput)
             _ToolBodySection(
-              label: isError
-                  ? Locales.Claude.Message.toolErrorOutput
-                  : Locales.Claude.Message.toolResult,
+              label: isError ? Locales.Claude.Message.toolErrorOutput : Locales.Claude.Message.toolResult,
               body: output!,
               maxHeight: maxHeight,
               tone: isError ? AppColors.error : AppColors.onSurface,
@@ -1119,12 +929,7 @@ class _ToolBody extends HookWidget {
 }
 
 class _ToolBodySection extends HookWidget {
-  const _ToolBodySection({
-    required this.label,
-    required this.body,
-    required this.maxHeight,
-    required this.tone,
-  });
+  const _ToolBodySection({required this.label, required this.body, required this.maxHeight, required this.tone});
 
   final String label;
   final String body;
@@ -1138,10 +943,7 @@ class _ToolBodySection extends HookWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.only(
-            top: AppSpacing.xs,
-            bottom: AppSpacing.xs,
-          ),
+          padding: const EdgeInsets.only(top: AppSpacing.xs, bottom: AppSpacing.xs),
           child: Text(
             label,
             style: AppTypography.bodyMain.copyWith(
@@ -1156,10 +958,7 @@ class _ToolBodySection extends HookWidget {
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerLowest,
             borderRadius: BorderRadius.circular(AppRadii.sm),
-            border: Border.all(
-              color: AppColors.outlineVariant.withValues(alpha: 0.3),
-              width: 1,
-            ),
+            border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3), width: 1),
           ),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxHeight),
@@ -1170,11 +969,7 @@ class _ToolBodySection extends HookWidget {
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 child: SelectableText(
                   body,
-                  style: AppTypography.terminalCode.copyWith(
-                    color: tone,
-                    fontSize: 12,
-                    height: 1.5,
-                  ),
+                  style: AppTypography.terminalCode.copyWith(color: tone, fontSize: 12, height: 1.5),
                 ),
               ),
             ),
@@ -1205,22 +1000,14 @@ class _SystemLine extends StatelessWidget {
         if (isCompletion) ...[
           const Padding(
             padding: EdgeInsets.only(top: 4),
-            child: Icon(
-              Symbols.check_circle,
-              size: 12,
-              color: AppColors.outline,
-              fill: 1,
-            ),
+            child: Icon(Symbols.check_circle, size: 12, color: AppColors.outline, fill: 1),
           ),
           const SizedBox(width: AppSpacing.xs),
         ],
         Flexible(
           child: Text(
             rendered,
-            style: (isCompletion
-                    ? AppTypography.bodyMain
-                    : AppTypography.terminalCode)
-                .copyWith(
+            style: (isCompletion ? AppTypography.bodyMain : AppTypography.terminalCode).copyWith(
               color: AppColors.outline,
               fontSize: isCompletion ? 12 : 11,
               fontStyle: isCompletion ? FontStyle.italic : FontStyle.normal,
@@ -1265,10 +1052,7 @@ class _ErrorBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.errorContainer.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadii.md),
-        border: Border.all(
-          color: AppColors.error.withValues(alpha: 0.4),
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.4), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1280,10 +1064,7 @@ class _ErrorBanner extends StatelessWidget {
               Expanded(
                 child: SelectableText(
                   message,
-                  style: AppTypography.bodyMain.copyWith(
-                    color: AppColors.error,
-                    fontSize: 12,
-                  ),
+                  style: AppTypography.bodyMain.copyWith(color: AppColors.error, fontSize: 12),
                 ),
               ),
             ],
@@ -1292,10 +1073,7 @@ class _ErrorBanner extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             SelectableText(
               stderrTail.takeLast(8).join('\n'),
-              style: AppTypography.terminalCode.copyWith(
-                color: AppColors.outline,
-                fontSize: 11,
-              ),
+              style: AppTypography.terminalCode.copyWith(color: AppColors.outline, fontSize: 11),
             ),
           ],
         ],

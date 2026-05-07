@@ -16,23 +16,24 @@ class ScreenshotService {
 
   final Talker _talker;
 
-  Future<Either<Failure, String>> capture(
-    ScreenshotCaptureMode mode, {
-    int? displayIndex,
-  }) async {
+  Future<Either<Failure, String>> capture(ScreenshotCaptureMode mode, {int? displayIndex}) async {
     try {
       final tmpDir = await getTemporaryDirectory();
-      if (!await tmpDir.exists()) {
-        await tmpDir.create(recursive: true);
-      }
+      // `create(recursive: true)` is idempotent — no error if the dir already
+      // exists, so the explicit `exists()` pre-check is redundant. After a
+      // bundle rename, NSTemporaryDirectory() can point at a path that is
+      // not yet materialized; this single call covers that case.
+      await tmpDir.create(recursive: true);
       final id = DateTime.now().millisecondsSinceEpoch;
       final pngPath = '${tmpDir.path}/screenshot_$id.png';
 
       final args = switch (mode) {
         ScreenshotCaptureMode.fullScreen => [
-            if (displayIndex != null) ...['-D', '$displayIndex'],
-            '-t', 'png', pngPath,
-          ],
+          if (displayIndex != null) ...['-D', '$displayIndex'],
+          '-t',
+          'png',
+          pngPath,
+        ],
         ScreenshotCaptureMode.region => ['-i', '-t', 'png', pngPath],
         ScreenshotCaptureMode.window => ['-i', '-w', '-t', 'png', pngPath],
       };
@@ -40,9 +41,7 @@ class ScreenshotService {
       final result = await Process.run('screencapture', args);
 
       if (result.exitCode != 0) {
-        _talker.warning(
-          'screencapture exit ${result.exitCode}: ${result.stderr}',
-        );
+        _talker.warning('screencapture exit ${result.exitCode}: ${result.stderr}');
         return const Left(ScreenshotCancelledFailure());
       }
       if (!await File(pngPath).exists()) {
@@ -71,19 +70,21 @@ class ScreenshotService {
     }
   }
 
-  Future<String> _compressToJpeg(
-    String pngPath,
-    int id,
-    Directory tmpDir,
-  ) async {
+  Future<String> _compressToJpeg(String pngPath, int id, Directory tmpDir) async {
     final jpegPath = '${tmpDir.path}/screenshot_${id}_c.jpg';
 
     final result = await Process.run('sips', [
-      '-Z', '1920',
-      '-s', 'formatOptions', '75',
-      '-s', 'format', 'jpeg',
+      '-Z',
+      '1920',
+      '-s',
+      'formatOptions',
+      '75',
+      '-s',
+      'format',
+      'jpeg',
       pngPath,
-      '--out', jpegPath,
+      '--out',
+      jpegPath,
     ]);
     if (result.exitCode != 0) {
       _talker.warning('sips exit ${result.exitCode}: ${result.stderr}');

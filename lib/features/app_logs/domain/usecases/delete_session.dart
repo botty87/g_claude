@@ -9,6 +9,5 @@ class DeleteSession {
   DeleteSession(this._repo);
   final AppLogsRepository _repo;
 
-  Future<Either<Failure, void>> call({required int sessionId}) =>
-      _repo.deleteSession(sessionId);
+  Future<Either<Failure, void>> call({required int sessionId}) => _repo.deleteSession(sessionId);
 }

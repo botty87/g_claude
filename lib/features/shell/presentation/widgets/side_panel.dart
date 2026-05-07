@@ -15,9 +15,7 @@ class SidePanel extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surfaceContainerLow,
-        border: Border(
-          right: BorderSide(color: AppColors.outlineVariant, width: 1),
-        ),
+        border: Border(right: BorderSide(color: AppColors.outlineVariant, width: 1)),
       ),
       child: BlocBuilder<ShellCubit, ShellState>(
         buildWhen: (p, c) => p.selectedActivity != c.selectedActivity,

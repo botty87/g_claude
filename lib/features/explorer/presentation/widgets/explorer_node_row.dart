@@ -64,10 +64,7 @@ class ExplorerNodeRow extends StatelessWidget {
         return Container(
           height: rowHeight,
           color: background,
-          padding: EdgeInsetsDirectional.only(
-            start: AppSpacing.sm + depth * indentPerLevel,
-            end: AppSpacing.sm,
-          ),
+          padding: EdgeInsetsDirectional.only(start: AppSpacing.sm + depth * indentPerLevel, end: AppSpacing.sm),
           child: Row(
             children: [
               _buildLeadingSlot(),
@@ -116,11 +113,7 @@ class ExplorerNodeRow extends StatelessWidget {
       };
       return Tooltip(
         message: message,
-        child: const Icon(
-          Symbols.error_outline,
-          size: chevronSize,
-          color: AppColors.error,
-        ),
+        child: const Icon(Symbols.error_outline, size: chevronSize, color: AppColors.error),
       );
     }
 

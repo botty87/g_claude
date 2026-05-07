@@ -38,19 +38,20 @@ void main() {
       expect(preToolUse, hasLength(1));
 
       final entry = preToolUse.single as Map<String, dynamic>;
-      expect(entry['matcher'], '*',
-          reason: 'matcher * routes every tool through the permission server.');
+      expect(entry['matcher'], '*', reason: 'matcher * routes every tool through the permission server.');
 
       final inner = (entry['hooks'] as List).single as Map<String, dynamic>;
       expect(inner['type'], 'command');
       expect(inner['command'], contains('http://127.0.0.1:12345/permission'));
       expect(inner['command'], contains('curl'));
-      expect(inner['command'], contains('--max-time 120'),
-          reason: 'curl timeout must be set so a frozen UI does not stall the subprocess forever.');
+      expect(
+        inner['command'],
+        contains('--max-time 120'),
+        reason: 'curl timeout must be set so a frozen UI does not stall the subprocess forever.',
+      );
     });
 
-    test('a second call with the same port reuses the cached path (no rewrite)',
-        () async {
+    test('a second call with the same port reuses the cached path (no rewrite)', () async {
       final w = ClaudeSettingsWriter(makeTestTalker());
 
       final p1 = await w.ensure(12345);
@@ -65,8 +66,7 @@ void main() {
       expect(File(p2).lastModifiedSync(), mtime1);
     });
 
-    test('a second call with a different port writes a NEW file at a new path',
-        () async {
+    test('a second call with a different port writes a NEW file at a new path', () async {
       final w = ClaudeSettingsWriter(makeTestTalker());
 
       final p1 = await w.ensure(12345);
@@ -80,8 +80,7 @@ void main() {
         }
       });
 
-      expect(p2, isNot(p1),
-          reason: 'A different port must yield a different settings file.');
+      expect(p2, isNot(p1), reason: 'A different port must yield a different settings file.');
       // The new file must reference the new port.
       final body2 = File(p2).readAsStringSync();
       expect(body2, contains('http://127.0.0.1:54321/permission'));

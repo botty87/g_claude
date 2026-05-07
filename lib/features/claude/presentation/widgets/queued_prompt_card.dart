@@ -24,8 +24,7 @@ class QueuedPromptCard extends HookWidget {
     final status = context.select<ClaudeSessionsCubit, ClaudeRunStatus>(
       (c) => c.state.sessions[workspaceId]?.runStatus ?? ClaudeRunStatus.idle,
     );
-    final isBusy = status == ClaudeRunStatus.connecting ||
-        status == ClaudeRunStatus.running;
+    final isBusy = status == ClaudeRunStatus.connecting || status == ClaudeRunStatus.running;
 
     final controller = useTextEditingController(text: queued?.text ?? '');
     final cubit = context.read<ClaudeSessionsCubit>();
@@ -48,6 +47,7 @@ class QueuedPromptCard extends HookWidget {
         if (controller.text == current.text) return;
         cubit.setQueuedPrompt(workspaceId, controller.text);
       }
+
       controller.addListener(listener);
       return () => controller.removeListener(listener);
     }, [controller]);
@@ -57,28 +57,17 @@ class QueuedPromptCard extends HookWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
-        border: const Border(
-          top: BorderSide(color: AppColors.outlineVariant, width: 1),
-        ),
+        border: const Border(top: BorderSide(color: AppColors.outlineVariant, width: 1)),
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.sm,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(
-            Symbols.schedule,
-            size: 16,
-            color: AppColors.primary,
-          ),
+          const Icon(Symbols.schedule, size: 16, color: AppColors.primary),
           const SizedBox(width: AppSpacing.sm),
           Text(
             Locales.Claude.Terminal.Input.Queue.label,
-            style: AppTypography.terminalCode.copyWith(
-              color: AppColors.outline,
-            ),
+            style: AppTypography.terminalCode.copyWith(color: AppColors.outline),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -87,26 +76,20 @@ class QueuedPromptCard extends HookWidget {
               controller: controller,
               maxLines: 3,
               minLines: 1,
-              style: AppTypography.terminalCode.copyWith(
-                color: AppColors.onSurface,
-              ),
+              style: AppTypography.terminalCode.copyWith(color: AppColors.onSurface),
               decoration: InputDecoration(
                 isCollapsed: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 2),
                 border: InputBorder.none,
                 hintText: Locales.Claude.Terminal.Input.Queue.editPlaceholder,
-                hintStyle: AppTypography.terminalCode.copyWith(
-                  color: AppColors.outline,
-                ),
+                hintStyle: AppTypography.terminalCode.copyWith(color: AppColors.outline),
               ),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
           Material(
             color: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadii.sm),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.sm)),
             child: IconButton(
               key: const ValueKey('claude_queued_prompt_remove'),
               icon: const Icon(Symbols.close, size: 16),

@@ -28,19 +28,11 @@ class App extends StatelessWidget {
         BlocProvider<ShellCubit>.value(value: getIt<ShellCubit>()),
         BlocProvider<ExplorerCubit>.value(value: getIt<ExplorerCubit>()),
         BlocProvider<FileTabsCubit>.value(value: getIt<FileTabsCubit>()),
-        BlocProvider<ClaudeSessionsCubit>.value(
-          value: getIt<ClaudeSessionsCubit>(),
-        ),
-        BlocProvider<ChatHistoryCubit>.value(
-          value: getIt<ChatHistoryCubit>(),
-        ),
+        BlocProvider<ClaudeSessionsCubit>.value(value: getIt<ClaudeSessionsCubit>()),
+        BlocProvider<ChatHistoryCubit>.value(value: getIt<ChatHistoryCubit>()),
         BlocProvider<AppLogsCubit>.value(value: getIt<AppLogsCubit>()),
-        BlocProvider<AppLogDetailCubit>.value(
-          value: getIt<AppLogDetailCubit>(),
-        ),
-        BlocProvider<TerminalSessionsCubit>.value(
-          value: getIt<TerminalSessionsCubit>(),
-        ),
+        BlocProvider<AppLogDetailCubit>.value(value: getIt<AppLogDetailCubit>()),
+        BlocProvider<TerminalSessionsCubit>.value(value: getIt<TerminalSessionsCubit>()),
       ],
       child: MaterialApp.router(
         title: 'Clyde',

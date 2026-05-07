@@ -15,12 +15,8 @@ class WorkspaceDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = context.select<WorkspacesCubit, Workspace?>(
-      (c) => c.state.activeWorkspace,
-    );
-    final workspaces = context.select<WorkspacesCubit, List<Workspace>>(
-      (c) => c.state.workspacesOrEmpty,
-    );
+    final active = context.select<WorkspacesCubit, Workspace?>((c) => c.state.activeWorkspace);
+    final workspaces = context.select<WorkspacesCubit, List<Workspace>>((c) => c.state.workspacesOrEmpty);
 
     return Hoverable(
       key: const ValueKey('workspace_dropdown'),
@@ -37,8 +33,7 @@ class WorkspaceDropdown extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Symbols.folder,
-                  size: 14, color: AppColors.onSurfaceVariant),
+              const Icon(Symbols.folder, size: 14, color: AppColors.onSurfaceVariant),
               const SizedBox(width: AppSpacing.xs),
               Flexible(
                 child: Text(
@@ -49,8 +44,7 @@ class WorkspaceDropdown extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
-              const Icon(Symbols.expand_more,
-                  size: 14, color: AppColors.onSurfaceVariant),
+              const Icon(Symbols.expand_more, size: 14, color: AppColors.onSurfaceVariant),
             ],
           ),
         );
@@ -58,11 +52,7 @@ class WorkspaceDropdown extends StatelessWidget {
     );
   }
 
-  void _showMenu(
-    BuildContext context,
-    List<Workspace> workspaces,
-    Workspace? active,
-  ) {
+  void _showMenu(BuildContext context, List<Workspace> workspaces, Workspace? active) {
     final renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
@@ -108,24 +98,17 @@ class WorkspaceDropdown extends StatelessWidget {
         mouseCursor: SystemMouseCursors.click,
         child: Row(
           children: [
-            const Icon(Symbols.add,
-                size: 16, color: AppColors.onSurfaceVariant),
+            const Icon(Symbols.add, size: 16, color: AppColors.onSurfaceVariant),
             const SizedBox(width: AppSpacing.sm),
-            Text(
-              Locales.Workspace.Dropdown.openFolder,
-              style: AppTypography.bodyMain.copyWith(fontSize: 13),
-            ),
+            Text(Locales.Workspace.Dropdown.openFolder, style: AppTypography.bodyMain.copyWith(fontSize: 13)),
           ],
         ),
       ),
     );
 
-    showMenu<String>(
-      context: context,
-      position: position,
-      color: AppColors.surfaceContainerHigh,
-      items: items,
-    ).then((value) {
+    showMenu<String>(context: context, position: position, color: AppColors.surfaceContainerHigh, items: items).then((
+      value,
+    ) {
       if (value == null) return;
       if (value == 'open') {
         cubit.openFromPicker();
@@ -138,11 +121,7 @@ class WorkspaceDropdown extends StatelessWidget {
 }
 
 class _WorkspaceMenuItem extends StatelessWidget {
-  const _WorkspaceMenuItem({
-    required this.workspace,
-    required this.isActive,
-    required this.onClose,
-  });
+  const _WorkspaceMenuItem({required this.workspace, required this.isActive, required this.onClose});
 
   final Workspace workspace;
   final bool isActive;
@@ -153,26 +132,17 @@ class _WorkspaceMenuItem extends StatelessWidget {
     return Tooltip(
       message: workspace.path,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
         child: Row(
           children: [
-            Icon(
-              Symbols.folder,
-              size: 16,
-              color: isActive
-                  ? AppColors.brandIndigo
-                  : AppColors.onSurfaceVariant,
-            ),
+            Icon(Symbols.folder, size: 16, color: isActive ? AppColors.brandIndigo : AppColors.onSurfaceVariant),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 workspace.name,
                 style: AppTypography.bodyMain.copyWith(
                   fontSize: 13,
-                  color: isActive
-                      ? AppColors.onSurface
-                      : AppColors.onSurfaceVariant,
+                  color: isActive ? AppColors.onSurface : AppColors.onSurfaceVariant,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 ),
                 overflow: TextOverflow.ellipsis,
@@ -187,16 +157,13 @@ class _WorkspaceMenuItem extends StatelessWidget {
                   width: 18,
                   height: 18,
                   decoration: BoxDecoration(
-                    color: hover
-                        ? AppColors.glassHover
-                        : Colors.transparent,
+                    color: hover ? AppColors.glassHover : Colors.transparent,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Icon(
                     Symbols.close,
                     size: 14,
-                    color: AppColors.onSurfaceVariant
-                        .withValues(alpha: hover ? 1.0 : 0.6),
+                    color: AppColors.onSurfaceVariant.withValues(alpha: hover ? 1.0 : 0.6),
                   ),
                 ),
               ),

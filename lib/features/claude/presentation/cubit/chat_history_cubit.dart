@@ -59,10 +59,12 @@ class ChatHistoryCubit extends Cubit<ChatHistoryState> {
     final list = s.workspacesOrEmpty;
     final ids = list.map((w) => w.id).toSet();
     final added = [
-      for (final w in list) if (!state.byWorkspace.containsKey(w.id)) w,
+      for (final w in list)
+        if (!state.byWorkspace.containsKey(w.id)) w,
     ];
     final removed = [
-      for (final k in state.byWorkspace.keys) if (!ids.contains(k)) k,
+      for (final k in state.byWorkspace.keys)
+        if (!ids.contains(k)) k,
     ];
     if (added.isEmpty && removed.isEmpty) return;
 
@@ -80,35 +82,19 @@ class ChatHistoryCubit extends Cubit<ChatHistoryState> {
   Future<void> refresh(WorkspaceId workspaceId, String cwd) async {
     _emitWs(workspaceId, _historyOrEmpty(workspaceId).copyWith(status: HistoryStatus.loading));
 
-    final refreshResult = await _refreshIndex(
-      workspaceId: workspaceId,
-      workspaceCwd: cwd,
-    );
-    refreshResult.fold(
-      (f) => _talker.warning('refreshIndex failed for $workspaceId: $f'),
-      (_) => null,
-    );
+    final refreshResult = await _refreshIndex(workspaceId: workspaceId, workspaceCwd: cwd);
+    refreshResult.fold((f) => _talker.warning('refreshIndex failed for $workspaceId: $f'), (_) => null);
 
     final loadResult = await _loadHistory(workspaceId);
     loadResult.fold(
       (f) {
         _talker.error('loadHistory failed for $workspaceId: $f');
-        _emitWs(
-          workspaceId,
-          _historyOrEmpty(workspaceId).copyWith(
-            status: HistoryStatus.error,
-            lastError: f,
-          ),
-        );
+        _emitWs(workspaceId, _historyOrEmpty(workspaceId).copyWith(status: HistoryStatus.error, lastError: f));
       },
       (sessions) {
         _emitWs(
           workspaceId,
-          _historyOrEmpty(workspaceId).copyWith(
-            sessions: sessions,
-            status: HistoryStatus.idle,
-            lastError: null,
-          ),
+          _historyOrEmpty(workspaceId).copyWith(sessions: sessions, status: HistoryStatus.idle, lastError: null),
         );
       },
     );
@@ -117,11 +103,7 @@ class ChatHistoryCubit extends Cubit<ChatHistoryState> {
   void selectSession(WorkspaceId workspaceId, String sessionId) {
     _emitWs(
       workspaceId,
-      _historyOrEmpty(workspaceId).copyWith(
-        selectedId: sessionId,
-        previewMessages: const [],
-        previewLoading: true,
-      ),
+      _historyOrEmpty(workspaceId).copyWith(selectedId: sessionId, previewMessages: const [], previewLoading: true),
     );
     unawaited(_loadPreview(workspaceId, sessionId));
   }
@@ -137,10 +119,7 @@ class ChatHistoryCubit extends Cubit<ChatHistoryState> {
       return;
     }
 
-    final result = await _loadMessages(
-      encodedPath: summary.encodedPath,
-      sessionId: sessionId,
-    );
+    final result = await _loadMessages(encodedPath: summary.encodedPath, sessionId: sessionId);
     result.fold(
       (f) {
         _talker.error('loadMessages failed for $sessionId: $f');
@@ -149,13 +128,7 @@ class ChatHistoryCubit extends Cubit<ChatHistoryState> {
       (messages) {
         final current = state.byWorkspace[workspaceId];
         if (current?.selectedId != sessionId) return;
-        _emitWs(
-          workspaceId,
-          _historyOrEmpty(workspaceId).copyWith(
-            previewMessages: messages,
-            previewLoading: false,
-          ),
-        );
+        _emitWs(workspaceId, _historyOrEmpty(workspaceId).copyWith(previewMessages: messages, previewLoading: false));
       },
     );
   }
@@ -163,11 +136,7 @@ class ChatHistoryCubit extends Cubit<ChatHistoryState> {
   void clearSelection(WorkspaceId workspaceId) {
     _emitWs(
       workspaceId,
-      _historyOrEmpty(workspaceId).copyWith(
-        selectedId: null,
-        previewMessages: const [],
-        previewLoading: false,
-      ),
+      _historyOrEmpty(workspaceId).copyWith(selectedId: null, previewMessages: const [], previewLoading: false),
     );
   }
 
@@ -177,22 +146,12 @@ class ChatHistoryCubit extends Cubit<ChatHistoryState> {
     if (query.trim().isEmpty) {
       _emitWs(
         workspaceId,
-        _historyOrEmpty(workspaceId).copyWith(
-          query: query,
-          searchResults: null,
-          searchLoading: false,
-        ),
+        _historyOrEmpty(workspaceId).copyWith(query: query, searchResults: null, searchLoading: false),
       );
       return;
     }
 
-    _emitWs(
-      workspaceId,
-      _historyOrEmpty(workspaceId).copyWith(
-        query: query,
-        searchLoading: true,
-      ),
-    );
+    _emitWs(workspaceId, _historyOrEmpty(workspaceId).copyWith(query: query, searchLoading: true));
 
     _searchDebounce[workspaceId] = Timer(
       const Duration(milliseconds: 200),
@@ -207,77 +166,42 @@ class ChatHistoryCubit extends Cubit<ChatHistoryState> {
     result.fold(
       (f) {
         _talker.error('searchSessions failed for $workspaceId: $f');
-        _emitWs(
-          workspaceId,
-          _historyOrEmpty(workspaceId).copyWith(
-            searchResults: const [],
-            searchLoading: false,
-          ),
-        );
+        _emitWs(workspaceId, _historyOrEmpty(workspaceId).copyWith(searchResults: const [], searchLoading: false));
       },
       (sessions) {
-        _emitWs(
-          workspaceId,
-          _historyOrEmpty(workspaceId).copyWith(
-            searchResults: sessions,
-            searchLoading: false,
-          ),
-        );
+        _emitWs(workspaceId, _historyOrEmpty(workspaceId).copyWith(searchResults: sessions, searchLoading: false));
       },
     );
   }
 
-  Future<void> delete(
-    WorkspaceId workspaceId,
-    String sessionId,
-    String encodedPath,
-  ) async {
-    final result = await _deleteSession(
-      sessionId: sessionId,
-      encodedPath: encodedPath,
-    );
-    result.fold(
-      (f) => _talker.error('deleteSession failed for $sessionId: $f'),
-      (_) {
-        final history = _historyOrEmpty(workspaceId);
-        final sessions = history.sessions.where((s) => s.id != sessionId).toList();
-        var updated = history.copyWith(sessions: sessions);
-        if (history.selectedId == sessionId) {
-          updated = updated.copyWith(
-            selectedId: null,
-            previewMessages: const [],
-            previewLoading: false,
-          );
-        }
-        _emitWs(workspaceId, updated);
-      },
-    );
+  Future<void> delete(WorkspaceId workspaceId, String sessionId, String encodedPath) async {
+    final result = await _deleteSession(sessionId: sessionId, encodedPath: encodedPath);
+    result.fold((f) => _talker.error('deleteSession failed for $sessionId: $f'), (_) {
+      final history = _historyOrEmpty(workspaceId);
+      final sessions = history.sessions.where((s) => s.id != sessionId).toList();
+      var updated = history.copyWith(sessions: sessions);
+      if (history.selectedId == sessionId) {
+        updated = updated.copyWith(selectedId: null, previewMessages: const [], previewLoading: false);
+      }
+      _emitWs(workspaceId, updated);
+    });
   }
 
-  Future<String?> export(
-    WorkspaceId workspaceId,
-    String sessionId,
-    String encodedPath,
-    String destinationPath,
-  ) async {
+  Future<String?> export(WorkspaceId workspaceId, String sessionId, String encodedPath, String destinationPath) async {
     final result = await _exportSession(
       encodedPath: encodedPath,
       sessionId: sessionId,
       destinationPath: destinationPath,
     );
-    return result.fold(
-      (f) {
-        _talker.error('exportSession failed for $sessionId: $f');
-        return null;
-      },
-      (path) => path,
-    );
+    return result.fold((f) {
+      _talker.error('exportSession failed for $sessionId: $f');
+      return null;
+    }, (path) => path);
   }
 
   String encodeCwd(String cwd) => _historyDs.encodeCwd(cwd);
 
-  WorkspaceHistory _historyOrEmpty(String workspaceId) =>
-      state.byWorkspace[workspaceId] ?? const WorkspaceHistory();
+  WorkspaceHistory _historyOrEmpty(String workspaceId) => state.byWorkspace[workspaceId] ?? const WorkspaceHistory();
 
   void _emitWs(String workspaceId, WorkspaceHistory next) {
     final map = Map<String, WorkspaceHistory>.from(state.byWorkspace);

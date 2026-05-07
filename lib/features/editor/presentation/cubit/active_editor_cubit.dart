@@ -5,11 +5,7 @@ import 'package:re_editor/re_editor.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 
 class ActiveEditorRef {
-  const ActiveEditorRef({
-    required this.workspaceId,
-    required this.path,
-    required this.controller,
-  });
+  const ActiveEditorRef({required this.workspaceId, required this.path, required this.controller});
 
   final WorkspaceId workspaceId;
   final String path;
@@ -62,11 +58,6 @@ class ActiveEditorCubit extends Cubit<Map<WorkspaceId, String>> {
     if (selectedText.isEmpty) return null;
     final start = sel.baseIndex < sel.extentIndex ? sel.baseIndex : sel.extentIndex;
     final end = sel.baseIndex < sel.extentIndex ? sel.extentIndex : sel.baseIndex;
-    return EditorSelectionSnapshot(
-      path: ref.path,
-      startLine: start + 1,
-      endLine: end + 1,
-      snippet: selectedText,
-    );
+    return EditorSelectionSnapshot(path: ref.path, startLine: start + 1, endLine: end + 1, snippet: selectedText);
   }
 }

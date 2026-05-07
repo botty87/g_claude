@@ -30,11 +30,6 @@ class FilterSlashCommands {
       }
     }
 
-    return [
-      ...postColonPrefix,
-      ...wholePrefix,
-      ...nameContains,
-      ...descContains,
-    ];
+    return [...postColonPrefix, ...wholePrefix, ...nameContains, ...descContains];
   }
 }

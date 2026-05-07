@@ -227,7 +227,9 @@ class AppShellPage extends HookWidget {
 
     KeyEventResult onKey(FocusNode node, KeyEvent event) {
       if (event is! KeyDownEvent) return KeyEventResult.ignored;
-      if (!HardwareKeyboard.instance.isMetaPressed) return KeyEventResult.ignored;
+      if (!HardwareKeyboard.instance.isMetaPressed) {
+        return KeyEventResult.ignored;
+      }
 
       final shift = HardwareKeyboard.instance.isShiftPressed;
       final alt = HardwareKeyboard.instance.isAltPressed;
@@ -350,53 +352,38 @@ class _MainArea extends HookWidget {
 
     final hasPreviewItem = switch (selectedActivity) {
       ActivityId.explorer => context.select<FileTabsCubit, bool>(
-          (c) => activeId != null && (c.state.filesFor(activeId)?.activePath != null),
-        ),
+        (c) => activeId != null && (c.state.filesFor(activeId)?.activePath != null),
+      ),
       ActivityId.sessions => context.select<ChatHistoryCubit, bool>(
-          (c) => activeId != null && (c.state.historyFor(activeId)?.selectedId != null),
-        ),
-      ActivityId.logs => context.select<AppLogsCubit, bool>(
-          (c) => c.state.selectedSessionId != null,
-        ),
-      ActivityId.terminal ||
-      ActivityId.search ||
-      ActivityId.git ||
-      ActivityId.settings =>
-        false,
+        (c) => activeId != null && (c.state.historyFor(activeId)?.selectedId != null),
+      ),
+      ActivityId.logs => context.select<AppLogsCubit, bool>((c) => c.state.selectedSessionId != null),
+      // Terminal owns its own pane via `showTerminal` below — no preview item.
+      ActivityId.terminal => false,
+      // Stub activities: not implemented yet.
+      ActivityId.search || ActivityId.git || ActivityId.settings => false,
     };
 
     final savedSizes = context.read<ShellCubit>().state.paneSizes;
     final showTerminal = selectedActivity == ActivityId.terminal;
 
-    final controller = useMemoized(
-      () {
-        final savedSide = (savedSizes[_idSide] ?? _sideDefault).clamp(_sideMin, _sideMax);
-        return MultiSplitViewController(
-          areas: [
-            // Terminal mode dedicates the full main area to terminal+Claude;
-            // the side panel and preview are skipped.
-            if (showTerminal) ...[
-              Area(
-                id: _idTerminal,
-                size: savedSizes[_idTerminal] ?? _terminalDefault,
-                min: _terminalMin,
-              ),
-              Area(id: _idClaude, flex: 1, min: _claudeMin),
-            ] else ...[
-              Area(id: _idSide, size: savedSide, min: _sideMin, max: _sideMax),
-              if (hasPreviewItem)
-                Area(
-                  id: _idPreview,
-                  size: savedSizes[_idPreview] ?? _previewDefault,
-                  min: _previewMin,
-                ),
-              Area(id: _idClaude, flex: 1, min: _claudeMin),
-            ],
+    final controller = useMemoized(() {
+      final savedSide = (savedSizes[_idSide] ?? _sideDefault).clamp(_sideMin, _sideMax);
+      return MultiSplitViewController(
+        areas: [
+          // Terminal mode dedicates the full main area to terminal+Claude;
+          // the side panel and preview are skipped.
+          if (showTerminal) ...[
+            Area(id: _idTerminal, size: savedSizes[_idTerminal] ?? _terminalDefault, min: _terminalMin),
+            Area(id: _idClaude, flex: 1, min: _claudeMin),
+          ] else ...[
+            Area(id: _idSide, size: savedSide, min: _sideMin, max: _sideMax),
+            if (hasPreviewItem) Area(id: _idPreview, size: savedSizes[_idPreview] ?? _previewDefault, min: _previewMin),
+            Area(id: _idClaude, flex: 1, min: _claudeMin),
           ],
-        );
-      },
-      [hasPreviewItem, showTerminal],
-    );
+        ],
+      );
+    }, [hasPreviewItem, showTerminal]);
     useEffect(() => controller.dispose, [controller]);
 
     void persistSizes() {

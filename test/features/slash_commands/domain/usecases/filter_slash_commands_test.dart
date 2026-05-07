@@ -31,8 +31,7 @@ void main() {
 
       final out = subject(all, '');
 
-      expect(out, all,
-          reason: 'Empty query short-circuits before any tiering.');
+      expect(out, all, reason: 'Empty query short-circuits before any tiering.');
     });
 
     test('filter consisting only of "/" is treated as empty and returns all', () {
@@ -69,8 +68,7 @@ void main() {
 
       final out = subject([containsOnly, prefix], 'co');
 
-      expect(out.first, prefix,
-          reason: '"commit" starts with "co"; "precommit" only contains it.');
+      expect(out.first, prefix, reason: '"commit" starts with "co"; "precommit" only contains it.');
       expect(out, contains(containsOnly));
       expect(out.length, 2);
     });
@@ -107,8 +105,11 @@ void main() {
       // The implementation uses replaceFirst, so `//foo` becomes `/foo` and
       // will never prefix-match `foo`. Documented contract.
       final cmd = makeSlashCommand('/foo');
-      expect(subject([cmd], '//foo'), isEmpty,
-          reason: '"/foo" remaining after stripping one slash does not prefix-match "foo".');
+      expect(
+        subject([cmd], '//foo'),
+        isEmpty,
+        reason: '"/foo" remaining after stripping one slash does not prefix-match "foo".',
+      );
     });
 
     test('query is lowercased before matching trigger and description', () {
@@ -147,8 +148,7 @@ void main() {
 
       final out = subject([c, a, b], 'commit');
 
-      expect(out, [c, a, b],
-          reason: 'Same-tier members keep their input order — stable sort.');
+      expect(out, [c, a, b], reason: 'Same-tier members keep their input order — stable sort.');
     });
   });
 }

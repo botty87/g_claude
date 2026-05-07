@@ -31,27 +31,19 @@ import 'screenshot_preview_dialog.dart';
 const _kScreenshotPreviewPrefKey = 'screenshot_preview_enabled';
 
 class ClaudeInputBar extends HookWidget {
-  const ClaudeInputBar({
-    super.key,
-    required this.workspaceId,
-    required this.status,
-  });
+  const ClaudeInputBar({super.key, required this.workspaceId, required this.status});
 
   final String workspaceId;
   final ClaudeRunStatus status;
 
   bool get _isBusy =>
-      status == ClaudeRunStatus.connecting ||
-      status == ClaudeRunStatus.running ||
-      status == ClaudeRunStatus.compacting;
+      status == ClaudeRunStatus.connecting || status == ClaudeRunStatus.running || status == ClaudeRunStatus.compacting;
 
   @override
   Widget build(BuildContext context) {
     final sessionsCubit = context.read<ClaudeSessionsCubit>();
     final initialDraft = useMemoized(
-      () =>
-          sessionsCubit.state.sessions[workspaceId]?.inputDraft ??
-          ChatInputDraft.empty,
+      () => sessionsCubit.state.sessions[workspaceId]?.inputDraft ?? ChatInputDraft.empty,
       const [],
     );
 
@@ -59,10 +51,7 @@ class ClaudeInputBar extends HookWidget {
     final wrapperFocus = useFocusNode(debugLabel: 'claude_input_wrapper');
     final inputFocus = useFocusNode(debugLabel: 'claude_input_field');
 
-    final slashCubit = useMemoized(
-      () => getIt<SlashCommandsCubit>()..loadFor(workspaceId),
-      [workspaceId],
-    );
+    final slashCubit = useMemoized(() => getIt<SlashCommandsCubit>()..loadFor(workspaceId), [workspaceId]);
     useEffect(() => slashCubit.close, [slashCubit]);
 
     final link = useMemoized(LayerLink.new, const []);
@@ -74,14 +63,9 @@ class ClaudeInputBar extends HookWidget {
     );
     final escArmedAt = useRef<DateTime?>(null);
 
-    void persistDraft({
-      String? text,
-      List<SlashCommand>? chips,
-      List<ChatAttachment>? attachmentsOverride,
-    }) {
+    void persistDraft({String? text, List<SlashCommand>? chips, List<ChatAttachment>? attachmentsOverride}) {
       final liveAttachments =
-          sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ??
-              const <ChatAttachment>[];
+          sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ?? const <ChatAttachment>[];
       sessionsCubit.setInputDraft(
         workspaceId,
         ChatInputDraft(
@@ -119,8 +103,7 @@ class ClaudeInputBar extends HookWidget {
         });
         return;
       }
-      final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.selectedCommands
-          ?? const <SlashCommand>[];
+      final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.selectedCommands ?? const <SlashCommand>[];
       final next = [...live, cmd];
       _stripSlashPrefix(controller);
       slashCubit.dismiss();
@@ -132,17 +115,10 @@ class ClaudeInputBar extends HookWidget {
 
     Future<void> pickFiles() async {
       if (_isBusy) return;
-      final res = await FilePicker.pickFiles(
-        allowMultiple: true,
-        type: FileType.any,
-      );
+      final res = await FilePicker.pickFiles(allowMultiple: true, type: FileType.any);
       if (res == null) return;
-      final current = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments
-          ?? const <ChatAttachment>[];
-      final existing = current
-          .where((a) => a.kind == ChatAttachmentKind.file)
-          .map((a) => p.normalize(a.path))
-          .toSet();
+      final current = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ?? const <ChatAttachment>[];
+      final existing = current.where((a) => a.kind == ChatAttachmentKind.file).map((a) => p.normalize(a.path)).toSet();
       final additions = <ChatAttachment>[];
       for (final f in res.files) {
         final path = f.path;
@@ -150,11 +126,7 @@ class ClaudeInputBar extends HookWidget {
         final norm = p.normalize(path);
         if (existing.contains(norm)) continue;
         existing.add(norm);
-        additions.add(ChatAttachment(
-          path: path,
-          displayName: p.basename(path),
-          kind: ChatAttachmentKind.file,
-        ));
+        additions.add(ChatAttachment(path: path, displayName: p.basename(path), kind: ChatAttachmentKind.file));
       }
       if (additions.isNotEmpty) {
         persistDraft(attachmentsOverride: [...current, ...additions]);
@@ -164,21 +136,13 @@ class ClaudeInputBar extends HookWidget {
     final screenshotPreviewEnabled = useState(true);
     useEffect(() {
       SharedPreferences.getInstance().then((prefs) {
-        screenshotPreviewEnabled.value =
-            prefs.getBool(_kScreenshotPreviewPrefKey) ?? true;
+        screenshotPreviewEnabled.value = prefs.getBool(_kScreenshotPreviewPrefKey) ?? true;
       });
       return null;
     }, const []);
 
-    Future<void> runCapture(
-      ScreenshotCaptureMode mode,
-      BuildContext menuContext, {
-      int? displayIndex,
-    }) async {
-      final result = await getIt<ScreenshotService>().capture(
-        mode,
-        displayIndex: displayIndex,
-      );
+    Future<void> runCapture(ScreenshotCaptureMode mode, BuildContext menuContext, {int? displayIndex}) async {
+      final result = await getIt<ScreenshotService>().capture(mode, displayIndex: displayIndex);
       result.fold(
         (failure) {
           if (failure is ScreenshotCancelledFailure) {
@@ -186,9 +150,7 @@ class ClaudeInputBar extends HookWidget {
           }
           ScaffoldMessenger.maybeOf(menuContext)?.showSnackBar(
             SnackBar(
-              content: Text(
-                Locales.Claude.Terminal.Input.Attachments.screenshotError,
-              ),
+              content: Text(Locales.Claude.Terminal.Input.Attachments.screenshotError),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -204,18 +166,17 @@ class ClaudeInputBar extends HookWidget {
               return;
             }
           }
-          final current =
-              sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments
-              ?? const <ChatAttachment>[];
-          persistDraft(attachmentsOverride: [
-            ...current,
-            ChatAttachment(
-              path: path,
-              displayName: Locales
-                  .Claude.Terminal.Input.Attachments.screenshotDisplayName,
-              kind: ChatAttachmentKind.imageCapture,
-            ),
-          ]);
+          final current = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ?? const <ChatAttachment>[];
+          persistDraft(
+            attachmentsOverride: [
+              ...current,
+              ChatAttachment(
+                path: path,
+                displayName: Locales.Claude.Terminal.Input.Attachments.screenshotDisplayName,
+                kind: ChatAttachmentKind.imageCapture,
+              ),
+            ],
+          );
         },
       );
     }
@@ -224,29 +185,24 @@ class ClaudeInputBar extends HookWidget {
       if (_isBusy) return;
       final path = await FilePicker.getDirectoryPath();
       if (path == null) return;
-      final current = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments
-          ?? const <ChatAttachment>[];
+      final current = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ?? const <ChatAttachment>[];
       final norm = p.normalize(path);
       if (current.any((a) => p.normalize(a.path) == norm)) return;
-      persistDraft(attachmentsOverride: [
-        ...current,
-        ChatAttachment(
-          path: path,
-          displayName: p.basename(path),
-          kind: ChatAttachmentKind.directory,
-        ),
-      ]);
+      persistDraft(
+        attachmentsOverride: [
+          ...current,
+          ChatAttachment(path: path, displayName: p.basename(path), kind: ChatAttachmentKind.directory),
+        ],
+      );
     }
 
     void removeAttachment(ChatAttachment a) {
-      final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments
-          ?? const <ChatAttachment>[];
+      final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ?? const <ChatAttachment>[];
       persistDraft(
         attachmentsOverride: live
-            .where((x) => !(x.path == a.path &&
-                x.kind == a.kind &&
-                x.startLine == a.startLine &&
-                x.endLine == a.endLine))
+            .where(
+              (x) => !(x.path == a.path && x.kind == a.kind && x.startLine == a.startLine && x.endLine == a.endLine),
+            )
             .toList(),
       );
       if (a.kind == ChatAttachmentKind.imageCapture) {
@@ -263,21 +219,13 @@ class ClaudeInputBar extends HookWidget {
         sessionsCubit.setQueuedPrompt(workspaceId, userText);
         return;
       }
-      final triggers =
-          selectedChips.map((c) => c.trigger).toList(growable: false);
-      final hasContent = userText.isNotEmpty ||
-          triggers.isNotEmpty ||
-          attachments.isNotEmpty;
+      final triggers = selectedChips.map((c) => c.trigger).toList(growable: false);
+      final hasContent = userText.isNotEmpty || triggers.isNotEmpty || attachments.isNotEmpty;
       if (!hasContent) return;
       final attachmentsSnapshot = List<ChatAttachment>.unmodifiable(attachments);
       controller.clear();
       sessionsCubit.clearInputDraft(workspaceId);
-      sessionsCubit.sendPrompt(
-        workspaceId,
-        userText,
-        slashTriggers: triggers,
-        attachments: attachmentsSnapshot,
-      );
+      sessionsCubit.sendPrompt(workspaceId, userText, slashTriggers: triggers, attachments: attachmentsSnapshot);
     }
 
     KeyEventResult onKey(FocusNode node, KeyEvent event) {
@@ -294,8 +242,7 @@ class ClaudeInputBar extends HookWidget {
           slashCubit.moveSelection(-1);
           return KeyEventResult.handled;
         }
-        if (event.logicalKey == LogicalKeyboardKey.tab ||
-            event.logicalKey == LogicalKeyboardKey.enter) {
+        if (event.logicalKey == LogicalKeyboardKey.tab || event.logicalKey == LogicalKeyboardKey.enter) {
           final cmd = slashCubit.accept();
           if (cmd != null) {
             applySelection(cmd);
@@ -309,12 +256,9 @@ class ClaudeInputBar extends HookWidget {
         }
       }
 
-      if (event.logicalKey == LogicalKeyboardKey.backspace &&
-          controller.text.isEmpty &&
-          !isSuggesting) {
+      if (event.logicalKey == LogicalKeyboardKey.backspace && controller.text.isEmpty && !isSuggesting) {
         if (selectedChips.isNotEmpty) {
-          final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.selectedCommands
-              ?? const <SlashCommand>[];
+          final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.selectedCommands ?? const <SlashCommand>[];
           if (live.isNotEmpty) {
             final next = live.sublist(0, live.length - 1);
             persistDraft(chips: next);
@@ -322,8 +266,7 @@ class ClaudeInputBar extends HookWidget {
           }
         }
         if (attachments.isNotEmpty) {
-          final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments
-              ?? const <ChatAttachment>[];
+          final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ?? const <ChatAttachment>[];
           if (live.isNotEmpty) {
             final next = live.sublist(0, live.length - 1);
             persistDraft(attachmentsOverride: next);
@@ -339,8 +282,7 @@ class ClaudeInputBar extends HookWidget {
         submit();
         return KeyEventResult.handled;
       }
-      if (event.logicalKey == LogicalKeyboardKey.period &&
-          HardwareKeyboard.instance.isMetaPressed) {
+      if (event.logicalKey == LogicalKeyboardKey.period && HardwareKeyboard.instance.isMetaPressed) {
         if (_isBusy) sessionsCubit.stopRun();
         return KeyEventResult.handled;
       }
@@ -351,8 +293,7 @@ class ClaudeInputBar extends HookWidget {
         }
         final now = DateTime.now();
         final armed = escArmedAt.value;
-        if (armed != null &&
-            now.difference(armed) <= const Duration(seconds: 3)) {
+        if (armed != null && now.difference(armed) <= const Duration(seconds: 3)) {
           escArmedAt.value = null;
           ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
           sessionsCubit.stopRun();
@@ -391,27 +332,19 @@ class ClaudeInputBar extends HookWidget {
           SlashCommandChipRow(
             chips: selectedChips,
             onRemove: (cmd) {
-              final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.selectedCommands
-                  ?? const <SlashCommand>[];
+              final live =
+                  sessionsCubit.state.sessions[workspaceId]?.inputDraft.selectedCommands ?? const <SlashCommand>[];
               final next = live.where((c) => c.trigger != cmd.trigger).toList();
               persistDraft(chips: next);
             },
           ),
-          AttachmentChipRow(
-            attachments: attachments,
-            onRemove: removeAttachment,
-          ),
+          AttachmentChipRow(attachments: attachments, onRemove: removeAttachment),
           Container(
             decoration: const BoxDecoration(
               color: AppColors.surfaceContainerLow,
-              border: Border(
-                top: BorderSide(color: AppColors.outlineVariant, width: 1),
-              ),
+              border: Border(top: BorderSide(color: AppColors.outlineVariant, width: 1)),
             ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.md,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
             child: CompositedTransformTarget(
               link: link,
               child: Row(
@@ -419,8 +352,7 @@ class ClaudeInputBar extends HookWidget {
                 children: [
                   const Padding(
                     padding: EdgeInsets.only(top: 2),
-                    child: Icon(Icons.chevron_right,
-                        size: 16, color: AppColors.primary),
+                    child: Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
@@ -436,18 +368,14 @@ class ClaudeInputBar extends HookWidget {
                         maxLines: 6,
                         minLines: 1,
                         textInputAction: TextInputAction.newline,
-                        style: AppTypography.terminalCode.copyWith(
-                          color: AppColors.onSurface,
-                        ),
+                        style: AppTypography.terminalCode.copyWith(color: AppColors.onSurface),
                         decoration: InputDecoration(
                           isCollapsed: true,
                           border: InputBorder.none,
                           hintText: _isBusy
                               ? Locales.Claude.Terminal.Input.placeholderQueueing
                               : Locales.Claude.Terminal.Input.placeholder,
-                          hintStyle: AppTypography.terminalCode.copyWith(
-                            color: AppColors.outline,
-                          ),
+                          hintStyle: AppTypography.terminalCode.copyWith(color: AppColors.outline),
                         ),
                       ),
                     ),
@@ -476,11 +404,9 @@ class ClaudeInputBar extends HookWidget {
                       final next = !screenshotPreviewEnabled.value;
                       screenshotPreviewEnabled.value = next;
                       final prefs = await SharedPreferences.getInstance();
-                      await prefs.setBool(
-                          _kScreenshotPreviewPrefKey, next);
+                      await prefs.setBool(_kScreenshotPreviewPrefKey, next);
                     },
-                    onCapture: (mode, displayIndex) =>
-                        runCapture(mode, context, displayIndex: displayIndex),
+                    onCapture: (mode, displayIndex) => runCapture(mode, context, displayIndex: displayIndex),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   if (_isBusy && controller.text.trim().isNotEmpty)
@@ -539,18 +465,13 @@ class _ScreenshotMenu extends HookWidget {
   final bool isBusy;
   final bool previewEnabled;
   final Future<void> Function() onTogglePreview;
-  final Future<void> Function(ScreenshotCaptureMode mode, int? displayIndex)
-      onCapture;
+  final Future<void> Function(ScreenshotCaptureMode mode, int? displayIndex) onCapture;
 
   @override
   Widget build(BuildContext context) {
     final controller = useMemoized(MenuController.new, const []);
-    final displays = useMemoized(
-      () => WidgetsBinding.instance.platformDispatcher.displays.toList(),
-      const [],
-    );
-    final fullScreenLabel =
-        Locales.Claude.Terminal.Input.Attachments.screenshotFullScreen;
+    final displays = useMemoized(() => WidgetsBinding.instance.platformDispatcher.displays.toList(), const []);
+    final fullScreenLabel = Locales.Claude.Terminal.Input.Attachments.screenshotFullScreen;
 
     final menuChildren = <Widget>[
       if (displays.length > 1)
@@ -558,47 +479,31 @@ class _ScreenshotMenu extends HookWidget {
           menuChildren: [
             for (var i = 0; i < displays.length; i++)
               MenuItemButton(
-                onPressed: () => onCapture(
-                  ScreenshotCaptureMode.fullScreen,
-                  i + 1,
-                ),
-                child: Text(
-                  Locales.Claude.Terminal.Input.Attachments
-                      .screenshotDisplay(index: '${i + 1}'),
-                ),
+                onPressed: () => onCapture(ScreenshotCaptureMode.fullScreen, i + 1),
+                child: Text(Locales.Claude.Terminal.Input.Attachments.screenshotDisplay(index: '${i + 1}')),
               ),
           ],
           child: Text(fullScreenLabel),
         )
       else
         MenuItemButton(
-          onPressed: () =>
-              onCapture(ScreenshotCaptureMode.fullScreen, null),
+          onPressed: () => onCapture(ScreenshotCaptureMode.fullScreen, null),
           child: Text(fullScreenLabel),
         ),
       MenuItemButton(
         onPressed: () => onCapture(ScreenshotCaptureMode.region, null),
-        child: Text(
-          Locales.Claude.Terminal.Input.Attachments.screenshotRegion,
-        ),
+        child: Text(Locales.Claude.Terminal.Input.Attachments.screenshotRegion),
       ),
       MenuItemButton(
         onPressed: () => onCapture(ScreenshotCaptureMode.window, null),
-        child: Text(
-          Locales.Claude.Terminal.Input.Attachments.screenshotWindow,
-        ),
+        child: Text(Locales.Claude.Terminal.Input.Attachments.screenshotWindow),
       ),
       const Divider(height: 1),
       MenuItemButton(
         closeOnActivate: false,
-        leadingIcon: Icon(
-          previewEnabled ? Icons.check_box : Icons.check_box_outline_blank,
-          size: 18,
-        ),
+        leadingIcon: Icon(previewEnabled ? Icons.check_box : Icons.check_box_outline_blank, size: 18),
         onPressed: onTogglePreview,
-        child: Text(
-          Locales.Claude.Terminal.Input.Attachments.screenshotPreview,
-        ),
+        child: Text(Locales.Claude.Terminal.Input.Attachments.screenshotPreview),
       ),
     ];
 

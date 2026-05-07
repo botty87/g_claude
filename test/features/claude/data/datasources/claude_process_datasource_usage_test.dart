@@ -28,10 +28,7 @@ List<Map<String, dynamic>> _readFixture(String relativePath) {
   return out;
 }
 
-List<ClaudeEvent> _runFixture(
-  ClaudeProcessDataSourceImpl parser,
-  String relativePath,
-) {
+List<ClaudeEvent> _runFixture(ClaudeProcessDataSourceImpl parser, String relativePath) {
   parser.resetParserStateForTest();
   final events = <ClaudeEvent>[];
   for (final raw in _readFixture(relativePath)) {
@@ -58,74 +55,54 @@ void main() {
     parser = _makeParser();
   });
 
-  group(
-    'usageUpdate from real simple_text fixture — message_start and message_delta',
-    () {
-      late List<ClaudeEventUsageUpdate> usageEvents;
+  group('usageUpdate from real simple_text fixture — message_start and message_delta', () {
+    late List<ClaudeEventUsageUpdate> usageEvents;
 
-      setUp(() {
-        final events = _runFixture(parser, 'simple_text.ndjson');
-        usageEvents = events.whereType<ClaudeEventUsageUpdate>().toList();
-      });
+    setUp(() {
+      final events = _runFixture(parser, 'simple_text.ndjson');
+      usageEvents = events.whereType<ClaudeEventUsageUpdate>().toList();
+    });
 
-      test(
-        'at least one usageUpdate is emitted from the message_start envelope',
-        () {
-          expect(
-            usageEvents,
-            isNotEmpty,
-            reason:
-                'simple_text.ndjson has a message_start with a usage object',
-          );
-        },
+    test('at least one usageUpdate is emitted from the message_start envelope', () {
+      expect(usageEvents, isNotEmpty, reason: 'simple_text.ndjson has a message_start with a usage object');
+    });
+
+    test('the first usageUpdate carries non-zero inputTokens or cache tokens', () {
+      final first = usageEvents.first;
+      final hasPositiveContext =
+          (first.inputTokens ?? 0) > 0 || (first.cacheReadTokens ?? 0) > 0 || (first.cacheCreationTokens ?? 0) > 0;
+      expect(
+        hasPositiveContext,
+        isTrue,
+        reason: 'message_start usage must include at least one non-zero input/cache field',
       );
-
-      test(
-        'the first usageUpdate carries non-zero inputTokens or cache tokens',
-        () {
-          final first = usageEvents.first;
-          final hasPositiveContext =
-              (first.inputTokens ?? 0) > 0 ||
-              (first.cacheReadTokens ?? 0) > 0 ||
-              (first.cacheCreationTokens ?? 0) > 0;
-          expect(
-            hasPositiveContext,
-            isTrue,
-            reason:
-                'message_start usage must include at least one non-zero input/cache field',
-          );
-        },
-      );
-    },
-  );
+    });
+  });
 
   group('usageUpdate — synthetic: message_start with all usage fields', () {
-    test(
-      'emits usageUpdate with all four fields parsed from message_start',
-      () {
-        final out = parser.normalizeForTest({
-          'type': 'stream_event',
-          'event': {
-            'type': 'message_start',
-            'message': {
-              'usage': {
-                'input_tokens': 100,
-                'cache_read_input_tokens': 5000,
-                'cache_creation_input_tokens': 200,
-                'output_tokens': 0,
-              },
+    test('emits usageUpdate with all four fields parsed from message_start', () {
+      final out = parser.normalizeForTest({
+        'type': 'stream_event',
+        'event': {
+          'type': 'message_start',
+          'message': {
+            'usage': {
+              'input_tokens': 100,
+              'cache_read_input_tokens': 5000,
+              'cache_creation_input_tokens': 200,
+              'output_tokens': 0,
             },
           },
-        }).toList();
+        },
+      }).toList();
 
-        expect(out, hasLength(1));
-        final e = out.single as ClaudeEventUsageUpdate;
-        expect(e.inputTokens, 100);
-        expect(e.cacheReadTokens, 5000);
-        expect(e.cacheCreationTokens, 200);
-        expect(e.outputTokens, 0);
-      },
-    );
+      expect(out, hasLength(1));
+      final e = out.single as ClaudeEventUsageUpdate;
+      expect(e.inputTokens, 100);
+      expect(e.cacheReadTokens, 5000);
+      expect(e.cacheCreationTokens, 200);
+      expect(e.outputTokens, 0);
+    });
   });
 
   group('usageUpdate — synthetic: message_delta with output_tokens only', () {
@@ -148,38 +125,29 @@ void main() {
     });
   });
 
-  group(
-    'usageUpdate — synthetic: frames without usage field emit no event',
-    () {
-      test(
-        'message_start without usage object emits zero usageUpdate events',
-        () {
-          final out = parser.normalizeForTest({
-            'type': 'stream_event',
-            'event': {
-              'type': 'message_start',
-              'message': {'model': 'claude-sonnet-4-5'},
-            },
-          }).toList();
-
-          expect(out.whereType<ClaudeEventUsageUpdate>(), isEmpty);
+  group('usageUpdate — synthetic: frames without usage field emit no event', () {
+    test('message_start without usage object emits zero usageUpdate events', () {
+      final out = parser.normalizeForTest({
+        'type': 'stream_event',
+        'event': {
+          'type': 'message_start',
+          'message': {'model': 'claude-sonnet-4-5'},
         },
-      );
+      }).toList();
 
-      test(
-        'message_delta without usage field emits zero usageUpdate events',
-        () {
-          final out = parser.normalizeForTest({
-            'type': 'stream_event',
-            'event': {
-              'type': 'message_delta',
-              'delta': {'stop_reason': 'end_turn'},
-            },
-          }).toList();
+      expect(out.whereType<ClaudeEventUsageUpdate>(), isEmpty);
+    });
 
-          expect(out.whereType<ClaudeEventUsageUpdate>(), isEmpty);
+    test('message_delta without usage field emits zero usageUpdate events', () {
+      final out = parser.normalizeForTest({
+        'type': 'stream_event',
+        'event': {
+          'type': 'message_delta',
+          'delta': {'stop_reason': 'end_turn'},
         },
-      );
-    },
-  );
+      }).toList();
+
+      expect(out.whereType<ClaudeEventUsageUpdate>(), isEmpty);
+    });
+  });
 }

@@ -27,10 +27,8 @@ abstract class ClaudeSessionData with _$ClaudeSessionData {
 abstract class ClaudeSessionsState with _$ClaudeSessionsState {
   const ClaudeSessionsState._();
 
-  const factory ClaudeSessionsState({
-    @Default(<String, ClaudeSessionData>{})
-    Map<String, ClaudeSessionData> sessions,
-  }) = _ClaudeSessionsState;
+  const factory ClaudeSessionsState({@Default(<String, ClaudeSessionData>{}) Map<String, ClaudeSessionData> sessions}) =
+      _ClaudeSessionsState;
 
   ClaudeSessionData? sessionFor(String? workspaceId) {
     if (workspaceId == null) return null;

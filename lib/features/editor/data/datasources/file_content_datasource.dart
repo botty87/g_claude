@@ -40,12 +40,7 @@ class FileContentDataSourceImpl implements FileContentDataSource {
 
     final content = await file.readAsString();
     return (
-      content: FileContent(
-        path: path,
-        content: content,
-        language: _languageFor(path),
-        sizeBytes: stat.size,
-      ),
+      content: FileContent(path: path, content: content, language: _languageFor(path), sizeBytes: stat.size),
       modified: stat.modified,
     );
   }

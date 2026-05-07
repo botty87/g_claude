@@ -35,21 +35,14 @@ class ClaudeTerminalHeader extends StatelessWidget {
       (c) => c.state.sessions[workspaceId]?.model ?? ClaudeModel.defaultModel,
     );
     final effort = context.select<ClaudeSessionsCubit, ClaudeEffort>(
-      (c) =>
-          c.state.sessions[workspaceId]?.effort ?? ClaudeEffort.defaultEffort,
+      (c) => c.state.sessions[workspaceId]?.effort ?? ClaudeEffort.defaultEffort,
     );
-    final thinkingMode = context
-        .select<ClaudeSessionsCubit, ClaudeThinkingMode>(
-          (c) =>
-              c.state.sessions[workspaceId]?.thinkingMode ??
-              ClaudeThinkingMode.defaultMode,
-        );
-    final permissionMode = context
-        .select<ClaudeSessionsCubit, ClaudePermissionMode>(
-          (c) =>
-              c.state.sessions[workspaceId]?.permissionMode ??
-              ClaudePermissionMode.defaultChoice,
-        );
+    final thinkingMode = context.select<ClaudeSessionsCubit, ClaudeThinkingMode>(
+      (c) => c.state.sessions[workspaceId]?.thinkingMode ?? ClaudeThinkingMode.defaultMode,
+    );
+    final permissionMode = context.select<ClaudeSessionsCubit, ClaudePermissionMode>(
+      (c) => c.state.sessions[workspaceId]?.permissionMode ?? ClaudePermissionMode.defaultChoice,
+    );
     final hasMessages = context.select<ClaudeSessionsCubit, bool>(
       (c) => (c.state.sessions[workspaceId]?.messages.isNotEmpty) ?? false,
     );
@@ -63,9 +56,7 @@ class ClaudeTerminalHeader extends StatelessWidget {
       height: AppSpacing.toolbarHeight,
       decoration: const BoxDecoration(
         color: AppColors.surfaceContainerLow,
-        border: Border(
-          bottom: BorderSide(color: AppColors.outlineVariant, width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.outlineVariant, width: 1)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: LayoutBuilder(
@@ -75,11 +66,7 @@ class ClaudeTerminalHeader extends StatelessWidget {
             children: [
               Tooltip(
                 message: Locales.Claude.Terminal.title,
-                child: const Icon(
-                  Icons.terminal,
-                  size: 14,
-                  color: AppColors.primary,
-                ),
+                child: const Icon(Icons.terminal, size: 14, color: AppColors.primary),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -88,27 +75,20 @@ class ClaudeTerminalHeader extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ModelPicker(
-                        current: model,
-                        enabled: !isBusy,
-                        onSelected: (m) => cubit.setModel(workspaceId, m),
-                      ),
+                      ModelPicker(current: model, enabled: !isBusy, onSelected: (m) => cubit.setModel(workspaceId, m)),
                       const SizedBox(width: AppSpacing.xs),
                       EffortThinkingPicker(
                         currentEffort: effort,
                         currentThinking: thinkingMode,
                         enabled: !isBusy,
-                        onEffortSelected: (e) =>
-                            cubit.setEffort(workspaceId, e),
-                        onThinkingSelected: (t) =>
-                            cubit.setThinking(workspaceId, t),
+                        onEffortSelected: (e) => cubit.setEffort(workspaceId, e),
+                        onThinkingSelected: (t) => cubit.setThinking(workspaceId, t),
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       PermissionPicker(
                         current: permissionMode,
                         enabled: !isBusy,
-                        onSelected: (m) =>
-                            cubit.setPermissionMode(workspaceId, m),
+                        onSelected: (m) => cubit.setPermissionMode(workspaceId, m),
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       McpPicker(workspaceId: workspaceId),
@@ -126,17 +106,13 @@ class ClaudeTerminalHeader extends StatelessWidget {
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: hover
-                            ? AppColors.glassHover
-                            : Colors.transparent,
+                        color: hover ? AppColors.glassHover : Colors.transparent,
                         borderRadius: BorderRadius.circular(AppRadii.sm),
                       ),
                       child: Icon(
                         Symbols.add_comment,
                         size: 14,
-                        color: isBusy
-                            ? AppColors.outline
-                            : AppColors.onSurfaceVariant,
+                        color: isBusy ? AppColors.outline : AppColors.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -170,20 +146,11 @@ class _StatusIndicator extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              color: status.color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: status.color, shape: BoxShape.circle),
           ),
           if (!compact) ...[
             const SizedBox(width: AppSpacing.sm),
-            Text(
-              label,
-              style: AppTypography.bodyMain.copyWith(
-                color: AppColors.outline,
-                fontSize: 11,
-              ),
-            ),
+            Text(label, style: AppTypography.bodyMain.copyWith(color: AppColors.outline, fontSize: 11)),
           ],
         ],
       ),
@@ -204,32 +171,44 @@ class _ContextMeter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Granular selectors (CLAUDE.md): each field = one select, never the
-    // whole SessionUsage object, so rebuilds are scoped to the changed field.
-    final hasUsage = context.select<ClaudeSessionsCubit, bool>(
-      (c) => c.state.sessions[workspaceId]?.usage != null,
-    );
-    if (!hasUsage) return const SizedBox.shrink();
+    // All meter inputs flip together inside a single SessionUsage emit, so
+    // splitting them into N selectors buys nothing — collapse into one
+    // record select. The record's `==` (structural) is stable when usage is
+    // unchanged, so this still avoids unnecessary rebuilds.
+    final usage = context
+        .select<
+          ClaudeSessionsCubit,
+          ({
+            bool hasUsage,
+            int contextTokens,
+            int inputTokens,
+            int cacheReadTokens,
+            int cacheCreationTokens,
+            int outputTokens,
+            int limit,
+          })
+        >((c) {
+          final session = c.state.sessions[workspaceId];
+          final u = session?.usage;
+          final model = session?.model ?? ClaudeModel.defaultModel;
+          return (
+            hasUsage: u != null,
+            contextTokens: u?.contextTokens ?? 0,
+            inputTokens: u?.inputTokens ?? 0,
+            cacheReadTokens: u?.cacheReadTokens ?? 0,
+            cacheCreationTokens: u?.cacheCreationTokens ?? 0,
+            outputTokens: u?.outputTokens ?? 0,
+            limit: model.contextLimit,
+          );
+        });
+    if (!usage.hasUsage) return const SizedBox.shrink();
 
-    final contextTokens = context.select<ClaudeSessionsCubit, int>(
-      (c) => c.state.sessions[workspaceId]?.usage?.contextTokens ?? 0,
-    );
-    final inputTokens = context.select<ClaudeSessionsCubit, int>(
-      (c) => c.state.sessions[workspaceId]?.usage?.inputTokens ?? 0,
-    );
-    final cacheReadTokens = context.select<ClaudeSessionsCubit, int>(
-      (c) => c.state.sessions[workspaceId]?.usage?.cacheReadTokens ?? 0,
-    );
-    final cacheCreationTokens = context.select<ClaudeSessionsCubit, int>(
-      (c) => c.state.sessions[workspaceId]?.usage?.cacheCreationTokens ?? 0,
-    );
-    final outputTokens = context.select<ClaudeSessionsCubit, int>(
-      (c) => c.state.sessions[workspaceId]?.usage?.outputTokens ?? 0,
-    );
-    final limit = context.select<ClaudeSessionsCubit, int>(
-      (c) => (c.state.sessions[workspaceId]?.model ?? ClaudeModel.defaultModel)
-          .contextLimit,
-    );
+    final contextTokens = usage.contextTokens;
+    final inputTokens = usage.inputTokens;
+    final cacheReadTokens = usage.cacheReadTokens;
+    final cacheCreationTokens = usage.cacheCreationTokens;
+    final outputTokens = usage.outputTokens;
+    final limit = usage.limit;
 
     final ratio = limit > 0 ? (contextTokens / limit).clamp(0.0, 1.0) : 0.0;
     final pct = (ratio * 100).round();
@@ -265,8 +244,7 @@ class _ContextMeter extends StatelessWidget {
               child: CircularProgressIndicator(
                 value: 1,
                 strokeWidth: 2,
-                valueColor:
-                    const AlwaysStoppedAnimation(AppColors.outlineVariant),
+                valueColor: const AlwaysStoppedAnimation(AppColors.outlineVariant),
                 backgroundColor: Colors.transparent,
               ),
             ),

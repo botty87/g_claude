@@ -7,20 +7,11 @@ import '../entities/claude_message.dart';
 abstract interface class ChatHistoryRepository {
   Future<Either<Failure, List<ChatSessionSummary>>> listSessions(WorkspaceId workspaceId);
 
-  Future<Either<Failure, List<ClaudeMessage>>> loadMessages({
-    required String encodedPath,
-    required String sessionId,
-  });
+  Future<Either<Failure, List<ClaudeMessage>>> loadMessages({required String encodedPath, required String sessionId});
 
-  Future<Either<Failure, void>> refreshIndex({
-    required WorkspaceId workspaceId,
-    required String workspaceCwd,
-  });
+  Future<Either<Failure, void>> refreshIndex({required WorkspaceId workspaceId, required String workspaceCwd});
 
-  Future<Either<Failure, void>> deleteSession({
-    required String sessionId,
-    required String encodedPath,
-  });
+  Future<Either<Failure, void>> deleteSession({required String sessionId, required String encodedPath});
 
   Future<Either<Failure, String>> exportSession({
     required String encodedPath,
@@ -28,8 +19,5 @@ abstract interface class ChatHistoryRepository {
     required String destinationPath,
   });
 
-  Future<Either<Failure, List<ChatSessionSummary>>> searchSessions(
-    WorkspaceId workspaceId,
-    String query,
-  );
+  Future<Either<Failure, List<ChatSessionSummary>>> searchSessions(WorkspaceId workspaceId, String query);
 }

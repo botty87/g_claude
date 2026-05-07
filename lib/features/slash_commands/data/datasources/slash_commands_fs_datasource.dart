@@ -25,10 +25,7 @@ class SlashCommandsFsDataSource {
     return _scanCommandsDir(dir, SlashCommandSource.project);
   }
 
-  Future<List<SlashCommand>> _scanCommandsDir(
-    Directory dir,
-    SlashCommandSource source,
-  ) async {
+  Future<List<SlashCommand>> _scanCommandsDir(Directory dir, SlashCommandSource source) async {
     final results = <SlashCommand>[];
     try {
       await for (final entity in dir.list(recursive: true, followLinks: false)) {
@@ -47,11 +44,7 @@ class SlashCommandsFsDataSource {
     return results;
   }
 
-  Future<SlashCommand?> _parseCommandFile(
-    File file,
-    String commandsDir,
-    SlashCommandSource source,
-  ) async {
+  Future<SlashCommand?> _parseCommandFile(File file, String commandsDir, SlashCommandSource source) async {
     final rel = p.withoutExtension(p.relative(file.path, from: commandsDir));
     final name = rel.replaceAll(p.separator, ':');
     final trigger = '/$name';
@@ -82,5 +75,4 @@ class SlashCommandsFsDataSource {
       allowedTools: allowedTools,
     );
   }
-
 }

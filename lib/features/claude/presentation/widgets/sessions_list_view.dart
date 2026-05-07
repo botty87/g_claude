@@ -20,9 +20,7 @@ class SessionsListView extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = context.select<WorkspacesCubit, Workspace?>(
-      (c) => c.state.activeWorkspace,
-    );
+    final active = context.select<WorkspacesCubit, Workspace?>((c) => c.state.activeWorkspace);
     if (active == null) {
       return const SizedBox.shrink();
     }
@@ -43,54 +41,34 @@ class SessionsListView extends HookWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SessionsHeader(
-          onRefresh: () =>
-              context.read<ChatHistoryCubit>().refresh(active.id, active.path),
-        ),
+        _SessionsHeader(onRefresh: () => context.read<ChatHistoryCubit>().refresh(active.id, active.path)),
         Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.xs,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
           child: TextField(
             controller: searchController,
             decoration: InputDecoration(
               hintText: Locales.Sessions.List.search,
               prefixIcon: const Icon(Symbols.search, size: 16),
               isDense: true,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadii.sm),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.sm)),
             ),
             style: AppTypography.bodyMain.copyWith(fontSize: 12),
           ),
         ),
         Expanded(
           child: BlocBuilder<ChatHistoryCubit, ChatHistoryState>(
-            buildWhen: (p, c) =>
-                p.byWorkspace[active.id] != c.byWorkspace[active.id],
+            buildWhen: (p, c) => p.byWorkspace[active.id] != c.byWorkspace[active.id],
             builder: (context, state) {
               final h = state.historyFor(active.id);
-              if (h == null ||
-                  h.status == HistoryStatus.loading && h.sessions.isEmpty) {
+              if (h == null || h.status == HistoryStatus.loading && h.sessions.isEmpty) {
                 return const Center(
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
+                  child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
                 );
               }
-              final list = h.query.trim().isEmpty
-                  ? h.sessions
-                  : (h.searchResults ?? const <ChatSessionSummary>[]);
+              final list = h.query.trim().isEmpty ? h.sessions : (h.searchResults ?? const <ChatSessionSummary>[]);
               if (h.searchLoading && list.isEmpty) {
                 return const Center(
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
+                  child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
                 );
               }
               if (list.isEmpty) {
@@ -123,9 +101,7 @@ class SessionsListView extends HookWidget {
         ),
         Container(
           decoration: const BoxDecoration(
-            border: Border(
-              top: BorderSide(color: AppColors.outlineVariant, width: 1),
-            ),
+            border: Border(top: BorderSide(color: AppColors.outlineVariant, width: 1)),
           ),
           padding: const EdgeInsets.all(AppSpacing.sm),
           child: TextButton.icon(
@@ -151,25 +127,17 @@ class _SessionsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
       child: Row(
         children: [
           Text(
             Locales.Sessions.List.headerLabel,
-            style: AppTypography.sidebarLabel.copyWith(
-              color: AppColors.onSurfaceVariant,
-            ),
+            style: AppTypography.sidebarLabel.copyWith(color: AppColors.onSurfaceVariant),
           ),
           const Spacer(),
           Tooltip(
             message: Locales.Sessions.List.refresh,
-            child: _HeaderIconButton(
-              icon: Symbols.refresh,
-              onTap: onRefresh,
-            ),
+            child: _HeaderIconButton(icon: Symbols.refresh, onTap: onRefresh),
           ),
         ],
       ),
@@ -195,11 +163,7 @@ class _HeaderIconButton extends StatelessWidget {
             color: hover ? AppColors.glassHover : Colors.transparent,
             borderRadius: BorderRadius.circular(3),
           ),
-          child: Icon(
-            icon,
-            size: 14,
-            color: hover ? AppColors.onSurface : AppColors.onSurfaceVariant,
-          ),
+          child: Icon(icon, size: 14, color: hover ? AppColors.onSurface : AppColors.onSurfaceVariant),
         );
       },
     );
@@ -207,12 +171,7 @@ class _HeaderIconButton extends StatelessWidget {
 }
 
 class _SessionRow extends StatelessWidget {
-  const _SessionRow({
-    super.key,
-    required this.summary,
-    required this.isSelected,
-    required this.workspaceId,
-  });
+  const _SessionRow({super.key, required this.summary, required this.isSelected, required this.workspaceId});
 
   final ChatSessionSummary summary;
   final bool isSelected;
@@ -221,8 +180,7 @@ class _SessionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Hoverable(
-      onTap: () =>
-          context.read<ChatHistoryCubit>().selectSession(workspaceId, summary.id),
+      onTap: () => context.read<ChatHistoryCubit>().selectSession(workspaceId, summary.id),
       builder: (context, hover) {
         Color? bg;
         if (isSelected) {
@@ -234,10 +192,7 @@ class _SessionRow extends StatelessWidget {
         return Container(
           constraints: const BoxConstraints(minHeight: 44),
           color: bg,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.xs,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -247,23 +202,17 @@ class _SessionRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      summary.title.isEmpty
-                          ? Locales.Sessions.List.untitled
-                          : summary.title,
+                      summary.title.isEmpty ? Locales.Sessions.List.untitled : summary.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.bodyMain.copyWith(
-                        fontSize: 12,
-                        color: AppColors.onSurface,
-                      ),
+                      style: AppTypography.bodyMain.copyWith(fontSize: 12, color: AppColors.onSurface),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       _relativeDate(summary.lastMessageAt),
                       style: AppTypography.bodyMain.copyWith(
                         fontSize: 11,
-                        color:
-                            AppColors.onSurfaceVariant.withValues(alpha: 0.7),
+                        color: AppColors.onSurfaceVariant.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -271,20 +220,14 @@ class _SessionRow extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.xs),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 5,
-                  vertical: 1,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(AppRadii.sm),
                 ),
                 child: Text(
                   '${summary.messageCount}',
-                  style: AppTypography.bodyMain.copyWith(
-                    fontSize: 10,
-                    color: AppColors.onSurfaceVariant,
-                  ),
+                  style: AppTypography.bodyMain.copyWith(fontSize: 10, color: AppColors.onSurfaceVariant),
                 ),
               ),
             ],
@@ -298,12 +241,18 @@ class _SessionRow extends StatelessWidget {
     final now = DateTime.now();
     final diff = now.difference(dt);
     if (diff.inMinutes < 1) return Locales.Sessions.List.RelativeDate.now;
-    if (diff.inMinutes < 60) return Locales.Sessions.List.RelativeDate.minutesAgo(n: '${diff.inMinutes}');
-    if (diff.inHours < 24) return Locales.Sessions.List.RelativeDate.hoursAgo(n: '${diff.inHours}');
+    if (diff.inMinutes < 60) {
+      return Locales.Sessions.List.RelativeDate.minutesAgo(n: '${diff.inMinutes}');
+    }
+    if (diff.inHours < 24) {
+      return Locales.Sessions.List.RelativeDate.hoursAgo(n: '${diff.inHours}');
+    }
     final yesterday = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 1));
     final dtDay = DateTime(dt.year, dt.month, dt.day);
     if (dtDay == yesterday) return Locales.Sessions.List.RelativeDate.yesterday;
-    if (dt.year == now.year) return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}';
+    if (dt.year == now.year) {
+      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}';
+    }
     return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${(dt.year % 100).toString().padLeft(2, '0')}';
   }
 }

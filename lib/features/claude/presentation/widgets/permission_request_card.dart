@@ -13,11 +13,7 @@ import '../../domain/entities/claude_message.dart';
 /// Inline card asking the user to approve / deny a tool invocation surfaced
 /// by the `PreToolUse` permission hook.
 class PermissionRequestCard extends HookWidget {
-  const PermissionRequestCard({
-    super.key,
-    required this.message,
-    required this.onDecide,
-  });
+  const PermissionRequestCard({super.key, required this.message, required this.onDecide});
 
   final ClaudeMessagePermissionRequest message;
   final void Function(ClaudePermissionDecision decision) onDecide;
@@ -30,22 +26,16 @@ class PermissionRequestCard extends HookWidget {
       return _AnsweredView(message: message);
     }
 
-    final encodedInput = useMemoized(
-      () => message.toolInput.isEmpty
-          ? ''
-          : prettyJson.convert(message.toolInput),
-      [message.toolInput],
-    );
+    final encodedInput = useMemoized(() => message.toolInput.isEmpty ? '' : prettyJson.convert(message.toolInput), [
+      message.toolInput,
+    ]);
 
     return Container(
       key: ValueKey('permission_request_card_${message.id}'),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerHigh.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(AppRadii.md),
-        border: Border.all(
-          color: AppColors.tertiary.withValues(alpha: 0.5),
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.5), width: 1),
       ),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
@@ -53,12 +43,7 @@ class PermissionRequestCard extends HookWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                Symbols.shield_question,
-                size: 16,
-                color: AppColors.tertiary,
-                fill: 1,
-              ),
+              const Icon(Symbols.shield_question, size: 16, color: AppColors.tertiary, fill: 1),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
@@ -76,11 +61,7 @@ class PermissionRequestCard extends HookWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             Locales.Claude.PermissionRequest.subtitle(tool: message.toolName),
-            style: AppTypography.bodyMain.copyWith(
-              color: AppColors.onSurface,
-              fontSize: 13,
-              height: 1.4,
-            ),
+            style: AppTypography.bodyMain.copyWith(color: AppColors.onSurface, fontSize: 13, height: 1.4),
           ),
           if (encodedInput.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.sm),
@@ -88,11 +69,7 @@ class PermissionRequestCard extends HookWidget {
               onTap: () => expanded.value = !expanded.value,
               child: Row(
                 children: [
-                  Icon(
-                    expanded.value ? Symbols.expand_less : Symbols.expand_more,
-                    size: 14,
-                    color: AppColors.outline,
-                  ),
+                  Icon(expanded.value ? Symbols.expand_less : Symbols.expand_more, size: 14, color: AppColors.outline),
                   const SizedBox(width: AppSpacing.xs),
                   Text(
                     Locales.Claude.PermissionRequest.inputLabel,
@@ -114,18 +91,12 @@ class PermissionRequestCard extends HookWidget {
                 decoration: BoxDecoration(
                   color: AppColors.surfaceContainerLowest,
                   borderRadius: BorderRadius.circular(AppRadii.sm),
-                  border: Border.all(
-                    color: AppColors.outlineVariant.withValues(alpha: 0.3),
-                  ),
+                  border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.3)),
                 ),
                 child: SingleChildScrollView(
                   child: SelectableText(
                     encodedInput,
-                    style: AppTypography.terminalCode.copyWith(
-                      color: AppColors.onSurface,
-                      fontSize: 11.5,
-                      height: 1.5,
-                    ),
+                    style: AppTypography.terminalCode.copyWith(color: AppColors.onSurface, fontSize: 11.5, height: 1.5),
                   ),
                 ),
               ),
@@ -142,14 +113,11 @@ class PermissionRequestCard extends HookWidget {
                 label: Text(Locales.Claude.PermissionRequest.deny),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.error,
-                  side: BorderSide(
-                    color: AppColors.error.withValues(alpha: 0.6),
-                  ),
+                  side: BorderSide(color: AppColors.error.withValues(alpha: 0.6)),
                 ),
               ),
               OutlinedButton(
-                onPressed: () =>
-                    onDecide(ClaudePermissionDecision.allowAlways),
+                onPressed: () => onDecide(ClaudePermissionDecision.allowAlways),
                 child: Text(Locales.Claude.PermissionRequest.allowAlways),
               ),
               FilledButton.icon(
@@ -174,34 +142,25 @@ class _AnsweredView extends StatelessWidget {
   Widget build(BuildContext context) {
     final (icon, color, label) = switch (message.decision) {
       ClaudePermissionDecision.allowOnce => (
-          Symbols.check_circle,
-          AppColors.primary,
-          Locales.Claude.PermissionRequest.answeredAllowOnce,
-        ),
+        Symbols.check_circle,
+        AppColors.primary,
+        Locales.Claude.PermissionRequest.answeredAllowOnce,
+      ),
       ClaudePermissionDecision.allowAlways => (
-          Symbols.check_circle,
-          AppColors.primary,
-          Locales.Claude.PermissionRequest.answeredAllowAlways,
-        ),
-      ClaudePermissionDecision.deny => (
-          Symbols.block,
-          AppColors.error,
-          Locales.Claude.PermissionRequest.answeredDeny,
-        ),
+        Symbols.check_circle,
+        AppColors.primary,
+        Locales.Claude.PermissionRequest.answeredAllowAlways,
+      ),
+      ClaudePermissionDecision.deny => (Symbols.block, AppColors.error, Locales.Claude.PermissionRequest.answeredDeny),
       null => (Symbols.help, AppColors.outline, '—'),
     };
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(AppRadii.md),
-        border: Border.all(
-          color: AppColors.outlineVariant.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.sm,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
       child: Row(
         children: [
           Icon(icon, size: 14, color: color, fill: 1),
@@ -216,11 +175,7 @@ class _AnsweredView extends StatelessWidget {
           ),
           Text(
             label,
-            style: AppTypography.bodyMain.copyWith(
-              color: color,
-              fontSize: 11.5,
-              fontStyle: FontStyle.italic,
-            ),
+            style: AppTypography.bodyMain.copyWith(color: color, fontSize: 11.5, fontStyle: FontStyle.italic),
           ),
         ],
       ),

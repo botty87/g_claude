@@ -23,8 +23,7 @@ void main() {
   });
 
   group('openWorkspace — happy path', () {
-    test('returns a Workspace whose path/id are normalized (absolute) and name is the basename',
-        () async {
+    test('returns a Workspace whose path/id are normalized (absolute) and name is the basename', () async {
       when(() => ds.ensureDirectoryExists(any())).thenAnswer((_) async {});
       when(() => ds.readClaudeMd(any())).thenAnswer((_) async => '# proj');
 
@@ -47,11 +46,8 @@ void main() {
   });
 
   group('openWorkspace — exception → Failure mapping', () {
-    test('WorkspaceNotFoundException → NotFoundFailure with path in message',
-        () async {
-      when(() => ds.ensureDirectoryExists(any())).thenThrow(
-        const WorkspaceNotFoundException('/missing'),
-      );
+    test('WorkspaceNotFoundException → NotFoundFailure with path in message', () async {
+      when(() => ds.ensureDirectoryExists(any())).thenThrow(const WorkspaceNotFoundException('/missing'));
 
       final out = await repo.openWorkspace(path: '/missing');
       expect(out.isLeft, isTrue);
@@ -61,24 +57,20 @@ void main() {
     });
 
     test('WorkspaceNotADirectoryException → ValidationFailure', () async {
-      when(() => ds.ensureDirectoryExists(any())).thenThrow(
-        const WorkspaceNotADirectoryException('/not-a-dir'),
-      );
+      when(() => ds.ensureDirectoryExists(any())).thenThrow(const WorkspaceNotADirectoryException('/not-a-dir'));
 
       final out = await repo.openWorkspace(path: '/not-a-dir');
       expect(out.left, isA<ValidationFailure>());
     });
 
     test('Generic exception from datasource → UnexpectedFailure', () async {
-      when(() => ds.ensureDirectoryExists(any()))
-          .thenThrow(Exception('disk full'));
+      when(() => ds.ensureDirectoryExists(any())).thenThrow(Exception('disk full'));
 
       final out = await repo.openWorkspace(path: '/x/y');
       expect(out.left, isA<UnexpectedFailure>());
     });
 
-    test('exception thrown by readClaudeMd (after directory check) → UnexpectedFailure',
-        () async {
+    test('exception thrown by readClaudeMd (after directory check) → UnexpectedFailure', () async {
       when(() => ds.ensureDirectoryExists(any())).thenAnswer((_) async {});
       when(() => ds.readClaudeMd(any())).thenThrow(Exception('IO'));
 

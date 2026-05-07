@@ -10,6 +10,5 @@ class LoadSlashCommands {
   LoadSlashCommands(this._repo);
   final SlashCommandsRepository _repo;
 
-  Future<Either<Failure, List<SlashCommand>>> call({String? workspaceCwd}) =>
-      _repo.loadAll(workspaceCwd: workspaceCwd);
+  Future<Either<Failure, List<SlashCommand>>> call({String? workspaceCwd}) => _repo.loadAll(workspaceCwd: workspaceCwd);
 }

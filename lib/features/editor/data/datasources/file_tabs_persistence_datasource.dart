@@ -6,11 +6,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../../../core/persistence/key_value_store.dart';
 
 class PersistedWorkspaceFiles {
-  const PersistedWorkspaceFiles({
-    required this.openPaths,
-    this.activePath,
-    this.previewPath,
-  });
+  const PersistedWorkspaceFiles({required this.openPaths, this.activePath, this.previewPath});
 
   final List<String> openPaths;
   final String? activePath;
@@ -47,9 +43,7 @@ class FileTabsPersistenceDataSourceImpl implements FileTabsPersistenceDataSource
       final json = jsonDecode(raw) as Map<String, dynamic>;
       final v = json['schemaVersion'] as int?;
       if (v != _schemaVersion) {
-        _talker.warning(
-          'FileTabs persistence: schema mismatch (got $v, expected $_schemaVersion). Discarding.',
-        );
+        _talker.warning('FileTabs persistence: schema mismatch (got $v, expected $_schemaVersion). Discarding.');
         return null;
       }
       final perWs = <String, PersistedWorkspaceFiles>{};
@@ -85,9 +79,7 @@ class FileTabsPersistenceDataSourceImpl implements FileTabsPersistenceDataSource
   Future<void> clear() => _store.remove(_key);
 
   PersistedWorkspaceFiles? _parseFiles(Map<String, dynamic> j) {
-    final paths = (j['openPaths'] as List<dynamic>? ?? const [])
-        .whereType<String>()
-        .toList(growable: false);
+    final paths = (j['openPaths'] as List<dynamic>? ?? const []).whereType<String>().toList(growable: false);
     return PersistedWorkspaceFiles(
       openPaths: paths,
       activePath: j['activePath'] as String?,

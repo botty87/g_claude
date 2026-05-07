@@ -28,12 +28,7 @@ class _MockPersistence extends Mock implements WorkspacesPersistenceDataSource {
 class _MockWatcher extends Mock implements WorkspaceFileWatcher {}
 
 Workspace _ws(String path, {DateTime? openedAt}) {
-  return Workspace(
-    id: path,
-    path: path,
-    name: path.split('/').last,
-    openedAt: openedAt ?? DateTime.utc(2026, 1, 1),
-  );
+  return Workspace(id: path, path: path, name: path.split('/').last, openedAt: openedAt ?? DateTime.utc(2026, 1, 1));
 }
 
 void main() {
@@ -65,9 +60,7 @@ void main() {
     blocTest<WorkspacesCubit, WorkspacesState>(
       'opens a path: emits loaded with the new workspace + activeId == its id',
       build: () {
-        when(() => openWs(path: any(named: 'path'))).thenAnswer(
-          (_) async => Right(_ws('/Users/me/proj')),
-        );
+        when(() => openWs(path: any(named: 'path'))).thenAnswer((_) async => Right(_ws('/Users/me/proj')));
         return make();
       },
       act: (c) => c.openPath('/Users/me/proj'),
@@ -84,18 +77,14 @@ void main() {
     blocTest<WorkspacesCubit, WorkspacesState>(
       'asking to open an already-open workspace switches activeId only',
       build: () {
-        when(() => openWs(path: any(named: 'path'))).thenAnswer(
-          (_) async => Right(_ws('/x')),
-        );
+        when(() => openWs(path: any(named: 'path'))).thenAnswer((_) async => Right(_ws('/x')));
         return make();
       },
       act: (c) async {
         // First open.
         await c.openPath('/x');
         // Open another and switch active off.
-        when(() => openWs(path: any(named: 'path'))).thenAnswer(
-          (_) async => Right(_ws('/y')),
-        );
+        when(() => openWs(path: any(named: 'path'))).thenAnswer((_) async => Right(_ws('/y')));
         await c.openPath('/y');
         // Now ask again for /x → must NOT call openWs, just activate.
         await c.openPath('/x');
@@ -113,22 +102,19 @@ void main() {
     blocTest<WorkspacesCubit, WorkspacesState>(
       'invalid path emits a loaded state carrying lastFailure, list unchanged',
       build: () {
-        when(() => openWs(path: any(named: 'path'))).thenAnswer(
-          (_) async => Right(_ws('/x')),
-        );
+        when(() => openWs(path: any(named: 'path'))).thenAnswer((_) async => Right(_ws('/x')));
         return make();
       },
       act: (c) async {
         await c.openPath('/x');
-        when(() => openWs(path: any(named: 'path'))).thenAnswer(
-          (_) async => Left(NotFoundFailure('Directory does not exist: /missing')),
-        );
+        when(
+          () => openWs(path: any(named: 'path')),
+        ).thenAnswer((_) async => Left(NotFoundFailure('Directory does not exist: /missing')));
         await c.openPath('/missing');
       },
       verify: (c) {
         expect(c.state.workspacesOrEmpty.map((w) => w.id), ['/x']);
-        expect((c.state as WorkspacesStateLoaded).lastFailure,
-            isA<NotFoundFailure>());
+        expect((c.state as WorkspacesStateLoaded).lastFailure, isA<NotFoundFailure>());
       },
     );
   });
@@ -159,8 +145,7 @@ void main() {
     blocTest<WorkspacesCubit, WorkspacesState>(
       'closing the only workspace empties the list and clears activeId',
       build: () {
-        when(() => openWs(path: any(named: 'path')))
-            .thenAnswer((_) async => Right(_ws('/x')));
+        when(() => openWs(path: any(named: 'path'))).thenAnswer((_) async => Right(_ws('/x')));
         return make();
       },
       act: (c) async {
@@ -195,14 +180,10 @@ void main() {
     blocTest<WorkspacesCubit, WorkspacesState>(
       'closing a non-existent id is a no-op (no emit, no exception)',
       build: () {
-        when(() => openWs(path: any(named: 'path')))
-            .thenAnswer((_) async => Right(_ws('/x')));
+        when(() => openWs(path: any(named: 'path'))).thenAnswer((_) async => Right(_ws('/x')));
         return make();
       },
-      seed: () => WorkspacesState.loaded(
-        workspaces: [_ws('/x')],
-        activeId: '/x',
-      ),
+      seed: () => WorkspacesState.loaded(workspaces: [_ws('/x')], activeId: '/x'),
       act: (c) => c.closeWorkspace('/never-opened'),
       expect: () => const <WorkspacesState>[],
     );
@@ -227,14 +208,10 @@ void main() {
     blocTest<WorkspacesCubit, WorkspacesState>(
       'setActive on the already-active id is a no-op (no emit)',
       build: () {
-        when(() => openWs(path: any(named: 'path')))
-            .thenAnswer((_) async => Right(_ws('/x')));
+        when(() => openWs(path: any(named: 'path'))).thenAnswer((_) async => Right(_ws('/x')));
         return make();
       },
-      seed: () => WorkspacesState.loaded(
-        workspaces: [_ws('/x')],
-        activeId: '/x',
-      ),
+      seed: () => WorkspacesState.loaded(workspaces: [_ws('/x')], activeId: '/x'),
       act: (c) => c.setActive('/x'),
       expect: () => const <WorkspacesState>[],
     );
@@ -242,10 +219,7 @@ void main() {
     blocTest<WorkspacesCubit, WorkspacesState>(
       'setActive on an unknown id is a no-op',
       build: () => make(),
-      seed: () => WorkspacesState.loaded(
-        workspaces: [_ws('/x')],
-        activeId: '/x',
-      ),
+      seed: () => WorkspacesState.loaded(workspaces: [_ws('/x')], activeId: '/x'),
       act: (c) => c.setActive('/never-opened'),
       expect: () => const <WorkspacesState>[],
     );
@@ -269,27 +243,22 @@ void main() {
     blocTest<WorkspacesCubit, WorkspacesState>(
       'restores valid entries and skips entries whose openWorkspace fails',
       build: () {
-        when(() => persistence.read()).thenAnswer((_) async => PersistedWorkspaces(
-              activeId: '/x',
-              workspaces: [
-                PersistedWorkspaceEntry(
-                  id: '/x',
-                  path: '/x',
-                  name: 'x',
-                  openedAt: DateTime.utc(2026, 1, 1),
-                ),
-                PersistedWorkspaceEntry(
-                  id: '/missing',
-                  path: '/missing',
-                  name: 'missing',
-                  openedAt: DateTime.utc(2026, 1, 1),
-                ),
-              ],
-            ));
-        when(() => openWs(path: '/x')).thenAnswer((_) async => Right(_ws('/x')));
-        when(() => openWs(path: '/missing')).thenAnswer(
-          (_) async => Left(NotFoundFailure('/missing')),
+        when(() => persistence.read()).thenAnswer(
+          (_) async => PersistedWorkspaces(
+            activeId: '/x',
+            workspaces: [
+              PersistedWorkspaceEntry(id: '/x', path: '/x', name: 'x', openedAt: DateTime.utc(2026, 1, 1)),
+              PersistedWorkspaceEntry(
+                id: '/missing',
+                path: '/missing',
+                name: 'missing',
+                openedAt: DateTime.utc(2026, 1, 1),
+              ),
+            ],
+          ),
         );
+        when(() => openWs(path: '/x')).thenAnswer((_) async => Right(_ws('/x')));
+        when(() => openWs(path: '/missing')).thenAnswer((_) async => Left(NotFoundFailure('/missing')));
         return make();
       },
       act: (c) => c.restore(),
@@ -302,24 +271,22 @@ void main() {
     blocTest<WorkspacesCubit, WorkspacesState>(
       'falls back to first restored workspace when persisted activeId is missing',
       build: () {
-        when(() => persistence.read()).thenAnswer((_) async => PersistedWorkspaces(
-              activeId: '/never-restored',
-              workspaces: [
-                PersistedWorkspaceEntry(
-                  id: '/x',
-                  path: '/x',
-                  name: 'x',
-                  openedAt: DateTime.utc(2026, 1, 1),
-                ),
-              ],
-            ));
+        when(() => persistence.read()).thenAnswer(
+          (_) async => PersistedWorkspaces(
+            activeId: '/never-restored',
+            workspaces: [PersistedWorkspaceEntry(id: '/x', path: '/x', name: 'x', openedAt: DateTime.utc(2026, 1, 1))],
+          ),
+        );
         when(() => openWs(path: '/x')).thenAnswer((_) async => Right(_ws('/x')));
         return make();
       },
       act: (c) => c.restore(),
       verify: (c) {
-        expect(c.state.activeIdOrNull, '/x',
-            reason: 'When persisted activeId is missing from restored list, fallback to first.');
+        expect(
+          c.state.activeIdOrNull,
+          '/x',
+          reason: 'When persisted activeId is missing from restored list, fallback to first.',
+        );
       },
     );
   });

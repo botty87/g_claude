@@ -26,8 +26,7 @@ void main() {
     });
 
     test('plugin prefix is stripped from displayName, name is preserved', () {
-      const input =
-          'plugin:firebase:firebase: npx -y firebase-tools mcp --dir . - ✓ Connected\n';
+      const input = 'plugin:firebase:firebase: npx -y firebase-tools mcp --dir . - ✓ Connected\n';
       final servers = McpListDataSource.parseOutput(input);
       expect(servers, hasLength(1));
       expect(servers.first.name, equals('plugin:firebase:firebase'));
@@ -35,8 +34,7 @@ void main() {
     });
 
     test('claude.ai prefix is stripped from displayName', () {
-      const input =
-          'claude.ai ClickUp: https://mcp.clickup.com/mcp - ✓ Connected\n';
+      const input = 'claude.ai ClickUp: https://mcp.clickup.com/mcp - ✓ Connected\n';
       final servers = McpListDataSource.parseOutput(input);
       expect(servers, hasLength(1));
       expect(servers.first.name, equals('claude.ai ClickUp'));
@@ -58,8 +56,7 @@ unknown-server: some-cmd - some-unknown-marker
       expect(servers[3].status, equals(McpServerStatus.unknown));
     });
 
-    test('noisy lines are ignored — header, empty lines, non-matching lines',
-        () {
+    test('noisy lines are ignored — header, empty lines, non-matching lines', () {
       const input = '''
 Checking MCP server health…
 

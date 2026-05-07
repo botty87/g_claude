@@ -11,6 +11,5 @@ class ReadFile {
 
   final FileContentRepository _repo;
 
-  Future<Either<Failure, FileContent>> call({required String path}) =>
-      _repo.readFile(path: path);
+  Future<Either<Failure, FileContent>> call({required String path}) => _repo.readFile(path: path);
 }

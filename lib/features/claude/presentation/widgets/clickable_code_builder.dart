@@ -12,11 +12,7 @@ typedef PathTapHandler = void Function(String absPath);
 /// (rendered inside `<pre>`, multi-line content) falls back to the default
 /// inline rendering by returning `null`.
 class ClickableCodeBuilder extends MarkdownElementBuilder {
-  ClickableCodeBuilder({
-    required this.cwd,
-    required this.basenameIndex,
-    required this.onTapPath,
-  });
+  ClickableCodeBuilder({required this.cwd, required this.basenameIndex, required this.onTapPath});
 
   final String cwd;
   final Map<String, List<String>> basenameIndex;
@@ -32,27 +28,15 @@ class ClickableCodeBuilder extends MarkdownElementBuilder {
     final content = element.textContent;
     if (content.contains('\n')) return null;
 
-    final resolved = resolveCodePath(
-      content: content,
-      cwd: cwd,
-      basenameIndex: basenameIndex,
-    );
+    final resolved = resolveCodePath(content: content, cwd: cwd, basenameIndex: basenameIndex);
     if (resolved == null) return null;
 
-    return _ClickableInlineCode(
-      label: content,
-      style: preferredStyle,
-      onTap: () => onTapPath(resolved),
-    );
+    return _ClickableInlineCode(label: content, style: preferredStyle, onTap: () => onTapPath(resolved));
   }
 }
 
 class _ClickableInlineCode extends HookWidget {
-  const _ClickableInlineCode({
-    required this.label,
-    required this.onTap,
-    this.style,
-  });
+  const _ClickableInlineCode({required this.label, required this.onTap, this.style});
 
   final String label;
   final TextStyle? style;
@@ -73,9 +57,7 @@ class _ClickableInlineCode extends HookWidget {
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Text.rich(
-          TextSpan(text: label, style: effective),
-        ),
+        child: Text.rich(TextSpan(text: label, style: effective)),
       ),
     );
   }

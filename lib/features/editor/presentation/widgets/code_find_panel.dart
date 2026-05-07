@@ -20,17 +20,11 @@ class CodeFindPanel extends StatelessWidget implements PreferredSizeWidget {
   static const double _panelWidth = 360;
 
   @override
-  Size get preferredSize => Size(
-        double.infinity,
-        controller.value == null ? 0 : _panelHeight + 8,
-      );
+  Size get preferredSize => Size(double.infinity, controller.value == null ? 0 : _panelHeight + 8);
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: controller,
-      builder: (context, _) => _buildPanel(context),
-    );
+    return ListenableBuilder(listenable: controller, builder: (context, _) => _buildPanel(context));
   }
 
   Widget _buildPanel(BuildContext context) {
@@ -42,10 +36,7 @@ class CodeFindPanel extends StatelessWidget implements PreferredSizeWidget {
     final resultText = result == null
         ? Locales.Editor.Find.noResults
         : '${result.index + 1} / ${result.matches.length}';
-    final inputStyle = AppTypography.bodyMain.copyWith(
-      fontSize: 13,
-      color: AppColors.onSurface,
-    );
+    final inputStyle = AppTypography.bodyMain.copyWith(fontSize: 13, color: AppColors.onSurface);
 
     return Padding(
       padding: const EdgeInsets.only(right: 8, top: 4),
@@ -74,10 +65,7 @@ class CodeFindPanel extends StatelessWidget implements PreferredSizeWidget {
                     style: inputStyle,
                     decoration: InputDecoration(
                       hintText: Locales.Editor.Find.hint,
-                      hintStyle: inputStyle.copyWith(
-                        color:
-                            AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-                      ),
+                      hintStyle: inputStyle.copyWith(color: AppColors.onSurfaceVariant.withValues(alpha: 0.5)),
                       isCollapsed: true,
                       border: InputBorder.none,
                     ),
@@ -114,11 +102,7 @@ class CodeFindPanel extends StatelessWidget implements PreferredSizeWidget {
                   tooltip: Locales.Editor.Find.next,
                   onTap: result == null ? null : controller.nextMatch,
                 ),
-                _IconButton(
-                  icon: Symbols.close,
-                  tooltip: Locales.Editor.Find.close,
-                  onTap: controller.close,
-                ),
+                _IconButton(icon: Symbols.close, tooltip: Locales.Editor.Find.close, onTap: controller.close),
               ],
             ),
           ),
@@ -129,12 +113,7 @@ class CodeFindPanel extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _ToggleButton extends StatelessWidget {
-  const _ToggleButton({
-    required this.text,
-    required this.active,
-    required this.tooltip,
-    required this.onTap,
-  });
+  const _ToggleButton({required this.text, required this.active, required this.tooltip, required this.onTap});
 
   final String text;
   final bool active;
@@ -171,11 +150,7 @@ class _ToggleButton extends StatelessWidget {
 }
 
 class _IconButton extends StatelessWidget {
-  const _IconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
+  const _IconButton({required this.icon, required this.tooltip, required this.onTap});
 
   final IconData icon;
   final String tooltip;
@@ -196,9 +171,7 @@ class _IconButton extends StatelessWidget {
           child: Icon(
             icon,
             size: 16,
-            color: disabled
-                ? AppColors.onSurfaceVariant.withValues(alpha: 0.3)
-                : AppColors.onSurfaceVariant,
+            color: disabled ? AppColors.onSurfaceVariant.withValues(alpha: 0.3) : AppColors.onSurfaceVariant,
           ),
         ),
       ),

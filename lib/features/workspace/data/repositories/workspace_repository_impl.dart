@@ -23,13 +23,15 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
     try {
       await _localDataSource.ensureDirectoryExists(normalized);
       final claudeMd = await _localDataSource.readClaudeMd(normalized);
-      return Right(Workspace(
-        id: normalized,
-        path: normalized,
-        name: p.basename(normalized),
-        claudeMd: claudeMd,
-        openedAt: DateTime.now(),
-      ));
+      return Right(
+        Workspace(
+          id: normalized,
+          path: normalized,
+          name: p.basename(normalized),
+          claudeMd: claudeMd,
+          openedAt: DateTime.now(),
+        ),
+      );
     } on WorkspaceNotFoundException catch (e) {
       return Left(NotFoundFailure('Directory does not exist: ${e.path}'));
     } on WorkspaceNotADirectoryException catch (e) {

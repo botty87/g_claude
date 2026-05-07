@@ -14,10 +14,5 @@ class ExportChatSession {
     required String encodedPath,
     required String sessionId,
     required String destinationPath,
-  }) =>
-      _repo.exportSession(
-        encodedPath: encodedPath,
-        sessionId: sessionId,
-        destinationPath: destinationPath,
-      );
+  }) => _repo.exportSession(encodedPath: encodedPath, sessionId: sessionId, destinationPath: destinationPath);
 }

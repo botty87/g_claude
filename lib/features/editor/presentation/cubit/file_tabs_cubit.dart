@@ -17,12 +17,8 @@ part 'file_tabs_cubit.state.dart';
 
 @lazySingleton
 class FileTabsCubit extends Cubit<FileTabsState> {
-  FileTabsCubit(
-    this._workspacesCubit,
-    this._persistence,
-    this._fileWatcher,
-    this._talker,
-  ) : super(const FileTabsState());
+  FileTabsCubit(this._workspacesCubit, this._persistence, this._fileWatcher, this._talker)
+    : super(const FileTabsState());
 
   final WorkspacesCubit _workspacesCubit;
   final FileTabsPersistenceDataSource _persistence;
@@ -51,12 +47,14 @@ class FileTabsCubit extends Cubit<FileTabsState> {
 
   void _attachWatcher(Workspace w) {
     if (_fsSubs.containsKey(w.id)) return;
-    _fsSubs[w.id] = _fileWatcher.watch(w.path).listen(
-      (event) => _onFsEvent(w, event),
-      onError: (Object e, StackTrace st) {
-        _talker.error('FileTabsCubit: watcher error for ${w.path}', e, st);
-      },
-    );
+    _fsSubs[w.id] = _fileWatcher
+        .watch(w.path)
+        .listen(
+          (event) => _onFsEvent(w, event),
+          onError: (Object e, StackTrace st) {
+            _talker.error('FileTabsCubit: watcher error for ${w.path}', e, st);
+          },
+        );
   }
 
   void _detachWatcher(WorkspaceId id) {
@@ -70,8 +68,7 @@ class FileTabsCubit extends Cubit<FileTabsState> {
     if (files == null || files.openPaths.isEmpty) return;
     final eventCanonical = p.canonicalize(event.path);
     for (final open in files.openPaths) {
-      final isMatch = p.equals(event.path, open) ||
-          p.canonicalize(open) == eventCanonical;
+      final isMatch = p.equals(event.path, open) || p.canonicalize(open) == eventCanonical;
       if (!isMatch) continue;
       // Defer close: atomic-save (Edit/Write) emits delete + create within
       // a few ms. If the file reappears, treat as in-place overwrite and
@@ -96,12 +93,9 @@ class FileTabsCubit extends Cubit<FileTabsState> {
     for (final id in orphans) {
       _detachWatcher(id);
     }
-    final stale = state.perWorkspace.keys
-        .where((id) => !aliveIds.contains(id))
-        .toList();
+    final stale = state.perWorkspace.keys.where((id) => !aliveIds.contains(id)).toList();
     if (stale.isEmpty) return;
-    final next = Map.of(state.perWorkspace)
-      ..removeWhere((k, _) => stale.contains(k));
+    final next = Map.of(state.perWorkspace)..removeWhere((k, _) => stale.contains(k));
     _talker.debug('FileTabsCubit: pruned ${stale.length} stale workspace(s)');
     emit(state.copyWith(perWorkspace: next));
   }
@@ -119,17 +113,9 @@ class FileTabsCubit extends Cubit<FileTabsState> {
       final previewIdx = files.openPaths.indexOf(files.previewPath!);
       final nextPaths = [...files.openPaths];
       nextPaths[previewIdx] = path;
-      next = files.copyWith(
-        openPaths: nextPaths,
-        activePath: path,
-        previewPath: path,
-      );
+      next = files.copyWith(openPaths: nextPaths, activePath: path, previewPath: path);
     } else {
-      next = files.copyWith(
-        openPaths: [...files.openPaths, path],
-        activePath: path,
-        previewPath: path,
-      );
+      next = files.copyWith(openPaths: [...files.openPaths, path], activePath: path, previewPath: path);
     }
 
     _talker.debug('FileTabsCubit: opened $path in workspace $id (preview)');
@@ -141,12 +127,7 @@ class FileTabsCubit extends Cubit<FileTabsState> {
     if (files == null) return;
     if (files.previewPath != path) return;
     _talker.debug('FileTabsCubit: pinned $path');
-    emit(state.copyWith(
-      perWorkspace: {
-        ...state.perWorkspace,
-        id: files.copyWith(previewPath: null),
-      },
-    ));
+    emit(state.copyWith(perWorkspace: {...state.perWorkspace, id: files.copyWith(previewPath: null)}));
   }
 
   void closeFile(WorkspaceId id, String path) {
@@ -159,25 +140,16 @@ class FileTabsCubit extends Cubit<FileTabsState> {
     final nextPreview = files.previewPath == path ? null : files.previewPath;
 
     if (nextPaths.isEmpty) {
-      final next = files.copyWith(
-        openPaths: [],
-        activePath: null,
-        previewPath: null,
-      );
+      final next = files.copyWith(openPaths: [], activePath: null, previewPath: null);
       emit(state.copyWith(perWorkspace: {...state.perWorkspace, id: next}));
       return;
     }
 
     String? newActive = files.activePath;
     if (newActive == path) {
-      newActive =
-          nextPaths[index < nextPaths.length ? index : nextPaths.length - 1];
+      newActive = nextPaths[index < nextPaths.length ? index : nextPaths.length - 1];
     }
-    final next = files.copyWith(
-      openPaths: nextPaths,
-      activePath: newActive,
-      previewPath: nextPreview,
-    );
+    final next = files.copyWith(openPaths: nextPaths, activePath: newActive, previewPath: nextPreview);
     _talker.debug('FileTabsCubit: closed $path in workspace $id');
     emit(state.copyWith(perWorkspace: {...state.perWorkspace, id: next}));
   }
@@ -206,24 +178,21 @@ class FileTabsCubit extends Cubit<FileTabsState> {
     }
 
     _talker.debug('FileTabsCubit: reordered $fromPath → $toPath in workspace $id');
-    emit(state.copyWith(
-      perWorkspace: {
-        ...state.perWorkspace,
-        id: files.copyWith(openPaths: nextPaths),
-      },
-    ));
+    emit(
+      state.copyWith(
+        perWorkspace: {
+          ...state.perWorkspace,
+          id: files.copyWith(openPaths: nextPaths),
+        },
+      ),
+    );
   }
 
   void closeAllFiles(WorkspaceId id) {
     final files = state.perWorkspace[id];
     if (files == null || files.openPaths.isEmpty) return;
     _talker.debug('FileTabsCubit: closed all files in workspace $id');
-    emit(state.copyWith(
-      perWorkspace: {
-        ...state.perWorkspace,
-        id: const WorkspaceFiles(),
-      },
-    ));
+    emit(state.copyWith(perWorkspace: {...state.perWorkspace, id: const WorkspaceFiles()}));
   }
 
   void setActiveFile(WorkspaceId id, String path) {
@@ -240,9 +209,7 @@ class FileTabsCubit extends Cubit<FileTabsState> {
     try {
       final snapshot = await _persistence.read();
       if (snapshot == null || snapshot.perWorkspace.isEmpty) return;
-      final aliveIds = _workspacesCubit.state.workspacesOrEmpty
-          .map((w) => w.id)
-          .toSet();
+      final aliveIds = _workspacesCubit.state.workspacesOrEmpty.map((w) => w.id).toSet();
       final filtered = <WorkspaceId, WorkspaceFiles>{};
       snapshot.perWorkspace.forEach((id, files) {
         if (!aliveIds.contains(id)) return;

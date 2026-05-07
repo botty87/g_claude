@@ -9,11 +9,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 
 class ScreenshotPreviewDialog extends StatelessWidget {
-  const ScreenshotPreviewDialog({
-    super.key,
-    required this.imagePath,
-    this.viewOnly = false,
-  });
+  const ScreenshotPreviewDialog({super.key, required this.imagePath, this.viewOnly = false});
 
   final String imagePath;
   final bool viewOnly;
@@ -22,9 +18,7 @@ class ScreenshotPreviewDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: AppColors.surfaceContainer,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.md),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.md)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 860, maxHeight: 600),
         child: Padding(
@@ -35,20 +29,13 @@ class ScreenshotPreviewDialog extends StatelessWidget {
             children: [
               Text(
                 Locales.Claude.Terminal.Input.Attachments.screenshotPreviewTitle,
-                style: AppTypography.bodyMain.copyWith(
-                  color: AppColors.onSurface,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTypography.bodyMain.copyWith(color: AppColors.onSurface, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: AppSpacing.md),
               Flexible(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(AppRadii.sm),
-                  child: Image.file(
-                    File(imagePath),
-                    fit: BoxFit.contain,
-                    cacheWidth: 1720,
-                  ),
+                  child: Image.file(File(imagePath), fit: BoxFit.contain, cacheWidth: 1720),
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -57,36 +44,22 @@ class ScreenshotPreviewDialog extends StatelessWidget {
                 children: viewOnly
                     ? [
                         FilledButton(
-                          style: FilledButton.styleFrom(
-                            enabledMouseCursor: SystemMouseCursors.click,
-                          ),
-                          onPressed: () =>
-                              Navigator.of(context).pop(false),
-                          child: Text(
-                            Locales.Claude.Terminal.Input.Attachments
-                                .screenshotPreviewClose,
-                          ),
+                          style: FilledButton.styleFrom(enabledMouseCursor: SystemMouseCursors.click),
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text(Locales.Claude.Terminal.Input.Attachments.screenshotPreviewClose),
                         ),
                       ]
                     : [
                         TextButton(
-                          style: TextButton.styleFrom(
-                            enabledMouseCursor: SystemMouseCursors.click,
-                          ),
+                          style: TextButton.styleFrom(enabledMouseCursor: SystemMouseCursors.click),
                           onPressed: () => Navigator.of(context).pop(false),
-                          child: Text(
-                            Locales.Claude.Terminal.Input.Attachments.screenshotPreviewDiscard,
-                          ),
+                          child: Text(Locales.Claude.Terminal.Input.Attachments.screenshotPreviewDiscard),
                         ),
                         const SizedBox(width: AppSpacing.sm),
                         FilledButton(
-                          style: FilledButton.styleFrom(
-                            enabledMouseCursor: SystemMouseCursors.click,
-                          ),
+                          style: FilledButton.styleFrom(enabledMouseCursor: SystemMouseCursors.click),
                           onPressed: () => Navigator.of(context).pop(true),
-                          child: Text(
-                            Locales.Claude.Terminal.Input.Attachments.screenshotPreviewAttach,
-                          ),
+                          child: Text(Locales.Claude.Terminal.Input.Attachments.screenshotPreviewAttach),
                         ),
                       ],
               ),

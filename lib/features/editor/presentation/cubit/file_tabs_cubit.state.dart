@@ -13,9 +13,6 @@ abstract class FileTabsState with _$FileTabsState {
 
 @freezed
 abstract class WorkspaceFiles with _$WorkspaceFiles {
-  const factory WorkspaceFiles({
-    @Default(<String>[]) List<String> openPaths,
-    String? activePath,
-    String? previewPath,
-  }) = _WorkspaceFiles;
+  const factory WorkspaceFiles({@Default(<String>[]) List<String> openPaths, String? activePath, String? previewPath}) =
+      _WorkspaceFiles;
 }

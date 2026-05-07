@@ -14,11 +14,7 @@ abstract final class AppTypography {
   );
 
   /// Inter — nav tabs. 12/16 w500.
-  static TextStyle navTab = GoogleFonts.inter(
-    fontSize: 12,
-    height: 16 / 12,
-    fontWeight: FontWeight.w500,
-  );
+  static TextStyle navTab = GoogleFonts.inter(fontSize: 12, height: 16 / 12, fontWeight: FontWeight.w500);
 
   /// Inter — sidebar labels (uppercase). 11/16 w600 letter-spacing 0.05em.
   static TextStyle sidebarLabel = GoogleFonts.inter(
@@ -29,18 +25,10 @@ abstract final class AppTypography {
   );
 
   /// JetBrains Mono — terminal/code body. 13/1.6 w400.
-  static TextStyle terminalCode = GoogleFonts.jetBrainsMono(
-    fontSize: 13,
-    height: 1.6,
-    fontWeight: FontWeight.w400,
-  );
+  static TextStyle terminalCode = GoogleFonts.jetBrainsMono(fontSize: 13, height: 1.6, fontWeight: FontWeight.w400);
 
   /// JetBrains Mono — terminal prompt / "You" / "Claude" labels. 13/1.6 w700.
-  static TextStyle terminalPrompt = GoogleFonts.jetBrainsMono(
-    fontSize: 13,
-    height: 1.6,
-    fontWeight: FontWeight.w700,
-  );
+  static TextStyle terminalPrompt = GoogleFonts.jetBrainsMono(fontSize: 13, height: 1.6, fontWeight: FontWeight.w700);
 
   /// Brand wordmark (top header). Inter 11 w700 wide-tracking uppercase.
   static TextStyle brand = GoogleFonts.inter(

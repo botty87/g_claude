@@ -34,24 +34,22 @@ void main() {
     blocTest<SlashCommandsCubit, SlashCommandsState>(
       'success populates `all` and stays in idle',
       build: () {
-        when(() => load.call(workspaceCwd: any(named: 'workspaceCwd')))
-            .thenAnswer((_) async => Right([
-                  makeSlashCommand('/foo', description: 'first'),
-                  makeSlashCommand('/bar', description: 'second'),
-                ]));
+        when(() => load.call(workspaceCwd: any(named: 'workspaceCwd'))).thenAnswer(
+          (_) async =>
+              Right([makeSlashCommand('/foo', description: 'first'), makeSlashCommand('/bar', description: 'second')]),
+        );
         return make();
       },
       act: (c) => c.loadFor('/some/cwd'),
-      expect: () => [
-        isA<SlashCommandsStateIdle>().having((s) => s.all.length, 'count', 2),
-      ],
+      expect: () => [isA<SlashCommandsStateIdle>().having((s) => s.all.length, 'count', 2)],
     );
 
     blocTest<SlashCommandsCubit, SlashCommandsState>(
       'failure emits an empty idle state and does not throw',
       build: () {
-        when(() => load.call(workspaceCwd: any(named: 'workspaceCwd')))
-            .thenAnswer((_) async => Left(NotFoundFailure('cwd missing')));
+        when(
+          () => load.call(workspaceCwd: any(named: 'workspaceCwd')),
+        ).thenAnswer((_) async => Left(NotFoundFailure('cwd missing')));
         return make();
       },
       act: (c) => c.loadFor('/missing'),
@@ -83,9 +81,7 @@ void main() {
         filter: '/f',
       ),
       act: (c) => c.onInputChanged('hello world'),
-      expect: () => [
-        isA<SlashCommandsStateIdle>().having((s) => s.all.length, 'all preserved', 1),
-      ],
+      expect: () => [isA<SlashCommandsStateIdle>().having((s) => s.all.length, 'all preserved', 1)],
     );
 
     blocTest<SlashCommandsCubit, SlashCommandsState>(
@@ -93,10 +89,7 @@ void main() {
       build: () => make(),
       seed: () => SlashCommandsState.idle(all: [makeSlashCommand('/feature')]),
       act: (c) => c.onInputChanged('first line\nthen\n/fea'),
-      expect: () => [
-        isA<SlashCommandsStateSuggesting>()
-            .having((s) => s.filter, 'filter', '/fea'),
-      ],
+      expect: () => [isA<SlashCommandsStateSuggesting>().having((s) => s.filter, 'filter', '/fea')],
     );
 
     blocTest<SlashCommandsCubit, SlashCommandsState>(
@@ -141,9 +134,7 @@ void main() {
         filter: '/',
       ),
       act: (c) => c.moveSelection(10),
-      expect: () => [
-        isA<SlashCommandsStateSuggesting>().having((s) => s.selectedIndex, 'idx', 2),
-      ],
+      expect: () => [isA<SlashCommandsStateSuggesting>().having((s) => s.selectedIndex, 'idx', 2)],
     );
 
     blocTest<SlashCommandsCubit, SlashCommandsState>(
@@ -157,12 +148,7 @@ void main() {
     blocTest<SlashCommandsCubit, SlashCommandsState>(
       'moveSelection on empty filtered is a no-op',
       build: () => make(),
-      seed: () => SlashCommandsState.suggesting(
-        all: const [],
-        filtered: const [],
-        selectedIndex: 0,
-        filter: '/zzz',
-      ),
+      seed: () => SlashCommandsState.suggesting(all: const [], filtered: const [], selectedIndex: 0, filter: '/zzz'),
       act: (c) => c.moveSelection(1),
       expect: () => const <SlashCommandsState>[],
     );
@@ -179,9 +165,7 @@ void main() {
         filter: '/',
       ),
       act: (c) => c.selectAt(1),
-      expect: () => [
-        isA<SlashCommandsStateSuggesting>().having((s) => s.selectedIndex, 'idx', 1),
-      ],
+      expect: () => [isA<SlashCommandsStateSuggesting>().having((s) => s.selectedIndex, 'idx', 1)],
     );
 
     blocTest<SlashCommandsCubit, SlashCommandsState>(
@@ -223,12 +207,7 @@ void main() {
     blocTest<SlashCommandsCubit, SlashCommandsState>(
       'returns null when filtered is empty',
       build: () => make(),
-      seed: () => const SlashCommandsState.suggesting(
-        all: [],
-        filtered: [],
-        selectedIndex: 0,
-        filter: '/zzz',
-      ),
+      seed: () => const SlashCommandsState.suggesting(all: [], filtered: [], selectedIndex: 0, filter: '/zzz'),
       verify: (c) => expect(c.accept(), isNull),
     );
   });
@@ -276,9 +255,7 @@ void main() {
         filter: '/',
       ),
       act: (c) => c.dismiss(),
-      expect: () => [
-        isA<SlashCommandsStateIdle>().having((s) => s.all.length, 'all', 1),
-      ],
+      expect: () => [isA<SlashCommandsStateIdle>().having((s) => s.all.length, 'all', 1)],
     );
   });
 }

@@ -27,29 +27,17 @@ void main() {
 
   group('resolveCodePath', () {
     test('absolute existing path resolves', () {
-      final got = resolveCodePath(
-        content: absFile,
-        cwd: cwd,
-        basenameIndex: const {},
-      );
+      final got = resolveCodePath(content: absFile, cwd: cwd, basenameIndex: const {});
       expect(got, p.normalize(absFile));
     });
 
     test('absolute missing path returns null', () {
-      final got = resolveCodePath(
-        content: '/no/such/file.dart',
-        cwd: cwd,
-        basenameIndex: const {},
-      );
+      final got = resolveCodePath(content: '/no/such/file.dart', cwd: cwd, basenameIndex: const {});
       expect(got, isNull);
     });
 
     test('relative to cwd resolves', () {
-      final got = resolveCodePath(
-        content: 'lib/main.dart',
-        cwd: cwd,
-        basenameIndex: const {},
-      );
+      final got = resolveCodePath(content: 'lib/main.dart', cwd: cwd, basenameIndex: const {});
       expect(got, p.normalize(absFile));
     });
 
@@ -86,14 +74,7 @@ void main() {
     });
 
     test('cli flags return null', () {
-      expect(
-        resolveCodePath(
-          content: '--no-verify',
-          cwd: cwd,
-          basenameIndex: const {},
-        ),
-        isNull,
-      );
+      expect(resolveCodePath(content: '--no-verify', cwd: cwd, basenameIndex: const {}), isNull);
     });
 
     test('numbers return null', () {
@@ -107,40 +88,19 @@ void main() {
     });
 
     test('plain identifier without dot or slash returns null', () {
-      expect(
-        resolveCodePath(
-          content: 'useState',
-          cwd: cwd,
-          basenameIndex: const {},
-        ),
-        isNull,
-      );
+      expect(resolveCodePath(content: 'useState', cwd: cwd, basenameIndex: const {}), isNull);
     });
 
     test('content with whitespace returns null', () {
-      expect(
-        resolveCodePath(
-          content: 'lib/ main.dart',
-          cwd: cwd,
-          basenameIndex: const {},
-        ),
-        isNull,
-      );
+      expect(resolveCodePath(content: 'lib/ main.dart', cwd: cwd, basenameIndex: const {}), isNull);
     });
 
     test('too short returns null', () {
-      expect(
-        resolveCodePath(content: 'a', cwd: cwd, basenameIndex: const {}),
-        isNull,
-      );
+      expect(resolveCodePath(content: 'a', cwd: cwd, basenameIndex: const {}), isNull);
     });
 
     test('directory path is not resolved as file', () {
-      final got = resolveCodePath(
-        content: 'lib',
-        cwd: cwd,
-        basenameIndex: const {},
-      );
+      final got = resolveCodePath(content: 'lib', cwd: cwd, basenameIndex: const {});
       expect(got, isNull);
     });
   });

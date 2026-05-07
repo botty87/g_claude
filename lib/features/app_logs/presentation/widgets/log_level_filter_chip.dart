@@ -13,15 +13,11 @@ class LogLevelFilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selected = context
-        .select<AppLogDetailCubit, Set<AppLogLevel>>((c) => c.state.levelFilter);
+    final selected = context.select<AppLogDetailCubit, Set<AppLogLevel>>((c) => c.state.levelFilter);
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
       child: Row(
         children: [
           for (final lvl in AppLogLevel.values) ...[
@@ -38,8 +34,7 @@ class LogLevelFilterChips extends StatelessWidget {
           ],
           if (selected.isNotEmpty)
             TextButton(
-              onPressed: () =>
-                  context.read<AppLogDetailCubit>().setLevelFilter(const {}),
+              onPressed: () => context.read<AppLogDetailCubit>().setLevelFilter(const {}),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 minimumSize: const Size(0, 22),
@@ -47,10 +42,7 @@ class LogLevelFilterChips extends StatelessWidget {
               ),
               child: Text(
                 'all',
-                style: AppTypography.bodyMain.copyWith(
-                  fontSize: 11,
-                  color: AppColors.onSurfaceVariant,
-                ),
+                style: AppTypography.bodyMain.copyWith(fontSize: 11, color: AppColors.onSurfaceVariant),
               ),
             ),
         ],
@@ -60,11 +52,7 @@ class LogLevelFilterChips extends StatelessWidget {
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.level,
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _Chip({required this.level, required this.isSelected, required this.onTap});
 
   final AppLogLevel level;
   final bool isSelected;
@@ -79,14 +67,9 @@ class _Chip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: isSelected
-              ? color.withValues(alpha: 0.18)
-              : AppColors.surfaceContainerHigh,
+          color: isSelected ? color.withValues(alpha: 0.18) : AppColors.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected ? color : AppColors.outlineVariant,
-            width: 1,
-          ),
+          border: Border.all(color: isSelected ? color : AppColors.outlineVariant, width: 1),
         ),
         child: Text(
           labelFor(level),

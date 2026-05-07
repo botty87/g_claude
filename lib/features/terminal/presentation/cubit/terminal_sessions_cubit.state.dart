@@ -11,13 +11,17 @@ abstract class TerminalSessionInfo with _$TerminalSessionInfo {
     @Default(TerminalRunStatus.starting) TerminalRunStatus status,
     int? exitCode,
     String? lastError,
+
+    /// Bumped on each `restart()`. Widgets key off this so the TerminalView
+    /// rebinds its listeners against the new Terminal instance even if the
+    /// status stays at `running` across the restart (fast respawn).
+    @Default(0) int incarnation,
   }) = _TerminalSessionInfo;
 }
 
 @freezed
 abstract class TerminalSessionsState with _$TerminalSessionsState {
   const factory TerminalSessionsState({
-    @Default(<String, TerminalSessionInfo>{})
-    Map<String, TerminalSessionInfo> sessions,
+    @Default(<String, TerminalSessionInfo>{}) Map<String, TerminalSessionInfo> sessions,
   }) = _TerminalSessionsState;
 }

@@ -17,13 +17,9 @@ class McpListDataSource {
     final binary = await _binary.resolve() ?? 'claude';
     final result = await Process.run(binary, ['mcp', 'list']);
     if (result.exitCode != 0) {
-      throw McpListException(
-        'mcp list exit ${result.exitCode}: ${result.stderr}',
-      );
+      throw McpListException('mcp list exit ${result.exitCode}: ${result.stderr}');
     }
-    final stdout = result.stdout is String
-        ? result.stdout as String
-        : utf8.decode(result.stdout as List<int>);
+    final stdout = result.stdout is String ? result.stdout as String : utf8.decode(result.stdout as List<int>);
     final servers = parseOutput(stdout);
     _talker.verbose('mcp list parsed: ${servers.length} servers');
     return servers;
