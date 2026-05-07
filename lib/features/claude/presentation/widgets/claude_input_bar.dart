@@ -365,7 +365,7 @@ class ClaudeInputBar extends HookWidget {
                         controller: controller,
                         focusNode: inputFocus,
                         autofocus: true,
-                        maxLines: 6,
+                        maxLines: 15,
                         minLines: 1,
                         textInputAction: TextInputAction.newline,
                         style: AppTypography.terminalCode.copyWith(color: AppColors.onSurface),
@@ -444,7 +444,10 @@ class ClaudeInputBar extends HookWidget {
 void _stripSlashPrefix(TextEditingController controller) {
   final lines = controller.text.split('\n');
   final last = lines.last;
-  if (slashTriggerRegex.hasMatch(last)) {
+  final tokenMatch = slashTokenAtEndRegex.firstMatch(last);
+  if (tokenMatch != null) {
+    lines[lines.length - 1] = last.substring(0, tokenMatch.start).trimRight();
+  } else if (slashTriggerRegex.hasMatch(last)) {
     lines[lines.length - 1] = '';
   }
   final newText = lines.join('\n');

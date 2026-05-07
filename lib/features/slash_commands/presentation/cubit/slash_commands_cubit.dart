@@ -13,6 +13,11 @@ part 'slash_commands_cubit.state.dart';
 
 final slashTriggerRegex = RegExp(r'^\s*\/[a-zA-Z0-9:_-]*$');
 
+/// Matches the trailing slash token on a line: a `/` preceded by start-of-line
+/// or whitespace, followed by zero or more allowed slash-command characters,
+/// anchored to the end. Captures the token (including the leading slash).
+final slashTokenAtEndRegex = RegExp(r'(?:^|\s)(\/[a-zA-Z0-9:_-]*)$');
+
 @injectable
 class SlashCommandsCubit extends Cubit<SlashCommandsState> {
   SlashCommandsCubit(this._load, this._filter, this._talker) : super(const SlashCommandsState.idle());
@@ -65,10 +70,12 @@ class SlashCommandsCubit extends Cubit<SlashCommandsState> {
 
   void onInputChanged(String text) {
     final lastLine = text.split('\n').last;
-    if (slashTriggerRegex.hasMatch(lastLine)) {
-      final filter = lastLine.trimLeft();
+    final match = slashTokenAtEndRegex.firstMatch(lastLine);
+    if (match != null) {
+      final filter = match.group(1) ?? '/';
       final all = _all;
-      final filtered = _filter.call(all, filter);
+      final matched = _filter.call(all, filter);
+      final filtered = matched.isEmpty ? all : matched;
       final current = state;
       final prevIndex = current is SlashCommandsStateSuggesting ? current.selectedIndex : 0;
       final clampedIndex = filtered.isEmpty ? 0 : prevIndex.clamp(0, filtered.length - 1);

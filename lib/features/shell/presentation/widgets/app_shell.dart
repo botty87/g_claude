@@ -38,11 +38,6 @@ import 'side_panel.dart';
 class AppShellPage extends HookWidget {
   const AppShellPage({super.key});
 
-  // Stable across the two layout branches (workspace open vs fullscreen chat)
-  // and across MultiSplitView controller recreations. Without it, the pane
-  // remounts every Cmd+B toggle and loses scroll/state.
-  static final _claudePaneKey = GlobalKey(debugLabel: 'ClaudeTerminalPane');
-
   @override
   Widget build(BuildContext context) {
     final focusNode = useFocusNode();
@@ -302,13 +297,13 @@ class AppShellPage extends HookWidget {
             const FileTabsBar(),
             Expanded(
               child: workspaceOpen
-                  ? Row(
+                  ? const Row(
                       children: [
-                        const ActivityBar(),
-                        Expanded(child: _MainArea(claudePaneKey: _claudePaneKey)),
+                        ActivityBar(),
+                        Expanded(child: _MainArea()),
                       ],
                     )
-                  : ClaudeTerminalPane(key: _claudePaneKey),
+                  : const ClaudeTerminalPane(),
             ),
           ],
         ),
@@ -318,9 +313,7 @@ class AppShellPage extends HookWidget {
 }
 
 class _MainArea extends HookWidget {
-  const _MainArea({required this.claudePaneKey});
-
-  final Key claudePaneKey;
+  const _MainArea();
 
   static const _idSide = 'side';
   static const _idPreview = 'preview';
@@ -422,7 +415,7 @@ class _MainArea extends HookWidget {
                 _ => const SizedBox.shrink(),
               };
             case _idClaude:
-              return ClaudeTerminalPane(key: claudePaneKey);
+              return const ClaudeTerminalPane();
             case _idTerminal:
               return const TerminalPane();
             default:
