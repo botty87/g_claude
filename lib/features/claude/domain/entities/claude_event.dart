@@ -9,19 +9,13 @@ part 'claude_event.freezed.dart';
 /// it to the domain.
 @freezed
 abstract class ClaudePluginInfo with _$ClaudePluginInfo {
-  const factory ClaudePluginInfo({
-    required String name,
-    required String path,
-    String? source,
-  }) = _ClaudePluginInfo;
+  const factory ClaudePluginInfo({required String name, required String path, String? source}) = _ClaudePluginInfo;
 }
 
 @freezed
 abstract class AskUserQuestionOption with _$AskUserQuestionOption {
-  const factory AskUserQuestionOption({
-    required String label,
-    @Default('') String description,
-  }) = _AskUserQuestionOption;
+  const factory AskUserQuestionOption({required String label, @Default('') String description}) =
+      _AskUserQuestionOption;
 }
 
 @freezed
@@ -48,29 +42,19 @@ sealed class ClaudeEvent with _$ClaudeEvent {
   }) = ClaudeEventSessionInit;
 
   /// Streaming text delta for the current assistant message.
-  const factory ClaudeEvent.textChunk({
-    required String text,
-  }) = ClaudeEventTextChunk;
+  const factory ClaudeEvent.textChunk({required String text}) = ClaudeEventTextChunk;
 
   /// A tool invocation has started.
-  const factory ClaudeEvent.toolCall({
-    required String toolName,
-    required String toolId,
-    required int index,
-  }) = ClaudeEventToolCall;
+  const factory ClaudeEvent.toolCall({required String toolName, required String toolId, required int index}) =
+      ClaudeEventToolCall;
 
   /// Partial JSON input being streamed for a tool call.
-  const factory ClaudeEvent.toolCallUpdate({
-    required String toolId,
-    required String partialInput,
-  }) = ClaudeEventToolCallUpdate;
+  const factory ClaudeEvent.toolCallUpdate({required String toolId, required String partialInput}) =
+      ClaudeEventToolCallUpdate;
 
   /// A tool invocation finished receiving its full input.
-  const factory ClaudeEvent.toolCallComplete({
-    required int index,
-    String? toolId,
-    Map<String, dynamic>? input,
-  }) = ClaudeEventToolCallComplete;
+  const factory ClaudeEvent.toolCallComplete({required int index, String? toolId, Map<String, dynamic>? input}) =
+      ClaudeEventToolCallComplete;
 
   /// Tool execution finished — output / error from the tool itself.
   const factory ClaudeEvent.toolResult({
@@ -80,41 +64,26 @@ sealed class ClaudeEvent with _$ClaudeEvent {
   }) = ClaudeEventToolResult;
 
   /// Full assistant message after a content block has been assembled.
-  const factory ClaudeEvent.assistantMessage({
-    required String text,
-  }) = ClaudeEventAssistantMessage;
+  const factory ClaudeEvent.assistantMessage({required String text}) = ClaudeEventAssistantMessage;
 
   /// Run finished successfully.
-  const factory ClaudeEvent.taskComplete({
-    String? result,
-    double? costUsd,
-    int? durationMs,
-    int? numTurns,
-  }) = ClaudeEventTaskComplete;
+  const factory ClaudeEvent.taskComplete({String? result, double? costUsd, int? durationMs, int? numTurns}) =
+      ClaudeEventTaskComplete;
 
   /// Subprocess emitted an error result.
-  const factory ClaudeEvent.errorEvent({
-    required String message,
-  }) = ClaudeEventErrorEvent;
+  const factory ClaudeEvent.errorEvent({required String message}) = ClaudeEventErrorEvent;
 
   /// Subprocess hit a rate limit.
-  const factory ClaudeEvent.rateLimit({
-    required String status,
-    int? resetsAt,
-  }) = ClaudeEventRateLimit;
+  const factory ClaudeEvent.rateLimit({required String status, int? resetsAt}) = ClaudeEventRateLimit;
 
   /// The subprocess exited (clean or unexpected).
-  const factory ClaudeEvent.sessionDead({
-    int? exitCode,
-    @Default(<String>[]) List<String> stderrTail,
-  }) = ClaudeEventSessionDead;
+  const factory ClaudeEvent.sessionDead({int? exitCode, @Default(<String>[]) List<String> stderrTail}) =
+      ClaudeEventSessionDead;
 
   /// Claude emitted the `AskUserQuestion` tool — needs an interactive answer
   /// from the user that we'll send back as a `tool_result`.
-  const factory ClaudeEvent.askUserQuestion({
-    required String toolUseId,
-    required List<AskUserQuestionItem> questions,
-  }) = ClaudeEventAskUserQuestion;
+  const factory ClaudeEvent.askUserQuestion({required String toolUseId, required List<AskUserQuestionItem> questions}) =
+      ClaudeEventAskUserQuestion;
 
   /// PreToolUse hook is asking the user to approve a tool invocation. The
   /// permission server is holding the HTTP response open until the user

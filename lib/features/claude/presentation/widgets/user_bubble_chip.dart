@@ -15,11 +15,7 @@ class BubbleSlashChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const color = AppColors.primary;
-    return _ChipShell(
-      color: color,
-      icon: Symbols.bolt,
-      label: trigger,
-    );
+    return _ChipShell(color: color, icon: Symbols.bolt, label: trigger);
   }
 }
 
@@ -40,21 +36,13 @@ class BubbleAttachmentChip extends StatelessWidget {
     return Tooltip(
       message: attachment.path,
       waitDuration: const Duration(milliseconds: 400),
-      child: _ChipShell(
-        color: color,
-        icon: icon,
-        label: attachment.displayName,
-      ),
+      child: _ChipShell(color: color, icon: icon, label: attachment.displayName),
     );
   }
 }
 
 class _ChipShell extends StatelessWidget {
-  const _ChipShell({
-    required this.color,
-    required this.icon,
-    required this.label,
-  });
+  const _ChipShell({required this.color, required this.icon, required this.label});
 
   final Color color;
   final IconData icon;
@@ -68,10 +56,7 @@ class _ChipShell extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.35), width: 1),
         borderRadius: BorderRadius.circular(AppRadii.sm),
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xs,
-        vertical: 1,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 1),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -79,11 +64,7 @@ class _ChipShell extends StatelessWidget {
           const SizedBox(width: 3),
           Text(
             label,
-            style: AppTypography.terminalCode.copyWith(
-              fontSize: 10.5,
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTypography.terminalCode.copyWith(fontSize: 10.5, color: color, fontWeight: FontWeight.w600),
           ),
         ],
       ),

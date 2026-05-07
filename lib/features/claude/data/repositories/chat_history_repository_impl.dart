@@ -21,9 +21,7 @@ class ChatHistoryRepositoryImpl implements ChatHistoryRepository {
   final Talker _talker;
 
   @override
-  Future<Either<Failure, List<ChatSessionSummary>>> listSessions(
-    WorkspaceId workspaceId,
-  ) async {
+  Future<Either<Failure, List<ChatSessionSummary>>> listSessions(WorkspaceId workspaceId) async {
     try {
       final rows = await _index.listForWorkspace(workspaceId);
       final summaries = rows
@@ -52,9 +50,7 @@ class ChatHistoryRepositoryImpl implements ChatHistoryRepository {
     required String sessionId,
   }) async {
     try {
-      final messages = await _history
-          .readSession(encodedPath: encodedPath, sessionId: sessionId)
-          .toList();
+      final messages = await _history.readSession(encodedPath: encodedPath, sessionId: sessionId).toList();
       return Right(messages);
     } on FileSystemException catch (e) {
       _talker.error('loadMessages: session file not found $sessionId', e);
@@ -66,15 +62,9 @@ class ChatHistoryRepositoryImpl implements ChatHistoryRepository {
   }
 
   @override
-  Future<Either<Failure, void>> refreshIndex({
-    required WorkspaceId workspaceId,
-    required String workspaceCwd,
-  }) async {
+  Future<Either<Failure, void>> refreshIndex({required WorkspaceId workspaceId, required String workspaceCwd}) async {
     try {
-      await _index.refreshIndex(
-        workspaceId: workspaceId,
-        workspaceCwd: workspaceCwd,
-      );
+      await _index.refreshIndex(workspaceId: workspaceId, workspaceCwd: workspaceCwd);
       return const Right(null);
     } catch (e, st) {
       _talker.error('refreshIndex failed for $workspaceId', e, st);
@@ -83,15 +73,9 @@ class ChatHistoryRepositoryImpl implements ChatHistoryRepository {
   }
 
   @override
-  Future<Either<Failure, void>> deleteSession({
-    required String sessionId,
-    required String encodedPath,
-  }) async {
+  Future<Either<Failure, void>> deleteSession({required String sessionId, required String encodedPath}) async {
     try {
-      await _history.deleteSession(
-        encodedPath: encodedPath,
-        sessionId: sessionId,
-      );
+      await _history.deleteSession(encodedPath: encodedPath, sessionId: sessionId);
       await _index.deleteRow(sessionId);
       return const Right(null);
     } on FileSystemException catch (e) {
@@ -126,10 +110,7 @@ class ChatHistoryRepositoryImpl implements ChatHistoryRepository {
   }
 
   @override
-  Future<Either<Failure, List<ChatSessionSummary>>> searchSessions(
-    WorkspaceId workspaceId,
-    String query,
-  ) async {
+  Future<Either<Failure, List<ChatSessionSummary>>> searchSessions(WorkspaceId workspaceId, String query) async {
     if (query.trim().isEmpty) return listSessions(workspaceId);
     try {
       final ids = await _index.searchIds(workspaceId, query);

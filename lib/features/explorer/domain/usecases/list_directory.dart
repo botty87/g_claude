@@ -11,6 +11,5 @@ class ListDirectory {
 
   final FileSystemRepository _repo;
 
-  Future<Either<Failure, List<FileNode>>> call({required String path}) =>
-      _repo.listDirectory(path: path);
+  Future<Either<Failure, List<FileNode>>> call({required String path}) => _repo.listDirectory(path: path);
 }

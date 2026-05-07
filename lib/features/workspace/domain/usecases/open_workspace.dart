@@ -11,6 +11,5 @@ class OpenWorkspace {
 
   final WorkspaceRepository _repository;
 
-  Future<Either<Failure, Workspace>> call({required String path}) =>
-      _repository.openWorkspace(path: path);
+  Future<Either<Failure, Workspace>> call({required String path}) => _repository.openWorkspace(path: path);
 }

@@ -13,10 +13,7 @@ part 'app_log_detail_cubit.state.dart';
 
 @lazySingleton
 class AppLogDetailCubit extends Cubit<AppLogDetailState> {
-  AppLogDetailCubit(
-    this._watchSessionEntries,
-    this._appLogsCubit,
-  ) : super(const AppLogDetailState());
+  AppLogDetailCubit(this._watchSessionEntries, this._appLogsCubit) : super(const AppLogDetailState());
 
   final WatchSessionEntries _watchSessionEntries;
   final AppLogsCubit _appLogsCubit;
@@ -42,11 +39,7 @@ class AppLogDetailCubit extends Cubit<AppLogDetailState> {
     _entriesSub = null;
 
     if (id == null) {
-      emit(state.copyWith(
-        sessionId: null,
-        entries: const [],
-        loading: false,
-      ));
+      emit(state.copyWith(sessionId: null, entries: const [], loading: false));
       return;
     }
 
@@ -73,13 +66,14 @@ class AppLogDetailCubit extends Cubit<AppLogDetailState> {
   }
 
   void _subscribeEntries(int sessionId) {
-    _entriesSub = _watchSessionEntries(
-      sessionId: sessionId,
-      levels: state.levelFilter,
-      search: state.search.trim().isEmpty ? null : state.search,
-    ).listen((entries) {
-      emit(state.copyWith(entries: entries, loading: false));
-    });
+    _entriesSub =
+        _watchSessionEntries(
+          sessionId: sessionId,
+          levels: state.levelFilter,
+          search: state.search.trim().isEmpty ? null : state.search,
+        ).listen((entries) {
+          emit(state.copyWith(entries: entries, loading: false));
+        });
   }
 
   @override

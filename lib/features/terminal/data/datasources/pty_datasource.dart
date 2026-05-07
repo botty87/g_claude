@@ -2,29 +2,19 @@ import 'dart:async';
 
 import 'package:xterm/xterm.dart';
 
-enum TerminalRunStatus { starting, running, exited, failed }
+import '../../domain/entities/pty_session_event.dart';
 
-class PtySessionEvent {
-  const PtySessionEvent({
-    required this.workspaceId,
-    required this.status,
-    this.exitCode,
-    this.error,
-  });
-
-  final String workspaceId;
-  final TerminalRunStatus status;
-  final int? exitCode;
-  final String? error;
-}
+export '../../domain/entities/pty_session_event.dart';
+export '../../domain/entities/terminal_run_status.dart';
 
 abstract class PtyDataSource {
   /// Resolves the shell binary from `$SHELL`, with `/bin/zsh` fallback.
   String detectShell();
 
   /// Spawn or get existing PTY for workspace. Idempotent.
-  /// Returns the xterm Terminal handle for UI binding.
-  Terminal getOrCreate({required String workspaceId, required String cwd});
+  /// The xterm Terminal handle is retrieved separately via [terminalFor];
+  /// callers never need it directly here.
+  void getOrCreate({required String workspaceId, required String cwd});
 
   /// Returns the Terminal for an existing session, or null.
   Terminal? terminalFor(String workspaceId);

@@ -14,11 +14,7 @@ part 'app_logs_cubit.state.dart';
 
 @lazySingleton
 class AppLogsCubit extends Cubit<AppLogsState> {
-  AppLogsCubit(
-    this._watchLogSessions,
-    this._deleteSession,
-    this._repo,
-  ) : super(const AppLogsState());
+  AppLogsCubit(this._watchLogSessions, this._deleteSession, this._repo) : super(const AppLogsState());
 
   final WatchLogSessions _watchLogSessions;
   final DeleteSession _deleteSession;
@@ -35,11 +31,7 @@ class AppLogsCubit extends Cubit<AppLogsState> {
       if (selected == null && currentId != null) {
         selected = currentId;
       }
-      emit(state.copyWith(
-        sessions: sessions,
-        loading: false,
-        selectedSessionId: selected,
-      ));
+      emit(state.copyWith(sessions: sessions, loading: false, selectedSessionId: selected));
     });
   }
 

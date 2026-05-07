@@ -28,7 +28,8 @@ class ClaudeSettingsWriter {
             'hooks': [
               {
                 'type': 'command',
-                'command': 'curl -sf --max-time 120 '
+                'command':
+                    'curl -sf --max-time 120 '
                     '-H "Content-Type: application/json" '
                     '--data-binary @- '
                     'http://127.0.0.1:$port/permission',
@@ -38,9 +39,7 @@ class ClaudeSettingsWriter {
         ],
       },
     };
-    await file.writeAsString(
-      prettyJson.convert(content),
-    );
+    await file.writeAsString(prettyJson.convert(content));
     _path = file.path;
     _writtenForPort = port;
     _talker.info('Claude settings written: $_path (hook port=$port)');

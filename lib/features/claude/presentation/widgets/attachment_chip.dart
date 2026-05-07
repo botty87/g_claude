@@ -10,11 +10,7 @@ import '../../domain/entities/chat_attachment.dart';
 import 'screenshot_preview_dialog.dart';
 
 class AttachmentChip extends StatelessWidget {
-  const AttachmentChip({
-    super.key,
-    required this.attachment,
-    required this.onRemove,
-  });
+  const AttachmentChip({super.key, required this.attachment, required this.onRemove});
 
   final ChatAttachment attachment;
   final VoidCallback onRemove;
@@ -30,12 +26,7 @@ class AttachmentChip extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
         borderRadius: BorderRadius.circular(AppRadii.sm),
       ),
-      padding: const EdgeInsets.only(
-        left: AppSpacing.sm,
-        right: AppSpacing.xs,
-        top: 2,
-        bottom: 2,
-      ),
+      padding: const EdgeInsets.only(left: AppSpacing.sm, right: AppSpacing.xs, top: 2, bottom: 2),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -50,13 +41,7 @@ class AttachmentChip extends StatelessWidget {
             color: color,
           ),
           const SizedBox(width: AppSpacing.xs),
-          Text(
-            attachment.displayName,
-            style: AppTypography.terminalCode.copyWith(
-              fontSize: 12,
-              color: color,
-            ),
-          ),
+          Text(attachment.displayName, style: AppTypography.terminalCode.copyWith(fontSize: 12, color: color)),
           const SizedBox(width: AppSpacing.xs),
           _RemoveButton(color: color, onTap: onRemove),
         ],
@@ -70,21 +55,14 @@ class AttachmentChip extends StatelessWidget {
               behavior: HitTestBehavior.opaque,
               onTap: () => showDialog<void>(
                 context: context,
-                builder: (_) => ScreenshotPreviewDialog(
-                  imagePath: attachment.path,
-                  viewOnly: true,
-                ),
+                builder: (_) => ScreenshotPreviewDialog(imagePath: attachment.path, viewOnly: true),
               ),
               child: chip,
             ),
           )
         : chip;
 
-    return Tooltip(
-      message: attachment.path,
-      waitDuration: const Duration(milliseconds: 400),
-      child: interactive,
-    );
+    return Tooltip(message: attachment.path, waitDuration: const Duration(milliseconds: 400), child: interactive);
   }
 }
 

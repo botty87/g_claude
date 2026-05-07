@@ -39,10 +39,7 @@ class _ErrorView extends StatelessWidget {
       children: [
         const Icon(Symbols.broken_image, color: AppColors.error, size: 32),
         const SizedBox(height: 8),
-        Text(
-          Locales.Editor.Image.loadError,
-          style: AppTypography.bodyMain.copyWith(color: AppColors.onSurfaceVariant),
-        ),
+        Text(Locales.Editor.Image.loadError, style: AppTypography.bodyMain.copyWith(color: AppColors.onSurfaceVariant)),
       ],
     );
   }

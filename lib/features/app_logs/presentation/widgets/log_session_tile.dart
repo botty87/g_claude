@@ -12,11 +12,7 @@ import '../../domain/entities/app_log_session.dart';
 import '../cubit/app_logs_cubit.dart';
 
 class LogSessionTile extends StatelessWidget {
-  const LogSessionTile({
-    super.key,
-    required this.session,
-    required this.isSelected,
-  });
+  const LogSessionTile({super.key, required this.session, required this.isSelected});
 
   final AppLogSession session;
   final bool isSelected;
@@ -36,10 +32,7 @@ class LogSessionTile extends StatelessWidget {
         return Container(
           constraints: const BoxConstraints(minHeight: 56),
           color: bg,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.xs,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -52,34 +45,25 @@ class LogSessionTile extends StatelessWidget {
                       _formatRange(session),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.bodyMain.copyWith(
-                        fontSize: 12,
-                        color: AppColors.onSurface,
-                      ),
+                      style: AppTypography.bodyMain.copyWith(fontSize: 12, color: AppColors.onSurface),
                     ),
                     const SizedBox(height: 2),
                     Row(
                       children: [
                         if (session.errorCount > 0)
                           _CountBadge(
-                            label: Locales.AppLogs.Session.errors(
-                              count: '${session.errorCount}',
-                            ),
+                            label: Locales.AppLogs.Session.errors(count: '${session.errorCount}'),
                             color: AppColors.error,
                           ),
                         if (session.errorCount > 0) const SizedBox(width: 4),
                         if (session.warningCount > 0)
                           _CountBadge(
-                            label: Locales.AppLogs.Session.warnings(
-                              count: '${session.warningCount}',
-                            ),
+                            label: Locales.AppLogs.Session.warnings(count: '${session.warningCount}'),
                             color: AppColors.tertiary,
                           ),
                         if (session.warningCount > 0) const SizedBox(width: 4),
                         _CountBadge(
-                          label: Locales.AppLogs.Session.total(
-                            count: '${session.totalCount}',
-                          ),
+                          label: Locales.AppLogs.Session.total(count: '${session.totalCount}'),
                           color: AppColors.onSurfaceVariant,
                         ),
                       ],
@@ -99,13 +83,7 @@ class LogSessionTile extends StatelessWidget {
                       color: hover ? AppColors.glassHover : Colors.transparent,
                       borderRadius: BorderRadius.circular(AppRadii.sm),
                     ),
-                    child: Icon(
-                      Symbols.delete,
-                      size: 14,
-                      color: hover
-                          ? AppColors.error
-                          : AppColors.onSurfaceVariant,
-                    ),
+                    child: Icon(Symbols.delete, size: 14, color: hover ? AppColors.error : AppColors.onSurfaceVariant),
                   ),
                 ),
               ),
@@ -145,22 +123,18 @@ class LogSessionTile extends StatelessWidget {
     if (s.endedAt == null) {
       return '$start  ·  ${Locales.AppLogs.Session.inProgress}';
     }
-    final end = _sameDay(s.startedAt, s.endedAt!)
-        ? _formatHMS(s.endedAt!)
-        : _formatTime(s.endedAt!);
+    final end = _sameDay(s.startedAt, s.endedAt!) ? _formatHMS(s.endedAt!) : _formatTime(s.endedAt!);
     return '$start  →  $end';
   }
 
-  bool _sameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
+  bool _sameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 
   String _formatTime(DateTime dt) {
     final d = '${_pad2(dt.day)}/${_pad2(dt.month)}';
     return '$d ${_formatHMS(dt)}';
   }
 
-  String _formatHMS(DateTime dt) =>
-      '${_pad2(dt.hour)}:${_pad2(dt.minute)}:${_pad2(dt.second)}';
+  String _formatHMS(DateTime dt) => '${_pad2(dt.hour)}:${_pad2(dt.minute)}:${_pad2(dt.second)}';
 
   String _pad2(int n) => n.toString().padLeft(2, '0');
 }
@@ -179,13 +153,7 @@ class _CountBadge extends StatelessWidget {
         color: AppColors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(AppRadii.sm),
       ),
-      child: Text(
-        label,
-        style: AppTypography.bodyMain.copyWith(
-          fontSize: 10,
-          color: color,
-        ),
-      ),
+      child: Text(label, style: AppTypography.bodyMain.copyWith(fontSize: 10, color: color)),
     );
   }
 }

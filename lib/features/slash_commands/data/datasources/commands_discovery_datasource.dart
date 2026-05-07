@@ -8,21 +8,13 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../../claude/domain/entities/claude_event.dart';
 
 class CommandsDiscoveryResult {
-  const CommandsDiscoveryResult({
-    required this.slashCommands,
-    required this.skills,
-    required this.plugins,
-  });
+  const CommandsDiscoveryResult({required this.slashCommands, required this.skills, required this.plugins});
 
   final List<String> slashCommands;
   final List<String> skills;
   final List<ClaudePluginInfo> plugins;
 
-  static const empty = CommandsDiscoveryResult(
-    slashCommands: [],
-    skills: [],
-    plugins: [],
-  );
+  static const empty = CommandsDiscoveryResult(slashCommands: [], skills: [], plugins: []);
 }
 
 /// Pre-warm a `claude -p` subprocess with `/help` to capture the
@@ -52,20 +44,12 @@ class CommandsDiscoveryDataSource {
 
   void invalidate(String cwd) => _cache.remove(cwd);
 
-  Future<CommandsDiscoveryResult> _spawnAndCapture({
-    required String binary,
-    required String cwd,
-  }) async {
+  Future<CommandsDiscoveryResult> _spawnAndCapture({required String binary, required String cwd}) async {
     Process process;
     try {
       process = await Process.start(
         binary,
-        const [
-          '-p',
-          '--input-format', 'stream-json',
-          '--output-format', 'stream-json',
-          '--verbose',
-        ],
+        const ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose'],
         workingDirectory: cwd,
         environment: Platform.environment,
         runInShell: false,
@@ -76,10 +60,7 @@ class CommandsDiscoveryDataSource {
     }
 
     final completer = Completer<CommandsDiscoveryResult>();
-    final stdoutSub = process.stdout
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .listen((line) {
+    final stdoutSub = process.stdout.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
       if (completer.isCompleted) return;
       if (line.trim().isEmpty) return;
       try {
@@ -89,20 +70,24 @@ class CommandsDiscoveryDataSource {
         final pluginsRaw = raw['plugins'];
         final plugins = pluginsRaw is List
             ? pluginsRaw
-                .whereType<Map<String, dynamic>>()
-                .map((m) => ClaudePluginInfo(
+                  .whereType<Map<String, dynamic>>()
+                  .map(
+                    (m) => ClaudePluginInfo(
                       name: m['name'] as String? ?? '',
                       path: m['path'] as String? ?? '',
                       source: m['source'] as String?,
-                    ))
-                .where((p) => p.name.isNotEmpty && p.path.isNotEmpty)
-                .toList()
+                    ),
+                  )
+                  .where((p) => p.name.isNotEmpty && p.path.isNotEmpty)
+                  .toList()
             : const <ClaudePluginInfo>[];
-        completer.complete(CommandsDiscoveryResult(
-          slashCommands: (raw['slash_commands'] as List?)?.cast<String>() ?? const [],
-          skills: (raw['skills'] as List?)?.cast<String>() ?? const [],
-          plugins: plugins,
-        ));
+        completer.complete(
+          CommandsDiscoveryResult(
+            slashCommands: (raw['slash_commands'] as List?)?.cast<String>() ?? const [],
+            skills: (raw['skills'] as List?)?.cast<String>() ?? const [],
+            plugins: plugins,
+          ),
+        );
       } catch (_) {
         // ignore non-JSON lines
       }
@@ -111,26 +96,30 @@ class CommandsDiscoveryDataSource {
     process.stderr.drain<void>();
 
     try {
-      process.stdin.writeln(jsonEncode({
-        'type': 'user',
-        'message': {
-          'role': 'user',
-          'content': [
-            {'type': 'text', 'text': '/help'},
-          ],
-        },
-      }));
+      process.stdin.writeln(
+        jsonEncode({
+          'type': 'user',
+          'message': {
+            'role': 'user',
+            'content': [
+              {'type': 'text', 'text': '/help'},
+            ],
+          },
+        }),
+      );
       await process.stdin.flush();
       await process.stdin.close();
     } catch (e) {
       _talker.warning('discovery: stdin write failed: $e');
     }
 
-    final result = await completer.future
-        .timeout(const Duration(seconds: 10), onTimeout: () {
-      _talker.warning('discovery: timed out for cwd=$cwd');
-      return CommandsDiscoveryResult.empty;
-    });
+    final result = await completer.future.timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        _talker.warning('discovery: timed out for cwd=$cwd');
+        return CommandsDiscoveryResult.empty;
+      },
+    );
 
     process.kill(ProcessSignal.sigterm);
     await stdoutSub.cancel();

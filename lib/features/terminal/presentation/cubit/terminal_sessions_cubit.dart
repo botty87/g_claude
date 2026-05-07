@@ -14,11 +14,7 @@ part 'terminal_sessions_cubit.state.dart';
 
 @lazySingleton
 class TerminalSessionsCubit extends Cubit<TerminalSessionsState> {
-  TerminalSessionsCubit(
-    this._datasource,
-    this._workspacesCubit,
-    this._talker,
-  ) : super(const TerminalSessionsState());
+  TerminalSessionsCubit(this._datasource, this._workspacesCubit, this._talker) : super(const TerminalSessionsState());
 
   final PtyDataSource _datasource;
   final WorkspacesCubit _workspacesCubit;
@@ -42,8 +38,14 @@ class TerminalSessionsCubit extends Cubit<TerminalSessionsState> {
     final list = s.workspacesOrEmpty;
     final ids = list.map((w) => w.id).toSet();
 
-    final added = [for (final w in list) if (!state.sessions.containsKey(w.id)) w];
-    final removed = [for (final k in state.sessions.keys) if (!ids.contains(k)) k];
+    final added = [
+      for (final w in list)
+        if (!state.sessions.containsKey(w.id)) w,
+    ];
+    final removed = [
+      for (final k in state.sessions.keys)
+        if (!ids.contains(k)) k,
+    ];
 
     if (added.isEmpty && removed.isEmpty) return;
 
@@ -55,30 +57,39 @@ class TerminalSessionsCubit extends Cubit<TerminalSessionsState> {
         cwd: w.path,
         status: TerminalRunStatus.starting,
       );
-      _datasource.getOrCreate(workspaceId: w.id, cwd: w.path);
     }
 
     for (final id in removed) {
       map.remove(id);
+    }
+
+    // Emit `starting` BEFORE spawning. `getOrCreate` synchronously fires a
+    // `running` event on the broadcast stream; `_onPtyEvent` runs on a
+    // microtask and looks up `state.sessions[id]`. If we spawned before the
+    // emit, the lookup would miss and the running transition would be
+    // silently dropped.
+    emit(state.copyWith(sessions: map));
+
+    for (final w in added) {
+      _datasource.getOrCreate(workspaceId: w.id, cwd: w.path);
+    }
+
+    for (final id in removed) {
       // Fire-and-forget: dispose runs the SIGTERM→SIGKILL sequence.
       unawaited(_datasource.dispose(id));
     }
-
-    emit(state.copyWith(sessions: map));
   }
 
   void _onPtyEvent(PtySessionEvent event) {
     final session = state.sessions[event.workspaceId];
     if (session == null) return;
 
-    _emitSession(
-      event.workspaceId,
-      session.copyWith(
-        status: event.status,
-        exitCode: event.exitCode ?? session.exitCode,
-        lastError: event.error ?? session.lastError,
-      ),
-    );
+    final updated = switch (event) {
+      PtySessionEventRunning() => session.copyWith(status: TerminalRunStatus.running),
+      PtySessionEventExited(:final exitCode) => session.copyWith(status: TerminalRunStatus.exited, exitCode: exitCode),
+      PtySessionEventFailed(:final error) => session.copyWith(status: TerminalRunStatus.failed, lastError: error),
+    };
+    _emitSession(event.workspaceId, updated);
   }
 
   void _emitSession(String workspaceId, TerminalSessionInfo info) {
@@ -112,6 +123,7 @@ class TerminalSessionsCubit extends Cubit<TerminalSessionsState> {
         status: TerminalRunStatus.starting,
         exitCode: null,
         lastError: null,
+        incarnation: session.incarnation + 1,
       ),
     );
 
@@ -123,14 +135,7 @@ class TerminalSessionsCubit extends Cubit<TerminalSessionsState> {
       // (datasource filters it via identical()), but in case the cubit
       // received the exited event before that filter took effect, this
       // restores the intended state.
-      _emitSession(
-        workspaceId,
-        current.copyWith(
-          status: TerminalRunStatus.starting,
-          exitCode: null,
-          lastError: null,
-        ),
-      );
+      _emitSession(workspaceId, current.copyWith(status: TerminalRunStatus.starting, exitCode: null, lastError: null));
       _datasource.getOrCreate(workspaceId: workspaceId, cwd: current.cwd);
     });
   }

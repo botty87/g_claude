@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../../../core/process/graceful_kill.dart';
 import '../../domain/entities/claude_event.dart';
 import '../../domain/entities/claude_effort.dart';
 import '../../domain/entities/claude_model.dart';
@@ -34,20 +35,13 @@ abstract interface class ClaudeProcessDataSource {
   /// for the matching control_response. Returns the inner `response` payload
   /// (may be empty). Throws [McpControlException] on error or [StateError] if
   /// no subprocess is active.
-  Future<Map<String, dynamic>> sendControlRequest({
-    required String subtype,
-    required Map<String, dynamic> payload,
-  });
+  Future<Map<String, dynamic>> sendControlRequest({required String subtype, required Map<String, dynamic> payload});
 
   /// Writes a `tool_result` user message to stdin. Used to answer interactive
   /// tool calls (e.g. `AskUserQuestion`) so Claude can resume the run.
   /// `content` is JSON-encoded into the `content` field; pass already-stringified
   /// data when needed. Throws [StateError] if no subprocess is active.
-  Future<void> sendToolResult({
-    required String toolUseId,
-    required Object content,
-    bool isError = false,
-  });
+  Future<void> sendToolResult({required String toolUseId, required Object content, bool isError = false});
 }
 
 class McpControlException implements Exception {
@@ -97,12 +91,7 @@ const _kPlugins = 'plugins';
 
 @LazySingleton(as: ClaudeProcessDataSource)
 class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
-  ClaudeProcessDataSourceImpl(
-    this._talker,
-    this._permissionServer,
-    this._settingsWriter,
-    this._binaryResolver,
-  );
+  ClaudeProcessDataSourceImpl(this._talker, this._permissionServer, this._settingsWriter, this._binaryResolver);
 
   final Talker _talker;
   final PermissionServer _permissionServer;
@@ -153,10 +142,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
         ClaudePermissionMode.defaultMode.cliFlag,
         '--settings',
         settingsPath,
-        if (!askUserQuestionInteractiveEnabled) ...[
-          '--disallowedTools',
-          'AskUserQuestion',
-        ],
+        if (!askUserQuestionInteractiveEnabled) ...['--disallowedTools', 'AskUserQuestion'],
         '--append-system-prompt',
         mode.systemPromptHint,
         if (model != null) ...['--model', model.cliId],
@@ -216,11 +202,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
             final bytes = await File(path).readAsBytes();
             imageBlocks.add({
               'type': 'image',
-              'source': {
-                'type': 'base64',
-                'media_type': 'image/jpeg',
-                'data': base64Encode(bytes),
-              },
+              'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': base64Encode(bytes)},
             });
           } catch (e) {
             _talker.warning('Failed to read screenshot image: $path ($e)');
@@ -271,19 +253,11 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
   Future<void> stop() async {
     final p = _current;
     if (p == null) return;
-    p.kill(ProcessSignal.sigterm);
-    final exited = await p.exitCode.timeout(const Duration(seconds: 2), onTimeout: () => -1);
-    if (exited == -1) {
-      p.kill(ProcessSignal.sigkill);
-    }
+    await gracefulKill(kill: p.kill, exitCode: p.exitCode);
   }
 
   @override
-  Future<void> sendToolResult({
-    required String toolUseId,
-    required Object content,
-    bool isError = false,
-  }) async {
+  Future<void> sendToolResult({required String toolUseId, required Object content, bool isError = false}) async {
     final process = _current;
     if (process == null) {
       throw StateError('sendToolResult: no active subprocess');
@@ -294,12 +268,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
       'message': {
         'role': 'user',
         'content': [
-          {
-            'type': 'tool_result',
-            'tool_use_id': toolUseId,
-            'content': encoded,
-            if (isError) 'is_error': true,
-          },
+          {'type': 'tool_result', 'tool_use_id': toolUseId, 'content': encoded, if (isError) 'is_error': true},
         ],
       },
     };
@@ -393,14 +362,16 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
           final pluginsRaw = raw[_kPlugins];
           final plugins = pluginsRaw is List
               ? pluginsRaw
-                  .whereType<Map<String, dynamic>>()
-                  .map((m) => ClaudePluginInfo(
+                    .whereType<Map<String, dynamic>>()
+                    .map(
+                      (m) => ClaudePluginInfo(
                         name: m['name'] as String? ?? '',
                         path: m['path'] as String? ?? '',
                         source: m['source'] as String?,
-                      ))
-                  .where((p) => p.name.isNotEmpty && p.path.isNotEmpty)
-                  .toList()
+                      ),
+                    )
+                    .where((p) => p.name.isNotEmpty && p.path.isNotEmpty)
+                    .toList()
               : const <ClaudePluginInfo>[];
           yield ClaudeEvent.sessionInit(
             sessionId: raw[_kSessionId] as String? ?? '',
@@ -436,9 +407,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
           case 'message_delta':
             final usage = inner['usage'];
             if (usage is Map<String, dynamic>) {
-              yield ClaudeEvent.usageUpdate(
-                outputTokens: (usage['output_tokens'] as num?)?.toInt(),
-              );
+              yield ClaudeEvent.usageUpdate(outputTokens: (usage['output_tokens'] as num?)?.toInt());
             }
             return;
 
@@ -496,10 +465,7 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
                 input != null) {
               final questions = _parseAskUserQuestions(input);
               if (questions.isNotEmpty) {
-                yield ClaudeEvent.askUserQuestion(
-                  toolUseId: tool.toolId,
-                  questions: questions,
-                );
+                yield ClaudeEvent.askUserQuestion(toolUseId: tool.toolId, questions: questions);
               }
             }
             return;
@@ -586,19 +552,18 @@ class ClaudeProcessDataSourceImpl implements ClaudeProcessDataSource {
           if (o is Map) {
             final label = o['label'] as String? ?? '';
             if (label.isEmpty) continue;
-            options.add(AskUserQuestionOption(
-              label: label,
-              description: o['description'] as String? ?? '',
-            ));
+            options.add(AskUserQuestionOption(label: label, description: o['description'] as String? ?? ''));
           }
         }
       }
-      result.add(AskUserQuestionItem(
-        question: question,
-        header: q['header'] as String? ?? '',
-        multiSelect: q['multiSelect'] == true,
-        options: options,
-      ));
+      result.add(
+        AskUserQuestionItem(
+          question: question,
+          header: q['header'] as String? ?? '',
+          multiSelect: q['multiSelect'] == true,
+          options: options,
+        ),
+      );
     }
     return result;
   }

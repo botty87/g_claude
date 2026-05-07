@@ -14,7 +14,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TerminalSessionInfo {
 
- String get shellPath; String get cwd; TerminalRunStatus get status; int? get exitCode; String? get lastError;
+ String get shellPath; String get cwd; TerminalRunStatus get status; int? get exitCode; String? get lastError;/// Bumped on each `restart()`. Widgets key off this so the TerminalView
+/// rebinds its listeners against the new Terminal instance even if the
+/// status stays at `running` across the restart (fast respawn).
+ int get incarnation;
 /// Create a copy of TerminalSessionInfo
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +28,16 @@ $TerminalSessionInfoCopyWith<TerminalSessionInfo> get copyWith => _$TerminalSess
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TerminalSessionInfo&&(identical(other.shellPath, shellPath) || other.shellPath == shellPath)&&(identical(other.cwd, cwd) || other.cwd == cwd)&&(identical(other.status, status) || other.status == status)&&(identical(other.exitCode, exitCode) || other.exitCode == exitCode)&&(identical(other.lastError, lastError) || other.lastError == lastError));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TerminalSessionInfo&&(identical(other.shellPath, shellPath) || other.shellPath == shellPath)&&(identical(other.cwd, cwd) || other.cwd == cwd)&&(identical(other.status, status) || other.status == status)&&(identical(other.exitCode, exitCode) || other.exitCode == exitCode)&&(identical(other.lastError, lastError) || other.lastError == lastError)&&(identical(other.incarnation, incarnation) || other.incarnation == incarnation));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,shellPath,cwd,status,exitCode,lastError);
+int get hashCode => Object.hash(runtimeType,shellPath,cwd,status,exitCode,lastError,incarnation);
 
 @override
 String toString() {
-  return 'TerminalSessionInfo(shellPath: $shellPath, cwd: $cwd, status: $status, exitCode: $exitCode, lastError: $lastError)';
+  return 'TerminalSessionInfo(shellPath: $shellPath, cwd: $cwd, status: $status, exitCode: $exitCode, lastError: $lastError, incarnation: $incarnation)';
 }
 
 
@@ -45,7 +48,7 @@ abstract mixin class $TerminalSessionInfoCopyWith<$Res>  {
   factory $TerminalSessionInfoCopyWith(TerminalSessionInfo value, $Res Function(TerminalSessionInfo) _then) = _$TerminalSessionInfoCopyWithImpl;
 @useResult
 $Res call({
- String shellPath, String cwd, TerminalRunStatus status, int? exitCode, String? lastError
+ String shellPath, String cwd, TerminalRunStatus status, int? exitCode, String? lastError, int incarnation
 });
 
 
@@ -62,14 +65,15 @@ class _$TerminalSessionInfoCopyWithImpl<$Res>
 
 /// Create a copy of TerminalSessionInfo
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? shellPath = null,Object? cwd = null,Object? status = null,Object? exitCode = freezed,Object? lastError = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? shellPath = null,Object? cwd = null,Object? status = null,Object? exitCode = freezed,Object? lastError = freezed,Object? incarnation = null,}) {
   return _then(_self.copyWith(
 shellPath: null == shellPath ? _self.shellPath : shellPath // ignore: cast_nullable_to_non_nullable
 as String,cwd: null == cwd ? _self.cwd : cwd // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as TerminalRunStatus,exitCode: freezed == exitCode ? _self.exitCode : exitCode // ignore: cast_nullable_to_non_nullable
 as int?,lastError: freezed == lastError ? _self.lastError : lastError // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,incarnation: null == incarnation ? _self.incarnation : incarnation // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -154,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String shellPath,  String cwd,  TerminalRunStatus status,  int? exitCode,  String? lastError)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String shellPath,  String cwd,  TerminalRunStatus status,  int? exitCode,  String? lastError,  int incarnation)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TerminalSessionInfo() when $default != null:
-return $default(_that.shellPath,_that.cwd,_that.status,_that.exitCode,_that.lastError);case _:
+return $default(_that.shellPath,_that.cwd,_that.status,_that.exitCode,_that.lastError,_that.incarnation);case _:
   return orElse();
 
 }
@@ -175,10 +179,10 @@ return $default(_that.shellPath,_that.cwd,_that.status,_that.exitCode,_that.last
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String shellPath,  String cwd,  TerminalRunStatus status,  int? exitCode,  String? lastError)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String shellPath,  String cwd,  TerminalRunStatus status,  int? exitCode,  String? lastError,  int incarnation)  $default,) {final _that = this;
 switch (_that) {
 case _TerminalSessionInfo():
-return $default(_that.shellPath,_that.cwd,_that.status,_that.exitCode,_that.lastError);case _:
+return $default(_that.shellPath,_that.cwd,_that.status,_that.exitCode,_that.lastError,_that.incarnation);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +199,10 @@ return $default(_that.shellPath,_that.cwd,_that.status,_that.exitCode,_that.last
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String shellPath,  String cwd,  TerminalRunStatus status,  int? exitCode,  String? lastError)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String shellPath,  String cwd,  TerminalRunStatus status,  int? exitCode,  String? lastError,  int incarnation)?  $default,) {final _that = this;
 switch (_that) {
 case _TerminalSessionInfo() when $default != null:
-return $default(_that.shellPath,_that.cwd,_that.status,_that.exitCode,_that.lastError);case _:
+return $default(_that.shellPath,_that.cwd,_that.status,_that.exitCode,_that.lastError,_that.incarnation);case _:
   return null;
 
 }
@@ -210,7 +214,7 @@ return $default(_that.shellPath,_that.cwd,_that.status,_that.exitCode,_that.last
 
 
 class _TerminalSessionInfo implements TerminalSessionInfo {
-  const _TerminalSessionInfo({required this.shellPath, required this.cwd, this.status = TerminalRunStatus.starting, this.exitCode, this.lastError});
+  const _TerminalSessionInfo({required this.shellPath, required this.cwd, this.status = TerminalRunStatus.starting, this.exitCode, this.lastError, this.incarnation = 0});
   
 
 @override final  String shellPath;
@@ -218,6 +222,10 @@ class _TerminalSessionInfo implements TerminalSessionInfo {
 @override@JsonKey() final  TerminalRunStatus status;
 @override final  int? exitCode;
 @override final  String? lastError;
+/// Bumped on each `restart()`. Widgets key off this so the TerminalView
+/// rebinds its listeners against the new Terminal instance even if the
+/// status stays at `running` across the restart (fast respawn).
+@override@JsonKey() final  int incarnation;
 
 /// Create a copy of TerminalSessionInfo
 /// with the given fields replaced by the non-null parameter values.
@@ -229,16 +237,16 @@ _$TerminalSessionInfoCopyWith<_TerminalSessionInfo> get copyWith => __$TerminalS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TerminalSessionInfo&&(identical(other.shellPath, shellPath) || other.shellPath == shellPath)&&(identical(other.cwd, cwd) || other.cwd == cwd)&&(identical(other.status, status) || other.status == status)&&(identical(other.exitCode, exitCode) || other.exitCode == exitCode)&&(identical(other.lastError, lastError) || other.lastError == lastError));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TerminalSessionInfo&&(identical(other.shellPath, shellPath) || other.shellPath == shellPath)&&(identical(other.cwd, cwd) || other.cwd == cwd)&&(identical(other.status, status) || other.status == status)&&(identical(other.exitCode, exitCode) || other.exitCode == exitCode)&&(identical(other.lastError, lastError) || other.lastError == lastError)&&(identical(other.incarnation, incarnation) || other.incarnation == incarnation));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,shellPath,cwd,status,exitCode,lastError);
+int get hashCode => Object.hash(runtimeType,shellPath,cwd,status,exitCode,lastError,incarnation);
 
 @override
 String toString() {
-  return 'TerminalSessionInfo(shellPath: $shellPath, cwd: $cwd, status: $status, exitCode: $exitCode, lastError: $lastError)';
+  return 'TerminalSessionInfo(shellPath: $shellPath, cwd: $cwd, status: $status, exitCode: $exitCode, lastError: $lastError, incarnation: $incarnation)';
 }
 
 
@@ -249,7 +257,7 @@ abstract mixin class _$TerminalSessionInfoCopyWith<$Res> implements $TerminalSes
   factory _$TerminalSessionInfoCopyWith(_TerminalSessionInfo value, $Res Function(_TerminalSessionInfo) _then) = __$TerminalSessionInfoCopyWithImpl;
 @override @useResult
 $Res call({
- String shellPath, String cwd, TerminalRunStatus status, int? exitCode, String? lastError
+ String shellPath, String cwd, TerminalRunStatus status, int? exitCode, String? lastError, int incarnation
 });
 
 
@@ -266,14 +274,15 @@ class __$TerminalSessionInfoCopyWithImpl<$Res>
 
 /// Create a copy of TerminalSessionInfo
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? shellPath = null,Object? cwd = null,Object? status = null,Object? exitCode = freezed,Object? lastError = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? shellPath = null,Object? cwd = null,Object? status = null,Object? exitCode = freezed,Object? lastError = freezed,Object? incarnation = null,}) {
   return _then(_TerminalSessionInfo(
 shellPath: null == shellPath ? _self.shellPath : shellPath // ignore: cast_nullable_to_non_nullable
 as String,cwd: null == cwd ? _self.cwd : cwd // ignore: cast_nullable_to_non_nullable
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as TerminalRunStatus,exitCode: freezed == exitCode ? _self.exitCode : exitCode // ignore: cast_nullable_to_non_nullable
 as int?,lastError: freezed == lastError ? _self.lastError : lastError // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,incarnation: null == incarnation ? _self.incarnation : incarnation // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

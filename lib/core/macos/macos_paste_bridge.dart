@@ -19,10 +19,7 @@ class MacosPasteBridge {
       if (call.method != 'paste') return;
       final ctx = FocusManager.instance.primaryFocus?.context;
       if (ctx == null) return;
-      Actions.maybeInvoke<PasteTextIntent>(
-        ctx,
-        const PasteTextIntent(SelectionChangedCause.keyboard),
-      );
+      Actions.maybeInvoke<PasteTextIntent>(ctx, const PasteTextIntent(SelectionChangedCause.keyboard));
     });
   }
 }

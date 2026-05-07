@@ -13,14 +13,14 @@ sealed class WorkspacesState with _$WorkspacesState {
   }) = WorkspacesStateLoaded;
 
   List<Workspace> get workspacesOrEmpty => switch (this) {
-        WorkspacesStateInitial() => const [],
-        WorkspacesStateLoaded(:final workspaces) => workspaces,
-      };
+    WorkspacesStateInitial() => const [],
+    WorkspacesStateLoaded(:final workspaces) => workspaces,
+  };
 
   WorkspaceId? get activeIdOrNull => switch (this) {
-        WorkspacesStateInitial() => null,
-        WorkspacesStateLoaded(:final activeId) => activeId,
-      };
+    WorkspacesStateInitial() => null,
+    WorkspacesStateLoaded(:final activeId) => activeId,
+  };
 
   Workspace? get activeWorkspace {
     final id = activeIdOrNull;

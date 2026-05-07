@@ -23,16 +23,8 @@ import 'package:mocktail/mocktail.dart';
 
 class _MockDs extends Mock implements FileContentDataSource {}
 
-ReadFileResult _result(String path, String content, DateTime mtime,
-    {int? bytes}) {
-  return (
-    content: FileContent(
-      path: path,
-      content: content,
-      sizeBytes: bytes ?? content.length,
-    ),
-    modified: mtime,
-  );
+ReadFileResult _result(String path, String content, DateTime mtime, {int? bytes}) {
+  return (content: FileContent(path: path, content: content, sizeBytes: bytes ?? content.length), modified: mtime);
 }
 
 void main() {
@@ -45,10 +37,10 @@ void main() {
   });
 
   group('readFile — cache miss flow', () {
-    test('first read calls the datasource exactly once and returns the content',
-        () async {
-      when(() => ds.readFile(path: '/p/a.dart')).thenAnswer((_) async =>
-          _result('/p/a.dart', 'foo', DateTime.utc(2026, 1, 1)));
+    test('first read calls the datasource exactly once and returns the content', () async {
+      when(
+        () => ds.readFile(path: '/p/a.dart'),
+      ).thenAnswer((_) async => _result('/p/a.dart', 'foo', DateTime.utc(2026, 1, 1)));
 
       final out = await repo.readFile(path: '/p/a.dart');
 
@@ -57,14 +49,13 @@ void main() {
       verify(() => ds.readFile(path: '/p/a.dart')).called(1);
     });
 
-    test('a second read of the same path is served from cache (no datasource read)',
-        () async {
-      when(() => ds.readFile(path: '/p/a.dart')).thenAnswer((_) async =>
-          _result('/p/a.dart', 'foo', DateTime.utc(2026, 1, 1)));
+    test('a second read of the same path is served from cache (no datasource read)', () async {
+      when(
+        () => ds.readFile(path: '/p/a.dart'),
+      ).thenAnswer((_) async => _result('/p/a.dart', 'foo', DateTime.utc(2026, 1, 1)));
       // After the first hit lands, the cache validates via mtimeOf instead of
       // re-reading. Configure mtimeOf to return the same mtime → cache hit.
-      when(() => ds.mtimeOf(path: '/p/a.dart'))
-          .thenAnswer((_) async => DateTime.utc(2026, 1, 1));
+      when(() => ds.mtimeOf(path: '/p/a.dart')).thenAnswer((_) async => DateTime.utc(2026, 1, 1));
 
       await repo.readFile(path: '/p/a.dart');
       final second = await repo.readFile(path: '/p/a.dart');
@@ -86,10 +77,10 @@ void main() {
 
       // Now switch the datasource so mtimeOf reports a NEW mtime, and a new
       // readFile returns updated content.
-      when(() => ds.mtimeOf(path: '/p/a.dart'))
-          .thenAnswer((_) async => DateTime.utc(2026, 1, 2));
-      when(() => ds.readFile(path: '/p/a.dart')).thenAnswer((_) async =>
-          _result('/p/a.dart', 'second', DateTime.utc(2026, 1, 2)));
+      when(() => ds.mtimeOf(path: '/p/a.dart')).thenAnswer((_) async => DateTime.utc(2026, 1, 2));
+      when(
+        () => ds.readFile(path: '/p/a.dart'),
+      ).thenAnswer((_) async => _result('/p/a.dart', 'second', DateTime.utc(2026, 1, 2)));
 
       final out = await repo.readFile(path: '/p/a.dart');
 
@@ -97,10 +88,10 @@ void main() {
       verify(() => ds.readFile(path: '/p/a.dart')).called(2);
     });
 
-    test('mtimeOf returning null evicts the cache and surfaces NotFoundFailure',
-        () async {
-      when(() => ds.readFile(path: '/p/a.dart')).thenAnswer((_) async =>
-          _result('/p/a.dart', 'foo', DateTime.utc(2026, 1, 1)));
+    test('mtimeOf returning null evicts the cache and surfaces NotFoundFailure', () async {
+      when(
+        () => ds.readFile(path: '/p/a.dart'),
+      ).thenAnswer((_) async => _result('/p/a.dart', 'foo', DateTime.utc(2026, 1, 1)));
       await repo.readFile(path: '/p/a.dart');
 
       when(() => ds.mtimeOf(path: '/p/a.dart')).thenAnswer((_) async => null);
@@ -116,18 +107,16 @@ void main() {
       // dart:io's PathNotFoundException requires (path, OSError, [message]).
       // Construct one with a canned OSError to drive the catch arm in
       // _readUncached.
-      when(() => ds.readFile(path: any(named: 'path'))).thenThrow(
-        const PathNotFoundException('/p/missing', OSError('ENOENT', 2)),
-      );
+      when(
+        () => ds.readFile(path: any(named: 'path')),
+      ).thenThrow(const PathNotFoundException('/p/missing', OSError('ENOENT', 2)));
 
       final out = await repo.readFile(path: '/p/missing');
       expect(out.left, isA<NotFoundFailure>());
     });
 
-    test('FileTooLargeException → ValidationFailure with size in message',
-        () async {
-      when(() => ds.readFile(path: any(named: 'path')))
-          .thenThrow(FileTooLargeException(99999));
+    test('FileTooLargeException → ValidationFailure with size in message', () async {
+      when(() => ds.readFile(path: any(named: 'path'))).thenThrow(FileTooLargeException(99999));
 
       final out = await repo.readFile(path: '/p/big');
       final failure = out.left;
@@ -136,27 +125,22 @@ void main() {
     });
 
     test('BinaryFileException → ValidationFailure', () async {
-      when(() => ds.readFile(path: any(named: 'path')))
-          .thenThrow(const BinaryFileException());
+      when(() => ds.readFile(path: any(named: 'path'))).thenThrow(const BinaryFileException());
 
       final out = await repo.readFile(path: '/p/binary');
       expect(out.left, isA<ValidationFailure>());
     });
 
-    test('Generic exception → UnexpectedFailure (no exception bubbles past)',
-        () async {
-      when(() => ds.readFile(path: any(named: 'path')))
-          .thenThrow(Exception('something else'));
+    test('Generic exception → UnexpectedFailure (no exception bubbles past)', () async {
+      when(() => ds.readFile(path: any(named: 'path'))).thenThrow(Exception('something else'));
 
       final out = await repo.readFile(path: '/p/x');
-      expect(out.left, isA<UnexpectedFailure>(),
-          reason: 'No exception must reach the presentation layer.');
+      expect(out.left, isA<UnexpectedFailure>(), reason: 'No exception must reach the presentation layer.');
     });
   });
 
   group('readFile — in-flight coalesce', () {
-    test('two concurrent reads of the same path produce one datasource call',
-        () async {
+    test('two concurrent reads of the same path produce one datasource call', () async {
       var calls = 0;
       // Slow datasource so we can fire the second call while the first is
       // still pending.
@@ -175,22 +159,19 @@ void main() {
   });
 
   group('readFile — LRU eviction by entry count', () {
-    test('beyond 30 distinct entries, the LRU is evicted (first read no longer cached)',
-        () async {
+    test('beyond 30 distinct entries, the LRU is evicted (first read no longer cached)', () async {
       // Stage 31 distinct paths. After the 31st insert, the first one must
       // have been evicted: a second read of it goes back to the datasource.
       for (var i = 0; i < 31; i++) {
         final path = '/p/$i.dart';
-        when(() => ds.readFile(path: path)).thenAnswer((_) async =>
-            _result(path, 'x', DateTime.utc(2026, 1, 1)));
+        when(() => ds.readFile(path: path)).thenAnswer((_) async => _result(path, 'x', DateTime.utc(2026, 1, 1)));
       }
       for (var i = 0; i < 31; i++) {
         await repo.readFile(path: '/p/$i.dart');
       }
       // Now read /p/0 again. It should NOT be in cache anymore — second
       // datasource hit expected.
-      when(() => ds.mtimeOf(path: '/p/0.dart'))
-          .thenAnswer((_) async => DateTime.utc(2026, 1, 1));
+      when(() => ds.mtimeOf(path: '/p/0.dart')).thenAnswer((_) async => DateTime.utc(2026, 1, 1));
       await repo.readFile(path: '/p/0.dart');
 
       verify(() => ds.readFile(path: '/p/0.dart')).called(2);
@@ -203,17 +184,18 @@ void main() {
       // content.length — passing `bytes` is sufficient and avoids holding
       // 12MB of strings live during the test run.
       const sixMb = 6 * 1024 * 1024;
-      when(() => ds.readFile(path: '/p/big1.bin')).thenAnswer((_) async =>
-          _result('/p/big1.bin', 'x', DateTime.utc(2026, 1, 1), bytes: sixMb));
-      when(() => ds.readFile(path: '/p/big2.bin')).thenAnswer((_) async =>
-          _result('/p/big2.bin', 'x', DateTime.utc(2026, 1, 1), bytes: sixMb));
+      when(
+        () => ds.readFile(path: '/p/big1.bin'),
+      ).thenAnswer((_) async => _result('/p/big1.bin', 'x', DateTime.utc(2026, 1, 1), bytes: sixMb));
+      when(
+        () => ds.readFile(path: '/p/big2.bin'),
+      ).thenAnswer((_) async => _result('/p/big2.bin', 'x', DateTime.utc(2026, 1, 1), bytes: sixMb));
 
       await repo.readFile(path: '/p/big1.bin');
       await repo.readFile(path: '/p/big2.bin');
 
       // Now /p/big1.bin must have been evicted: a re-read goes to datasource.
-      when(() => ds.mtimeOf(path: '/p/big1.bin'))
-          .thenAnswer((_) async => DateTime.utc(2026, 1, 1));
+      when(() => ds.mtimeOf(path: '/p/big1.bin')).thenAnswer((_) async => DateTime.utc(2026, 1, 1));
       await repo.readFile(path: '/p/big1.bin');
       verify(() => ds.readFile(path: '/p/big1.bin')).called(2);
     });

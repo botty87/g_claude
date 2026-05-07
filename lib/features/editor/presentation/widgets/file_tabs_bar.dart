@@ -34,9 +34,7 @@ class FileTabsBar extends HookWidget {
 
     final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
     final hidesEditorTabs = context.select<ShellCubit, bool>(
-      (c) =>
-          c.state.selectedActivity == ActivityId.sessions ||
-          c.state.selectedActivity == ActivityId.logs,
+      (c) => c.state.selectedActivity == ActivityId.sessions || c.state.selectedActivity == ActivityId.logs,
     );
 
     return Container(
@@ -103,7 +101,9 @@ class _WorkspaceToggleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final workspaceOpen = context.select<ShellCubit, bool>((c) => c.state.workspaceOpen);
-    final action = workspaceOpen ? Locales.Shell.Workspace.toggleToFullscreen : Locales.Shell.Workspace.toggleToWorkspace;
+    final action = workspaceOpen
+        ? Locales.Shell.Workspace.toggleToFullscreen
+        : Locales.Shell.Workspace.toggleToWorkspace;
     return Tooltip(
       message: '$action (⌘B)',
       child: IconButton(

@@ -26,25 +26,18 @@ class ClaudeTerminalPane extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeId = context.select<WorkspacesCubit, String?>(
-      (c) => c.state.activeIdOrNull,
-    );
+    final activeId = context.select<WorkspacesCubit, String?>((c) => c.state.activeIdOrNull);
 
     if (activeId == null) {
       return const _NoWorkspaceState();
     }
 
-    final hasSession = context.select<ClaudeSessionsCubit, bool>(
-      (c) => c.state.sessions.containsKey(activeId),
-    );
+    final hasSession = context.select<ClaudeSessionsCubit, bool>((c) => c.state.sessions.containsKey(activeId));
     if (!hasSession) {
       return const _NoWorkspaceState();
     }
 
-    return _ClaudeTerminalPaneActive(
-      key: ValueKey('claude_pane_$activeId'),
-      workspaceId: activeId,
-    );
+    return _ClaudeTerminalPaneActive(key: ValueKey('claude_pane_$activeId'), workspaceId: activeId);
   }
 }
 
@@ -61,14 +54,13 @@ class _ClaudeTerminalPaneActive extends HookWidget {
     final messages = context.select<ClaudeSessionsCubit, List<ClaudeMessage>>(
       (c) => c.state.sessions[workspaceId]?.messages ?? const [],
     );
-    final lastError = context.select<ClaudeSessionsCubit, Failure?>(
-      (c) => c.state.sessions[workspaceId]?.lastError,
-    );
+    final lastError = context.select<ClaudeSessionsCubit, Failure?>((c) => c.state.sessions[workspaceId]?.lastError);
     final stderrTail = context.select<ClaudeSessionsCubit, List<String>>(
       (c) => c.state.sessions[workspaceId]?.stderrTail ?? const [],
     );
 
-    final isBusy = runStatus == ClaudeRunStatus.running ||
+    final isBusy =
+        runStatus == ClaudeRunStatus.running ||
         runStatus == ClaudeRunStatus.connecting ||
         runStatus == ClaudeRunStatus.compacting;
 
@@ -81,8 +73,7 @@ class _ClaudeTerminalPaneActive extends HookWidget {
       onDragExited: (_) => isHovering.value = false,
       onDragDone: (details) {
         if (isBusy) return;
-        final liveDraft =
-            sessionsCubit.state.sessions[workspaceId]?.inputDraft;
+        final liveDraft = sessionsCubit.state.sessions[workspaceId]?.inputDraft;
         if (liveDraft == null) return;
         final current = liveDraft.attachments;
         final existing = current.map((a) => p.normalize(a.path)).toSet();
@@ -94,20 +85,11 @@ class _ClaudeTerminalPaneActive extends HookWidget {
           if (existing.contains(norm)) continue;
           existing.add(norm);
           final type = FileSystemEntity.typeSync(path);
-          final kind = type == FileSystemEntityType.directory
-              ? ChatAttachmentKind.directory
-              : ChatAttachmentKind.file;
-          additions.add(ChatAttachment(
-            path: path,
-            displayName: p.basename(path),
-            kind: kind,
-          ));
+          final kind = type == FileSystemEntityType.directory ? ChatAttachmentKind.directory : ChatAttachmentKind.file;
+          additions.add(ChatAttachment(path: path, displayName: p.basename(path), kind: kind));
         }
         if (additions.isNotEmpty) {
-          sessionsCubit.setInputDraft(
-            workspaceId,
-            liveDraft.copyWith(attachments: [...current, ...additions]),
-          );
+          sessionsCubit.setInputDraft(workspaceId, liveDraft.copyWith(attachments: [...current, ...additions]));
         }
         isHovering.value = false;
       },
@@ -128,10 +110,7 @@ class _ClaudeTerminalPaneActive extends HookWidget {
                     stderrTail: stderrTail,
                   ),
                 ),
-                QueuedPromptCard(
-                  key: ValueKey('claude_queued_card_$workspaceId'),
-                  workspaceId: workspaceId,
-                ),
+                QueuedPromptCard(key: ValueKey('claude_queued_card_$workspaceId'), workspaceId: workspaceId),
                 ClaudeInputBar(
                   key: ValueKey('claude_input_bar_$workspaceId'),
                   workspaceId: workspaceId,
@@ -140,10 +119,7 @@ class _ClaudeTerminalPaneActive extends HookWidget {
               ],
             ),
           ),
-          if (isHovering.value)
-            const Positioned.fill(
-              child: IgnorePointer(child: _DropOverlay()),
-            ),
+          if (isHovering.value) const Positioned.fill(child: IgnorePointer(child: _DropOverlay())),
         ],
       ),
     );
@@ -182,10 +158,7 @@ class _NoWorkspaceState extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.xl),
           child: Text(
             Locales.Claude.Terminal.Status.noWorkspace,
-            style: AppTypography.bodyMain.copyWith(
-              color: AppColors.outline,
-              fontSize: 12,
-            ),
+            style: AppTypography.bodyMain.copyWith(color: AppColors.outline, fontSize: 12),
             textAlign: TextAlign.center,
           ),
         ),
@@ -202,31 +175,19 @@ class _DropOverlay extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.08),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.6),
-          width: 2,
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.6), width: 2),
       ),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xl,
-            vertical: AppSpacing.md,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerLow,
             borderRadius: BorderRadius.circular(AppRadii.md),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.4),
-              width: 1,
-            ),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.4), width: 1),
           ),
           child: Text(
             Locales.Claude.Terminal.Input.Attachments.dropHint,
-            style: AppTypography.bodyMain.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTypography.bodyMain.copyWith(color: AppColors.primary, fontWeight: FontWeight.w500),
           ),
         ),
       ),

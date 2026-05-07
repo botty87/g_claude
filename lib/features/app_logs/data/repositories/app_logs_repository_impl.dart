@@ -19,22 +19,15 @@ class AppLogsRepositoryImpl implements AppLogsRepository {
   int? get currentSessionId => _currentSessionId;
 
   @override
-  Future<Either<Failure, AppLogSession>> startSession({
-    String? appVersion,
-    required String platform,
-  }) async {
+  Future<Either<Failure, AppLogSession>> startSession({String? appVersion, required String platform}) async {
     try {
-      final id = await _db.into(_db.appSessions).insert(
-            AppSessionsCompanion.insert(
-              startedAt: DateTime.now(),
-              platform: platform,
-              appVersion: Value(appVersion),
-            ),
+      final id = await _db
+          .into(_db.appSessions)
+          .insert(
+            AppSessionsCompanion.insert(startedAt: DateTime.now(), platform: platform, appVersion: Value(appVersion)),
           );
       _currentSessionId = id;
-      final row = await (_db.select(_db.appSessions)
-            ..where((t) => t.id.equals(id)))
-          .getSingle();
+      final row = await (_db.select(_db.appSessions)..where((t) => t.id.equals(id))).getSingle();
       return Right(_toSession(row));
     } catch (e) {
       return Left(UnexpectedFailure('startSession: $e'));
@@ -46,8 +39,9 @@ class AppLogsRepositoryImpl implements AppLogsRepository {
     final id = _currentSessionId;
     if (id == null) return const Right(null);
     try {
-      await (_db.update(_db.appSessions)..where((t) => t.id.equals(id)))
-          .write(AppSessionsCompanion(endedAt: Value(DateTime.now())));
+      await (_db.update(
+        _db.appSessions,
+      )..where((t) => t.id.equals(id))).write(AppSessionsCompanion(endedAt: Value(DateTime.now())));
       _currentSessionId = null;
       return const Right(null);
     } catch (e) {
@@ -56,9 +50,7 @@ class AppLogsRepositoryImpl implements AppLogsRepository {
   }
 
   @override
-  Future<Either<Failure, void>> appendEntries(
-    List<AppLogEntryDraft> drafts,
-  ) async {
+  Future<Either<Failure, void>> appendEntries(List<AppLogEntryDraft> drafts) async {
     final sessionId = _currentSessionId;
     if (sessionId == null || drafts.isEmpty) return const Right(null);
     try {
@@ -69,8 +61,7 @@ class AppLogsRepositoryImpl implements AppLogsRepository {
           b.insertAll(
             _db.logEntries,
             drafts.map((d) {
-              if (d.level == AppLogLevel.error ||
-                  d.level == AppLogLevel.critical) {
+              if (d.level == AppLogLevel.error || d.level == AppLogLevel.critical) {
                 errors++;
               }
               if (d.level == AppLogLevel.warning) {
@@ -111,23 +102,13 @@ class AppLogsRepositoryImpl implements AppLogsRepository {
   @override
   Stream<List<AppLogSession>> watchSessions() {
     final q = _db.select(_db.appSessions)
-      ..orderBy([
-        (t) => OrderingTerm(
-              expression: t.startedAt,
-              mode: OrderingMode.desc,
-            ),
-      ]);
+      ..orderBy([(t) => OrderingTerm(expression: t.startedAt, mode: OrderingMode.desc)]);
     return q.watch().map((rows) => rows.map(_toSession).toList());
   }
 
   @override
-  Stream<List<AppLogEntry>> watchEntries({
-    required int sessionId,
-    Set<AppLogLevel> levels = const {},
-    String? search,
-  }) {
-    final q = _db.select(_db.logEntries)
-      ..where((t) => t.sessionId.equals(sessionId));
+  Stream<List<AppLogEntry>> watchEntries({required int sessionId, Set<AppLogLevel> levels = const {}, String? search}) {
+    final q = _db.select(_db.logEntries)..where((t) => t.sessionId.equals(sessionId));
     if (levels.isNotEmpty) {
       final names = levels.map(appLogLevelToString).toList();
       q.where((t) => t.level.isIn(names));
@@ -137,18 +118,14 @@ class AppLogsRepositoryImpl implements AppLogsRepository {
       final pattern = '%$s%';
       q.where((t) => t.message.like(pattern) | t.title.like(pattern));
     }
-    q.orderBy([
-      (t) => OrderingTerm(expression: t.time, mode: OrderingMode.asc),
-    ]);
+    q.orderBy([(t) => OrderingTerm(expression: t.time, mode: OrderingMode.asc)]);
     return q.watch().map((rows) => rows.map(_toEntry).toList());
   }
 
   @override
   Future<Either<Failure, void>> deleteSession(int sessionId) async {
     try {
-      await (_db.delete(_db.appSessions)
-            ..where((t) => t.id.equals(sessionId)))
-          .go();
+      await (_db.delete(_db.appSessions)..where((t) => t.id.equals(sessionId))).go();
       if (_currentSessionId == sessionId) _currentSessionId = null;
       return const Right(null);
     } catch (e) {
@@ -188,24 +165,24 @@ class AppLogsRepositoryImpl implements AppLogsRepository {
   }
 
   AppLogSession _toSession(AppSessionRow r) => AppLogSession(
-        id: r.id,
-        startedAt: r.startedAt,
-        endedAt: r.endedAt,
-        appVersion: r.appVersion,
-        platform: r.platform,
-        errorCount: r.errorCount,
-        warningCount: r.warningCount,
-        totalCount: r.totalCount,
-      );
+    id: r.id,
+    startedAt: r.startedAt,
+    endedAt: r.endedAt,
+    appVersion: r.appVersion,
+    platform: r.platform,
+    errorCount: r.errorCount,
+    warningCount: r.warningCount,
+    totalCount: r.totalCount,
+  );
 
   AppLogEntry _toEntry(LogEntryRow r) => AppLogEntry(
-        id: r.id,
-        sessionId: r.sessionId,
-        time: r.time,
-        level: parseAppLogLevel(r.level),
-        title: r.title,
-        message: r.message,
-        exception: r.exception,
-        stackTrace: r.stackTrace,
-      );
+    id: r.id,
+    sessionId: r.sessionId,
+    time: r.time,
+    level: parseAppLogLevel(r.level),
+    title: r.title,
+    message: r.message,
+    exception: r.exception,
+    stackTrace: r.stackTrace,
+  );
 }

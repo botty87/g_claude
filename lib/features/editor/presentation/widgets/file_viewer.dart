@@ -26,34 +26,22 @@ class FileViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeId = context.select<WorkspacesCubit, WorkspaceId?>(
-      (c) => c.state.activeIdOrNull,
-    );
+    final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
     final activePath = context.select<FileTabsCubit, String?>(
       (c) => activeId == null ? null : c.state.filesFor(activeId)?.activePath,
     );
     final openPaths = context.select<FileTabsCubit, List<String>>(
-      (c) => activeId == null
-          ? const []
-          : (c.state.filesFor(activeId)?.openPaths ?? const []),
+      (c) => activeId == null ? const [] : (c.state.filesFor(activeId)?.openPaths ?? const []),
     );
     if (activeId == null || activePath == null) {
       return const _EmptyState();
     }
-    return _PooledStack(
-      activeId: activeId,
-      activePath: activePath,
-      openPaths: openPaths,
-    );
+    return _PooledStack(activeId: activeId, activePath: activePath, openPaths: openPaths);
   }
 }
 
 class _PooledStack extends HookWidget {
-  const _PooledStack({
-    required this.activeId,
-    required this.activePath,
-    required this.openPaths,
-  });
+  const _PooledStack({required this.activeId, required this.activePath, required this.openPaths});
 
   final WorkspaceId activeId;
   final String activePath;

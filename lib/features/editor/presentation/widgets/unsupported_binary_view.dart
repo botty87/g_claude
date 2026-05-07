@@ -29,11 +29,7 @@ class UnsupportedBinaryView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           spacing: AppSpacing.sm,
           children: [
-            Icon(
-              _iconFor(ext),
-              size: 48,
-              color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-            ),
+            Icon(_iconFor(ext), size: 48, color: AppColors.onSurfaceVariant.withValues(alpha: 0.5)),
             Text(
               filename,
               style: AppTypography.bodyMain.copyWith(color: AppColors.onSurface),
@@ -58,10 +54,7 @@ class UnsupportedBinaryView extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 spacing: 6,
-                children: [
-                  const Icon(Symbols.folder_open, size: 16),
-                  Text(Locales.Editor.Unsupported.revealInFinder),
-                ],
+                children: [const Icon(Symbols.folder_open, size: 16), Text(Locales.Editor.Unsupported.revealInFinder)],
               ),
             ),
           ],

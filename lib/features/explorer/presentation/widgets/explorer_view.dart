@@ -19,8 +19,7 @@ class ExplorerView extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeId = context
-        .select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
+    final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
 
     useEffect(() {
       if (activeId == null) return null;
@@ -40,15 +39,12 @@ class ExplorerView extends HookWidget {
       return null;
     }, [activeId]);
 
-    final active = context.select<WorkspacesCubit, Workspace?>(
-      (c) => c.state.activeWorkspace,
-    );
+    final active = context.select<WorkspacesCubit, Workspace?>((c) => c.state.activeWorkspace);
 
     return BlocListener<FileTabsCubit, FileTabsState>(
       listenWhen: (prev, curr) {
         if (activeId == null) return false;
-        return prev.filesFor(activeId)?.activePath !=
-            curr.filesFor(activeId)?.activePath;
+        return prev.filesFor(activeId)?.activePath != curr.filesFor(activeId)?.activePath;
       },
       listener: (context, state) {
         final active = context.read<WorkspacesCubit>().state.activeWorkspace;
@@ -65,17 +61,9 @@ class ExplorerView extends HookWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ExplorerHeader(
-            onRefresh: active != null
-                ? () => context
-                    .read<ExplorerCubit>()
-                    .refresh(active.id, active.path)
-                : null,
+            onRefresh: active != null ? () => context.read<ExplorerCubit>().refresh(active.id, active.path) : null,
           ),
-          Expanded(
-            child: active == null
-                ? const SizedBox.shrink()
-                : _ExplorerTree(workspace: active),
-          ),
+          Expanded(child: active == null ? const SizedBox.shrink() : _ExplorerTree(workspace: active)),
         ],
       ),
     );
@@ -92,9 +80,7 @@ class _ExplorerTree extends HookWidget {
     final scrollController = useScrollController();
 
     return BlocConsumer<ExplorerCubit, ExplorerState>(
-      listenWhen: (prev, curr) =>
-          prev.trees[workspace.id]?.selectedPath !=
-          curr.trees[workspace.id]?.selectedPath,
+      listenWhen: (prev, curr) => prev.trees[workspace.id]?.selectedPath != curr.trees[workspace.id]?.selectedPath,
       listener: (context, state) {
         final tree = state.trees[workspace.id];
         if (tree == null) return;
@@ -106,16 +92,14 @@ class _ExplorerTree extends HookWidget {
         _maybeAutoScroll(scrollController, idx);
       },
       buildWhen: (prev, curr) =>
-          prev.trees[workspace.id] != curr.trees[workspace.id] ||
-          prev.showHidden != curr.showHidden,
+          prev.trees[workspace.id] != curr.trees[workspace.id] || prev.showHidden != curr.showHidden,
       builder: (context, state) {
         final tree = state.trees[workspace.id];
         if (tree == null) {
           return const SizedBox.shrink();
         }
 
-        if (tree.errors.containsKey(workspace.path) &&
-            !tree.children.containsKey(workspace.path)) {
+        if (tree.errors.containsKey(workspace.path) && !tree.children.containsKey(workspace.path)) {
           return _ExplorerMessage(text: Locales.Shell.SidePanel.loadError);
         }
 
@@ -152,25 +136,17 @@ class _ExplorerTree extends HookWidget {
       final target = index * ExplorerNodeRow.rowHeight;
       final viewport = controller.position.viewportDimension;
       final offset = controller.offset;
-      final inView = target >= offset &&
-          target <= offset + viewport - ExplorerNodeRow.rowHeight;
+      final inView = target >= offset && target <= offset + viewport - ExplorerNodeRow.rowHeight;
       if (inView) return;
-      final desired =
-          (target - viewport / 2 + ExplorerNodeRow.rowHeight)
-              .clamp(0.0, controller.position.maxScrollExtent);
-      controller.animateTo(
-        desired,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
+      final desired = (target - viewport / 2 + ExplorerNodeRow.rowHeight).clamp(
+        0.0,
+        controller.position.maxScrollExtent,
       );
+      controller.animateTo(desired, duration: const Duration(milliseconds: 180), curve: Curves.easeOut);
     });
   }
 
-  List<_VisibleEntry> _buildVisible(
-    String rootPath,
-    WorkspaceTree tree,
-    bool showHidden,
-  ) {
+  List<_VisibleEntry> _buildVisible(String rootPath, WorkspaceTree tree, bool showHidden) {
     final out = <_VisibleEntry>[];
     void walk(String parent, int depth) {
       final children = tree.children[parent];
@@ -200,10 +176,7 @@ class _ExplorerMessage extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.sm),
       child: Text(
         text,
-        style: AppTypography.bodyMain.copyWith(
-          fontSize: 13,
-          color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
-        ),
+        style: AppTypography.bodyMain.copyWith(fontSize: 13, color: AppColors.onSurfaceVariant.withValues(alpha: 0.6)),
       ),
     );
   }

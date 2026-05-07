@@ -12,6 +12,5 @@ class StartAppSession {
   StartAppSession(this._repo);
   final AppLogsRepository _repo;
 
-  Future<Either<Failure, AppLogSession>> call() =>
-      _repo.startSession(platform: Platform.operatingSystem);
+  Future<Either<Failure, AppLogSession>> call() => _repo.startSession(platform: Platform.operatingSystem);
 }

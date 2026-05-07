@@ -726,7 +726,7 @@ as bool,
 
 class ClaudeMessageCompactSummary extends ClaudeMessage {
   const ClaudeMessageCompactSummary({required this.id, required this.summary, required this.hiddenMessageCount, required this.createdAt, this.expanded = false}): super._();
-
+  
 
 @override final  String id;
  final  String summary;

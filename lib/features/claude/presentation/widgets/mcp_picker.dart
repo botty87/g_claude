@@ -40,25 +40,14 @@ class McpPicker extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Symbols.hub,
-                  size: 14,
-                  color: AppColors.onSurfaceVariant,
-                ),
+                const Icon(Symbols.hub, size: 14, color: AppColors.onSurfaceVariant),
                 const SizedBox(width: AppSpacing.xs),
                 Text(
                   Locales.Claude.Terminal.Mcp.label,
-                  style: AppTypography.bodyMain.copyWith(
-                    fontSize: 11,
-                    color: AppColors.onSurfaceVariant,
-                  ),
+                  style: AppTypography.bodyMain.copyWith(fontSize: 11, color: AppColors.onSurfaceVariant),
                 ),
                 const SizedBox(width: 2),
-                const Icon(
-                  Icons.expand_more,
-                  size: 12,
-                  color: AppColors.onSurfaceVariant,
-                ),
+                const Icon(Icons.expand_more, size: 12, color: AppColors.onSurfaceVariant),
               ],
             ),
           );
@@ -83,11 +72,7 @@ class McpPicker extends StatelessWidget {
         PopupMenuItem<void>(
           enabled: false,
           padding: EdgeInsets.zero,
-          child: _McpOverlayContent(
-            cubit: cubit,
-            workspaceId: workspaceId,
-            width: 360,
-          ),
+          child: _McpOverlayContent(cubit: cubit, workspaceId: workspaceId, width: 360),
         ),
       ],
     );
@@ -95,11 +80,7 @@ class McpPicker extends StatelessWidget {
 }
 
 class _McpOverlayContent extends HookWidget {
-  const _McpOverlayContent({
-    required this.cubit,
-    required this.workspaceId,
-    required this.width,
-  });
+  const _McpOverlayContent({required this.cubit, required this.workspaceId, required this.width});
 
   final ClaudeSessionsCubit cubit;
   final String workspaceId;
@@ -134,33 +115,20 @@ class _McpOverlayContent extends HookWidget {
               children: [
                 Text(
                   Locales.Claude.Terminal.Mcp.title,
-                  style: AppTypography.bodyMain.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTypography.bodyMain.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: Icon(
-                    Symbols.refresh,
-                    size: 16,
-                    color: loading ? AppColors.outline : null,
-                  ),
+                  icon: Icon(Symbols.refresh, size: 16, color: loading ? AppColors.outline : null),
                   onPressed: loading ? null : refresh,
                   tooltip: Locales.Claude.Terminal.Mcp.refresh,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints.tightFor(
-                    width: 24,
-                    height: 24,
-                  ),
+                  constraints: const BoxConstraints.tightFor(width: 24, height: 24),
                   splashRadius: 12,
                 ),
               ],
             ),
-            const Divider(
-              color: AppColors.outlineVariant,
-              height: 16,
-              thickness: 1,
-            ),
+            const Divider(color: AppColors.outlineVariant, height: 16, thickness: 1),
             _buildBody(context, snapshot),
           ],
         ),
@@ -168,43 +136,27 @@ class _McpOverlayContent extends HookWidget {
     );
   }
 
-  Widget _buildBody(
-    BuildContext context,
-    AsyncSnapshot<List<McpServer>> snapshot,
-  ) {
+  Widget _buildBody(BuildContext context, AsyncSnapshot<List<McpServer>> snapshot) {
     if (snapshot.connectionState == ConnectionState.waiting) {
       return Row(
         children: [
-          const SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
+          const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
           const SizedBox(width: AppSpacing.sm),
           Text(
             Locales.Claude.Terminal.Mcp.loading,
-            style: AppTypography.bodyMain.copyWith(
-              fontSize: 11,
-              color: AppColors.outline,
-            ),
+            style: AppTypography.bodyMain.copyWith(fontSize: 11, color: AppColors.outline),
           ),
         ],
       );
     }
 
     if (snapshot.hasError) {
-      return Text(
-        Locales.Claude.Terminal.Mcp.error,
-        style: AppTypography.bodyMain.copyWith(color: AppColors.error),
-      );
+      return Text(Locales.Claude.Terminal.Mcp.error, style: AppTypography.bodyMain.copyWith(color: AppColors.error));
     }
 
     final data = snapshot.data;
     if (data == null || data.isEmpty) {
-      return Text(
-        Locales.Claude.Terminal.Mcp.empty,
-        style: AppTypography.bodyMain.copyWith(color: AppColors.outline),
-      );
+      return Text(Locales.Claude.Terminal.Mcp.empty, style: AppTypography.bodyMain.copyWith(color: AppColors.outline));
     }
 
     return ConstrainedBox(
@@ -213,8 +165,7 @@ class _McpOverlayContent extends HookWidget {
         buildWhen: (a, b) {
           final sa = a.sessionFor(workspaceId);
           final sb = b.sessionFor(workspaceId);
-          return sa?.disabledMcpServers != sb?.disabledMcpServers ||
-              sa?.runStatus != sb?.runStatus;
+          return sa?.disabledMcpServers != sb?.disabledMcpServers || sa?.runStatus != sb?.runStatus;
         },
         builder: (context, sessionsState) {
           final session = sessionsState.sessionFor(workspaceId);
@@ -234,10 +185,8 @@ class _McpOverlayContent extends HookWidget {
                   server: server,
                   isDisabled: isDisabled,
                   canAuth: canAuth,
-                  onToggle: (enabled) =>
-                      cubit.toggleMcpServer(workspaceId, server.name, enabled),
-                  onAuth: () =>
-                      cubit.authenticateMcpServer(workspaceId, server.name),
+                  onToggle: (enabled) => cubit.toggleMcpServer(workspaceId, server.name, enabled),
+                  onAuth: () => cubit.authenticateMcpServer(workspaceId, server.name),
                 );
               },
             ),
@@ -265,12 +214,8 @@ class _McpServerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dotColor = isDisabled
-        ? AppColors.outline
-        : _statusColor(server.status);
-    final nameColor = isDisabled
-        ? AppColors.outline
-        : AppColors.onSurfaceVariant;
+    final dotColor = isDisabled ? AppColors.outline : _statusColor(server.status);
+    final nameColor = isDisabled ? AppColors.outline : AppColors.onSurfaceVariant;
     final tooltipParts = <String>[
       server.name,
       _statusLabel(server.status).tr(),
@@ -284,10 +229,7 @@ class _McpServerTile extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -297,20 +239,13 @@ class _McpServerTile extends StatelessWidget {
               children: [
                 Text(
                   server.displayName,
-                  style: AppTypography.bodyMain.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    color: nameColor,
-                  ),
+                  style: AppTypography.bodyMain.copyWith(fontWeight: FontWeight.w600, fontSize: 12, color: nameColor),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   server.commandOrUrl,
-                  style: AppTypography.bodyMain.copyWith(
-                    fontSize: 10,
-                    color: AppColors.outline,
-                  ),
+                  style: AppTypography.bodyMain.copyWith(fontSize: 10, color: AppColors.outline),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -322,10 +257,7 @@ class _McpServerTile extends StatelessWidget {
             _McpAuthButton(canAuth: canAuth, onTap: onAuth),
           ],
           const SizedBox(width: AppSpacing.sm),
-          _McpToggle(
-            value: !isDisabled,
-            onChanged: onToggle,
-          ),
+          _McpToggle(value: !isDisabled, onChanged: onToggle),
         ],
       ),
     );
@@ -341,17 +273,13 @@ class _McpAuthButton extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final hovered = useState(false);
-    final tooltip = canAuth
-        ? Locales.Claude.Terminal.Mcp.authenticate
-        : Locales.Claude.Terminal.Mcp.toggleNoSession;
+    final tooltip = canAuth ? Locales.Claude.Terminal.Mcp.authenticate : Locales.Claude.Terminal.Mcp.toggleNoSession;
     return Tooltip(
       message: tooltip,
       child: Opacity(
         opacity: canAuth ? 1.0 : 0.4,
         child: MouseRegion(
-          cursor: canAuth
-              ? SystemMouseCursors.click
-              : SystemMouseCursors.basic,
+          cursor: canAuth ? SystemMouseCursors.click : SystemMouseCursors.basic,
           onEnter: canAuth ? (_) => hovered.value = true : null,
           onExit: canAuth ? (_) => hovered.value = false : null,
           child: GestureDetector(
@@ -361,19 +289,11 @@ class _McpAuthButton extends HookWidget {
               width: 22,
               height: 22,
               decoration: BoxDecoration(
-                color: hovered.value
-                    ? const Color(0xFFFFCC00).withValues(alpha: 0.20)
-                    : Colors.transparent,
+                color: hovered.value ? const Color(0xFFFFCC00).withValues(alpha: 0.20) : Colors.transparent,
                 borderRadius: BorderRadius.circular(AppRadii.sm),
-                border: Border.all(
-                  color: const Color(0xFFFFCC00).withValues(alpha: 0.6),
-                ),
+                border: Border.all(color: const Color(0xFFFFCC00).withValues(alpha: 0.6)),
               ),
-              child: const Icon(
-                Symbols.key,
-                size: 12,
-                color: Color(0xFFFFCC00),
-              ),
+              child: const Icon(Symbols.key, size: 12, color: Color(0xFFFFCC00)),
             ),
           ),
         ),
@@ -383,10 +303,7 @@ class _McpAuthButton extends HookWidget {
 }
 
 class _McpToggle extends HookWidget {
-  const _McpToggle({
-    required this.value,
-    required this.onChanged,
-  });
+  const _McpToggle({required this.value, required this.onChanged});
 
   final bool value;
   final ValueChanged<bool>? onChanged;
@@ -406,9 +323,7 @@ class _McpToggle extends HookWidget {
     return Opacity(
       opacity: enabled ? 1.0 : 0.4,
       child: MouseRegion(
-        cursor: enabled
-            ? SystemMouseCursors.click
-            : SystemMouseCursors.basic,
+        cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
         onEnter: enabled ? (_) => hovered.value = true : null,
         onExit: enabled ? (_) => hovered.value = false : null,
         child: GestureDetector(
@@ -418,27 +333,20 @@ class _McpToggle extends HookWidget {
             curve: Curves.easeOut,
             width: _trackW,
             height: _trackH,
-            decoration: BoxDecoration(
-              color: trackColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
+            decoration: BoxDecoration(color: trackColor, borderRadius: BorderRadius.circular(8)),
             child: Stack(
               children: [
                 AnimatedAlign(
                   duration: const Duration(milliseconds: 150),
                   curve: Curves.easeOut,
-                  alignment: value
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
+                  alignment: value ? Alignment.centerRight : Alignment.centerLeft,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: _dotPad),
                     child: Container(
                       width: _dotSize,
                       height: _dotSize,
                       decoration: BoxDecoration(
-                        color: value
-                            ? Colors.white
-                            : AppColors.outline,
+                        color: value ? Colors.white : AppColors.outline,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -455,14 +363,10 @@ class _McpToggle extends HookWidget {
   Color _resolveTrackColor(bool hovered) {
     if (value) {
       // ON: primary, hover brightens slightly
-      return hovered
-          ? AppColors.primary
-          : AppColors.primary.withValues(alpha: 0.85);
+      return hovered ? AppColors.primary : AppColors.primary.withValues(alpha: 0.85);
     } else {
       // OFF: dim outline, hover becomes slightly more visible
-      return hovered
-          ? AppColors.outline.withValues(alpha: 0.6)
-          : AppColors.outline.withValues(alpha: 0.4);
+      return hovered ? AppColors.outline.withValues(alpha: 0.6) : AppColors.outline.withValues(alpha: 0.4);
     }
   }
 }

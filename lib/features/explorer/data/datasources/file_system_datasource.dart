@@ -31,11 +31,7 @@ class FileSystemDataSourceImpl implements FileSystemDataSource {
     await for (final entity in dir.list(followLinks: false)) {
       final name = p.basename(entity.path);
       if (_alwaysHidden.contains(name)) continue;
-      entries.add(FileNode(
-        name: name,
-        path: entity.path,
-        isDir: entity is Directory,
-      ));
+      entries.add(FileNode(name: name, path: entity.path, isDir: entity is Directory));
     }
 
     entries.sort((a, b) {

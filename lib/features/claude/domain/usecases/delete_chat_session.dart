@@ -10,9 +10,6 @@ class DeleteChatSession {
 
   final ChatHistoryRepository _repo;
 
-  Future<Either<Failure, void>> call({
-    required String sessionId,
-    required String encodedPath,
-  }) =>
+  Future<Either<Failure, void>> call({required String sessionId, required String encodedPath}) =>
       _repo.deleteSession(sessionId: sessionId, encodedPath: encodedPath);
 }

@@ -55,11 +55,7 @@ class EffortThinkingPicker extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Symbols.bolt,
-                  size: 12,
-                  color: _thinkingAccent(currentThinking),
-                ),
+                Icon(Symbols.bolt, size: 12, color: _thinkingAccent(currentThinking)),
                 const SizedBox(width: AppSpacing.xs),
                 Text(
                   currentEffort.labelKey.tr(),
@@ -69,11 +65,7 @@ class EffortThinkingPicker extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
-                const Icon(
-                  Symbols.expand_more,
-                  size: 12,
-                  color: AppColors.onSurfaceVariant,
-                ),
+                const Icon(Symbols.expand_more, size: 12, color: AppColors.onSurfaceVariant),
               ],
             ),
           );
@@ -195,39 +187,17 @@ class _EffortSegments extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                 decoration: BoxDecoration(
-                  color: selected
-                      ? AppColors.brandIndigo.withValues(alpha: 0.25)
-                      : Colors.transparent,
+                  color: selected ? AppColors.brandIndigo.withValues(alpha: 0.25) : Colors.transparent,
                   borderRadius: BorderRadius.horizontal(
-                    left: isFirst
-                        ? const Radius.circular(AppRadii.sm)
-                        : Radius.zero,
-                    right: isLast
-                        ? const Radius.circular(AppRadii.sm)
-                        : Radius.zero,
+                    left: isFirst ? const Radius.circular(AppRadii.sm) : Radius.zero,
+                    right: isLast ? const Radius.circular(AppRadii.sm) : Radius.zero,
                   ),
                   border: Border(
-                    top: BorderSide(
-                      color: selected
-                          ? AppColors.brandIndigo
-                          : AppColors.outlineVariant,
-                    ),
-                    bottom: BorderSide(
-                      color: selected
-                          ? AppColors.brandIndigo
-                          : AppColors.outlineVariant,
-                    ),
-                    left: BorderSide(
-                      color: selected
-                          ? AppColors.brandIndigo
-                          : AppColors.outlineVariant,
-                    ),
+                    top: BorderSide(color: selected ? AppColors.brandIndigo : AppColors.outlineVariant),
+                    bottom: BorderSide(color: selected ? AppColors.brandIndigo : AppColors.outlineVariant),
+                    left: BorderSide(color: selected ? AppColors.brandIndigo : AppColors.outlineVariant),
                     right: isLast
-                        ? BorderSide(
-                            color: selected
-                                ? AppColors.brandIndigo
-                                : AppColors.outlineVariant,
-                          )
+                        ? BorderSide(color: selected ? AppColors.brandIndigo : AppColors.outlineVariant)
                         : BorderSide.none,
                   ),
                 ),
@@ -236,11 +206,8 @@ class _EffortSegments extends StatelessWidget {
                     e.labelKey.tr(),
                     style: AppTypography.bodyMain.copyWith(
                       fontSize: 10,
-                      color: selected
-                          ? AppColors.primary
-                          : AppColors.onSurfaceVariant,
-                      fontWeight:
-                          selected ? FontWeight.w600 : FontWeight.w400,
+                      color: selected ? AppColors.primary : AppColors.onSurfaceVariant,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
                 ),
@@ -275,39 +242,17 @@ class _ThinkingSegments extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                 decoration: BoxDecoration(
-                  color: selected
-                      ? AppColors.brandIndigo.withValues(alpha: 0.25)
-                      : Colors.transparent,
+                  color: selected ? AppColors.brandIndigo.withValues(alpha: 0.25) : Colors.transparent,
                   borderRadius: BorderRadius.horizontal(
-                    left: isFirst
-                        ? const Radius.circular(AppRadii.sm)
-                        : Radius.zero,
-                    right: isLast
-                        ? const Radius.circular(AppRadii.sm)
-                        : Radius.zero,
+                    left: isFirst ? const Radius.circular(AppRadii.sm) : Radius.zero,
+                    right: isLast ? const Radius.circular(AppRadii.sm) : Radius.zero,
                   ),
                   border: Border(
-                    top: BorderSide(
-                      color: selected
-                          ? AppColors.brandIndigo
-                          : AppColors.outlineVariant,
-                    ),
-                    bottom: BorderSide(
-                      color: selected
-                          ? AppColors.brandIndigo
-                          : AppColors.outlineVariant,
-                    ),
-                    left: BorderSide(
-                      color: selected
-                          ? AppColors.brandIndigo
-                          : AppColors.outlineVariant,
-                    ),
+                    top: BorderSide(color: selected ? AppColors.brandIndigo : AppColors.outlineVariant),
+                    bottom: BorderSide(color: selected ? AppColors.brandIndigo : AppColors.outlineVariant),
+                    left: BorderSide(color: selected ? AppColors.brandIndigo : AppColors.outlineVariant),
                     right: isLast
-                        ? BorderSide(
-                            color: selected
-                                ? AppColors.brandIndigo
-                                : AppColors.outlineVariant,
-                          )
+                        ? BorderSide(color: selected ? AppColors.brandIndigo : AppColors.outlineVariant)
                         : BorderSide.none,
                   ),
                 ),
@@ -318,21 +263,15 @@ class _ThinkingSegments extends StatelessWidget {
                       Container(
                         width: 6,
                         height: 6,
-                        decoration: BoxDecoration(
-                          color: dotColor,
-                          shape: BoxShape.circle,
-                        ),
+                        decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
                         t.labelKey.tr(),
                         style: AppTypography.bodyMain.copyWith(
                           fontSize: 10,
-                          color: selected
-                              ? AppColors.primary
-                              : AppColors.onSurfaceVariant,
-                          fontWeight:
-                              selected ? FontWeight.w600 : FontWeight.w400,
+                          color: selected ? AppColors.primary : AppColors.onSurfaceVariant,
+                          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                         ),
                       ),
                     ],
@@ -345,5 +284,4 @@ class _ThinkingSegments extends StatelessWidget {
       }).toList(),
     );
   }
-
 }

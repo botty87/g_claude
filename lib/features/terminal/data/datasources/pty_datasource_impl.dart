@@ -7,20 +7,18 @@ import 'package:injectable/injectable.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:xterm/xterm.dart';
 
+import '../../../../core/process/graceful_kill.dart';
 import 'pty_datasource.dart';
 
 class _TerminalSession {
-  _TerminalSession({
-    required this.terminal,
-    required this.controller,
-    this.pty,
-  });
+  _TerminalSession({required this.terminal, required this.controller, this.pty});
 
   // null when the spawn failed and no PTY process exists.
   final Pty? pty;
   final Terminal terminal;
   final TerminalController controller;
   StreamSubscription<String>? sub;
+  Timer? resizeDebounce;
   int? exitCode;
 }
 
@@ -36,22 +34,30 @@ class PtyDataSourceImpl implements PtyDataSource {
   @override
   Stream<PtySessionEvent> get events => _eventsController.stream;
 
-  @override
-  String detectShell() => _detectShellStatic();
+  /// Add an event only if the controller is still open. The PTY exit
+  /// callback can fire asynchronously after `disposeAll()` closed the
+  /// controller; without this guard `add` would throw StateError.
+  void _emitEvent(PtySessionEvent event) {
+    if (_eventsController.isClosed) return;
+    _eventsController.add(event);
+  }
 
-  static String _detectShellStatic() {
+  @override
+  String detectShell() {
     final shell = Platform.environment['SHELL'];
     if (shell != null && shell.isNotEmpty) return shell;
     return '/bin/zsh';
   }
 
-  @override
-  Terminal getOrCreate({required String workspaceId, required String cwd}) {
-    final existing = _sessions[workspaceId];
-    if (existing != null) return existing.terminal;
+  static const int _scrollbackLines = 10000;
 
-    final shellPath = _detectShellStatic();
-    final terminal = Terminal(maxLines: 10000);
+  @override
+  void getOrCreate({required String workspaceId, required String cwd}) {
+    final existing = _sessions[workspaceId];
+    if (existing != null) return;
+
+    final shellPath = detectShell();
+    final terminal = Terminal(maxLines: _scrollbackLines);
     final controller = TerminalController();
 
     _talker.info('PTY spawning $shellPath in $cwd for workspace $workspaceId');
@@ -60,19 +66,12 @@ class PtyDataSourceImpl implements PtyDataSource {
       final pty = Pty.start(
         shellPath,
         workingDirectory: cwd,
-        environment: {
-          'SHELL': shellPath,
-          ...Platform.environment,
-        },
+        environment: {'SHELL': shellPath, ...Platform.environment},
         columns: terminal.viewWidth,
         rows: terminal.viewHeight,
       );
 
-      final session = _TerminalSession(
-        terminal: terminal,
-        controller: controller,
-        pty: pty,
-      );
+      final session = _TerminalSession(terminal: terminal, controller: controller, pty: pty);
       _sessions[workspaceId] = session;
 
       session.sub = pty.output
@@ -85,14 +84,15 @@ class PtyDataSourceImpl implements PtyDataSource {
       };
 
       // PTY API is resize(rows, cols); xterm onResize gives (width, height, …).
+      // Debounce: window-drag fires per-frame, which would SIGWINCH-storm the
+      // shell and trigger redundant prompt redraws. 60ms = barely perceptible
+      // pause once the user stops dragging.
       terminal.onResize = (w, h, pw, ph) {
-        pty.resize(h, w);
+        session.resizeDebounce?.cancel();
+        session.resizeDebounce = Timer(const Duration(milliseconds: 60), () => pty.resize(h, w));
       };
 
-      _eventsController.add(PtySessionEvent(
-        workspaceId: workspaceId,
-        status: TerminalRunStatus.running,
-      ));
+      _emitEvent(PtySessionEvent.running(workspaceId: workspaceId));
 
       // Capture session reference: a later restart() may have replaced
       // _sessions[workspaceId] with a new entry; without identity check the
@@ -107,29 +107,16 @@ class PtyDataSourceImpl implements PtyDataSource {
         mySession.exitCode = code;
         terminal.write('\r\n[Process exited with code $code]\r\n');
         _talker.info('PTY exited for workspace $workspaceId (code=$code)');
-        _eventsController.add(PtySessionEvent(
-          workspaceId: workspaceId,
-          status: TerminalRunStatus.exited,
-          exitCode: code,
-        ));
+        _emitEvent(PtySessionEvent.exited(workspaceId: workspaceId, exitCode: code));
       });
     } catch (e, st) {
       _talker.error('PTY spawn failed for workspace $workspaceId', e, st);
       // Swallow input on dead session — onOutput would otherwise hit a null pty.
       terminal.onOutput = (_) {};
-      _sessions[workspaceId] = _TerminalSession(
-        terminal: terminal,
-        controller: controller,
-      );
+      _sessions[workspaceId] = _TerminalSession(terminal: terminal, controller: controller);
       terminal.write('\r\n[Failed to start shell: $e]\r\n');
-      _eventsController.add(PtySessionEvent(
-        workspaceId: workspaceId,
-        status: TerminalRunStatus.failed,
-        error: '$e',
-      ));
+      _emitEvent(PtySessionEvent.failed(workspaceId: workspaceId, error: '$e'));
     }
-
-    return terminal;
   }
 
   @override
@@ -151,9 +138,7 @@ class PtyDataSourceImpl implements PtyDataSource {
 
   @override
   Future<void> disposeAll() async {
-    final entries = List<MapEntry<String, _TerminalSession>>.from(
-      _sessions.entries,
-    );
+    final entries = List<MapEntry<String, _TerminalSession>>.from(_sessions.entries);
     _sessions.clear();
     await Future.wait(entries.map((e) => _killSession(e.value)));
     if (!_eventsController.isClosed) {
@@ -162,6 +147,8 @@ class PtyDataSourceImpl implements PtyDataSource {
   }
 
   Future<void> _killSession(_TerminalSession session) async {
+    session.resizeDebounce?.cancel();
+    session.resizeDebounce = null;
     await session.sub?.cancel();
     session.sub = null;
     session.controller.dispose();
@@ -170,18 +157,6 @@ class PtyDataSourceImpl implements PtyDataSource {
     if (pty == null) return; // spawn failed; no process to kill.
     if (session.exitCode != null) return; // already exited.
 
-    pty.kill(ProcessSignal.sigterm);
-    try {
-      await pty.exitCode.timeout(
-        const Duration(seconds: 2),
-        onTimeout: () {
-          pty.kill(ProcessSignal.sigkill);
-          return -1;
-        },
-      );
-    } catch (_) {
-      // Process may already be gone; ignore.
-    }
+    await gracefulKill(kill: pty.kill, exitCode: pty.exitCode);
   }
-
 }

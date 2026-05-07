@@ -13,10 +13,7 @@ part 'shell_cubit.state.dart';
 @lazySingleton
 class ShellCubit extends Cubit<ShellState> {
   ShellCubit(this._fileTabsCubit, this._workspacesCubit)
-      : super(const ShellState(
-          workspaceOpen: true,
-          selectedActivity: ActivityId.explorer,
-        ));
+    : super(const ShellState(workspaceOpen: true, selectedActivity: ActivityId.explorer));
 
   final FileTabsCubit _fileTabsCubit;
   final WorkspacesCubit _workspacesCubit;

@@ -9,6 +9,5 @@ class PruneOldSessions {
   PruneOldSessions(this._repo);
   final AppLogsRepository _repo;
 
-  Future<Either<Failure, int>> call({required Duration maxAge}) =>
-      _repo.pruneOlderThan(maxAge);
+  Future<Either<Failure, int>> call({required Duration maxAge}) => _repo.pruneOlderThan(maxAge);
 }

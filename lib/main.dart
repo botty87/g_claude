@@ -50,11 +50,7 @@ Future<void> _run() async {
 
   MacosPasteBridge.instance.start();
 
-  await Future.wait([
-    EasyLocalization.ensureInitialized(),
-    setupWindow(),
-    configureDependencies(),
-  ]);
+  await Future.wait([EasyLocalization.ensureInitialized(), setupWindow(), configureDependencies()]);
 
   final talker = getIt<Talker>();
 
@@ -94,12 +90,14 @@ Future<void> _run() async {
   // Throttled to _prewarmConcurrency so a heavy restore (many tabs × many
   // workspaces) does not flood the event loop with concurrent disk reads.
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    unawaited(_prewarmPersistedTabs(
-      workspaces: workspacesCubit,
-      fileTabs: fileTabsCubit,
-      explorer: getIt<ExplorerCubit>(),
-      readFile: getIt<ReadFile>(),
-    ));
+    unawaited(
+      _prewarmPersistedTabs(
+        workspaces: workspacesCubit,
+        fileTabs: fileTabsCubit,
+        explorer: getIt<ExplorerCubit>(),
+        readFile: getIt<ReadFile>(),
+      ),
+    );
   });
 
   Bloc.observer = getIt<BlocObserver>();
@@ -168,9 +166,7 @@ Future<void> _prewarmPersistedTabs({
     }
   }
 
-  await Future.wait(
-    List.generate(_prewarmConcurrency, (_) => worker()),
-  );
+  await Future.wait(List.generate(_prewarmConcurrency, (_) => worker()));
 }
 
 void _registerWorkspaceCubitExtension({

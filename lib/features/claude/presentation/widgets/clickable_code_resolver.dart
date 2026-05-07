@@ -38,15 +38,7 @@ bool _looksLikePath(String s) {
   if (s.length < 2) return false;
   if (s.contains('\n') || s.contains(' ')) return false;
   if (s.startsWith('--')) return false;
-  const reserved = {
-    'null',
-    'true',
-    'false',
-    'undefined',
-    'void',
-    'this',
-    'super',
-  };
+  const reserved = {'null', 'true', 'false', 'undefined', 'void', 'this', 'super'};
   if (reserved.contains(s)) return false;
   if (RegExp(r'^-?\d+(\.\d+)?$').hasMatch(s)) return false;
   if (!s.contains('/') && !s.contains(r'\') && !s.contains('.')) return false;
@@ -55,8 +47,7 @@ bool _looksLikePath(String s) {
 
 bool _existsFile(String path) {
   try {
-    return FileSystemEntity.typeSync(path, followLinks: false) ==
-        FileSystemEntityType.file;
+    return FileSystemEntity.typeSync(path, followLinks: false) == FileSystemEntityType.file;
   } catch (_) {
     return false;
   }

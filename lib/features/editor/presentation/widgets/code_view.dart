@@ -89,10 +89,7 @@ final Map<String, CodeHighlightThemeMode> _languageModes = {
 // ---------------------------------------------------------------------------
 
 class CodeView extends HookWidget {
-  const CodeView({
-    super.key,
-    required this.path,
-  });
+  const CodeView({super.key, required this.path});
 
   final String path;
 
@@ -107,13 +104,10 @@ class CodeView extends HookWidget {
       state.value = const _Loading();
       getIt<ReadFile>().call(path: path).then((either) {
         if (cancelled) return;
-        either.fold(
-          (failure) {
-            talker.debug('[cv] initial FAILED $path: $failure');
-            state.value = _Error(failure);
-          },
-          (content) => state.value = _Loaded(content),
-        );
+        either.fold((failure) {
+          talker.debug('[cv] initial FAILED $path: $failure');
+          state.value = _Error(failure);
+        }, (content) => state.value = _Loaded(content));
       });
       return () => cancelled = true;
     }, [path]);
@@ -125,13 +119,10 @@ class CodeView extends HookWidget {
       var cancelled = false;
       getIt<ReadFile>().call(path: path).then((either) {
         if (cancelled) return;
-        either.fold(
-          (failure) {
-            talker.debug('[cv] reload FAILED $path: $failure');
-            state.value = _Error(failure);
-          },
-          (content) => state.value = _Loaded(content),
-        );
+        either.fold((failure) {
+          talker.debug('[cv] reload FAILED $path: $failure');
+          state.value = _Error(failure);
+        }, (content) => state.value = _Loaded(content));
       });
       return () => cancelled = true;
     }, [reloadTick.value]);
@@ -159,10 +150,7 @@ class CodeView extends HookWidget {
       // Key by path only: changing the key on every save would unmount the
       // editor and lose cursor position / scroll / selection. The inner
       // controller swap is handled via useMemoized on content.content.
-      _Loaded(:final content) => _HighlightedView(
-        key: ValueKey('hv-${content.path}'),
-        content: content,
-      ),
+      _Loaded(:final content) => _HighlightedView(key: ValueKey('hv-${content.path}'), content: content),
     };
   }
 }
@@ -227,23 +215,14 @@ class _HighlightedView extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = useMemoized(
-      () => CodeLineEditingController.fromText(content.content),
-      [content.path],
-    );
+    final controller = useMemoized(() => CodeLineEditingController.fromText(content.content), [content.path]);
     useEffect(() => controller.dispose, [controller]);
 
     final activeEditor = getIt<ActiveEditorCubit>();
-    final workspaceId = context.select<WorkspacesCubit, String?>(
-      (c) => c.state.activeIdOrNull,
-    );
+    final workspaceId = context.select<WorkspacesCubit, String?>((c) => c.state.activeIdOrNull);
     useEffect(() {
       if (workspaceId == null) return null;
-      activeEditor.register(ActiveEditorRef(
-        workspaceId: workspaceId,
-        path: content.path,
-        controller: controller,
-      ));
+      activeEditor.register(ActiveEditorRef(workspaceId: workspaceId, path: content.path, controller: controller));
       return () => activeEditor.unregister(workspaceId, content.path);
     }, [workspaceId, content.path, controller]);
 
@@ -275,10 +254,7 @@ class _HighlightedView extends HookWidget {
           fontSize: baseStyle.fontSize,
           codeTheme: languageMode == null
               ? null
-              : CodeHighlightTheme(
-                  languages: {lang!: languageMode},
-                  theme: hl_theme.githubDarkTheme,
-                ),
+              : CodeHighlightTheme(languages: {lang!: languageMode}, theme: hl_theme.githubDarkTheme),
         ),
         indicatorBuilder: (context, editingController, chunkController, notifier) {
           return Row(
@@ -293,10 +269,7 @@ class _HighlightedView extends HookWidget {
           );
         },
         findBuilder: (context, controller, readOnly) => CodeFindPanel(controller: controller),
-        scrollbarBuilder: (context, child, details) => Scrollbar(
-          controller: details.controller,
-          child: child,
-        ),
+        scrollbarBuilder: (context, child, details) => Scrollbar(controller: details.controller, child: child),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       ),
     );

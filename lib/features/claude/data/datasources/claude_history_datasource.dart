@@ -54,8 +54,7 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
   /// real-shape JSONL fixtures inside a tmp dir without touching the user's
   /// real history.
   @visibleForTesting
-  ClaudeHistoryDataSourceImpl.withProjectsDir(this._talker, Directory projectsDir)
-      : _projectsDirOverride = projectsDir;
+  ClaudeHistoryDataSourceImpl.withProjectsDir(this._talker, Directory projectsDir) : _projectsDirOverride = projectsDir;
 
   final Talker _talker;
   final Directory? _projectsDirOverride;
@@ -139,16 +138,18 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
 
           final resolvedTitle = title ?? summaryFallback ?? '';
 
-          metas.add(JsonlSessionMeta(
-            id: sessionId,
-            encodedPath: encoded,
-            title: resolvedTitle,
-            firstMessageAt: firstMessageAt ?? fileMtime,
-            lastMessageAt: lastMessageAt ?? fileMtime,
-            messageCount: messageCount,
-            fileSize: fileSize,
-            fileMtime: fileMtime,
-          ));
+          metas.add(
+            JsonlSessionMeta(
+              id: sessionId,
+              encodedPath: encoded,
+              title: resolvedTitle,
+              firstMessageAt: firstMessageAt ?? fileMtime,
+              lastMessageAt: lastMessageAt ?? fileMtime,
+              messageCount: messageCount,
+              fileSize: fileSize,
+              fileMtime: fileMtime,
+            ),
+          );
         } catch (e, st) {
           _talker.error('Failed to scan session file ${entity.path}', e, st);
         }
@@ -170,11 +171,12 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
     try {
       await for (final entry in _readJsonl(
         file,
-        onParseError: (e) =>
-            _talker.warning('readSession: could not parse line in $sessionId: $e'),
+        onParseError: (e) => _talker.warning('readSession: could not parse line in $sessionId: $e'),
       )) {
         final type = entry['type'] as String?;
-        if (type == 'queue-operation' || type == 'summary' || type == 'system') continue;
+        if (type == 'queue-operation' || type == 'summary' || type == 'system') {
+          continue;
+        }
 
         final isSidechain = entry['isSidechain'] == true;
         if (isSidechain) continue;
@@ -193,11 +195,7 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
           final content = message['content'];
 
           if (content is String) {
-            yield ClaudeMessage.user(
-              id: uuid ?? 'u-${ts.millisecondsSinceEpoch}',
-              text: content,
-              createdAt: ts,
-            );
+            yield ClaudeMessage.user(id: uuid ?? 'u-${ts.millisecondsSinceEpoch}', text: content, createdAt: ts);
           } else if (content is List) {
             final userTextBuf = StringBuffer();
             for (final block in content) {
@@ -264,12 +262,7 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
 
           final text = textBuf.toString();
           if (text.isNotEmpty) {
-            yield ClaudeMessage.assistant(
-              id: messageId,
-              text: text,
-              isStreaming: false,
-              createdAt: ts,
-            );
+            yield ClaudeMessage.assistant(id: messageId, text: text, isStreaming: false, createdAt: ts);
           }
 
           for (final block in content) {
@@ -282,14 +275,16 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
             final input = block['input'];
             final inputMap = input is Map<String, dynamic> ? input : null;
 
-            final toolMsg = ClaudeMessage.tool(
-              id: 't-$toolId',
-              toolName: toolName,
-              status: ClaudeToolStatus.running,
-              toolUseId: toolId,
-              input: inputMap,
-              createdAt: ts,
-            ) as ClaudeMessageTool;
+            final toolMsg =
+                ClaudeMessage.tool(
+                      id: 't-$toolId',
+                      toolName: toolName,
+                      status: ClaudeToolStatus.running,
+                      toolUseId: toolId,
+                      input: inputMap,
+                      createdAt: ts,
+                    )
+                    as ClaudeMessageTool;
 
             pendingTools[toolId] = toolMsg;
             yield toolMsg;
@@ -316,7 +311,9 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
       await for (final entry in _readJsonl(file)) {
         if (buf.length >= maxBytes) break;
         final type = entry['type'] as String?;
-        if (type == 'queue-operation' || type == 'summary' || type == 'system') continue;
+        if (type == 'queue-operation' || type == 'summary' || type == 'system') {
+          continue;
+        }
         if (entry['isSidechain'] == true || entry['isMeta'] == true) continue;
 
         if (type == 'user') {

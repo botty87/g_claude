@@ -12,8 +12,5 @@ class LoadChatHistory {
 
   final ChatHistoryRepository _repo;
 
-  Future<Either<Failure, List<ChatSessionSummary>>> call(
-    WorkspaceId workspaceId,
-  ) =>
-      _repo.listSessions(workspaceId);
+  Future<Either<Failure, List<ChatSessionSummary>>> call(WorkspaceId workspaceId) => _repo.listSessions(workspaceId);
 }

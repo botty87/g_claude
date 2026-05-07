@@ -6,11 +6,7 @@ import '../../domain/entities/chat_attachment.dart';
 import 'attachment_chip.dart';
 
 class AttachmentChipRow extends StatelessWidget {
-  const AttachmentChipRow({
-    super.key,
-    required this.attachments,
-    required this.onRemove,
-  });
+  const AttachmentChipRow({super.key, required this.attachments, required this.onRemove});
 
   final List<ChatAttachment> attachments;
   final ValueChanged<ChatAttachment> onRemove;
@@ -22,14 +18,9 @@ class AttachmentChipRow extends StatelessWidget {
       width: double.infinity,
       decoration: const BoxDecoration(
         color: AppColors.surfaceContainer,
-        border: Border(
-          bottom: BorderSide(color: AppColors.outlineVariant, width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.outlineVariant, width: 1)),
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.sm,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
       child: Wrap(
         spacing: AppSpacing.sm,
         runSpacing: AppSpacing.xs,

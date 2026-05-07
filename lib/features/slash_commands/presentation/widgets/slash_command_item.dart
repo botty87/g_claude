@@ -11,19 +11,13 @@ import '../../domain/entities/slash_command_source.dart';
 import 'slash_command_source_color.dart';
 
 class SlashCommandItem extends StatelessWidget {
-  const SlashCommandItem({
-    super.key,
-    required this.command,
-    required this.selected,
-    required this.onTap,
-  });
+  const SlashCommandItem({super.key, required this.command, required this.selected, required this.onTap});
 
   final SlashCommand command;
   final bool selected;
   final VoidCallback onTap;
 
-  String _badgeLabel(SlashCommandSource source, BuildContext context) =>
-      'slashCommands.source.${source.name}'.tr();
+  String _badgeLabel(SlashCommandSource source, BuildContext context) => 'slashCommands.source.${source.name}'.tr();
 
   String _resolveDescription(String description) {
     if (description.startsWith('slashCommands.')) return description.tr();
@@ -39,37 +33,25 @@ class SlashCommandItem extends StatelessWidget {
         color: selected
             ? AppColors.glassHover
             : hover
-                ? AppColors.glassHover.withValues(alpha: 0.5)
-                : Colors.transparent,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
+            ? AppColors.glassHover.withValues(alpha: 0.5)
+            : Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
         child: Row(
           children: [
-            _SourceBadge(
-              label: _badgeLabel(command.source, context),
-              color: command.source.badgeColor,
-            ),
+            _SourceBadge(label: _badgeLabel(command.source, context), color: command.source.badgeColor),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Row(
                 children: [
                   Text(
                     command.trigger,
-                    style: AppTypography.terminalCode.copyWith(
-                      fontSize: 13,
-                      color: AppColors.onSurface,
-                    ),
+                    style: AppTypography.terminalCode.copyWith(fontSize: 13, color: AppColors.onSurface),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       _resolveDescription(command.description),
-                      style: AppTypography.bodyMain.copyWith(
-                        fontSize: 12,
-                        color: AppColors.outline,
-                      ),
+                      style: AppTypography.bodyMain.copyWith(fontSize: 12, color: AppColors.outline),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -98,13 +80,7 @@ class _SourceBadge extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
         borderRadius: BorderRadius.circular(AppRadii.sm),
       ),
-      child: Text(
-        label,
-        style: AppTypography.navTab.copyWith(
-          fontSize: 10,
-          color: color,
-        ),
-      ),
+      child: Text(label, style: AppTypography.navTab.copyWith(fontSize: 10, color: color)),
     );
   }
 }

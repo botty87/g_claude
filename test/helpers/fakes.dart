@@ -10,13 +10,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 ///
 /// Override only the fields under test to keep the contract under test
 /// front-and-center.
-Workspace makeWorkspace({
-  String? id,
-  String? path,
-  String? name,
-  String? claudeMd,
-  DateTime? openedAt,
-}) {
+Workspace makeWorkspace({String? id, String? path, String? name, String? claudeMd, DateTime? openedAt}) {
   final resolvedPath = path ?? '/tmp/ws_${id ?? 'a'}';
   return Workspace(
     id: id ?? resolvedPath,
@@ -39,9 +33,7 @@ SlashCommand makeSlashCommand(String trigger, {String description = ''}) {
 }
 
 /// Test [Talker] with logs disabled so the runner stdout stays clean.
-Talker makeTestTalker() => Talker(
-      settings: TalkerSettings(useConsoleLogs: false),
-    );
+Talker makeTestTalker() => Talker(settings: TalkerSettings(useConsoleLogs: false));
 
 /// Creates a temp directory and registers a recursive teardown so the test
 /// runner cleans up even when assertions fail.

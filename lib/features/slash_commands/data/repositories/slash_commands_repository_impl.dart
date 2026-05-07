@@ -16,20 +16,14 @@ import '../datasources/slash_commands_fs_datasource.dart';
 
 @LazySingleton(as: SlashCommandsRepository)
 class SlashCommandsRepositoryImpl implements SlashCommandsRepository {
-  SlashCommandsRepositoryImpl(
-    this._fs,
-    this._discovery,
-    this._binary,
-  );
+  SlashCommandsRepositoryImpl(this._fs, this._discovery, this._binary);
 
   final SlashCommandsFsDataSource _fs;
   final CommandsDiscoveryDataSource _discovery;
   final ClaudeBinaryResolver _binary;
 
   @override
-  Future<Either<Failure, List<SlashCommand>>> loadAll({
-    required String? workspaceCwd,
-  }) async {
+  Future<Either<Failure, List<SlashCommand>>> loadAll({required String? workspaceCwd}) async {
     try {
       final binary = await _binary.resolve();
       final cwd = workspaceCwd ?? Directory.current.path;
@@ -38,9 +32,7 @@ class SlashCommandsRepositoryImpl implements SlashCommandsRepository {
           ? await _discovery.discover(binary: binary, cwd: cwd)
           : CommandsDiscoveryResult.empty;
 
-      final userByName = {
-        for (final c in await _fs.loadUserCommands()) c.name: c,
-      };
+      final userByName = {for (final c in await _fs.loadUserCommands()) c.name: c};
       final projectByName = workspaceCwd != null
           ? {for (final c in await _fs.loadProjectCommands(workspaceCwd)) c.name: c}
           : const <String, SlashCommand>{};
@@ -108,12 +100,7 @@ class SlashCommandsRepositoryImpl implements SlashCommandsRepository {
       final sub = name.substring(colon + 1);
       final plugin = pluginByName[prefix];
       if (plugin != null) {
-        final enriched = await _enrichFromPlugin(
-          plugin: plugin,
-          subName: sub,
-          isSkill: isSkill,
-          name: name,
-        );
+        final enriched = await _enrichFromPlugin(plugin: plugin, subName: sub, isSkill: isSkill, name: name);
         if (enriched != null) return enriched;
       }
     }

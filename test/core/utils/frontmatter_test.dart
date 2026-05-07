@@ -25,18 +25,14 @@ void main() {
       // changes that touch the regex are aware. macOS-only app today, but
       // any cross-platform fixture would need normalization upstream.
       const crlf = '---\r\ndescription: foo\r\n---\r\nbody';
-      expect(parseFrontmatter(crlf), isEmpty,
-          reason: 'CRLF input is not supported — confirms current contract.');
+      expect(parseFrontmatter(crlf), isEmpty, reason: 'CRLF input is not supported — confirms current contract.');
     });
   });
 
   group('parseFrontmatter — key/value extraction', () {
     test('simple key: value pairs are extracted', () {
       const input = '---\ndescription: my command\nargument-hint: <path>\n---\nbody';
-      expect(parseFrontmatter(input), {
-        'description': 'my command',
-        'argument-hint': '<path>',
-      });
+      expect(parseFrontmatter(input), {'description': 'my command', 'argument-hint': '<path>'});
     });
 
     test('values surrounded by double quotes have quotes stripped', () {
@@ -64,10 +60,7 @@ void main() {
 
     test('lines without a colon are skipped', () {
       const input = '---\ndescription: foo\nthis line has no colon\nallowed-tools: read,write\n---\nbody';
-      expect(parseFrontmatter(input), {
-        'description': 'foo',
-        'allowed-tools': 'read,write',
-      });
+      expect(parseFrontmatter(input), {'description': 'foo', 'allowed-tools': 'read,write'});
     });
 
     test('empty key (line starting with colon) is dropped', () {

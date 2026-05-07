@@ -18,11 +18,7 @@ class EmptyStateView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Symbols.folder_open,
-            size: 56,
-            color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
-          ),
+          Icon(Symbols.folder_open, size: 56, color: AppColors.onSurfaceVariant.withValues(alpha: 0.5)),
           const SizedBox(height: AppSpacing.lg),
           ElevatedButton.icon(
             key: const ValueKey('empty_state_open_folder'),
@@ -33,17 +29,13 @@ class EmptyStateView extends StatelessWidget {
               backgroundColor: AppColors.primaryContainer,
               foregroundColor: AppColors.onPrimaryContainer,
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadii.md),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.md)),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
             Locales.Workspace.EmptyState.hint,
-            style: AppTypography.bodyMain.copyWith(
-              color: AppColors.onSurfaceVariant,
-            ),
+            style: AppTypography.bodyMain.copyWith(color: AppColors.onSurfaceVariant),
           ),
         ],
       ),

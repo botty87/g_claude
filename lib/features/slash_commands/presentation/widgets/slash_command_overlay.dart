@@ -47,9 +47,7 @@ class SlashCommandOverlay extends HookWidget {
                 if (state is! SlashCommandsStateSuggesting) {
                   return const SizedBox.shrink();
                 }
-                final visibleCommands = state.filtered
-                    .where((c) => !excludedTriggers.contains(c.trigger))
-                    .toList();
+                final visibleCommands = state.filtered.where((c) => !excludedTriggers.contains(c.trigger)).toList();
                 final clampedIndex = visibleCommands.isEmpty
                     ? 0
                     : state.selectedIndex.clamp(0, visibleCommands.length - 1);

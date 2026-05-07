@@ -178,6 +178,9 @@ package-release:
     ditto -c -k --sequesterRsrc --keepParent "{{release_app}}" "${out_dir}/${zip_name}"
     ( cd "${out_dir}" && shasum -a 256 "${zip_name}" > SHA256SUMS.txt )
     prev_tag=$(git describe --tags --abbrev=0 --exclude="${tag}" 2>/dev/null || echo "")
+    if [ -z "${prev_tag}" ] && [ "${tag}" != "v1.0.0" ]; then
+        echo "WARN: no prior tag found for ${tag}; release notes will say 'Initial release'." >&2
+    fi
     notes="${out_dir}/RELEASE_NOTES.md"
     if [ -f "${notes}" ]; then
         echo "RELEASE_NOTES.md already exists, leaving untouched."
@@ -264,9 +267,8 @@ release-publish:
     else
         echo "No metadata changes to commit."
     fi
-    echo "Pushing main + tags..."
-    git push origin main
-    git push origin "${tag}"
+    echo "Pushing main + tag (atomic)..."
+    git push origin main "${tag}"
     echo "Creating GitHub Release ${tag}..."
     if gh release view "${tag}" >/dev/null 2>&1; then
         echo "Release ${tag} already exists; uploading asset (clobber)."
@@ -282,8 +284,7 @@ release-publish:
 
 # Push commits + all tags (no release creation)
 release-push:
-    git push origin main
-    git push origin --tags
+    git push origin main --follow-tags
 
 # ==============================================================================
 # CODE GENERATION

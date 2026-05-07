@@ -46,10 +46,7 @@ Future<({int statusCode, Map<String, dynamic> json})> _postJson(
   final res = await _post(base, path, jsonEncode(payload));
   final body = await res.transform(utf8.decoder).join();
   final decoded = body.isEmpty ? <String, dynamic>{} : jsonDecode(body);
-  return (
-    statusCode: res.statusCode,
-    json: decoded is Map<String, dynamic> ? decoded : <String, dynamic>{}
-  );
+  return (statusCode: res.statusCode, json: decoded is Map<String, dynamic> ? decoded : <String, dynamic>{});
 }
 
 String? _decisionFromBody(Map<String, dynamic> json) {
@@ -85,8 +82,7 @@ void main() {
 
       final client = HttpClient();
       addTearDown(client.close);
-      final res =
-          await (await client.getUrl(s.base.replace(path: '/permission'))).close();
+      final res = await (await client.getUrl(s.base.replace(path: '/permission'))).close();
       expect(res.statusCode, 404);
     });
   });
@@ -113,11 +109,7 @@ void main() {
 
       s.server.setResolver((_) async => PermissionDecision.allow);
 
-      final res = await _postJson(s.base, '/permission', {
-        'session_id': 'a',
-        'tool_name': 'Read',
-        'tool_input': {},
-      });
+      final res = await _postJson(s.base, '/permission', {'session_id': 'a', 'tool_name': 'Read', 'tool_input': {}});
       expect(_decisionFromBody(res.json), 'allow');
     });
 
@@ -161,19 +153,14 @@ void main() {
   });
 
   group('PermissionServer — interactive (resolver returns "ask")', () {
-    test('without interactive handler registered, ask is downgraded to deny (safety fallback)',
-        () async {
+    test('without interactive handler registered, ask is downgraded to deny (safety fallback)', () async {
       final s = await _start();
       addTearDown(s.server.stop);
 
       s.server.setResolver((_) async => PermissionDecision.ask);
       // Note: deliberately NOT calling setInteractiveHandler.
 
-      final res = await _postJson(s.base, '/permission', {
-        'session_id': 'a',
-        'tool_name': 'Read',
-        'tool_input': {},
-      });
+      final res = await _postJson(s.base, '/permission', {'session_id': 'a', 'tool_name': 'Read', 'tool_input': {}});
       expect(_decisionFromBody(res.json), 'deny');
     });
 
@@ -187,11 +174,7 @@ void main() {
       s.server.setInteractiveHandler(handlerCalled.complete);
 
       // Fire the HTTP request asynchronously so we can drive the resolver.
-      final pending = _postJson(s.base, '/permission', {
-        'session_id': 'a',
-        'tool_name': 'Read',
-        'tool_input': {},
-      });
+      final pending = _postJson(s.base, '/permission', {'session_id': 'a', 'tool_name': 'Read', 'tool_input': {}});
 
       // The server must have invoked the handler before we resolve.
       final req = await handlerCalled.future;
@@ -201,8 +184,7 @@ void main() {
         pending,
         Future.delayed(const Duration(milliseconds: 100), () => 'timeout'),
       ]);
-      expect(raced, 'timeout',
-          reason: 'response must not arrive before respond() is called.');
+      expect(raced, 'timeout', reason: 'response must not arrive before respond() is called.');
 
       // Now release the request.
       s.server.respond(req.requestId, PermissionDecision.allow);
@@ -215,16 +197,12 @@ void main() {
       addTearDown(s.server.stop);
 
       // No pending request, but respond should not throw.
-      expect(
-        () => s.server.respond('p-does-not-exist', PermissionDecision.allow),
-        returnsNormally,
-      );
+      expect(() => s.server.respond('p-does-not-exist', PermissionDecision.allow), returnsNormally);
     });
   });
 
   group('PermissionServer — malformed body safety net', () {
-    test('non-JSON body resolves to "allow" (current contract; bug-flagged in lessons.md)',
-        () async {
+    test('non-JSON body resolves to "allow" (current contract; bug-flagged in lessons.md)', () async {
       // CONTRACT (current): the server logs the parse error and returns
       // `allow` so a hook misconfiguration does not block the subprocess.
       // This is permissive — see tasks/lessons.md for discussion.
@@ -238,8 +216,7 @@ void main() {
       expect(_decisionFromBody(decoded), 'allow');
     });
 
-    test('empty payload (no session_id / tool_name / tool_input) still produces a valid response',
-        () async {
+    test('empty payload (no session_id / tool_name / tool_input) still produces a valid response', () async {
       final s = await _start();
       addTearDown(s.server.stop);
 
@@ -273,8 +250,11 @@ void main() {
       final inner = res.json['hookSpecificOutput'] as Map<String, dynamic>;
       expect(inner.keys.toSet(), {'hookEventName', 'permissionDecision'});
       expect(inner['hookEventName'], 'PreToolUse');
-      expect(inner.containsKey('updatedInput'), isFalse,
-          reason: 'updatedInput corrupts UI-tool schemas; must never appear.');
+      expect(
+        inner.containsKey('updatedInput'),
+        isFalse,
+        reason: 'updatedInput corrupts UI-tool schemas; must never appear.',
+      );
     });
 
     test('Content-Type response header is application/json', () async {
@@ -308,7 +288,9 @@ void main() {
       final s = await _start();
 
       s.server.setResolver((_) async => PermissionDecision.ask);
-      s.server.setInteractiveHandler((_) {/* never respond */});
+      s.server.setInteractiveHandler((_) {
+        /* never respond */
+      });
 
       final pending = _postJson(s.base, '/permission', {});
       // Let the handler register the completer.
@@ -318,10 +300,7 @@ void main() {
 
       // The pending HTTP request must fail with a connection error — NOT
       // hang and NOT return a body.
-      await expectLater(
-        pending,
-        throwsA(isA<HttpException>()),
-      );
+      await expectLater(pending, throwsA(isA<HttpException>()));
     });
   });
 }

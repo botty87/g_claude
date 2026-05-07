@@ -13,12 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///
 /// Without this wrapper, `tr()` lookups fail because the easy_localization
 /// `Localization` instance is missing from the context.
-Future<void> pumpAppWidget(
-  WidgetTester tester,
-  Widget child, {
-  Locale? locale,
-  ThemeData? theme,
-}) async {
+Future<void> pumpAppWidget(WidgetTester tester, Widget child, {Locale? locale, ThemeData? theme}) async {
   // EasyLocalization persists the active locale via SharedPreferences. Under
   // `flutter_test` the platform plugin is not registered, so the call hangs
   // inside a FutureBuilder and `pumpAndSettle` never returns. Mocking the

@@ -27,10 +27,7 @@ class WorkspaceFileWatcherImpl implements WorkspaceFileWatcher {
 
   @override
   Stream<FileSystemEvent> watch(String workspacePath) {
-    final handle = _handles.putIfAbsent(
-      workspacePath,
-      () => _WatchHandle.start(workspacePath, _talker),
-    );
+    final handle = _handles.putIfAbsent(workspacePath, () => _WatchHandle.start(workspacePath, _talker));
     return handle.controller.stream;
   }
 
@@ -61,8 +58,7 @@ class WorkspaceFileWatcherImpl implements WorkspaceFileWatcher {
         continue;
       }
       final canonicalRoot = p.canonicalize(root);
-      if (p.equals(canonicalRoot, canonicalFile) ||
-          p.isWithin(canonicalRoot, canonicalFile)) {
+      if (p.equals(canonicalRoot, canonicalFile) || p.isWithin(canonicalRoot, canonicalFile)) {
         if (best == null || root.length > best.length) best = root;
       }
     }
@@ -70,19 +66,14 @@ class WorkspaceFileWatcherImpl implements WorkspaceFileWatcher {
   }
 }
 
-bool _eventMatchesPath(
-  FileSystemEvent event,
-  String target,
-  String canonicalTarget,
-) {
+bool _eventMatchesPath(FileSystemEvent event, String target, String canonicalTarget) {
   final src = event.path;
   if (p.equals(src, target) || p.canonicalize(src) == canonicalTarget) {
     return true;
   }
   if (event is FileSystemMoveEvent) {
     final dest = event.destination;
-    if (dest != null &&
-        (p.equals(dest, target) || p.canonicalize(dest) == canonicalTarget)) {
+    if (dest != null && (p.equals(dest, target) || p.canonicalize(dest) == canonicalTarget)) {
       return true;
     }
   }

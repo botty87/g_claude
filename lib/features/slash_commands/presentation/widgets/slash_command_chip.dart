@@ -9,11 +9,7 @@ import '../../domain/entities/slash_command.dart';
 import 'slash_command_source_color.dart';
 
 class SlashCommandChip extends StatelessWidget {
-  const SlashCommandChip({
-    super.key,
-    required this.command,
-    required this.onRemove,
-  });
+  const SlashCommandChip({super.key, required this.command, required this.onRemove});
 
   final SlashCommand command;
   final VoidCallback onRemove;
@@ -34,22 +30,11 @@ class SlashCommandChip extends StatelessWidget {
           border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
           borderRadius: BorderRadius.circular(AppRadii.sm),
         ),
-        padding: const EdgeInsets.only(
-          left: AppSpacing.sm,
-          right: AppSpacing.xs,
-          top: 2,
-          bottom: 2,
-        ),
+        padding: const EdgeInsets.only(left: AppSpacing.sm, right: AppSpacing.xs, top: 2, bottom: 2),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              command.trigger,
-              style: AppTypography.terminalCode.copyWith(
-                fontSize: 12,
-                color: color,
-              ),
-            ),
+            Text(command.trigger, style: AppTypography.terminalCode.copyWith(fontSize: 12, color: color)),
             const SizedBox(width: AppSpacing.xs),
             _RemoveButton(color: color, onTap: onRemove),
           ],

@@ -10,6 +10,5 @@ class LoadClaudeMd {
 
   final WorkspaceRepository _repository;
 
-  Future<Either<Failure, String?>> call({required String path}) =>
-      _repository.loadClaudeMd(path: path);
+  Future<Either<Failure, String?>> call({required String path}) => _repository.loadClaudeMd(path: path);
 }

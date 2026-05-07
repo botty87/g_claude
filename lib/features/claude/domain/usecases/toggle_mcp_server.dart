@@ -9,9 +9,6 @@ class ToggleMcpServer {
   ToggleMcpServer(this._repo);
   final ClaudeRepository _repo;
 
-  Future<Either<Failure, void>> call({
-    required String serverName,
-    required bool enabled,
-  }) =>
+  Future<Either<Failure, void>> call({required String serverName, required bool enabled}) =>
       _repo.toggleMcpServer(serverName: serverName, enabled: enabled);
 }

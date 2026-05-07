@@ -15,17 +15,16 @@ final slashTriggerRegex = RegExp(r'^\s*\/[a-zA-Z0-9:_-]*$');
 
 @injectable
 class SlashCommandsCubit extends Cubit<SlashCommandsState> {
-  SlashCommandsCubit(this._load, this._filter, this._talker)
-      : super(const SlashCommandsState.idle());
+  SlashCommandsCubit(this._load, this._filter, this._talker) : super(const SlashCommandsState.idle());
 
   final LoadSlashCommands _load;
   final FilterSlashCommands _filter;
   final Talker _talker;
 
   List<SlashCommand> get _all => switch (state) {
-        SlashCommandsStateIdle(:final all) => all,
-        SlashCommandsStateSuggesting(:final all) => all,
-      };
+    SlashCommandsStateIdle(:final all) => all,
+    SlashCommandsStateSuggesting(:final all) => all,
+  };
 
   Future<void> loadFor(String? workspaceCwd) async {
     final result = await _load.call(workspaceCwd: workspaceCwd);
@@ -46,14 +45,7 @@ class SlashCommandsCubit extends Cubit<SlashCommandsState> {
     final existingTriggers = existing.map((c) => c.trigger).toSet();
     final skillCommands = skills
         .where((s) => s.isNotEmpty)
-        .map(
-          (s) => SlashCommand(
-            name: s,
-            trigger: '/$s',
-            description: s,
-            source: SlashCommandSource.skill,
-          ),
-        )
+        .map((s) => SlashCommand(name: s, trigger: '/$s', description: s, source: SlashCommandSource.skill))
         .where((c) => !existingTriggers.contains(c.trigger))
         .toList();
 
@@ -64,15 +56,10 @@ class SlashCommandsCubit extends Cubit<SlashCommandsState> {
         emit(SlashCommandsState.idle(all: merged));
       case SlashCommandsStateSuggesting(:final filter, :final selectedIndex):
         final filtered = _filter.call(merged, filter);
-        final clampedIndex = filtered.isEmpty
-            ? 0
-            : selectedIndex.clamp(0, filtered.length - 1);
-        emit(SlashCommandsState.suggesting(
-          all: merged,
-          filtered: filtered,
-          selectedIndex: clampedIndex,
-          filter: filter,
-        ));
+        final clampedIndex = filtered.isEmpty ? 0 : selectedIndex.clamp(0, filtered.length - 1);
+        emit(
+          SlashCommandsState.suggesting(all: merged, filtered: filtered, selectedIndex: clampedIndex, filter: filter),
+        );
     }
   }
 
@@ -83,17 +70,9 @@ class SlashCommandsCubit extends Cubit<SlashCommandsState> {
       final all = _all;
       final filtered = _filter.call(all, filter);
       final current = state;
-      final prevIndex = current is SlashCommandsStateSuggesting
-          ? current.selectedIndex
-          : 0;
-      final clampedIndex =
-          filtered.isEmpty ? 0 : prevIndex.clamp(0, filtered.length - 1);
-      emit(SlashCommandsState.suggesting(
-        all: all,
-        filtered: filtered,
-        selectedIndex: clampedIndex,
-        filter: filter,
-      ));
+      final prevIndex = current is SlashCommandsStateSuggesting ? current.selectedIndex : 0;
+      final clampedIndex = filtered.isEmpty ? 0 : prevIndex.clamp(0, filtered.length - 1);
+      emit(SlashCommandsState.suggesting(all: all, filtered: filtered, selectedIndex: clampedIndex, filter: filter));
     } else {
       dismiss();
     }

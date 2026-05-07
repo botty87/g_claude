@@ -31,14 +31,9 @@ class _LogEntryTileState extends State<LogEntryTile> {
       onTap: hasDetails ? () => setState(() => _expanded = !_expanded) : null,
       child: Container(
         decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: AppColors.outlineVariant, width: 1),
-          ),
+          border: Border(bottom: BorderSide(color: AppColors.outlineVariant, width: 1)),
         ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: 6,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -49,10 +44,7 @@ class _LogEntryTileState extends State<LogEntryTile> {
                   width: 60,
                   child: Text(
                     _formatTime(e.time),
-                    style: AppTypography.terminalCode.copyWith(
-                      fontSize: 10,
-                      color: AppColors.onSurfaceVariant,
-                    ),
+                    style: AppTypography.terminalCode.copyWith(fontSize: 10, color: AppColors.onSurfaceVariant),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -66,11 +58,7 @@ class _LogEntryTileState extends State<LogEntryTile> {
                   alignment: Alignment.center,
                   child: Text(
                     labelFor(e.level).toUpperCase(),
-                    style: AppTypography.terminalCode.copyWith(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: color,
-                    ),
+                    style: AppTypography.terminalCode.copyWith(fontSize: 9, fontWeight: FontWeight.w700, color: color),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -91,12 +79,8 @@ class _LogEntryTileState extends State<LogEntryTile> {
                       Text(
                         e.message,
                         maxLines: _expanded ? null : 4,
-                        overflow:
-                            _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
-                        style: AppTypography.terminalCode.copyWith(
-                          fontSize: 11,
-                          color: AppColors.onSurface,
-                        ),
+                        overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                        style: AppTypography.terminalCode.copyWith(fontSize: 11, color: AppColors.onSurface),
                       ),
                     ],
                   ),
@@ -112,34 +96,24 @@ class _LogEntryTileState extends State<LogEntryTile> {
                     if (e.exception != null) ...[
                       Text(
                         Locales.AppLogs.Detail.exception,
-                        style: AppTypography.sidebarLabel.copyWith(
-                          color: AppColors.error,
-                        ),
+                        style: AppTypography.sidebarLabel.copyWith(color: AppColors.error),
                       ),
                       const SizedBox(height: 2),
                       SelectableText(
                         e.exception!,
-                        style: AppTypography.terminalCode.copyWith(
-                          fontSize: 10,
-                          color: AppColors.error,
-                        ),
+                        style: AppTypography.terminalCode.copyWith(fontSize: 10, color: AppColors.error),
                       ),
                       const SizedBox(height: 6),
                     ],
                     if (e.stackTrace != null) ...[
                       Text(
                         Locales.AppLogs.Detail.stackTrace,
-                        style: AppTypography.sidebarLabel.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
+                        style: AppTypography.sidebarLabel.copyWith(color: AppColors.onSurfaceVariant),
                       ),
                       const SizedBox(height: 2),
                       SelectableText(
                         e.stackTrace!,
-                        style: AppTypography.terminalCode.copyWith(
-                          fontSize: 10,
-                          color: AppColors.onSurfaceVariant,
-                        ),
+                        style: AppTypography.terminalCode.copyWith(fontSize: 10, color: AppColors.onSurfaceVariant),
                       ),
                     ],
                   ],

@@ -60,10 +60,7 @@ class MarkdownView extends HookWidget {
       viewState.value = const _MdLoading();
       getIt<ReadFile>().call(path: path).then((either) {
         if (cancelled) return;
-        either.fold(
-          (f) => viewState.value = _MdError(f),
-          (c) => viewState.value = _MdLoaded(c),
-        );
+        either.fold((f) => viewState.value = _MdError(f), (c) => viewState.value = _MdLoaded(c));
       });
       return () => cancelled = true;
     }, [path]);
@@ -73,13 +70,10 @@ class MarkdownView extends HookWidget {
       var cancelled = false;
       getIt<ReadFile>().call(path: path).then((either) {
         if (cancelled) return;
-        either.fold(
-          (f) {
-            talker.debug('[md] reload FAILED $path: $f');
-            viewState.value = _MdError(f);
-          },
-          (c) => viewState.value = _MdLoaded(c),
-        );
+        either.fold((f) {
+          talker.debug('[md] reload FAILED $path: $f');
+          viewState.value = _MdError(f);
+        }, (c) => viewState.value = _MdLoaded(c));
       });
       return () => cancelled = true;
     }, [reloadTick.value]);
@@ -101,15 +95,15 @@ class MarkdownView extends HookWidget {
 
     return switch (viewState.value) {
       _MdLoading() => const Center(
-          child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
+        child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
       _MdError(:final failure) => _MdErrorView(failure: failure),
       _MdLoaded(:final content) => _MdContent(
-          key: ValueKey('md-${content.path}'),
-          content: content,
-          showRendered: showRendered.value,
-          onToggle: () => showRendered.value = !showRendered.value,
-        ),
+        key: ValueKey('md-${content.path}'),
+        content: content,
+        showRendered: showRendered.value,
+        onToggle: () => showRendered.value = !showRendered.value,
+      ),
     };
   }
 }
@@ -119,12 +113,7 @@ class MarkdownView extends HookWidget {
 // ---------------------------------------------------------------------------
 
 class _MdContent extends StatelessWidget {
-  const _MdContent({
-    super.key,
-    required this.content,
-    required this.showRendered,
-    required this.onToggle,
-  });
+  const _MdContent({super.key, required this.content, required this.showRendered, required this.onToggle});
 
   final FileContent content;
   final bool showRendered;
@@ -134,17 +123,11 @@ class _MdContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        if (showRendered)
-          _RenderedView(content: content)
-        else
-          CodeView(path: content.path),
+        if (showRendered) _RenderedView(content: content) else CodeView(path: content.path),
         Positioned(
           top: 8,
           right: 12,
-          child: _ToggleButton(
-            showRendered: showRendered,
-            onToggle: onToggle,
-          ),
+          child: _ToggleButton(showRendered: showRendered, onToggle: onToggle),
         ),
       ],
     );
@@ -178,25 +161,11 @@ class _RenderedView extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
           ),
           blockquoteDecoration: BoxDecoration(
-            border: Border(
-              left: BorderSide(color: AppColors.outlineVariant, width: 3),
-            ),
+            border: Border(left: BorderSide(color: AppColors.outlineVariant, width: 3)),
           ),
-          h1: AppTypography.bodyMain.copyWith(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: AppColors.onSurface,
-          ),
-          h2: AppTypography.bodyMain.copyWith(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: AppColors.onSurface,
-          ),
-          h3: AppTypography.bodyMain.copyWith(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppColors.onSurface,
-          ),
+          h1: AppTypography.bodyMain.copyWith(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.onSurface),
+          h2: AppTypography.bodyMain.copyWith(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.onSurface),
+          h3: AppTypography.bodyMain.copyWith(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.onSurface),
           horizontalRuleDecoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: AppColors.outlineVariant)),
           ),
@@ -218,9 +187,7 @@ class _ToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = showRendered
-        ? Locales.Editor.Markdown.toggleSource
-        : Locales.Editor.Markdown.toggleRendered;
+    final label = showRendered ? Locales.Editor.Markdown.toggleSource : Locales.Editor.Markdown.toggleRendered;
 
     return Tooltip(
       message: label,
@@ -236,15 +203,8 @@ class _ToggleButton extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               spacing: 4,
               children: [
-                Icon(
-                  showRendered ? Symbols.code : Symbols.visibility,
-                  size: 14,
-                  color: AppColors.onSurfaceVariant,
-                ),
-                Text(
-                  label,
-                  style: AppTypography.navTab.copyWith(color: AppColors.onSurfaceVariant),
-                ),
+                Icon(showRendered ? Symbols.code : Symbols.visibility, size: 14, color: AppColors.onSurfaceVariant),
+                Text(label, style: AppTypography.navTab.copyWith(color: AppColors.onSurfaceVariant)),
               ],
             ),
           ),
@@ -271,10 +231,7 @@ class _MdErrorView extends StatelessWidget {
         children: [
           const Icon(Symbols.error_outline, color: AppColors.error, size: 32),
           const SizedBox(height: 8),
-          Text(
-            Locales.Editor.fileLoadError,
-            style: AppTypography.bodyMain.copyWith(color: AppColors.onSurfaceVariant),
-          ),
+          Text(Locales.Editor.fileLoadError, style: AppTypography.bodyMain.copyWith(color: AppColors.onSurfaceVariant)),
         ],
       ),
     );
