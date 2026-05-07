@@ -20,6 +20,7 @@ import '../../domain/entities/chat_input_draft.dart';
 import '../../domain/entities/claude_event.dart';
 import '../../domain/entities/claude_message.dart';
 import '../../domain/entities/claude_model.dart';
+import '../../domain/entities/session_usage.dart';
 import '../../domain/entities/claude_effort.dart';
 import '../../domain/entities/claude_permission_mode.dart';
 import '../../domain/entities/claude_thinking_mode.dart';
@@ -84,6 +85,10 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   String _streamingText = '';
 
   final Map<String, String> _sessionToWorkspace = {};
+
+  /// Per-workspace summary text waiting to be injected as bootstrap on the
+  /// next sendPrompt after a /compact. Cleared once consumed.
+  final Map<String, String> _pendingCompactBootstrap = {};
 
   static const _modelPrefix = 'claude.model.';
   static const _permPrefix = 'claude.permission.';
@@ -404,6 +409,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     }
     final oldId = session.claudeSessionId;
     if (oldId != null) _sessionToWorkspace.remove(oldId);
+    _pendingCompactBootstrap.remove(workspaceId);
     final next = Map<String, ClaudeSessionData>.from(state.sessions);
     next[workspaceId] = session.copyWith(
       messages: const [],
@@ -412,12 +418,194 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       lastError: null,
       stderrTail: const [],
       allowAlwaysActive: false,
+      usage: null,
     );
     emit(state.copyWith(sessions: next));
     unawaited(_writeActiveSession(workspaceId, null));
   }
 
   void newSession(String workspaceId) => clearConversation(workspaceId);
+
+  /// Toggles the expanded state of a compact summary card.
+  void toggleCompactSummaryExpanded(String workspaceId, String messageId) {
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+    var changed = false;
+    final updated = [
+      for (final m in session.messages)
+        if (m is ClaudeMessageCompactSummary && m.id == messageId)
+          () {
+            changed = true;
+            return m.copyWith(expanded: !m.expanded);
+          }()
+        else
+          m,
+    ];
+    if (!changed) return;
+    _emitSession(workspaceId, session.copyWith(messages: updated));
+  }
+
+  /// Runs a one-shot summarization run against the current Claude session,
+  /// captures the assistant text, then emits a [ClaudeMessageCompactSummary]
+  /// that visually collapses the prior conversation. The CLI-side session is
+  /// dropped (next prompt will start a fresh `claude` session bootstrapped
+  /// with the summary as its first user turn).
+  Future<void> compactSession(String workspaceId) async {
+    final session = state.sessions[workspaceId];
+    if (session == null) return;
+    if (_runningWorkspaceId != null) {
+      _talker.warning('compactSession while another run is active; ignored');
+      return;
+    }
+    if (session.messages.isEmpty) {
+      _talker.info('compactSession: no messages to compact');
+      return;
+    }
+    final hiddenCount = session.messages.where((m) {
+      if (m is ClaudeMessageCompactSummary) return false;
+      return true;
+    }).length;
+    if (hiddenCount == 0) return;
+
+    _talker.info('Compacting session for workspace=$workspaceId');
+
+    final next = Map<String, ClaudeSessionData>.from(state.sessions);
+    next[workspaceId] = session.copyWith(
+      runStatus: ClaudeRunStatus.compacting,
+      lastError: null,
+      stderrTail: const [],
+    );
+    emit(state.copyWith(sessions: next));
+
+    _runningWorkspaceId = workspaceId;
+
+    const summaryPrompt =
+        'Produce a faithful first-person recap of OUR conversation so far, '
+        'so that a future instance of you can pick it up seamlessly. Write '
+        'in this exact form:\n\n'
+        '1. What the user asked, in their own framing (paraphrase each turn).\n'
+        '2. What you (the assistant) answered or did, including any tools you '
+        'ran and their relevant results.\n'
+        '3. Any decisions, preferences, or constraints the user expressed.\n'
+        '4. Open threads or next steps that were discussed.\n\n'
+        'Be dense, concrete, no pleasantries. Do NOT describe the project as '
+        'if you were a new assistant looking at it — describe the conversation '
+        'as a continuous shared history. Output ONLY the recap.';
+
+    final params = SendPromptParams(
+      cwd: workspaceId,
+      prompt: summaryPrompt,
+      mode: session.permissionMode,
+      model: session.model,
+      effort: session.effort,
+      resumeSessionId: session.claudeSessionId,
+      imagePaths: const [],
+    );
+
+    final buf = StringBuffer();
+    Failure? failure;
+    final completer = Completer<void>();
+
+    final sub = _sendPrompt.call(params).listen(
+      (result) {
+        result.fold(
+          (f) {
+            _talker.warning('[compact] event failure: $f');
+            failure = f;
+          },
+          (event) {
+            if (event is ClaudeEventTextChunk) {
+              buf.write(event.text);
+            } else if (event is ClaudeEventAssistantMessage) {
+              if (buf.isEmpty) buf.write(event.text);
+            } else if (event is ClaudeEventTaskComplete ||
+                event is ClaudeEventErrorEvent ||
+                event is ClaudeEventSessionDead) {
+              // The subprocess often keeps stdin open after TaskComplete,
+              // so the stream never closes on its own — settle here.
+              if (!completer.isCompleted) completer.complete();
+            }
+          },
+        );
+      },
+      onError: (Object e, StackTrace st) {
+        _talker.error('Compact run errored', e, st);
+        failure = UnexpectedFailure('$e');
+        if (!completer.isCompleted) completer.complete();
+      },
+      onDone: () {
+        if (!completer.isCompleted) completer.complete();
+      },
+    );
+
+    try {
+      await completer.future.timeout(const Duration(minutes: 3));
+    } on TimeoutException {
+      _talker.warning('[compact] timeout after 3min');
+      failure = const UnexpectedFailure('compact: timeout');
+    }
+    await sub.cancel();
+    // Ensure the spawned subprocess is killed; otherwise it sits idle
+    // holding stdin open and would block the next sendPrompt.
+    unawaited(_stopRun.call());
+
+    _runningWorkspaceId = null;
+
+    final summary = buf.toString().trim();
+    final current = state.sessions[workspaceId];
+    if (current == null) return;
+
+    if (failure != null || summary.isEmpty) {
+      _emitSession(
+        workspaceId,
+        current.copyWith(
+          runStatus: ClaudeRunStatus.error,
+          lastError: failure ?? const UnexpectedFailure('compact: empty summary'),
+        ),
+      );
+      return;
+    }
+
+    final oldId = current.claudeSessionId;
+    if (oldId != null) _sessionToWorkspace.remove(oldId);
+
+    final summaryMessage = ClaudeMessage.compactSummary(
+      id: _genId('cs'),
+      summary: summary,
+      hiddenMessageCount: hiddenCount,
+      createdAt: DateTime.now(),
+    );
+
+    _pendingCompactBootstrap[workspaceId] = summary;
+    _emitSession(
+      workspaceId,
+      current.copyWith(
+        messages: [...current.messages, summaryMessage],
+        claudeSessionId: null,
+        runStatus: ClaudeRunStatus.idle,
+        usage: null,
+      ),
+    );
+    unawaited(_writeActiveSession(workspaceId, null));
+    _talker.info('Compact summary appended (hidden=$hiddenCount)');
+  }
+
+  _InterceptedCommand? _interceptedSlashCommand(
+    String text,
+    List<String> chips,
+  ) {
+    bool matches(String token, String name) =>
+        token == '/$name' || token.startsWith('/$name ');
+    final candidates = <String>[
+      ...chips,
+      if (text.startsWith('/')) text,
+    ];
+    for (final c in candidates) {
+      if (matches(c, 'compact')) return _InterceptedCommand.compact;
+      if (matches(c, 'clear')) return _InterceptedCommand.clear;
+    }
+    return null;
+  }
 
   Future<void> answerAskUserQuestion(
     String workspaceId,
@@ -531,6 +719,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
             lastError: null,
             stderrTail: const [],
             queuedPrompt: null,
+            usage: null,
           ),
         );
         unawaited(_writeActiveSession(workspaceId, sessionId));
@@ -614,6 +803,21 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       return;
     }
 
+    // Intercept client-side slash commands. The headless `claude -p` CLI does
+    // not interpret /compact, /clear, etc — they would otherwise be sent as
+    // plain text to the model.
+    final intercept = _interceptedSlashCommand(trimmed, slashTriggers);
+    if (intercept != null) {
+      switch (intercept) {
+        case _InterceptedCommand.clear:
+          clearConversation(workspaceId);
+          return;
+        case _InterceptedCommand.compact:
+          unawaited(compactSession(workspaceId));
+          return;
+      }
+    }
+
     final imagePaths = attachments
         .where((a) => a.kind == ChatAttachmentKind.imageCapture)
         .map((a) => a.path)
@@ -644,9 +848,20 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     ];
     final concatPrompt = concatParts.join(' ');
 
-    final cliPrompt = session.thinkingMode.keyword.isEmpty
+    final basePrompt = session.thinkingMode.keyword.isEmpty
         ? concatPrompt
         : '${session.thinkingMode.keyword} $concatPrompt';
+    final bootstrap = _pendingCompactBootstrap[workspaceId];
+    final cliPrompt = (bootstrap != null && bootstrap.isNotEmpty)
+        ? 'The following is a recap of our prior conversation (compacted to '
+            'save context). Treat it as already-shared history between us — '
+            'do NOT say you have no prior context, do NOT re-introduce '
+            'yourself, just continue naturally from where it left off.\n\n'
+            '<prior-conversation-recap>\n'
+            '$bootstrap\n'
+            '</prior-conversation-recap>\n\n'
+            'My next message:\n\n$basePrompt'
+        : basePrompt;
 
     final now = DateTime.now();
     final userMsgId = _genId('u');
@@ -676,6 +891,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       stderrTail: const [],
     );
     emit(state.copyWith(sessions: next));
+    _pendingCompactBootstrap.remove(workspaceId);
 
     _talker.debug('[cc] u> ${_oneLine(_truncate(cliPrompt, 800))}');
 
@@ -837,6 +1053,26 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         // Surfaced via PermissionServer interactive handler — nothing to do
         // here. Kept exhaustive so the compiler enforces handling.
         break;
+
+      case ClaudeEventUsageUpdate(
+          :final inputTokens,
+          :final cacheReadTokens,
+          :final cacheCreationTokens,
+          :final outputTokens,
+        ):
+        final current = session.usage ?? const SessionUsage();
+        final updated = current.copyWith(
+          inputTokens: inputTokens ?? current.inputTokens,
+          cacheReadTokens: cacheReadTokens ?? current.cacheReadTokens,
+          cacheCreationTokens: cacheCreationTokens ?? current.cacheCreationTokens,
+          outputTokens: outputTokens ?? current.outputTokens,
+        );
+        if (updated == current) {
+          return;
+        }
+        final next = Map<String, ClaudeSessionData>.from(state.sessions);
+        next[wid] = session.copyWith(usage: updated);
+        emit(state.copyWith(sessions: next));
 
       case ClaudeEventSessionDead(:final exitCode, :final stderrTail):
         _flushStreamingChunks();
@@ -1196,3 +1432,5 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     return super.close();
   }
 }
+
+enum _InterceptedCommand { compact, clear }

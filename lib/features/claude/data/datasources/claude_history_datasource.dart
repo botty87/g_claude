@@ -438,6 +438,13 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
             buf.writeln('decision: ${msg.decision!.name}');
           }
           buf.writeln();
+
+        case ClaudeMessageCompactSummary():
+          buf.writeln('## Compact summary (${msg.hiddenMessageCount} messages collapsed)');
+          buf.writeln('_${msg.createdAt.toIso8601String()}_');
+          buf.writeln();
+          buf.writeln(msg.summary);
+          buf.writeln();
       }
     }
 

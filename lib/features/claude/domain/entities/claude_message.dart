@@ -68,4 +68,15 @@ sealed class ClaudeMessage with _$ClaudeMessage {
     ClaudePermissionDecision? decision,
     @Default(false) bool answered,
   }) = ClaudeMessagePermissionRequest;
+
+  /// Marker inserted when the user runs `/compact`. Stores the one-shot
+  /// summary text and the count of messages that were collapsed. When
+  /// [expanded] is false the preceding era of messages is hidden from view.
+  const factory ClaudeMessage.compactSummary({
+    required String id,
+    required String summary,
+    required int hiddenMessageCount,
+    required DateTime createdAt,
+    @Default(false) bool expanded,
+  }) = ClaudeMessageCompactSummary;
 }

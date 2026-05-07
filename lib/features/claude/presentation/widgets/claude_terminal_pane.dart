@@ -69,7 +69,8 @@ class _ClaudeTerminalPaneActive extends HookWidget {
     );
 
     final isBusy = runStatus == ClaudeRunStatus.running ||
-        runStatus == ClaudeRunStatus.connecting;
+        runStatus == ClaudeRunStatus.connecting ||
+        runStatus == ClaudeRunStatus.compacting;
 
     final sessionsCubit = context.read<ClaudeSessionsCubit>();
     final isHovering = useState(false);

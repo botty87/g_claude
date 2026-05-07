@@ -124,4 +124,14 @@ sealed class ClaudeEvent with _$ClaudeEvent {
     required String toolName,
     required Map<String, dynamic> toolInput,
   }) = ClaudeEventPermissionRequest;
+
+  /// Token usage counters from `message_start` (input/cache fields) and
+  /// `message_delta` (outputTokens only). All fields are nullable so partial
+  /// updates merge cleanly into the existing [SessionUsage] in the cubit.
+  const factory ClaudeEvent.usageUpdate({
+    int? inputTokens,
+    int? cacheReadTokens,
+    int? cacheCreationTokens,
+    int? outputTokens,
+  }) = ClaudeEventUsageUpdate;
 }

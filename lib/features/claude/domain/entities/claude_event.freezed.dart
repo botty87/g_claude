@@ -850,7 +850,7 @@ extension ClaudeEventPatterns on ClaudeEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ClaudeEventSessionInit value)?  sessionInit,TResult Function( ClaudeEventTextChunk value)?  textChunk,TResult Function( ClaudeEventToolCall value)?  toolCall,TResult Function( ClaudeEventToolCallUpdate value)?  toolCallUpdate,TResult Function( ClaudeEventToolCallComplete value)?  toolCallComplete,TResult Function( ClaudeEventToolResult value)?  toolResult,TResult Function( ClaudeEventAssistantMessage value)?  assistantMessage,TResult Function( ClaudeEventTaskComplete value)?  taskComplete,TResult Function( ClaudeEventErrorEvent value)?  errorEvent,TResult Function( ClaudeEventRateLimit value)?  rateLimit,TResult Function( ClaudeEventSessionDead value)?  sessionDead,TResult Function( ClaudeEventAskUserQuestion value)?  askUserQuestion,TResult Function( ClaudeEventPermissionRequest value)?  permissionRequest,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ClaudeEventSessionInit value)?  sessionInit,TResult Function( ClaudeEventTextChunk value)?  textChunk,TResult Function( ClaudeEventToolCall value)?  toolCall,TResult Function( ClaudeEventToolCallUpdate value)?  toolCallUpdate,TResult Function( ClaudeEventToolCallComplete value)?  toolCallComplete,TResult Function( ClaudeEventToolResult value)?  toolResult,TResult Function( ClaudeEventAssistantMessage value)?  assistantMessage,TResult Function( ClaudeEventTaskComplete value)?  taskComplete,TResult Function( ClaudeEventErrorEvent value)?  errorEvent,TResult Function( ClaudeEventRateLimit value)?  rateLimit,TResult Function( ClaudeEventSessionDead value)?  sessionDead,TResult Function( ClaudeEventAskUserQuestion value)?  askUserQuestion,TResult Function( ClaudeEventPermissionRequest value)?  permissionRequest,TResult Function( ClaudeEventUsageUpdate value)?  usageUpdate,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
@@ -866,7 +866,8 @@ return errorEvent(_that);case ClaudeEventRateLimit() when rateLimit != null:
 return rateLimit(_that);case ClaudeEventSessionDead() when sessionDead != null:
 return sessionDead(_that);case ClaudeEventAskUserQuestion() when askUserQuestion != null:
 return askUserQuestion(_that);case ClaudeEventPermissionRequest() when permissionRequest != null:
-return permissionRequest(_that);case _:
+return permissionRequest(_that);case ClaudeEventUsageUpdate() when usageUpdate != null:
+return usageUpdate(_that);case _:
   return orElse();
 
 }
@@ -884,7 +885,7 @@ return permissionRequest(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ClaudeEventSessionInit value)  sessionInit,required TResult Function( ClaudeEventTextChunk value)  textChunk,required TResult Function( ClaudeEventToolCall value)  toolCall,required TResult Function( ClaudeEventToolCallUpdate value)  toolCallUpdate,required TResult Function( ClaudeEventToolCallComplete value)  toolCallComplete,required TResult Function( ClaudeEventToolResult value)  toolResult,required TResult Function( ClaudeEventAssistantMessage value)  assistantMessage,required TResult Function( ClaudeEventTaskComplete value)  taskComplete,required TResult Function( ClaudeEventErrorEvent value)  errorEvent,required TResult Function( ClaudeEventRateLimit value)  rateLimit,required TResult Function( ClaudeEventSessionDead value)  sessionDead,required TResult Function( ClaudeEventAskUserQuestion value)  askUserQuestion,required TResult Function( ClaudeEventPermissionRequest value)  permissionRequest,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ClaudeEventSessionInit value)  sessionInit,required TResult Function( ClaudeEventTextChunk value)  textChunk,required TResult Function( ClaudeEventToolCall value)  toolCall,required TResult Function( ClaudeEventToolCallUpdate value)  toolCallUpdate,required TResult Function( ClaudeEventToolCallComplete value)  toolCallComplete,required TResult Function( ClaudeEventToolResult value)  toolResult,required TResult Function( ClaudeEventAssistantMessage value)  assistantMessage,required TResult Function( ClaudeEventTaskComplete value)  taskComplete,required TResult Function( ClaudeEventErrorEvent value)  errorEvent,required TResult Function( ClaudeEventRateLimit value)  rateLimit,required TResult Function( ClaudeEventSessionDead value)  sessionDead,required TResult Function( ClaudeEventAskUserQuestion value)  askUserQuestion,required TResult Function( ClaudeEventPermissionRequest value)  permissionRequest,required TResult Function( ClaudeEventUsageUpdate value)  usageUpdate,}){
 final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit():
@@ -900,7 +901,8 @@ return errorEvent(_that);case ClaudeEventRateLimit():
 return rateLimit(_that);case ClaudeEventSessionDead():
 return sessionDead(_that);case ClaudeEventAskUserQuestion():
 return askUserQuestion(_that);case ClaudeEventPermissionRequest():
-return permissionRequest(_that);}
+return permissionRequest(_that);case ClaudeEventUsageUpdate():
+return usageUpdate(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -914,7 +916,7 @@ return permissionRequest(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ClaudeEventSessionInit value)?  sessionInit,TResult? Function( ClaudeEventTextChunk value)?  textChunk,TResult? Function( ClaudeEventToolCall value)?  toolCall,TResult? Function( ClaudeEventToolCallUpdate value)?  toolCallUpdate,TResult? Function( ClaudeEventToolCallComplete value)?  toolCallComplete,TResult? Function( ClaudeEventToolResult value)?  toolResult,TResult? Function( ClaudeEventAssistantMessage value)?  assistantMessage,TResult? Function( ClaudeEventTaskComplete value)?  taskComplete,TResult? Function( ClaudeEventErrorEvent value)?  errorEvent,TResult? Function( ClaudeEventRateLimit value)?  rateLimit,TResult? Function( ClaudeEventSessionDead value)?  sessionDead,TResult? Function( ClaudeEventAskUserQuestion value)?  askUserQuestion,TResult? Function( ClaudeEventPermissionRequest value)?  permissionRequest,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ClaudeEventSessionInit value)?  sessionInit,TResult? Function( ClaudeEventTextChunk value)?  textChunk,TResult? Function( ClaudeEventToolCall value)?  toolCall,TResult? Function( ClaudeEventToolCallUpdate value)?  toolCallUpdate,TResult? Function( ClaudeEventToolCallComplete value)?  toolCallComplete,TResult? Function( ClaudeEventToolResult value)?  toolResult,TResult? Function( ClaudeEventAssistantMessage value)?  assistantMessage,TResult? Function( ClaudeEventTaskComplete value)?  taskComplete,TResult? Function( ClaudeEventErrorEvent value)?  errorEvent,TResult? Function( ClaudeEventRateLimit value)?  rateLimit,TResult? Function( ClaudeEventSessionDead value)?  sessionDead,TResult? Function( ClaudeEventAskUserQuestion value)?  askUserQuestion,TResult? Function( ClaudeEventPermissionRequest value)?  permissionRequest,TResult? Function( ClaudeEventUsageUpdate value)?  usageUpdate,}){
 final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
@@ -930,7 +932,8 @@ return errorEvent(_that);case ClaudeEventRateLimit() when rateLimit != null:
 return rateLimit(_that);case ClaudeEventSessionDead() when sessionDead != null:
 return sessionDead(_that);case ClaudeEventAskUserQuestion() when askUserQuestion != null:
 return askUserQuestion(_that);case ClaudeEventPermissionRequest() when permissionRequest != null:
-return permissionRequest(_that);case _:
+return permissionRequest(_that);case ClaudeEventUsageUpdate() when usageUpdate != null:
+return usageUpdate(_that);case _:
   return null;
 
 }
@@ -947,7 +950,7 @@ return permissionRequest(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)?  sessionInit,TResult Function( String text)?  textChunk,TResult Function( String toolName,  String toolId,  int index)?  toolCall,TResult Function( String toolId,  String partialInput)?  toolCallUpdate,TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult Function( String text)?  assistantMessage,TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult Function( String message)?  errorEvent,TResult Function( String status,  int? resetsAt)?  rateLimit,TResult Function( int? exitCode,  List<String> stderrTail)?  sessionDead,TResult Function( String toolUseId,  List<AskUserQuestionItem> questions)?  askUserQuestion,TResult Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)?  permissionRequest,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)?  sessionInit,TResult Function( String text)?  textChunk,TResult Function( String toolName,  String toolId,  int index)?  toolCall,TResult Function( String toolId,  String partialInput)?  toolCallUpdate,TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult Function( String text)?  assistantMessage,TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult Function( String message)?  errorEvent,TResult Function( String status,  int? resetsAt)?  rateLimit,TResult Function( int? exitCode,  List<String> stderrTail)?  sessionDead,TResult Function( String toolUseId,  List<AskUserQuestionItem> questions)?  askUserQuestion,TResult Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)?  permissionRequest,TResult Function( int? inputTokens,  int? cacheReadTokens,  int? cacheCreationTokens,  int? outputTokens)?  usageUpdate,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
 return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins);case ClaudeEventTextChunk() when textChunk != null:
@@ -962,7 +965,8 @@ return errorEvent(_that.message);case ClaudeEventRateLimit() when rateLimit != n
 return rateLimit(_that.status,_that.resetsAt);case ClaudeEventSessionDead() when sessionDead != null:
 return sessionDead(_that.exitCode,_that.stderrTail);case ClaudeEventAskUserQuestion() when askUserQuestion != null:
 return askUserQuestion(_that.toolUseId,_that.questions);case ClaudeEventPermissionRequest() when permissionRequest != null:
-return permissionRequest(_that.requestId,_that.toolName,_that.toolInput);case _:
+return permissionRequest(_that.requestId,_that.toolName,_that.toolInput);case ClaudeEventUsageUpdate() when usageUpdate != null:
+return usageUpdate(_that.inputTokens,_that.cacheReadTokens,_that.cacheCreationTokens,_that.outputTokens);case _:
   return orElse();
 
 }
@@ -980,7 +984,7 @@ return permissionRequest(_that.requestId,_that.toolName,_that.toolInput);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)  sessionInit,required TResult Function( String text)  textChunk,required TResult Function( String toolName,  String toolId,  int index)  toolCall,required TResult Function( String toolId,  String partialInput)  toolCallUpdate,required TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)  toolCallComplete,required TResult Function( String toolUseId,  String content,  bool isError)  toolResult,required TResult Function( String text)  assistantMessage,required TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)  taskComplete,required TResult Function( String message)  errorEvent,required TResult Function( String status,  int? resetsAt)  rateLimit,required TResult Function( int? exitCode,  List<String> stderrTail)  sessionDead,required TResult Function( String toolUseId,  List<AskUserQuestionItem> questions)  askUserQuestion,required TResult Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)  permissionRequest,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)  sessionInit,required TResult Function( String text)  textChunk,required TResult Function( String toolName,  String toolId,  int index)  toolCall,required TResult Function( String toolId,  String partialInput)  toolCallUpdate,required TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)  toolCallComplete,required TResult Function( String toolUseId,  String content,  bool isError)  toolResult,required TResult Function( String text)  assistantMessage,required TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)  taskComplete,required TResult Function( String message)  errorEvent,required TResult Function( String status,  int? resetsAt)  rateLimit,required TResult Function( int? exitCode,  List<String> stderrTail)  sessionDead,required TResult Function( String toolUseId,  List<AskUserQuestionItem> questions)  askUserQuestion,required TResult Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)  permissionRequest,required TResult Function( int? inputTokens,  int? cacheReadTokens,  int? cacheCreationTokens,  int? outputTokens)  usageUpdate,}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit():
 return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins);case ClaudeEventTextChunk():
@@ -995,7 +999,8 @@ return errorEvent(_that.message);case ClaudeEventRateLimit():
 return rateLimit(_that.status,_that.resetsAt);case ClaudeEventSessionDead():
 return sessionDead(_that.exitCode,_that.stderrTail);case ClaudeEventAskUserQuestion():
 return askUserQuestion(_that.toolUseId,_that.questions);case ClaudeEventPermissionRequest():
-return permissionRequest(_that.requestId,_that.toolName,_that.toolInput);}
+return permissionRequest(_that.requestId,_that.toolName,_that.toolInput);case ClaudeEventUsageUpdate():
+return usageUpdate(_that.inputTokens,_that.cacheReadTokens,_that.cacheCreationTokens,_that.outputTokens);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -1009,7 +1014,7 @@ return permissionRequest(_that.requestId,_that.toolName,_that.toolInput);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)?  sessionInit,TResult? Function( String text)?  textChunk,TResult? Function( String toolName,  String toolId,  int index)?  toolCall,TResult? Function( String toolId,  String partialInput)?  toolCallUpdate,TResult? Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult? Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult? Function( String text)?  assistantMessage,TResult? Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult? Function( String message)?  errorEvent,TResult? Function( String status,  int? resetsAt)?  rateLimit,TResult? Function( int? exitCode,  List<String> stderrTail)?  sessionDead,TResult? Function( String toolUseId,  List<AskUserQuestionItem> questions)?  askUserQuestion,TResult? Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)?  permissionRequest,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)?  sessionInit,TResult? Function( String text)?  textChunk,TResult? Function( String toolName,  String toolId,  int index)?  toolCall,TResult? Function( String toolId,  String partialInput)?  toolCallUpdate,TResult? Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult? Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult? Function( String text)?  assistantMessage,TResult? Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult? Function( String message)?  errorEvent,TResult? Function( String status,  int? resetsAt)?  rateLimit,TResult? Function( int? exitCode,  List<String> stderrTail)?  sessionDead,TResult? Function( String toolUseId,  List<AskUserQuestionItem> questions)?  askUserQuestion,TResult? Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)?  permissionRequest,TResult? Function( int? inputTokens,  int? cacheReadTokens,  int? cacheCreationTokens,  int? outputTokens)?  usageUpdate,}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
 return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins);case ClaudeEventTextChunk() when textChunk != null:
@@ -1024,7 +1029,8 @@ return errorEvent(_that.message);case ClaudeEventRateLimit() when rateLimit != n
 return rateLimit(_that.status,_that.resetsAt);case ClaudeEventSessionDead() when sessionDead != null:
 return sessionDead(_that.exitCode,_that.stderrTail);case ClaudeEventAskUserQuestion() when askUserQuestion != null:
 return askUserQuestion(_that.toolUseId,_that.questions);case ClaudeEventPermissionRequest() when permissionRequest != null:
-return permissionRequest(_that.requestId,_that.toolName,_that.toolInput);case _:
+return permissionRequest(_that.requestId,_that.toolName,_that.toolInput);case ClaudeEventUsageUpdate() when usageUpdate != null:
+return usageUpdate(_that.inputTokens,_that.cacheReadTokens,_that.cacheCreationTokens,_that.outputTokens);case _:
   return null;
 
 }
@@ -1974,6 +1980,78 @@ requestId: null == requestId ? _self.requestId : requestId // ignore: cast_nulla
 as String,toolName: null == toolName ? _self.toolName : toolName // ignore: cast_nullable_to_non_nullable
 as String,toolInput: null == toolInput ? _self._toolInput : toolInput // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ClaudeEventUsageUpdate implements ClaudeEvent {
+  const ClaudeEventUsageUpdate({this.inputTokens, this.cacheReadTokens, this.cacheCreationTokens, this.outputTokens});
+  
+
+ final  int? inputTokens;
+ final  int? cacheReadTokens;
+ final  int? cacheCreationTokens;
+ final  int? outputTokens;
+
+/// Create a copy of ClaudeEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ClaudeEventUsageUpdateCopyWith<ClaudeEventUsageUpdate> get copyWith => _$ClaudeEventUsageUpdateCopyWithImpl<ClaudeEventUsageUpdate>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeEventUsageUpdate&&(identical(other.inputTokens, inputTokens) || other.inputTokens == inputTokens)&&(identical(other.cacheReadTokens, cacheReadTokens) || other.cacheReadTokens == cacheReadTokens)&&(identical(other.cacheCreationTokens, cacheCreationTokens) || other.cacheCreationTokens == cacheCreationTokens)&&(identical(other.outputTokens, outputTokens) || other.outputTokens == outputTokens));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,inputTokens,cacheReadTokens,cacheCreationTokens,outputTokens);
+
+@override
+String toString() {
+  return 'ClaudeEvent.usageUpdate(inputTokens: $inputTokens, cacheReadTokens: $cacheReadTokens, cacheCreationTokens: $cacheCreationTokens, outputTokens: $outputTokens)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ClaudeEventUsageUpdateCopyWith<$Res> implements $ClaudeEventCopyWith<$Res> {
+  factory $ClaudeEventUsageUpdateCopyWith(ClaudeEventUsageUpdate value, $Res Function(ClaudeEventUsageUpdate) _then) = _$ClaudeEventUsageUpdateCopyWithImpl;
+@useResult
+$Res call({
+ int? inputTokens, int? cacheReadTokens, int? cacheCreationTokens, int? outputTokens
+});
+
+
+
+
+}
+/// @nodoc
+class _$ClaudeEventUsageUpdateCopyWithImpl<$Res>
+    implements $ClaudeEventUsageUpdateCopyWith<$Res> {
+  _$ClaudeEventUsageUpdateCopyWithImpl(this._self, this._then);
+
+  final ClaudeEventUsageUpdate _self;
+  final $Res Function(ClaudeEventUsageUpdate) _then;
+
+/// Create a copy of ClaudeEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? inputTokens = freezed,Object? cacheReadTokens = freezed,Object? cacheCreationTokens = freezed,Object? outputTokens = freezed,}) {
+  return _then(ClaudeEventUsageUpdate(
+inputTokens: freezed == inputTokens ? _self.inputTokens : inputTokens // ignore: cast_nullable_to_non_nullable
+as int?,cacheReadTokens: freezed == cacheReadTokens ? _self.cacheReadTokens : cacheReadTokens // ignore: cast_nullable_to_non_nullable
+as int?,cacheCreationTokens: freezed == cacheCreationTokens ? _self.cacheCreationTokens : cacheCreationTokens // ignore: cast_nullable_to_non_nullable
+as int?,outputTokens: freezed == outputTokens ? _self.outputTokens : outputTokens // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
