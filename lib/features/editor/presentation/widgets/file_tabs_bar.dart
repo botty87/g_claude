@@ -5,7 +5,9 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/hoverable.dart';
 import '../../../shell/presentation/cubit/shell_cubit.dart';
 import '../../../shell/presentation/widgets/workspace_dropdown.dart';
 import '../../../workspace/domain/entities/workspace.dart';
@@ -33,6 +35,10 @@ class FileTabsBar extends HookWidget {
     }
 
     final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
+    final workspaceOpen = context.select<ShellCubit, bool>((c) => c.state.workspaceOpen);
+    if (!workspaceOpen) {
+      return const SizedBox.shrink();
+    }
     final hidesEditorTabs = context.select<ShellCubit, bool>(
       (c) => c.state.selectedActivity == ActivityId.sessions || c.state.selectedActivity == ActivityId.logs,
     );
@@ -88,15 +94,15 @@ class FileTabsBar extends HookWidget {
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             child: WorkspaceDropdown(),
           ),
-          const _WorkspaceToggleButton(),
+          const WorkspaceToggleButton(),
         ],
       ),
     );
   }
 }
 
-class _WorkspaceToggleButton extends StatelessWidget {
-  const _WorkspaceToggleButton();
+class WorkspaceToggleButton extends StatelessWidget {
+  const WorkspaceToggleButton({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -104,14 +110,24 @@ class _WorkspaceToggleButton extends StatelessWidget {
     final action = workspaceOpen
         ? Locales.Shell.Workspace.toggleToFullscreen
         : Locales.Shell.Workspace.toggleToWorkspace;
-    return Tooltip(
-      message: '$action (⌘B)',
-      child: IconButton(
-        key: const ValueKey('workspace_toggle_button'),
-        onPressed: () => context.read<ShellCubit>().toggleWorkspace(),
-        icon: Icon(workspaceOpen ? Symbols.fullscreen : Symbols.fullscreen_exit, size: 16, color: AppColors.onSurface),
-        visualDensity: VisualDensity.compact,
-        splashRadius: 14,
+    return Hoverable(
+      onTap: () => context.read<ShellCubit>().toggleWorkspace(),
+      builder: (context, hover) => Tooltip(
+        message: '$action (⌘B)',
+        child: Container(
+          key: const ValueKey('workspace_toggle_button'),
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: hover ? AppColors.glassHover : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadii.sm),
+          ),
+          child: Icon(
+            workspaceOpen ? Symbols.fullscreen : Symbols.fullscreen_exit,
+            size: 16,
+            color: AppColors.onSurface,
+          ),
+        ),
       ),
     );
   }

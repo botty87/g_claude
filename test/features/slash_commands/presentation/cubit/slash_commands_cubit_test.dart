@@ -111,13 +111,13 @@ void main() {
     );
 
     blocTest<SlashCommandsCubit, SlashCommandsState>(
-      'no matches still emits suggesting with empty filtered + selectedIndex 0',
+      'no matches falls back to full list (consistent with empty prefix)',
       build: () => make(),
       seed: () => SlashCommandsState.idle(all: [makeSlashCommand('/foo')]),
       act: (c) => c.onInputChanged('/zzzzz'),
       expect: () => [
         isA<SlashCommandsStateSuggesting>()
-            .having((s) => s.filtered, 'filtered', isEmpty)
+            .having((s) => s.filtered.length, 'filtered', 1)
             .having((s) => s.selectedIndex, 'index', 0),
       ],
     );
