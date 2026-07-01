@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ClaudeSessionData {
 
- List<ClaudeMessage> get messages; ClaudeRunStatus get runStatus; ClaudeModel get model; ClaudePermissionMode get permissionMode; ClaudeEffort get effort; ClaudeThinkingMode get thinkingMode; String? get claudeSessionId; Failure? get lastError; List<String> get stderrTail; List<String> get availableSkills; Set<String> get disabledMcpServers; ChatInputDraft get inputDraft; bool get allowAlwaysActive; QueuedPrompt? get queuedPrompt; SessionUsage? get usage;
+ String get tabId; List<ClaudeMessage> get messages; ClaudeRunStatus get runStatus; ClaudeModel get model; ClaudePermissionMode get permissionMode; ClaudeEffort get effort; ClaudeThinkingMode get thinkingMode; String? get claudeSessionId; Failure? get lastError; List<String> get stderrTail; List<String> get availableSkills; Set<String> get disabledMcpServers; ChatInputDraft get inputDraft; bool get allowAlwaysActive; QueuedPrompt? get queuedPrompt; SessionUsage? get usage;
 /// Create a copy of ClaudeSessionData
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ClaudeSessionDataCopyWith<ClaudeSessionData> get copyWith => _$ClaudeSessionDat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeSessionData&&const DeepCollectionEquality().equals(other.messages, messages)&&(identical(other.runStatus, runStatus) || other.runStatus == runStatus)&&(identical(other.model, model) || other.model == model)&&(identical(other.permissionMode, permissionMode) || other.permissionMode == permissionMode)&&(identical(other.effort, effort) || other.effort == effort)&&(identical(other.thinkingMode, thinkingMode) || other.thinkingMode == thinkingMode)&&(identical(other.claudeSessionId, claudeSessionId) || other.claudeSessionId == claudeSessionId)&&(identical(other.lastError, lastError) || other.lastError == lastError)&&const DeepCollectionEquality().equals(other.stderrTail, stderrTail)&&const DeepCollectionEquality().equals(other.availableSkills, availableSkills)&&const DeepCollectionEquality().equals(other.disabledMcpServers, disabledMcpServers)&&(identical(other.inputDraft, inputDraft) || other.inputDraft == inputDraft)&&(identical(other.allowAlwaysActive, allowAlwaysActive) || other.allowAlwaysActive == allowAlwaysActive)&&(identical(other.queuedPrompt, queuedPrompt) || other.queuedPrompt == queuedPrompt)&&(identical(other.usage, usage) || other.usage == usage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeSessionData&&(identical(other.tabId, tabId) || other.tabId == tabId)&&const DeepCollectionEquality().equals(other.messages, messages)&&(identical(other.runStatus, runStatus) || other.runStatus == runStatus)&&(identical(other.model, model) || other.model == model)&&(identical(other.permissionMode, permissionMode) || other.permissionMode == permissionMode)&&(identical(other.effort, effort) || other.effort == effort)&&(identical(other.thinkingMode, thinkingMode) || other.thinkingMode == thinkingMode)&&(identical(other.claudeSessionId, claudeSessionId) || other.claudeSessionId == claudeSessionId)&&(identical(other.lastError, lastError) || other.lastError == lastError)&&const DeepCollectionEquality().equals(other.stderrTail, stderrTail)&&const DeepCollectionEquality().equals(other.availableSkills, availableSkills)&&const DeepCollectionEquality().equals(other.disabledMcpServers, disabledMcpServers)&&(identical(other.inputDraft, inputDraft) || other.inputDraft == inputDraft)&&(identical(other.allowAlwaysActive, allowAlwaysActive) || other.allowAlwaysActive == allowAlwaysActive)&&(identical(other.queuedPrompt, queuedPrompt) || other.queuedPrompt == queuedPrompt)&&(identical(other.usage, usage) || other.usage == usage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(messages),runStatus,model,permissionMode,effort,thinkingMode,claudeSessionId,lastError,const DeepCollectionEquality().hash(stderrTail),const DeepCollectionEquality().hash(availableSkills),const DeepCollectionEquality().hash(disabledMcpServers),inputDraft,allowAlwaysActive,queuedPrompt,usage);
+int get hashCode => Object.hash(runtimeType,tabId,const DeepCollectionEquality().hash(messages),runStatus,model,permissionMode,effort,thinkingMode,claudeSessionId,lastError,const DeepCollectionEquality().hash(stderrTail),const DeepCollectionEquality().hash(availableSkills),const DeepCollectionEquality().hash(disabledMcpServers),inputDraft,allowAlwaysActive,queuedPrompt,usage);
 
 @override
 String toString() {
-  return 'ClaudeSessionData(messages: $messages, runStatus: $runStatus, model: $model, permissionMode: $permissionMode, effort: $effort, thinkingMode: $thinkingMode, claudeSessionId: $claudeSessionId, lastError: $lastError, stderrTail: $stderrTail, availableSkills: $availableSkills, disabledMcpServers: $disabledMcpServers, inputDraft: $inputDraft, allowAlwaysActive: $allowAlwaysActive, queuedPrompt: $queuedPrompt, usage: $usage)';
+  return 'ClaudeSessionData(tabId: $tabId, messages: $messages, runStatus: $runStatus, model: $model, permissionMode: $permissionMode, effort: $effort, thinkingMode: $thinkingMode, claudeSessionId: $claudeSessionId, lastError: $lastError, stderrTail: $stderrTail, availableSkills: $availableSkills, disabledMcpServers: $disabledMcpServers, inputDraft: $inputDraft, allowAlwaysActive: $allowAlwaysActive, queuedPrompt: $queuedPrompt, usage: $usage)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ClaudeSessionDataCopyWith<$Res>  {
   factory $ClaudeSessionDataCopyWith(ClaudeSessionData value, $Res Function(ClaudeSessionData) _then) = _$ClaudeSessionDataCopyWithImpl;
 @useResult
 $Res call({
- List<ClaudeMessage> messages, ClaudeRunStatus runStatus, ClaudeModel model, ClaudePermissionMode permissionMode, ClaudeEffort effort, ClaudeThinkingMode thinkingMode, String? claudeSessionId, Failure? lastError, List<String> stderrTail, List<String> availableSkills, Set<String> disabledMcpServers, ChatInputDraft inputDraft, bool allowAlwaysActive, QueuedPrompt? queuedPrompt, SessionUsage? usage
+ String tabId, List<ClaudeMessage> messages, ClaudeRunStatus runStatus, ClaudeModel model, ClaudePermissionMode permissionMode, ClaudeEffort effort, ClaudeThinkingMode thinkingMode, String? claudeSessionId, Failure? lastError, List<String> stderrTail, List<String> availableSkills, Set<String> disabledMcpServers, ChatInputDraft inputDraft, bool allowAlwaysActive, QueuedPrompt? queuedPrompt, SessionUsage? usage
 });
 
 
@@ -62,9 +62,10 @@ class _$ClaudeSessionDataCopyWithImpl<$Res>
 
 /// Create a copy of ClaudeSessionData
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? messages = null,Object? runStatus = null,Object? model = null,Object? permissionMode = null,Object? effort = null,Object? thinkingMode = null,Object? claudeSessionId = freezed,Object? lastError = freezed,Object? stderrTail = null,Object? availableSkills = null,Object? disabledMcpServers = null,Object? inputDraft = null,Object? allowAlwaysActive = null,Object? queuedPrompt = freezed,Object? usage = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? tabId = null,Object? messages = null,Object? runStatus = null,Object? model = null,Object? permissionMode = null,Object? effort = null,Object? thinkingMode = null,Object? claudeSessionId = freezed,Object? lastError = freezed,Object? stderrTail = null,Object? availableSkills = null,Object? disabledMcpServers = null,Object? inputDraft = null,Object? allowAlwaysActive = null,Object? queuedPrompt = freezed,Object? usage = freezed,}) {
   return _then(_self.copyWith(
-messages: null == messages ? _self.messages : messages // ignore: cast_nullable_to_non_nullable
+tabId: null == tabId ? _self.tabId : tabId // ignore: cast_nullable_to_non_nullable
+as String,messages: null == messages ? _self.messages : messages // ignore: cast_nullable_to_non_nullable
 as List<ClaudeMessage>,runStatus: null == runStatus ? _self.runStatus : runStatus // ignore: cast_nullable_to_non_nullable
 as ClaudeRunStatus,model: null == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
 as ClaudeModel,permissionMode: null == permissionMode ? _self.permissionMode : permissionMode // ignore: cast_nullable_to_non_nullable
@@ -197,10 +198,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<ClaudeMessage> messages,  ClaudeRunStatus runStatus,  ClaudeModel model,  ClaudePermissionMode permissionMode,  ClaudeEffort effort,  ClaudeThinkingMode thinkingMode,  String? claudeSessionId,  Failure? lastError,  List<String> stderrTail,  List<String> availableSkills,  Set<String> disabledMcpServers,  ChatInputDraft inputDraft,  bool allowAlwaysActive,  QueuedPrompt? queuedPrompt,  SessionUsage? usage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String tabId,  List<ClaudeMessage> messages,  ClaudeRunStatus runStatus,  ClaudeModel model,  ClaudePermissionMode permissionMode,  ClaudeEffort effort,  ClaudeThinkingMode thinkingMode,  String? claudeSessionId,  Failure? lastError,  List<String> stderrTail,  List<String> availableSkills,  Set<String> disabledMcpServers,  ChatInputDraft inputDraft,  bool allowAlwaysActive,  QueuedPrompt? queuedPrompt,  SessionUsage? usage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ClaudeSessionData() when $default != null:
-return $default(_that.messages,_that.runStatus,_that.model,_that.permissionMode,_that.effort,_that.thinkingMode,_that.claudeSessionId,_that.lastError,_that.stderrTail,_that.availableSkills,_that.disabledMcpServers,_that.inputDraft,_that.allowAlwaysActive,_that.queuedPrompt,_that.usage);case _:
+return $default(_that.tabId,_that.messages,_that.runStatus,_that.model,_that.permissionMode,_that.effort,_that.thinkingMode,_that.claudeSessionId,_that.lastError,_that.stderrTail,_that.availableSkills,_that.disabledMcpServers,_that.inputDraft,_that.allowAlwaysActive,_that.queuedPrompt,_that.usage);case _:
   return orElse();
 
 }
@@ -218,10 +219,10 @@ return $default(_that.messages,_that.runStatus,_that.model,_that.permissionMode,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<ClaudeMessage> messages,  ClaudeRunStatus runStatus,  ClaudeModel model,  ClaudePermissionMode permissionMode,  ClaudeEffort effort,  ClaudeThinkingMode thinkingMode,  String? claudeSessionId,  Failure? lastError,  List<String> stderrTail,  List<String> availableSkills,  Set<String> disabledMcpServers,  ChatInputDraft inputDraft,  bool allowAlwaysActive,  QueuedPrompt? queuedPrompt,  SessionUsage? usage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String tabId,  List<ClaudeMessage> messages,  ClaudeRunStatus runStatus,  ClaudeModel model,  ClaudePermissionMode permissionMode,  ClaudeEffort effort,  ClaudeThinkingMode thinkingMode,  String? claudeSessionId,  Failure? lastError,  List<String> stderrTail,  List<String> availableSkills,  Set<String> disabledMcpServers,  ChatInputDraft inputDraft,  bool allowAlwaysActive,  QueuedPrompt? queuedPrompt,  SessionUsage? usage)  $default,) {final _that = this;
 switch (_that) {
 case _ClaudeSessionData():
-return $default(_that.messages,_that.runStatus,_that.model,_that.permissionMode,_that.effort,_that.thinkingMode,_that.claudeSessionId,_that.lastError,_that.stderrTail,_that.availableSkills,_that.disabledMcpServers,_that.inputDraft,_that.allowAlwaysActive,_that.queuedPrompt,_that.usage);case _:
+return $default(_that.tabId,_that.messages,_that.runStatus,_that.model,_that.permissionMode,_that.effort,_that.thinkingMode,_that.claudeSessionId,_that.lastError,_that.stderrTail,_that.availableSkills,_that.disabledMcpServers,_that.inputDraft,_that.allowAlwaysActive,_that.queuedPrompt,_that.usage);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -238,10 +239,10 @@ return $default(_that.messages,_that.runStatus,_that.model,_that.permissionMode,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<ClaudeMessage> messages,  ClaudeRunStatus runStatus,  ClaudeModel model,  ClaudePermissionMode permissionMode,  ClaudeEffort effort,  ClaudeThinkingMode thinkingMode,  String? claudeSessionId,  Failure? lastError,  List<String> stderrTail,  List<String> availableSkills,  Set<String> disabledMcpServers,  ChatInputDraft inputDraft,  bool allowAlwaysActive,  QueuedPrompt? queuedPrompt,  SessionUsage? usage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String tabId,  List<ClaudeMessage> messages,  ClaudeRunStatus runStatus,  ClaudeModel model,  ClaudePermissionMode permissionMode,  ClaudeEffort effort,  ClaudeThinkingMode thinkingMode,  String? claudeSessionId,  Failure? lastError,  List<String> stderrTail,  List<String> availableSkills,  Set<String> disabledMcpServers,  ChatInputDraft inputDraft,  bool allowAlwaysActive,  QueuedPrompt? queuedPrompt,  SessionUsage? usage)?  $default,) {final _that = this;
 switch (_that) {
 case _ClaudeSessionData() when $default != null:
-return $default(_that.messages,_that.runStatus,_that.model,_that.permissionMode,_that.effort,_that.thinkingMode,_that.claudeSessionId,_that.lastError,_that.stderrTail,_that.availableSkills,_that.disabledMcpServers,_that.inputDraft,_that.allowAlwaysActive,_that.queuedPrompt,_that.usage);case _:
+return $default(_that.tabId,_that.messages,_that.runStatus,_that.model,_that.permissionMode,_that.effort,_that.thinkingMode,_that.claudeSessionId,_that.lastError,_that.stderrTail,_that.availableSkills,_that.disabledMcpServers,_that.inputDraft,_that.allowAlwaysActive,_that.queuedPrompt,_that.usage);case _:
   return null;
 
 }
@@ -253,9 +254,10 @@ return $default(_that.messages,_that.runStatus,_that.model,_that.permissionMode,
 
 
 class _ClaudeSessionData implements ClaudeSessionData {
-  const _ClaudeSessionData({final  List<ClaudeMessage> messages = const <ClaudeMessage>[], this.runStatus = ClaudeRunStatus.idle, required this.model, required this.permissionMode, required this.effort, required this.thinkingMode, this.claudeSessionId, this.lastError, final  List<String> stderrTail = const <String>[], final  List<String> availableSkills = const <String>[], final  Set<String> disabledMcpServers = const <String>{}, this.inputDraft = ChatInputDraft.empty, this.allowAlwaysActive = false, this.queuedPrompt, this.usage}): _messages = messages,_stderrTail = stderrTail,_availableSkills = availableSkills,_disabledMcpServers = disabledMcpServers;
+  const _ClaudeSessionData({this.tabId = '', final  List<ClaudeMessage> messages = const <ClaudeMessage>[], this.runStatus = ClaudeRunStatus.idle, required this.model, required this.permissionMode, required this.effort, required this.thinkingMode, this.claudeSessionId, this.lastError, final  List<String> stderrTail = const <String>[], final  List<String> availableSkills = const <String>[], final  Set<String> disabledMcpServers = const <String>{}, this.inputDraft = ChatInputDraft.empty, this.allowAlwaysActive = false, this.queuedPrompt, this.usage}): _messages = messages,_stderrTail = stderrTail,_availableSkills = availableSkills,_disabledMcpServers = disabledMcpServers;
   
 
+@override@JsonKey() final  String tabId;
  final  List<ClaudeMessage> _messages;
 @override@JsonKey() List<ClaudeMessage> get messages {
   if (_messages is EqualUnmodifiableListView) return _messages;
@@ -306,16 +308,16 @@ _$ClaudeSessionDataCopyWith<_ClaudeSessionData> get copyWith => __$ClaudeSession
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClaudeSessionData&&const DeepCollectionEquality().equals(other._messages, _messages)&&(identical(other.runStatus, runStatus) || other.runStatus == runStatus)&&(identical(other.model, model) || other.model == model)&&(identical(other.permissionMode, permissionMode) || other.permissionMode == permissionMode)&&(identical(other.effort, effort) || other.effort == effort)&&(identical(other.thinkingMode, thinkingMode) || other.thinkingMode == thinkingMode)&&(identical(other.claudeSessionId, claudeSessionId) || other.claudeSessionId == claudeSessionId)&&(identical(other.lastError, lastError) || other.lastError == lastError)&&const DeepCollectionEquality().equals(other._stderrTail, _stderrTail)&&const DeepCollectionEquality().equals(other._availableSkills, _availableSkills)&&const DeepCollectionEquality().equals(other._disabledMcpServers, _disabledMcpServers)&&(identical(other.inputDraft, inputDraft) || other.inputDraft == inputDraft)&&(identical(other.allowAlwaysActive, allowAlwaysActive) || other.allowAlwaysActive == allowAlwaysActive)&&(identical(other.queuedPrompt, queuedPrompt) || other.queuedPrompt == queuedPrompt)&&(identical(other.usage, usage) || other.usage == usage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClaudeSessionData&&(identical(other.tabId, tabId) || other.tabId == tabId)&&const DeepCollectionEquality().equals(other._messages, _messages)&&(identical(other.runStatus, runStatus) || other.runStatus == runStatus)&&(identical(other.model, model) || other.model == model)&&(identical(other.permissionMode, permissionMode) || other.permissionMode == permissionMode)&&(identical(other.effort, effort) || other.effort == effort)&&(identical(other.thinkingMode, thinkingMode) || other.thinkingMode == thinkingMode)&&(identical(other.claudeSessionId, claudeSessionId) || other.claudeSessionId == claudeSessionId)&&(identical(other.lastError, lastError) || other.lastError == lastError)&&const DeepCollectionEquality().equals(other._stderrTail, _stderrTail)&&const DeepCollectionEquality().equals(other._availableSkills, _availableSkills)&&const DeepCollectionEquality().equals(other._disabledMcpServers, _disabledMcpServers)&&(identical(other.inputDraft, inputDraft) || other.inputDraft == inputDraft)&&(identical(other.allowAlwaysActive, allowAlwaysActive) || other.allowAlwaysActive == allowAlwaysActive)&&(identical(other.queuedPrompt, queuedPrompt) || other.queuedPrompt == queuedPrompt)&&(identical(other.usage, usage) || other.usage == usage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_messages),runStatus,model,permissionMode,effort,thinkingMode,claudeSessionId,lastError,const DeepCollectionEquality().hash(_stderrTail),const DeepCollectionEquality().hash(_availableSkills),const DeepCollectionEquality().hash(_disabledMcpServers),inputDraft,allowAlwaysActive,queuedPrompt,usage);
+int get hashCode => Object.hash(runtimeType,tabId,const DeepCollectionEquality().hash(_messages),runStatus,model,permissionMode,effort,thinkingMode,claudeSessionId,lastError,const DeepCollectionEquality().hash(_stderrTail),const DeepCollectionEquality().hash(_availableSkills),const DeepCollectionEquality().hash(_disabledMcpServers),inputDraft,allowAlwaysActive,queuedPrompt,usage);
 
 @override
 String toString() {
-  return 'ClaudeSessionData(messages: $messages, runStatus: $runStatus, model: $model, permissionMode: $permissionMode, effort: $effort, thinkingMode: $thinkingMode, claudeSessionId: $claudeSessionId, lastError: $lastError, stderrTail: $stderrTail, availableSkills: $availableSkills, disabledMcpServers: $disabledMcpServers, inputDraft: $inputDraft, allowAlwaysActive: $allowAlwaysActive, queuedPrompt: $queuedPrompt, usage: $usage)';
+  return 'ClaudeSessionData(tabId: $tabId, messages: $messages, runStatus: $runStatus, model: $model, permissionMode: $permissionMode, effort: $effort, thinkingMode: $thinkingMode, claudeSessionId: $claudeSessionId, lastError: $lastError, stderrTail: $stderrTail, availableSkills: $availableSkills, disabledMcpServers: $disabledMcpServers, inputDraft: $inputDraft, allowAlwaysActive: $allowAlwaysActive, queuedPrompt: $queuedPrompt, usage: $usage)';
 }
 
 
@@ -326,7 +328,7 @@ abstract mixin class _$ClaudeSessionDataCopyWith<$Res> implements $ClaudeSession
   factory _$ClaudeSessionDataCopyWith(_ClaudeSessionData value, $Res Function(_ClaudeSessionData) _then) = __$ClaudeSessionDataCopyWithImpl;
 @override @useResult
 $Res call({
- List<ClaudeMessage> messages, ClaudeRunStatus runStatus, ClaudeModel model, ClaudePermissionMode permissionMode, ClaudeEffort effort, ClaudeThinkingMode thinkingMode, String? claudeSessionId, Failure? lastError, List<String> stderrTail, List<String> availableSkills, Set<String> disabledMcpServers, ChatInputDraft inputDraft, bool allowAlwaysActive, QueuedPrompt? queuedPrompt, SessionUsage? usage
+ String tabId, List<ClaudeMessage> messages, ClaudeRunStatus runStatus, ClaudeModel model, ClaudePermissionMode permissionMode, ClaudeEffort effort, ClaudeThinkingMode thinkingMode, String? claudeSessionId, Failure? lastError, List<String> stderrTail, List<String> availableSkills, Set<String> disabledMcpServers, ChatInputDraft inputDraft, bool allowAlwaysActive, QueuedPrompt? queuedPrompt, SessionUsage? usage
 });
 
 
@@ -343,9 +345,10 @@ class __$ClaudeSessionDataCopyWithImpl<$Res>
 
 /// Create a copy of ClaudeSessionData
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? messages = null,Object? runStatus = null,Object? model = null,Object? permissionMode = null,Object? effort = null,Object? thinkingMode = null,Object? claudeSessionId = freezed,Object? lastError = freezed,Object? stderrTail = null,Object? availableSkills = null,Object? disabledMcpServers = null,Object? inputDraft = null,Object? allowAlwaysActive = null,Object? queuedPrompt = freezed,Object? usage = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? tabId = null,Object? messages = null,Object? runStatus = null,Object? model = null,Object? permissionMode = null,Object? effort = null,Object? thinkingMode = null,Object? claudeSessionId = freezed,Object? lastError = freezed,Object? stderrTail = null,Object? availableSkills = null,Object? disabledMcpServers = null,Object? inputDraft = null,Object? allowAlwaysActive = null,Object? queuedPrompt = freezed,Object? usage = freezed,}) {
   return _then(_ClaudeSessionData(
-messages: null == messages ? _self._messages : messages // ignore: cast_nullable_to_non_nullable
+tabId: null == tabId ? _self.tabId : tabId // ignore: cast_nullable_to_non_nullable
+as String,messages: null == messages ? _self._messages : messages // ignore: cast_nullable_to_non_nullable
 as List<ClaudeMessage>,runStatus: null == runStatus ? _self.runStatus : runStatus // ignore: cast_nullable_to_non_nullable
 as ClaudeRunStatus,model: null == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
 as ClaudeModel,permissionMode: null == permissionMode ? _self.permissionMode : permissionMode // ignore: cast_nullable_to_non_nullable
@@ -401,9 +404,275 @@ $SessionUsageCopyWith<$Res>? get usage {
 }
 
 /// @nodoc
+mixin _$WorkspaceSessions {
+
+ List<ClaudeSessionData> get tabs; String get activeTabId;
+/// Create a copy of WorkspaceSessions
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$WorkspaceSessionsCopyWith<WorkspaceSessions> get copyWith => _$WorkspaceSessionsCopyWithImpl<WorkspaceSessions>(this as WorkspaceSessions, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkspaceSessions&&const DeepCollectionEquality().equals(other.tabs, tabs)&&(identical(other.activeTabId, activeTabId) || other.activeTabId == activeTabId));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(tabs),activeTabId);
+
+@override
+String toString() {
+  return 'WorkspaceSessions(tabs: $tabs, activeTabId: $activeTabId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $WorkspaceSessionsCopyWith<$Res>  {
+  factory $WorkspaceSessionsCopyWith(WorkspaceSessions value, $Res Function(WorkspaceSessions) _then) = _$WorkspaceSessionsCopyWithImpl;
+@useResult
+$Res call({
+ List<ClaudeSessionData> tabs, String activeTabId
+});
+
+
+
+
+}
+/// @nodoc
+class _$WorkspaceSessionsCopyWithImpl<$Res>
+    implements $WorkspaceSessionsCopyWith<$Res> {
+  _$WorkspaceSessionsCopyWithImpl(this._self, this._then);
+
+  final WorkspaceSessions _self;
+  final $Res Function(WorkspaceSessions) _then;
+
+/// Create a copy of WorkspaceSessions
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? tabs = null,Object? activeTabId = null,}) {
+  return _then(_self.copyWith(
+tabs: null == tabs ? _self.tabs : tabs // ignore: cast_nullable_to_non_nullable
+as List<ClaudeSessionData>,activeTabId: null == activeTabId ? _self.activeTabId : activeTabId // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [WorkspaceSessions].
+extension WorkspaceSessionsPatterns on WorkspaceSessions {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _WorkspaceSessions value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _WorkspaceSessions() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _WorkspaceSessions value)  $default,){
+final _that = this;
+switch (_that) {
+case _WorkspaceSessions():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _WorkspaceSessions value)?  $default,){
+final _that = this;
+switch (_that) {
+case _WorkspaceSessions() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<ClaudeSessionData> tabs,  String activeTabId)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _WorkspaceSessions() when $default != null:
+return $default(_that.tabs,_that.activeTabId);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<ClaudeSessionData> tabs,  String activeTabId)  $default,) {final _that = this;
+switch (_that) {
+case _WorkspaceSessions():
+return $default(_that.tabs,_that.activeTabId);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<ClaudeSessionData> tabs,  String activeTabId)?  $default,) {final _that = this;
+switch (_that) {
+case _WorkspaceSessions() when $default != null:
+return $default(_that.tabs,_that.activeTabId);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _WorkspaceSessions extends WorkspaceSessions {
+  const _WorkspaceSessions({final  List<ClaudeSessionData> tabs = const <ClaudeSessionData>[], this.activeTabId = ''}): _tabs = tabs,super._();
+  
+
+ final  List<ClaudeSessionData> _tabs;
+@override@JsonKey() List<ClaudeSessionData> get tabs {
+  if (_tabs is EqualUnmodifiableListView) return _tabs;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_tabs);
+}
+
+@override@JsonKey() final  String activeTabId;
+
+/// Create a copy of WorkspaceSessions
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$WorkspaceSessionsCopyWith<_WorkspaceSessions> get copyWith => __$WorkspaceSessionsCopyWithImpl<_WorkspaceSessions>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WorkspaceSessions&&const DeepCollectionEquality().equals(other._tabs, _tabs)&&(identical(other.activeTabId, activeTabId) || other.activeTabId == activeTabId));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_tabs),activeTabId);
+
+@override
+String toString() {
+  return 'WorkspaceSessions(tabs: $tabs, activeTabId: $activeTabId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$WorkspaceSessionsCopyWith<$Res> implements $WorkspaceSessionsCopyWith<$Res> {
+  factory _$WorkspaceSessionsCopyWith(_WorkspaceSessions value, $Res Function(_WorkspaceSessions) _then) = __$WorkspaceSessionsCopyWithImpl;
+@override @useResult
+$Res call({
+ List<ClaudeSessionData> tabs, String activeTabId
+});
+
+
+
+
+}
+/// @nodoc
+class __$WorkspaceSessionsCopyWithImpl<$Res>
+    implements _$WorkspaceSessionsCopyWith<$Res> {
+  __$WorkspaceSessionsCopyWithImpl(this._self, this._then);
+
+  final _WorkspaceSessions _self;
+  final $Res Function(_WorkspaceSessions) _then;
+
+/// Create a copy of WorkspaceSessions
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? tabs = null,Object? activeTabId = null,}) {
+  return _then(_WorkspaceSessions(
+tabs: null == tabs ? _self._tabs : tabs // ignore: cast_nullable_to_non_nullable
+as List<ClaudeSessionData>,activeTabId: null == activeTabId ? _self.activeTabId : activeTabId // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$ClaudeSessionsState {
 
- Map<String, ClaudeSessionData> get sessions;
+ Map<String, WorkspaceSessions> get workspaces;
 /// Create a copy of ClaudeSessionsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -414,16 +683,16 @@ $ClaudeSessionsStateCopyWith<ClaudeSessionsState> get copyWith => _$ClaudeSessio
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeSessionsState&&const DeepCollectionEquality().equals(other.sessions, sessions));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeSessionsState&&const DeepCollectionEquality().equals(other.workspaces, workspaces));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(sessions));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(workspaces));
 
 @override
 String toString() {
-  return 'ClaudeSessionsState(sessions: $sessions)';
+  return 'ClaudeSessionsState(workspaces: $workspaces)';
 }
 
 
@@ -434,7 +703,7 @@ abstract mixin class $ClaudeSessionsStateCopyWith<$Res>  {
   factory $ClaudeSessionsStateCopyWith(ClaudeSessionsState value, $Res Function(ClaudeSessionsState) _then) = _$ClaudeSessionsStateCopyWithImpl;
 @useResult
 $Res call({
- Map<String, ClaudeSessionData> sessions
+ Map<String, WorkspaceSessions> workspaces
 });
 
 
@@ -451,10 +720,10 @@ class _$ClaudeSessionsStateCopyWithImpl<$Res>
 
 /// Create a copy of ClaudeSessionsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? sessions = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? workspaces = null,}) {
   return _then(_self.copyWith(
-sessions: null == sessions ? _self.sessions : sessions // ignore: cast_nullable_to_non_nullable
-as Map<String, ClaudeSessionData>,
+workspaces: null == workspaces ? _self.workspaces : workspaces // ignore: cast_nullable_to_non_nullable
+as Map<String, WorkspaceSessions>,
   ));
 }
 
@@ -539,10 +808,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, ClaudeSessionData> sessions)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, WorkspaceSessions> workspaces)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ClaudeSessionsState() when $default != null:
-return $default(_that.sessions);case _:
+return $default(_that.workspaces);case _:
   return orElse();
 
 }
@@ -560,10 +829,10 @@ return $default(_that.sessions);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, ClaudeSessionData> sessions)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, WorkspaceSessions> workspaces)  $default,) {final _that = this;
 switch (_that) {
 case _ClaudeSessionsState():
-return $default(_that.sessions);case _:
+return $default(_that.workspaces);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -580,10 +849,10 @@ return $default(_that.sessions);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, ClaudeSessionData> sessions)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, WorkspaceSessions> workspaces)?  $default,) {final _that = this;
 switch (_that) {
 case _ClaudeSessionsState() when $default != null:
-return $default(_that.sessions);case _:
+return $default(_that.workspaces);case _:
   return null;
 
 }
@@ -595,14 +864,14 @@ return $default(_that.sessions);case _:
 
 
 class _ClaudeSessionsState extends ClaudeSessionsState {
-  const _ClaudeSessionsState({final  Map<String, ClaudeSessionData> sessions = const <String, ClaudeSessionData>{}}): _sessions = sessions,super._();
+  const _ClaudeSessionsState({final  Map<String, WorkspaceSessions> workspaces = const <String, WorkspaceSessions>{}}): _workspaces = workspaces,super._();
   
 
- final  Map<String, ClaudeSessionData> _sessions;
-@override@JsonKey() Map<String, ClaudeSessionData> get sessions {
-  if (_sessions is EqualUnmodifiableMapView) return _sessions;
+ final  Map<String, WorkspaceSessions> _workspaces;
+@override@JsonKey() Map<String, WorkspaceSessions> get workspaces {
+  if (_workspaces is EqualUnmodifiableMapView) return _workspaces;
   // ignore: implicit_dynamic_type
-  return EqualUnmodifiableMapView(_sessions);
+  return EqualUnmodifiableMapView(_workspaces);
 }
 
 
@@ -616,16 +885,16 @@ _$ClaudeSessionsStateCopyWith<_ClaudeSessionsState> get copyWith => __$ClaudeSes
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClaudeSessionsState&&const DeepCollectionEquality().equals(other._sessions, _sessions));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClaudeSessionsState&&const DeepCollectionEquality().equals(other._workspaces, _workspaces));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_sessions));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_workspaces));
 
 @override
 String toString() {
-  return 'ClaudeSessionsState(sessions: $sessions)';
+  return 'ClaudeSessionsState(workspaces: $workspaces)';
 }
 
 
@@ -636,7 +905,7 @@ abstract mixin class _$ClaudeSessionsStateCopyWith<$Res> implements $ClaudeSessi
   factory _$ClaudeSessionsStateCopyWith(_ClaudeSessionsState value, $Res Function(_ClaudeSessionsState) _then) = __$ClaudeSessionsStateCopyWithImpl;
 @override @useResult
 $Res call({
- Map<String, ClaudeSessionData> sessions
+ Map<String, WorkspaceSessions> workspaces
 });
 
 
@@ -653,10 +922,10 @@ class __$ClaudeSessionsStateCopyWithImpl<$Res>
 
 /// Create a copy of ClaudeSessionsState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? sessions = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? workspaces = null,}) {
   return _then(_ClaudeSessionsState(
-sessions: null == sessions ? _self._sessions : sessions // ignore: cast_nullable_to_non_nullable
-as Map<String, ClaudeSessionData>,
+workspaces: null == workspaces ? _self._workspaces : workspaces // ignore: cast_nullable_to_non_nullable
+as Map<String, WorkspaceSessions>,
   ));
 }
 

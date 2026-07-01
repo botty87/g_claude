@@ -93,7 +93,7 @@ class _Fixture {
 
 /// Builds a [ClaudeSessionsCubit] wired to mocked collaborators, with a
 /// single workspace already present in [WorkspacesCubit]'s state (so a
-/// [ClaudeSessionData] entry exists in `state.sessions[_wid]` before the
+/// [ClaudeSessionData] entry exists in `state.sessionFor(_wid)` before the
 /// test starts driving `sendPrompt`/events).
 _Fixture _makeFixture() {
   final sendPrompt = _MockSendPrompt();
@@ -186,13 +186,13 @@ void main() {
       final fixture = _makeFixture();
       await _startRun(fixture);
 
-      expect(fixture.cubit.state.sessions[_wid]?.runStatus, ClaudeRunStatus.connecting);
+      expect(fixture.cubit.state.sessionFor(_wid)?.runStatus, ClaudeRunStatus.connecting);
 
       fixture.runController.add(const Right(ClaudeEvent.sessionInit(sessionId: 'sess-1', model: 'claude-opus')));
       await _drain();
 
-      expect(fixture.cubit.state.sessions[_wid]?.runStatus, ClaudeRunStatus.running);
-      expect(fixture.cubit.state.sessions[_wid]?.claudeSessionId, 'sess-1');
+      expect(fixture.cubit.state.sessionFor(_wid)?.runStatus, ClaudeRunStatus.running);
+      expect(fixture.cubit.state.sessionFor(_wid)?.claudeSessionId, 'sess-1');
 
       await fixture.cubit.close();
     });
@@ -212,7 +212,7 @@ void main() {
       );
       await _drain();
 
-      final messages = fixture.cubit.state.sessions[_wid]!.messages;
+      final messages = fixture.cubit.state.sessionFor(_wid)!.messages;
       final planMessage = messages.whereType<ClaudeMessagePlan>().single;
       expect(planMessage.toolUseId, 'pl1');
       expect(planMessage.plan, '1. Do the thing');
@@ -237,7 +237,7 @@ void main() {
       );
       await _drain();
 
-      final messages = fixture.cubit.state.sessions[_wid]!.messages;
+      final messages = fixture.cubit.state.sessionFor(_wid)!.messages;
       final permissionMessage = messages.whereType<ClaudeMessagePermissionRequest>().single;
       expect(permissionMessage.requestId, 'req-1');
       expect(permissionMessage.toolName, 'Bash');
@@ -259,12 +259,12 @@ void main() {
 
       fixture.runController.add(const Right(ClaudeEvent.sessionInit(sessionId: 'sess-1', model: 'claude-opus')));
       await _drain();
-      expect(fixture.cubit.state.sessions[_wid]?.runStatus, ClaudeRunStatus.running);
+      expect(fixture.cubit.state.sessionFor(_wid)?.runStatus, ClaudeRunStatus.running);
 
       fixture.runController.add(const Right(ClaudeEvent.taskComplete(result: 'done')));
       await _drain();
 
-      expect(fixture.cubit.state.sessions[_wid]?.runStatus, ClaudeRunStatus.idle);
+      expect(fixture.cubit.state.sessionFor(_wid)?.runStatus, ClaudeRunStatus.idle);
 
       await fixture.cubit.close();
     });
@@ -284,7 +284,7 @@ void main() {
       );
       await _drain();
 
-      final session = fixture.cubit.state.sessions[_wid]!;
+      final session = fixture.cubit.state.sessionFor(_wid)!;
       expect(session.runStatus, ClaudeRunStatus.sessionDead);
       expect(session.stderrTail, ['fatal: boom', 'stack trace...']);
       expect(session.lastError, isA<SubprocessFailure>());
@@ -299,7 +299,7 @@ void main() {
       fixture.runController.add(const Right(ClaudeEvent.sessionDead(exitCode: 0, stderrTail: [])));
       await _drain();
 
-      final session = fixture.cubit.state.sessions[_wid]!;
+      final session = fixture.cubit.state.sessionFor(_wid)!;
       expect(session.runStatus, ClaudeRunStatus.idle);
       expect(session.lastError, isNull);
 
@@ -319,13 +319,13 @@ void main() {
       fixture.runController.add(const Right(ClaudeEvent.planProposed(toolUseId: 'pl1', plan: 'plan text')));
       await _drain();
 
-      final planMessage = fixture.cubit.state.sessions[_wid]!.messages.whereType<ClaudeMessagePlan>().single;
+      final planMessage = fixture.cubit.state.sessionFor(_wid)!.messages.whereType<ClaudeMessagePlan>().single;
 
       fixture.cubit.answerPlan(_wid, planMessage.id, true);
       await _drain();
 
-      expect(fixture.cubit.state.sessions[_wid]?.permissionMode, ClaudePermissionMode.auto);
-      final updatedPlan = fixture.cubit.state.sessions[_wid]!.messages.whereType<ClaudeMessagePlan>().single;
+      expect(fixture.cubit.state.sessionFor(_wid)?.permissionMode, ClaudePermissionMode.auto);
+      final updatedPlan = fixture.cubit.state.sessionFor(_wid)!.messages.whereType<ClaudeMessagePlan>().single;
       expect(updatedPlan.answered, isTrue);
       expect(updatedPlan.approved, isTrue);
 
@@ -345,13 +345,13 @@ void main() {
         fixture.runController.add(const Right(ClaudeEvent.planProposed(toolUseId: 'pl2', plan: 'plan text')));
         await _drain();
 
-        final before = fixture.cubit.state.sessions[_wid]!.permissionMode;
-        final planMessage = fixture.cubit.state.sessions[_wid]!.messages.whereType<ClaudeMessagePlan>().single;
+        final before = fixture.cubit.state.sessionFor(_wid)!.permissionMode;
+        final planMessage = fixture.cubit.state.sessionFor(_wid)!.messages.whereType<ClaudeMessagePlan>().single;
 
         fixture.cubit.answerPlan(_wid, planMessage.id, false);
         await _drain();
 
-        expect(fixture.cubit.state.sessions[_wid]?.permissionMode, before, reason: 'rejecting must not change mode');
+        expect(fixture.cubit.state.sessionFor(_wid)?.permissionMode, before, reason: 'rejecting must not change mode');
 
         verify(() => fixture.repo.respondPlan(sid: _wid, toolUseId: 'pl2', approve: false, mode: null)).called(1);
 

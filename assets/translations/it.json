@@ -224,6 +224,9 @@
       "reject": "Rifiuta",
       "answeredApproved": "Piano approvato",
       "answeredRejected": "Piano rifiutato"
+    },
+    "session": {
+      "newTab": "Nuova chat"
     }
   },
   "workspace": {

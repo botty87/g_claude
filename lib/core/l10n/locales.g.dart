@@ -184,6 +184,9 @@ class _Claude {
   /// Translations for plan
   final Plan = const _ClaudePlan._();
 
+  /// Translations for session
+  final Session = const _ClaudeSession._();
+
   /// Translations for terminal
   final Terminal = const _ClaudeTerminal._();
 
@@ -349,6 +352,13 @@ class _ClaudePlan {
   String get approve => LocaleKeys.claude_plan_approve.tr();
   String get reject => LocaleKeys.claude_plan_reject.tr();
   String get title => LocaleKeys.claude_plan_title.tr();
+}
+
+/// Nested class for session translations
+class _ClaudeSession {
+  const _ClaudeSession._();
+
+  String get newTab => LocaleKeys.claude_session_newTab.tr();
 }
 
 /// Nested class for terminal translations

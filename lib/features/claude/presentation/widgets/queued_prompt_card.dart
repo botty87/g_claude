@@ -19,10 +19,10 @@ class QueuedPromptCard extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final queued = context.select<ClaudeSessionsCubit, QueuedPrompt?>(
-      (c) => c.state.sessions[workspaceId]?.queuedPrompt,
+      (c) => c.state.sessionFor(workspaceId)?.queuedPrompt,
     );
     final status = context.select<ClaudeSessionsCubit, ClaudeRunStatus>(
-      (c) => c.state.sessions[workspaceId]?.runStatus ?? ClaudeRunStatus.idle,
+      (c) => c.state.sessionFor(workspaceId)?.runStatus ?? ClaudeRunStatus.idle,
     );
     final isBusy = status == ClaudeRunStatus.connecting || status == ClaudeRunStatus.running;
 
@@ -42,7 +42,7 @@ class QueuedPromptCard extends HookWidget {
 
     useEffect(() {
       void listener() {
-        final current = cubit.state.sessions[workspaceId]?.queuedPrompt;
+        final current = cubit.state.sessionFor(workspaceId)?.queuedPrompt;
         if (current == null) return;
         if (controller.text == current.text) return;
         cubit.setQueuedPrompt(workspaceId, controller.text);

@@ -10,6 +10,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
 import '../../../claude/presentation/widgets/claude_terminal_pane.dart';
+import '../../../claude/presentation/widgets/session_tab_bar.dart';
 import '../../../editor/presentation/cubit/editor_view_cubit.dart';
 import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
 import '../../../editor/presentation/widgets/file_tab.dart';
@@ -39,6 +40,7 @@ class CenterPane extends HookWidget {
 
     return Column(
       children: [
+        const SessionTabBar(),
         _Segmented(
           current: effectiveView,
           codeCount: openCount,

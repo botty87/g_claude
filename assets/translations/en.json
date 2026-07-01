@@ -224,6 +224,9 @@
       "reject": "Reject",
       "answeredApproved": "Plan approved",
       "answeredRejected": "Plan rejected"
+    },
+    "session": {
+      "newTab": "New chat"
     }
   },
   "workspace": {

@@ -32,7 +32,7 @@ class ClaudeTerminalPane extends HookWidget {
       return const _NoWorkspaceState();
     }
 
-    final hasSession = context.select<ClaudeSessionsCubit, bool>((c) => c.state.sessions.containsKey(activeId));
+    final hasSession = context.select<ClaudeSessionsCubit, bool>((c) => c.state.workspaces.containsKey(activeId));
     if (!hasSession) {
       return const _NoWorkspaceState();
     }
@@ -49,14 +49,14 @@ class _ClaudeTerminalPaneActive extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final runStatus = context.select<ClaudeSessionsCubit, ClaudeRunStatus>(
-      (c) => c.state.sessions[workspaceId]?.runStatus ?? ClaudeRunStatus.idle,
+      (c) => c.state.sessionFor(workspaceId)?.runStatus ?? ClaudeRunStatus.idle,
     );
     final messages = context.select<ClaudeSessionsCubit, List<ClaudeMessage>>(
-      (c) => c.state.sessions[workspaceId]?.messages ?? const [],
+      (c) => c.state.sessionFor(workspaceId)?.messages ?? const [],
     );
-    final lastError = context.select<ClaudeSessionsCubit, Failure?>((c) => c.state.sessions[workspaceId]?.lastError);
+    final lastError = context.select<ClaudeSessionsCubit, Failure?>((c) => c.state.sessionFor(workspaceId)?.lastError);
     final stderrTail = context.select<ClaudeSessionsCubit, List<String>>(
-      (c) => c.state.sessions[workspaceId]?.stderrTail ?? const [],
+      (c) => c.state.sessionFor(workspaceId)?.stderrTail ?? const [],
     );
 
     final isBusy =
@@ -73,7 +73,7 @@ class _ClaudeTerminalPaneActive extends HookWidget {
       onDragExited: (_) => isHovering.value = false,
       onDragDone: (details) {
         if (isBusy) return;
-        final liveDraft = sessionsCubit.state.sessions[workspaceId]?.inputDraft;
+        final liveDraft = sessionsCubit.state.sessionFor(workspaceId)?.inputDraft;
         if (liveDraft == null) return;
         final current = liveDraft.attachments;
         final existing = current.map((a) => p.normalize(a.path)).toSet();

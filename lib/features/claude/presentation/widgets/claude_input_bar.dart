@@ -43,7 +43,7 @@ class ClaudeInputBar extends HookWidget {
   Widget build(BuildContext context) {
     final sessionsCubit = context.read<ClaudeSessionsCubit>();
     final initialDraft = useMemoized(
-      () => sessionsCubit.state.sessions[workspaceId]?.inputDraft ?? ChatInputDraft.empty,
+      () => sessionsCubit.state.sessionFor(workspaceId)?.inputDraft ?? ChatInputDraft.empty,
       const [],
     );
 
@@ -56,28 +56,29 @@ class ClaudeInputBar extends HookWidget {
 
     final link = useMemoized(LayerLink.new, const []);
     final selectedChips = context.select<ClaudeSessionsCubit, List<SlashCommand>>(
-      (c) => c.state.sessions[workspaceId]?.inputDraft.selectedCommands ?? const [],
+      (c) => c.state.sessionFor(workspaceId)?.inputDraft.selectedCommands ?? const [],
     );
     final attachments = context.select<ClaudeSessionsCubit, List<ChatAttachment>>(
-      (c) => c.state.sessions[workspaceId]?.inputDraft.attachments ?? const [],
+      (c) => c.state.sessionFor(workspaceId)?.inputDraft.attachments ?? const [],
     );
     final escArmedAt = useRef<DateTime?>(null);
 
     void persistDraft({String? text, List<SlashCommand>? chips, List<ChatAttachment>? attachmentsOverride}) {
       final liveAttachments =
-          sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ?? const <ChatAttachment>[];
+          sessionsCubit.state.sessionFor(workspaceId)?.inputDraft.attachments ?? const <ChatAttachment>[];
       sessionsCubit.setInputDraft(
         workspaceId,
         ChatInputDraft(
           text: text ?? controller.text,
-          selectedCommands: chips ?? sessionsCubit.state.sessions[workspaceId]?.inputDraft.selectedCommands ?? const [],
+          selectedCommands:
+              chips ?? sessionsCubit.state.sessionFor(workspaceId)?.inputDraft.selectedCommands ?? const [],
           attachments: attachmentsOverride ?? liveAttachments,
         ),
       );
     }
 
     final skills = context.select<ClaudeSessionsCubit, List<String>>(
-      (c) => c.state.sessions[workspaceId]?.availableSkills ?? const [],
+      (c) => c.state.sessionFor(workspaceId)?.availableSkills ?? const [],
     );
     useEffect(() {
       slashCubit.updateSkills(skills);
@@ -103,7 +104,7 @@ class ClaudeInputBar extends HookWidget {
         });
         return;
       }
-      final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.selectedCommands ?? const <SlashCommand>[];
+      final live = sessionsCubit.state.sessionFor(workspaceId)?.inputDraft.selectedCommands ?? const <SlashCommand>[];
       final next = [...live, cmd];
       _stripSlashPrefix(controller);
       slashCubit.dismiss();
@@ -117,7 +118,7 @@ class ClaudeInputBar extends HookWidget {
       if (_isBusy) return;
       final res = await FilePicker.pickFiles(allowMultiple: true, type: FileType.any);
       if (res == null) return;
-      final current = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ?? const <ChatAttachment>[];
+      final current = sessionsCubit.state.sessionFor(workspaceId)?.inputDraft.attachments ?? const <ChatAttachment>[];
       final existing = current.where((a) => a.kind == ChatAttachmentKind.file).map((a) => p.normalize(a.path)).toSet();
       final additions = <ChatAttachment>[];
       for (final f in res.files) {
@@ -166,7 +167,8 @@ class ClaudeInputBar extends HookWidget {
               return;
             }
           }
-          final current = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ?? const <ChatAttachment>[];
+          final current =
+              sessionsCubit.state.sessionFor(workspaceId)?.inputDraft.attachments ?? const <ChatAttachment>[];
           persistDraft(
             attachmentsOverride: [
               ...current,
@@ -185,7 +187,7 @@ class ClaudeInputBar extends HookWidget {
       if (_isBusy) return;
       final path = await FilePicker.getDirectoryPath();
       if (path == null) return;
-      final current = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ?? const <ChatAttachment>[];
+      final current = sessionsCubit.state.sessionFor(workspaceId)?.inputDraft.attachments ?? const <ChatAttachment>[];
       final norm = p.normalize(path);
       if (current.any((a) => p.normalize(a.path) == norm)) return;
       persistDraft(
@@ -197,7 +199,7 @@ class ClaudeInputBar extends HookWidget {
     }
 
     void removeAttachment(ChatAttachment a) {
-      final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ?? const <ChatAttachment>[];
+      final live = sessionsCubit.state.sessionFor(workspaceId)?.inputDraft.attachments ?? const <ChatAttachment>[];
       persistDraft(
         attachmentsOverride: live
             .where(
@@ -258,7 +260,8 @@ class ClaudeInputBar extends HookWidget {
 
       if (event.logicalKey == LogicalKeyboardKey.backspace && controller.text.isEmpty && !isSuggesting) {
         if (selectedChips.isNotEmpty) {
-          final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.selectedCommands ?? const <SlashCommand>[];
+          final live =
+              sessionsCubit.state.sessionFor(workspaceId)?.inputDraft.selectedCommands ?? const <SlashCommand>[];
           if (live.isNotEmpty) {
             final next = live.sublist(0, live.length - 1);
             persistDraft(chips: next);
@@ -266,7 +269,7 @@ class ClaudeInputBar extends HookWidget {
           }
         }
         if (attachments.isNotEmpty) {
-          final live = sessionsCubit.state.sessions[workspaceId]?.inputDraft.attachments ?? const <ChatAttachment>[];
+          final live = sessionsCubit.state.sessionFor(workspaceId)?.inputDraft.attachments ?? const <ChatAttachment>[];
           if (live.isNotEmpty) {
             final next = live.sublist(0, live.length - 1);
             persistDraft(attachmentsOverride: next);
@@ -333,7 +336,7 @@ class ClaudeInputBar extends HookWidget {
             chips: selectedChips,
             onRemove: (cmd) {
               final live =
-                  sessionsCubit.state.sessions[workspaceId]?.inputDraft.selectedCommands ?? const <SlashCommand>[];
+                  sessionsCubit.state.sessionFor(workspaceId)?.inputDraft.selectedCommands ?? const <SlashCommand>[];
               final next = live.where((c) => c.trigger != cmd.trigger).toList();
               persistDraft(chips: next);
             },
