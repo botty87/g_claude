@@ -146,13 +146,12 @@
     },
     "thinking": {
       "off": "Off",
-      "think": "Think",
-      "thinkHard": "Think hard",
-      "ultrathink": "Ultrathink"
+      "on": "On"
     },
     "permission": {
       "plan": "Plan (read-only)",
       "acceptEdits": "Accept Edits",
+      "auto": "Auto",
       "bypassPermissions": "Bypass (yolo)",
       "default": "Default"
     },
@@ -206,6 +205,13 @@
       "answeredAllowAlways": "Always allowed",
       "answeredDeny": "Denied",
       "inputLabel": "INPUT"
+    },
+    "plan": {
+      "title": "Plan proposed",
+      "approve": "Approve",
+      "reject": "Reject",
+      "answeredApproved": "Plan approved",
+      "answeredRejected": "Plan rejected"
     }
   },
   "workspace": {

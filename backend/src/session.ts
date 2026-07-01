@@ -54,6 +54,16 @@ function userMessage(text: string, images: string[] = []): SDKUserMessage {
   return { type: 'user', message: { role: 'user', content: blocks as never }, parent_tool_use_id: null };
 }
 
+// 1M-token context beta, auto-enabled for models that support it. The SDK
+// documents `context-1m-2025-08-07` for Sonnet 4/4.5; Opus 4.8 carries its own
+// large-context model variant so needs no beta flag.
+function oneMillionBetas(model?: string): { betas?: never } {
+  if (model && model.toLowerCase().includes('sonnet')) {
+    return { betas: ['context-1m-2025-08-07'] as never };
+  }
+  return {};
+}
+
 function mediaType(path: string): string {
   switch (extname(path).toLowerCase()) {
     case '.png': return 'image/png';
@@ -66,16 +76,21 @@ function mediaType(path: string): string {
 class Session {
   readonly sid: string;
   private mode: PermissionMode;
+  private readonly keepAlive: boolean;
   private allowAlways = false;
   private readonly input = new InputQueue();
   private readonly mapper: EventMapper;
   private readonly pending = new Map<string, (r: PermissionResult) => void>();
+  // Original tool input per pending toolUseID, so allow results can echo a
+  // valid `updatedInput` record (the SDK's Zod schema rejects undefined).
+  private readonly pendingInput = new Map<string, Record<string, unknown>>();
   private readonly stderrTail: string[] = [];
   private query!: Query;
 
   constructor(req: StartReq, private readonly emit: Emit) {
     this.sid = req.sid;
     this.mode = req.mode;
+    this.keepAlive = req.keepAlive ?? false;
     this.mapper = new EventMapper(req.sid);
   }
 
@@ -90,6 +105,13 @@ class Session {
         canUseTool: this.canUseTool,
         ...(req.model ? { model: req.model } : {}),
         ...(req.resume ? { resume: req.resume } : {}),
+        ...(req.effort ? { effort: req.effort as never } : {}),
+        // Thinking as an On/Off switch: adaptive (Claude decides) vs disabled.
+        // Undefined → leave the model default (adaptive on Opus).
+        ...(req.thinking === true ? { thinking: { type: 'adaptive' } as never }
+          : req.thinking === false ? { thinking: { type: 'disabled' } as never } : {}),
+        // 1M context window, auto-enabled where supported (documented: Sonnet).
+        ...(oneMillionBetas(req.model)),
         ...(process.env.CLAUDE_CLI_PATH ? { pathToClaudeCodeExecutable: process.env.CLAUDE_CLI_PATH } : {}),
         stderr: (d: string) => {
           this.stderrTail.push(d);
@@ -106,11 +128,11 @@ class Session {
 
     if (toolName === 'AskUserQuestion') {
       this.emit({ t: 'askUserQuestion', sid, toolUseID, questions: (input as Record<string, unknown>).questions as unknown[] ?? [] });
-      return this.awaitRoundTrip(toolUseID);
+      return this.awaitRoundTrip(toolUseID, input);
     }
     if (toolName === 'ExitPlanMode') {
       this.emit({ t: 'planProposed', sid, toolUseID, plan: String((input as Record<string, unknown>).plan ?? ''), planFilePath: (input as Record<string, unknown>).planFilePath as string | undefined });
-      return this.awaitRoundTrip(toolUseID);
+      return this.awaitRoundTrip(toolUseID, input);
     }
 
     const decision = decisionFor(this.mode, toolName, this.allowAlways);
@@ -118,10 +140,11 @@ class Session {
     if (decision === 'deny') return { behavior: 'deny', message: `Denied by permission mode (${this.mode}).` };
 
     this.emit({ t: 'permissionRequest', sid, toolUseID, toolName, toolInput: input as Record<string, unknown> });
-    return this.awaitRoundTrip(toolUseID);
+    return this.awaitRoundTrip(toolUseID, input);
   };
 
-  private awaitRoundTrip(toolUseID: string): Promise<PermissionResult> {
+  private awaitRoundTrip(toolUseID: string, input: Record<string, unknown>): Promise<PermissionResult> {
+    this.pendingInput.set(toolUseID, input);
     return new Promise<PermissionResult>((resolve) => this.pending.set(toolUseID, resolve));
   }
 
@@ -129,6 +152,12 @@ class Session {
     const r = this.pending.get(toolUseID);
     if (!r) return;
     this.pending.delete(toolUseID);
+    // The SDK's Zod schema requires `updatedInput` to be a record on allow.
+    // Backfill it with the original tool input when the client didn't supply one.
+    if (result.behavior === 'allow' && result.updatedInput === undefined) {
+      result = { ...result, updatedInput: this.pendingInput.get(toolUseID) ?? {} };
+    }
+    this.pendingInput.delete(toolUseID);
     r(result);
   }
 
@@ -145,7 +174,7 @@ class Session {
 
   async answerPlan(req: Extract<Req, { t: 'plan' }>) {
     if (req.decision === 'approve') {
-      const target = req.mode ?? 'acceptEdits';
+      const target = req.mode ?? 'auto';
       this.mode = target;
       try { await this.query.setPermissionMode(target); } catch { /* race: query ended */ }
       this.resolve(req.toolUseID, { behavior: 'allow' });
@@ -175,7 +204,11 @@ class Session {
   private async runLoop() {
     try {
       for await (const m of this.query as AsyncIterable<unknown>) {
-        for (const e of this.mapper.map(m as Record<string, unknown>)) this.emit(e);
+        const msg = m as Record<string, unknown>;
+        for (const e of this.mapper.map(msg)) this.emit(e);
+        // One-shot (Clyde model): end the session after the turn's result so the
+        // client's per-run stream completes. Closing input ends the query loop.
+        if (!this.keepAlive && msg.type === 'result') this.input.close();
       }
       this.emit({ t: 'sessionDead', sid: this.sid, exitCode: 0, stderrTail: [...this.stderrTail] });
     } catch (e) {

@@ -15,9 +15,7 @@ import '../../domain/entities/claude_thinking_mode.dart';
 
 Color _thinkingAccent(ClaudeThinkingMode m) => switch (m) {
   ClaudeThinkingMode.off => AppColors.onSurfaceVariant,
-  ClaudeThinkingMode.think => AppColors.trafficMaximize,
-  ClaudeThinkingMode.thinkHard => AppColors.trafficMinimize,
-  ClaudeThinkingMode.ultrathink => AppColors.trafficClose,
+  ClaudeThinkingMode.on => AppColors.trafficMaximize,
 };
 
 class EffortThinkingPicker extends StatelessWidget {

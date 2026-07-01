@@ -253,9 +253,7 @@ class AppShellPage extends HookWidget {
           LogicalKeyboardKey.keyT => cycleThinking(),
           LogicalKeyboardKey.keyM => cyclePermission(),
           LogicalKeyboardKey.digit1 => setThinkingDirect(ClaudeThinkingMode.off),
-          LogicalKeyboardKey.digit2 => setThinkingDirect(ClaudeThinkingMode.think),
-          LogicalKeyboardKey.digit3 => setThinkingDirect(ClaudeThinkingMode.thinkHard),
-          LogicalKeyboardKey.digit4 => setThinkingDirect(ClaudeThinkingMode.ultrathink),
+          LogicalKeyboardKey.digit2 => setThinkingDirect(ClaudeThinkingMode.on),
           _ => false,
         };
       }

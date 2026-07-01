@@ -17,6 +17,12 @@ export function decisionFor(mode: PermissionMode, toolName: string, allowAlways:
     case 'acceptEdits':
     case 'bypassPermissions':
       return 'allow';
+    case 'dontAsk':
+      return 'deny';
+    case 'auto':
+      // The SDK's auto classifier runs at the permission-mode step; if a call
+      // still reaches canUseTool it was genuinely ambiguous → surface to user.
+      return allowAlways || READ_ONLY_TOOLS.has(toolName) ? 'allow' : 'ask';
     case 'default':
       return allowAlways || READ_ONLY_TOOLS.has(toolName) ? 'allow' : 'ask';
   }

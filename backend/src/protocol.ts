@@ -1,13 +1,17 @@
 // Single message protocol between Clyde (client) and this sidecar.
 // Transport-agnostic payloads; see PROTOCOL.md. Current transport: stdio NDJSON.
 
-export type PermissionMode = 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan';
+export type PermissionMode = 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan' | 'auto' | 'dontAsk';
 
 // ── REQ: client → sidecar ────────────────────────────────────────────────────
 export type Req =
   | { t: 'start'; sid: string; cwd: string; prompt: string; mode: PermissionMode;
       model?: string; effort?: string; thinking?: boolean; resume?: string;
-      images?: string[]; disabledMcp?: string[] }
+      images?: string[]; disabledMcp?: string[];
+      // When false (default) the session closes after the turn's result (emits
+      // sessionDead → the client's per-run stream completes). Clyde runs one
+      // turn per start (+resume). Set true for a persistent multi-turn session.
+      keepAlive?: boolean }
   | { t: 'input'; sid: string; text: string; images?: string[] }
   | { t: 'permission'; sid: string; toolUseID: string; decision: 'allow' | 'deny';
       updatedInput?: Record<string, unknown>; message?: string; remember?: boolean }

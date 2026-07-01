@@ -24,6 +24,7 @@ import 'clickable_code_builder.dart';
 import 'clickable_code_resolver.dart';
 import 'compact_summary_card.dart';
 import 'permission_request_card.dart';
+import 'plan_proposed_card.dart';
 import 'user_bubble_chip.dart';
 
 const _kAnimDuration = Duration(milliseconds: 180);
@@ -227,7 +228,7 @@ class ClaudeMessageList extends HookWidget {
   }
 }
 
-enum _Role { user, assistant, tools, system, askUser, permission, compactSummary }
+enum _Role { user, assistant, tools, system, askUser, permission, compactSummary, plan }
 
 sealed class _Item {
   const _Item();
@@ -247,6 +248,7 @@ class _SingleItem extends _Item {
     ClaudeMessageAskUserQuestion() => _Role.askUser,
     ClaudeMessagePermissionRequest() => _Role.permission,
     ClaudeMessageCompactSummary() => _Role.compactSummary,
+    ClaudeMessagePlan() => _Role.plan,
   };
   @override
   String get key => switch (message) {
@@ -257,6 +259,7 @@ class _SingleItem extends _Item {
     ClaudeMessageAskUserQuestion(:final id) => id,
     ClaudeMessagePermissionRequest(:final id) => id,
     ClaudeMessageCompactSummary(:final id) => id,
+    ClaudeMessagePlan(:final id) => id,
   };
 }
 
@@ -375,6 +378,7 @@ class _MessageItem extends StatelessWidget {
       final ClaudeMessageAskUserQuestion m => _AskUserQuestionItemWidget(message: m, workspaceId: workspaceId),
       final ClaudeMessagePermissionRequest m => _PermissionRequestItemWidget(message: m, workspaceId: workspaceId),
       final ClaudeMessageCompactSummary m => _CompactSummaryItemWidget(message: m, workspaceId: workspaceId),
+      final ClaudeMessagePlan m => _PlanProposedItemWidget(message: m, workspaceId: workspaceId),
     };
   }
 }
@@ -423,6 +427,22 @@ class _PermissionRequestItemWidget extends StatelessWidget {
     return PermissionRequestCard(
       message: message,
       onDecide: (decision) => cubit.answerPermission(workspaceId, message.id, decision),
+    );
+  }
+}
+
+class _PlanProposedItemWidget extends StatelessWidget {
+  const _PlanProposedItemWidget({required this.message, required this.workspaceId});
+
+  final ClaudeMessagePlan message;
+  final String workspaceId;
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<ClaudeSessionsCubit>();
+    return PlanProposedCard(
+      message: message,
+      onDecide: (approve) => cubit.answerPlan(workspaceId, message.id, approve),
     );
   }
 }

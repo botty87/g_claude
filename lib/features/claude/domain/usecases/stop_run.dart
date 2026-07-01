@@ -8,5 +8,5 @@ class StopRun {
 
   final ClaudeRepository _repository;
 
-  Future<void> call() => _repository.stop();
+  Future<void> call({required String sid}) => _repository.stop(sid: sid);
 }

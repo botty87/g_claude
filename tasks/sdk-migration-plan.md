@@ -1,7 +1,13 @@
 # Piano migrazione Clyde → Agent SDK (sidecar locale, protocollo unico)
 
-> Stato: **Fase 0 + 1 FATTE e validate** (sidecar end-to-end). Decisioni: long-lived multi-sessione · stdio dietro interfaccia · `spike-agent-sdk`→`backend/`.
-> Prossimo: Fase 2 (rewiring Dart). Branch `feature/claude-sdk`. Remoto/WS/Tailscale = fuori scope.
+> Stato: **Fase 0+1+2+3 FATTE e verificate**. Decisioni: long-lived multi-sessione · stdio dietro interfaccia · `spike-agent-sdk`→`backend/`.
+> Prossimo: Fase 4 (packaging). Branch `feature/claude-sdk`. Remoto/WS/Tailscale = fuori scope.
+>
+> **Verifica Fase 2+3**: `dart analyze` pulito · 78 test claude verdi · DI corretto (Shelf/process-datasource rimossi, sidecar registrato) · **integration test live (Dart↔sidecar→CLI)**: lifecycle (start→taskComplete→sessionDead, stream completa) ✓ e plan round-trip (planProposed→approve→scrive calc.js in cwd) ✓.
+> **Bug trovato+fixato in verifica**: il sidecar non chiudeva la sessione dopo `taskComplete` (streaming-input resta viva) → lo stream Dart non si completava. Aggiunto auto-close one-shot (keepAlive=false default) in `backend/src/session.ts`.
+> **Build GUI risolto**: pinnato Flutter **3.41.9** in `.fvmrc` (Dart 3.11.5, compatibile con `re_editor 0.8.0`; 3.44.4 rompe per `TextInputClient.onFocusReceived`). App compila e gira. Alternativa futura: bump `re_editor` per tornare su stable.
+> **Verifica GUI live (marionette)**: aperto workspace di test, plan mode, prompt → **card "Piano proposto" si renderizza**, "Approva" → sidecar `setPermissionMode(acceptEdits)` → Claude scrive il file in cwd, explorer si aggiorna via watcher, stato torna "Pronto". Provato due volte (hello.txt, bye.txt). Richiesto bump `marionette_flutter` 0.5.0→0.6.0 per allineare al server MCP.
+> **2° bug trovato+fixato in verifica GUI**: `answerPlan` approve ritornava `{behavior:'allow'}` senza `updatedInput` → l'SDK (Zod) lo rifiutava (`ExitPlanMode err=true`, non-fatale ma "1 errori" nella UI). Fix in `session.ts`: backfill centralizzato di `updatedInput` (input originale) su ogni `allow`. Confermato: 2° giro GUI = "0 errori".
 >
 > **Validato (Fase 1)**: i 3 round-trip funzionano attraverso il protocollo del sidecar — AskUserQuestion (prosegue con scelta), ExitPlanMode approve (setPermissionMode→scrive in cwd), reject graceful (no scrittura, ri-propone, turno completa). `apiKeySource=none` (abbonamento). Contenimento `cwd` ok con path relativi. Note: in streaming-input mode `taskComplete`=fine TURNO (sessione resta viva); Claude si ancora alla git-root che contiene cwd (per Clyde ok: workspace=cartella).
 > Obiettivo: l'utente avvia Clyde e basta; sotto gira un sidecar Node con l'Agent SDK che parla

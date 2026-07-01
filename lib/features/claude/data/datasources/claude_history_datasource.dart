@@ -442,6 +442,17 @@ class ClaudeHistoryDataSourceImpl implements ClaudeHistoryDataSource {
           buf.writeln();
           buf.writeln(msg.summary);
           buf.writeln();
+
+        case ClaudeMessagePlan():
+          buf.writeln('### Plan proposed');
+          buf.writeln('_${msg.createdAt.toIso8601String()}_');
+          buf.writeln();
+          buf.writeln(msg.plan);
+          if (msg.answered) {
+            buf.writeln();
+            buf.writeln('decision: ${(msg.approved ?? false) ? 'approved' : 'rejected'}');
+          }
+          buf.writeln();
       }
     }
 

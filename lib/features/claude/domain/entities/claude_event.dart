@@ -103,4 +103,8 @@ sealed class ClaudeEvent with _$ClaudeEvent {
     int? cacheCreationTokens,
     int? outputTokens,
   }) = ClaudeEventUsageUpdate;
+
+  /// The sidecar emitted ExitPlanMode — Claude has proposed a plan.
+  const factory ClaudeEvent.planProposed({required String toolUseId, required String plan, String? planFilePath}) =
+      ClaudeEventPlanProposed;
 }

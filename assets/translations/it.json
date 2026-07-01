@@ -146,13 +146,12 @@
     },
     "thinking": {
       "off": "Off",
-      "think": "Pensa",
-      "thinkHard": "Rifletti",
-      "ultrathink": "Ultrarifletti"
+      "on": "On"
     },
     "permission": {
       "plan": "Plan (sola lettura)",
       "acceptEdits": "Accetta modifiche",
+      "auto": "Auto",
       "bypassPermissions": "Bypass (yolo)",
       "default": "Default"
     },
@@ -206,6 +205,13 @@
       "answeredAllowAlways": "Sempre consentito",
       "answeredDeny": "Negato",
       "inputLabel": "INPUT"
+    },
+    "plan": {
+      "title": "Piano proposto",
+      "approve": "Approva",
+      "reject": "Rifiuta",
+      "answeredApproved": "Piano approvato",
+      "answeredRejected": "Piano rifiutato"
     }
   },
   "workspace": {

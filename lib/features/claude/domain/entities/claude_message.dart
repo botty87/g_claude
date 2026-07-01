@@ -76,4 +76,16 @@ sealed class ClaudeMessage with _$ClaudeMessage {
     required DateTime createdAt,
     @Default(false) bool expanded,
   }) = ClaudeMessageCompactSummary;
+
+  /// Inline card that shows a plan proposed by Claude via ExitPlanMode.
+  /// The user approves or rejects it; the card persists as a record.
+  const factory ClaudeMessage.plan({
+    required String id,
+    required String toolUseId,
+    required String plan,
+    String? planFilePath,
+    required DateTime createdAt,
+    bool? approved,
+    @Default(false) bool answered,
+  }) = ClaudeMessagePlan;
 }

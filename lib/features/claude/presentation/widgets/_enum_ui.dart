@@ -12,6 +12,8 @@ extension ClaudePermissionModeUi on ClaudePermissionMode {
         return Symbols.visibility;
       case ClaudePermissionMode.acceptEdits:
         return Symbols.edit_note;
+      case ClaudePermissionMode.auto:
+        return Symbols.auto_awesome;
       case ClaudePermissionMode.bypassPermissions:
         return Symbols.bolt;
       case ClaudePermissionMode.defaultMode:
@@ -25,6 +27,8 @@ extension ClaudePermissionModeUi on ClaudePermissionMode {
         return AppColors.secondary;
       case ClaudePermissionMode.acceptEdits:
         return AppColors.primary;
+      case ClaudePermissionMode.auto:
+        return AppColors.brandIndigo;
       case ClaudePermissionMode.bypassPermissions:
         return AppColors.tertiary;
       case ClaudePermissionMode.defaultMode:

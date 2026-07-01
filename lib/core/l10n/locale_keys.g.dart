@@ -2,7 +2,7 @@
 
 // ignore_for_file: constant_identifier_names
 
-abstract class LocaleKeys {
+abstract class  LocaleKeys {
   static const app_title = 'app.title';
   static const app = 'app';
   static const shell_activity_explorer = 'shell.activity.explorer';
@@ -12,139 +12,87 @@ abstract class LocaleKeys {
   static const shell_activity_logs = 'shell.activity.logs';
   static const shell_activity_terminal = 'shell.activity.terminal';
   static const shell_activity_settings = 'shell.activity.settings';
-  static const shell_activity_comingLaterSuffix =
-      'shell.activity.comingLaterSuffix';
+  static const shell_activity_comingLaterSuffix = 'shell.activity.comingLaterSuffix';
   static const shell_activity = 'shell.activity';
   static const shell_sidePanel_explorerLabel = 'shell.sidePanel.explorerLabel';
   static const shell_sidePanel_refresh = 'shell.sidePanel.refresh';
-  static const shell_sidePanel_toggleHiddenShow =
-      'shell.sidePanel.toggleHiddenShow';
-  static const shell_sidePanel_toggleHiddenHide =
-      'shell.sidePanel.toggleHiddenHide';
+  static const shell_sidePanel_toggleHiddenShow = 'shell.sidePanel.toggleHiddenShow';
+  static const shell_sidePanel_toggleHiddenHide = 'shell.sidePanel.toggleHiddenHide';
   static const shell_sidePanel_emptyFolder = 'shell.sidePanel.emptyFolder';
   static const shell_sidePanel_loadError = 'shell.sidePanel.loadError';
   static const shell_sidePanel = 'shell.sidePanel';
-  static const shell_workspace_toggleToFullscreen =
-      'shell.workspace.toggleToFullscreen';
-  static const shell_workspace_toggleToWorkspace =
-      'shell.workspace.toggleToWorkspace';
+  static const shell_workspace_toggleToFullscreen = 'shell.workspace.toggleToFullscreen';
+  static const shell_workspace_toggleToWorkspace = 'shell.workspace.toggleToWorkspace';
   static const shell_workspace = 'shell.workspace';
   static const shell_shortcuts_attachedFile = 'shell.shortcuts.attachedFile';
   static const shell_shortcuts_attachedRange = 'shell.shortcuts.attachedRange';
-  static const shell_shortcuts_alreadyAttached =
-      'shell.shortcuts.alreadyAttached';
+  static const shell_shortcuts_alreadyAttached = 'shell.shortcuts.alreadyAttached';
   static const shell_shortcuts_effortChanged = 'shell.shortcuts.effortChanged';
-  static const shell_shortcuts_thinkingChanged =
-      'shell.shortcuts.thinkingChanged';
-  static const shell_shortcuts_permissionChanged =
-      'shell.shortcuts.permissionChanged';
-  static const shell_shortcuts_noActiveWorkspace =
-      'shell.shortcuts.noActiveWorkspace';
+  static const shell_shortcuts_thinkingChanged = 'shell.shortcuts.thinkingChanged';
+  static const shell_shortcuts_permissionChanged = 'shell.shortcuts.permissionChanged';
+  static const shell_shortcuts_noActiveWorkspace = 'shell.shortcuts.noActiveWorkspace';
   static const shell_shortcuts = 'shell.shortcuts';
   static const shell = 'shell';
   static const claude_terminal_title = 'claude.terminal.title';
   static const claude_terminal_status_idle = 'claude.terminal.status.idle';
-  static const claude_terminal_status_connecting =
-      'claude.terminal.status.connecting';
-  static const claude_terminal_status_running =
-      'claude.terminal.status.running';
-  static const claude_terminal_status_compacting =
-      'claude.terminal.status.compacting';
+  static const claude_terminal_status_connecting = 'claude.terminal.status.connecting';
+  static const claude_terminal_status_running = 'claude.terminal.status.running';
+  static const claude_terminal_status_compacting = 'claude.terminal.status.compacting';
   static const claude_terminal_status_error = 'claude.terminal.status.error';
-  static const claude_terminal_status_sessionDead =
-      'claude.terminal.status.sessionDead';
-  static const claude_terminal_status_noWorkspace =
-      'claude.terminal.status.noWorkspace';
+  static const claude_terminal_status_sessionDead = 'claude.terminal.status.sessionDead';
+  static const claude_terminal_status_noWorkspace = 'claude.terminal.status.noWorkspace';
   static const claude_terminal_status = 'claude.terminal.status';
-  static const claude_terminal_compact_cardTitle =
-      'claude.terminal.compact.cardTitle';
-  static const claude_terminal_compact_expand =
-      'claude.terminal.compact.expand';
-  static const claude_terminal_compact_collapse =
-      'claude.terminal.compact.collapse';
-  static const claude_terminal_compact_summaryHeader =
-      'claude.terminal.compact.summaryHeader';
+  static const claude_terminal_compact_cardTitle = 'claude.terminal.compact.cardTitle';
+  static const claude_terminal_compact_expand = 'claude.terminal.compact.expand';
+  static const claude_terminal_compact_collapse = 'claude.terminal.compact.collapse';
+  static const claude_terminal_compact_summaryHeader = 'claude.terminal.compact.summaryHeader';
   static const claude_terminal_compact = 'claude.terminal.compact';
-  static const claude_terminal_input_placeholder =
-      'claude.terminal.input.placeholder';
-  static const claude_terminal_input_placeholderRunning =
-      'claude.terminal.input.placeholderRunning';
-  static const claude_terminal_input_placeholderQueueing =
-      'claude.terminal.input.placeholderQueueing';
+  static const claude_terminal_input_placeholder = 'claude.terminal.input.placeholder';
+  static const claude_terminal_input_placeholderRunning = 'claude.terminal.input.placeholderRunning';
+  static const claude_terminal_input_placeholderQueueing = 'claude.terminal.input.placeholderQueueing';
   static const claude_terminal_input_stop = 'claude.terminal.input.stop';
-  static const claude_terminal_input_escConfirmStop =
-      'claude.terminal.input.escConfirmStop';
+  static const claude_terminal_input_escConfirmStop = 'claude.terminal.input.escConfirmStop';
   static const claude_terminal_input_send = 'claude.terminal.input.send';
-  static const claude_terminal_input_attachments_addFile =
-      'claude.terminal.input.attachments.addFile';
-  static const claude_terminal_input_attachments_addFolder =
-      'claude.terminal.input.attachments.addFolder';
-  static const claude_terminal_input_attachments_addScreenshot =
-      'claude.terminal.input.attachments.addScreenshot';
-  static const claude_terminal_input_attachments_screenshotFullScreen =
-      'claude.terminal.input.attachments.screenshotFullScreen';
-  static const claude_terminal_input_attachments_screenshotDisplay =
-      'claude.terminal.input.attachments.screenshotDisplay';
-  static const claude_terminal_input_attachments_screenshotPickDisplay =
-      'claude.terminal.input.attachments.screenshotPickDisplay';
-  static const claude_terminal_input_attachments_screenshotRegion =
-      'claude.terminal.input.attachments.screenshotRegion';
-  static const claude_terminal_input_attachments_screenshotWindow =
-      'claude.terminal.input.attachments.screenshotWindow';
-  static const claude_terminal_input_attachments_screenshotPreview =
-      'claude.terminal.input.attachments.screenshotPreview';
-  static const claude_terminal_input_attachments_screenshotPreviewTitle =
-      'claude.terminal.input.attachments.screenshotPreviewTitle';
-  static const claude_terminal_input_attachments_screenshotPreviewAttach =
-      'claude.terminal.input.attachments.screenshotPreviewAttach';
-  static const claude_terminal_input_attachments_screenshotPreviewDiscard =
-      'claude.terminal.input.attachments.screenshotPreviewDiscard';
-  static const claude_terminal_input_attachments_screenshotPreviewClose =
-      'claude.terminal.input.attachments.screenshotPreviewClose';
-  static const claude_terminal_input_attachments_screenshotError =
-      'claude.terminal.input.attachments.screenshotError';
-  static const claude_terminal_input_attachments_screenshotDisplayName =
-      'claude.terminal.input.attachments.screenshotDisplayName';
-  static const claude_terminal_input_attachments_dropHint =
-      'claude.terminal.input.attachments.dropHint';
-  static const claude_terminal_input_attachments_removeTooltip =
-      'claude.terminal.input.attachments.removeTooltip';
-  static const claude_terminal_input_attachments =
-      'claude.terminal.input.attachments';
-  static const claude_terminal_input_queue_label =
-      'claude.terminal.input.queue.label';
-  static const claude_terminal_input_queue_removeTooltip =
-      'claude.terminal.input.queue.removeTooltip';
-  static const claude_terminal_input_queue_editPlaceholder =
-      'claude.terminal.input.queue.editPlaceholder';
-  static const claude_terminal_input_queue_send =
-      'claude.terminal.input.queue.send';
+  static const claude_terminal_input_attachments_addFile = 'claude.terminal.input.attachments.addFile';
+  static const claude_terminal_input_attachments_addFolder = 'claude.terminal.input.attachments.addFolder';
+  static const claude_terminal_input_attachments_addScreenshot = 'claude.terminal.input.attachments.addScreenshot';
+  static const claude_terminal_input_attachments_screenshotFullScreen = 'claude.terminal.input.attachments.screenshotFullScreen';
+  static const claude_terminal_input_attachments_screenshotDisplay = 'claude.terminal.input.attachments.screenshotDisplay';
+  static const claude_terminal_input_attachments_screenshotPickDisplay = 'claude.terminal.input.attachments.screenshotPickDisplay';
+  static const claude_terminal_input_attachments_screenshotRegion = 'claude.terminal.input.attachments.screenshotRegion';
+  static const claude_terminal_input_attachments_screenshotWindow = 'claude.terminal.input.attachments.screenshotWindow';
+  static const claude_terminal_input_attachments_screenshotPreview = 'claude.terminal.input.attachments.screenshotPreview';
+  static const claude_terminal_input_attachments_screenshotPreviewTitle = 'claude.terminal.input.attachments.screenshotPreviewTitle';
+  static const claude_terminal_input_attachments_screenshotPreviewAttach = 'claude.terminal.input.attachments.screenshotPreviewAttach';
+  static const claude_terminal_input_attachments_screenshotPreviewDiscard = 'claude.terminal.input.attachments.screenshotPreviewDiscard';
+  static const claude_terminal_input_attachments_screenshotPreviewClose = 'claude.terminal.input.attachments.screenshotPreviewClose';
+  static const claude_terminal_input_attachments_screenshotError = 'claude.terminal.input.attachments.screenshotError';
+  static const claude_terminal_input_attachments_screenshotDisplayName = 'claude.terminal.input.attachments.screenshotDisplayName';
+  static const claude_terminal_input_attachments_dropHint = 'claude.terminal.input.attachments.dropHint';
+  static const claude_terminal_input_attachments_removeTooltip = 'claude.terminal.input.attachments.removeTooltip';
+  static const claude_terminal_input_attachments = 'claude.terminal.input.attachments';
+  static const claude_terminal_input_queue_label = 'claude.terminal.input.queue.label';
+  static const claude_terminal_input_queue_removeTooltip = 'claude.terminal.input.queue.removeTooltip';
+  static const claude_terminal_input_queue_editPlaceholder = 'claude.terminal.input.queue.editPlaceholder';
+  static const claude_terminal_input_queue_send = 'claude.terminal.input.queue.send';
   static const claude_terminal_input_queue = 'claude.terminal.input.queue';
   static const claude_terminal_input = 'claude.terminal.input';
   static const claude_terminal_actions_clear = 'claude.terminal.actions.clear';
-  static const claude_terminal_actions_newSession =
-      'claude.terminal.actions.newSession';
+  static const claude_terminal_actions_newSession = 'claude.terminal.actions.newSession';
   static const claude_terminal_actions = 'claude.terminal.actions';
   static const claude_terminal_model_label = 'claude.terminal.model.label';
   static const claude_terminal_model_tooltip = 'claude.terminal.model.tooltip';
   static const claude_terminal_model = 'claude.terminal.model';
-  static const claude_terminal_permission_label =
-      'claude.terminal.permission.label';
-  static const claude_terminal_permission_tooltip =
-      'claude.terminal.permission.tooltip';
-  static const claude_terminal_permission_warning_default =
-      'claude.terminal.permission.warning.default';
-  static const claude_terminal_permission_warning =
-      'claude.terminal.permission.warning';
+  static const claude_terminal_permission_label = 'claude.terminal.permission.label';
+  static const claude_terminal_permission_tooltip = 'claude.terminal.permission.tooltip';
+  static const claude_terminal_permission_warning_default = 'claude.terminal.permission.warning.default';
+  static const claude_terminal_permission_warning = 'claude.terminal.permission.warning';
   static const claude_terminal_permission = 'claude.terminal.permission';
   static const claude_terminal_effort_label = 'claude.terminal.effort.label';
-  static const claude_terminal_effort_tooltip =
-      'claude.terminal.effort.tooltip';
+  static const claude_terminal_effort_tooltip = 'claude.terminal.effort.tooltip';
   static const claude_terminal_effort = 'claude.terminal.effort';
-  static const claude_terminal_thinking_label =
-      'claude.terminal.thinking.label';
-  static const claude_terminal_thinking_tooltip =
-      'claude.terminal.thinking.tooltip';
+  static const claude_terminal_thinking_label = 'claude.terminal.thinking.label';
+  static const claude_terminal_thinking_tooltip = 'claude.terminal.thinking.tooltip';
   static const claude_terminal_thinking = 'claude.terminal.thinking';
   static const claude_terminal_mcp_label = 'claude.terminal.mcp.label';
   static const claude_terminal_mcp_tooltip = 'claude.terminal.mcp.tooltip';
@@ -153,26 +101,17 @@ abstract class LocaleKeys {
   static const claude_terminal_mcp_empty = 'claude.terminal.mcp.empty';
   static const claude_terminal_mcp_loading = 'claude.terminal.mcp.loading';
   static const claude_terminal_mcp_error = 'claude.terminal.mcp.error';
-  static const claude_terminal_mcp_disabledLabel =
-      'claude.terminal.mcp.disabledLabel';
-  static const claude_terminal_mcp_toggleNoSession =
-      'claude.terminal.mcp.toggleNoSession';
-  static const claude_terminal_mcp_toggleError =
-      'claude.terminal.mcp.toggleError';
-  static const claude_terminal_mcp_authenticate =
-      'claude.terminal.mcp.authenticate';
-  static const claude_terminal_mcp_status_connected =
-      'claude.terminal.mcp.status.connected';
-  static const claude_terminal_mcp_status_failed =
-      'claude.terminal.mcp.status.failed';
-  static const claude_terminal_mcp_status_needsAuth =
-      'claude.terminal.mcp.status.needsAuth';
-  static const claude_terminal_mcp_status_unknown =
-      'claude.terminal.mcp.status.unknown';
+  static const claude_terminal_mcp_disabledLabel = 'claude.terminal.mcp.disabledLabel';
+  static const claude_terminal_mcp_toggleNoSession = 'claude.terminal.mcp.toggleNoSession';
+  static const claude_terminal_mcp_toggleError = 'claude.terminal.mcp.toggleError';
+  static const claude_terminal_mcp_authenticate = 'claude.terminal.mcp.authenticate';
+  static const claude_terminal_mcp_status_connected = 'claude.terminal.mcp.status.connected';
+  static const claude_terminal_mcp_status_failed = 'claude.terminal.mcp.status.failed';
+  static const claude_terminal_mcp_status_needsAuth = 'claude.terminal.mcp.status.needsAuth';
+  static const claude_terminal_mcp_status_unknown = 'claude.terminal.mcp.status.unknown';
   static const claude_terminal_mcp_status = 'claude.terminal.mcp.status';
   static const claude_terminal_mcp = 'claude.terminal.mcp';
-  static const claude_terminal_context_tooltip =
-      'claude.terminal.context.tooltip';
+  static const claude_terminal_context_tooltip = 'claude.terminal.context.tooltip';
   static const claude_terminal_context = 'claude.terminal.context';
   static const claude_terminal = 'claude.terminal';
   static const claude_model_haiku = 'claude.model.haiku';
@@ -186,14 +125,12 @@ abstract class LocaleKeys {
   static const claude_effort_max = 'claude.effort.max';
   static const claude_effort = 'claude.effort';
   static const claude_thinking_off = 'claude.thinking.off';
-  static const claude_thinking_think = 'claude.thinking.think';
-  static const claude_thinking_thinkHard = 'claude.thinking.thinkHard';
-  static const claude_thinking_ultrathink = 'claude.thinking.ultrathink';
+  static const claude_thinking_on = 'claude.thinking.on';
   static const claude_thinking = 'claude.thinking';
   static const claude_permission_plan = 'claude.permission.plan';
   static const claude_permission_acceptEdits = 'claude.permission.acceptEdits';
-  static const claude_permission_bypassPermissions =
-      'claude.permission.bypassPermissions';
+  static const claude_permission_auto = 'claude.permission.auto';
+  static const claude_permission_bypassPermissions = 'claude.permission.bypassPermissions';
   static const claude_permission_default = 'claude.permission.default';
   static const claude_permission = 'claude.permission';
   static const claude_message_assistantLabel = 'claude.message.assistantLabel';
@@ -204,17 +141,13 @@ abstract class LocaleKeys {
   static const claude_message_toolError = 'claude.message.toolError';
   static const claude_message_toolInput = 'claude.message.toolInput';
   static const claude_message_toolResult = 'claude.message.toolResult';
-  static const claude_message_toolErrorOutput =
-      'claude.message.toolErrorOutput';
+  static const claude_message_toolErrorOutput = 'claude.message.toolErrorOutput';
   static const claude_message_toolGroupTitle = 'claude.message.toolGroupTitle';
-  static const claude_message_toolGroupRunning =
-      'claude.message.toolGroupRunning';
+  static const claude_message_toolGroupRunning = 'claude.message.toolGroupRunning';
   static const claude_message_toolGroupDone = 'claude.message.toolGroupDone';
-  static const claude_message_toolGroupErrors =
-      'claude.message.toolGroupErrors';
+  static const claude_message_toolGroupErrors = 'claude.message.toolGroupErrors';
   static const claude_message_completionStub = 'claude.message.completionStub';
-  static const claude_message_scrollToBottomTooltip =
-      'claude.message.scrollToBottomTooltip';
+  static const claude_message_scrollToBottomTooltip = 'claude.message.scrollToBottomTooltip';
   static const claude_message = 'claude.message';
   static const claude_error_binaryNotFound = 'claude.error.binaryNotFound';
   static const claude_error_spawnFailed = 'claude.error.spawnFailed';
@@ -232,53 +165,45 @@ abstract class LocaleKeys {
   static const claude_askUser_submit = 'claude.askUser.submit';
   static const claude_askUser_stepCounter = 'claude.askUser.stepCounter';
   static const claude_askUser_otherOption = 'claude.askUser.otherOption';
-  static const claude_askUser_otherPlaceholder =
-      'claude.askUser.otherPlaceholder';
+  static const claude_askUser_otherPlaceholder = 'claude.askUser.otherPlaceholder';
   static const claude_askUser_answeredLabel = 'claude.askUser.answeredLabel';
-  static const claude_askUser_multiSelectHint =
-      'claude.askUser.multiSelectHint';
+  static const claude_askUser_multiSelectHint = 'claude.askUser.multiSelectHint';
   static const claude_askUser = 'claude.askUser';
-  static const claude_permissionRequest_title =
-      'claude.permissionRequest.title';
-  static const claude_permissionRequest_subtitle =
-      'claude.permissionRequest.subtitle';
-  static const claude_permissionRequest_allowOnce =
-      'claude.permissionRequest.allowOnce';
-  static const claude_permissionRequest_allowAlways =
-      'claude.permissionRequest.allowAlways';
+  static const claude_permissionRequest_title = 'claude.permissionRequest.title';
+  static const claude_permissionRequest_subtitle = 'claude.permissionRequest.subtitle';
+  static const claude_permissionRequest_allowOnce = 'claude.permissionRequest.allowOnce';
+  static const claude_permissionRequest_allowAlways = 'claude.permissionRequest.allowAlways';
   static const claude_permissionRequest_deny = 'claude.permissionRequest.deny';
-  static const claude_permissionRequest_answeredAllowOnce =
-      'claude.permissionRequest.answeredAllowOnce';
-  static const claude_permissionRequest_answeredAllowAlways =
-      'claude.permissionRequest.answeredAllowAlways';
-  static const claude_permissionRequest_answeredDeny =
-      'claude.permissionRequest.answeredDeny';
-  static const claude_permissionRequest_inputLabel =
-      'claude.permissionRequest.inputLabel';
+  static const claude_permissionRequest_answeredAllowOnce = 'claude.permissionRequest.answeredAllowOnce';
+  static const claude_permissionRequest_answeredAllowAlways = 'claude.permissionRequest.answeredAllowAlways';
+  static const claude_permissionRequest_answeredDeny = 'claude.permissionRequest.answeredDeny';
+  static const claude_permissionRequest_inputLabel = 'claude.permissionRequest.inputLabel';
   static const claude_permissionRequest = 'claude.permissionRequest';
+  static const claude_plan_title = 'claude.plan.title';
+  static const claude_plan_approve = 'claude.plan.approve';
+  static const claude_plan_reject = 'claude.plan.reject';
+  static const claude_plan_answeredApproved = 'claude.plan.answeredApproved';
+  static const claude_plan_answeredRejected = 'claude.plan.answeredRejected';
+  static const claude_plan = 'claude.plan';
   static const claude = 'claude';
   static const workspace_picker_title = 'workspace.picker.title';
   static const workspace_picker = 'workspace.picker';
-  static const workspace_emptyState_openFolder =
-      'workspace.emptyState.openFolder';
+  static const workspace_emptyState_openFolder = 'workspace.emptyState.openFolder';
   static const workspace_emptyState_hint = 'workspace.emptyState.hint';
   static const workspace_emptyState = 'workspace.emptyState';
   static const workspace_dropdown_empty = 'workspace.dropdown.empty';
   static const workspace_dropdown_openFolder = 'workspace.dropdown.openFolder';
-  static const workspace_dropdown_closeWorkspace =
-      'workspace.dropdown.closeWorkspace';
+  static const workspace_dropdown_closeWorkspace = 'workspace.dropdown.closeWorkspace';
   static const workspace_dropdown = 'workspace.dropdown';
   static const workspace = 'workspace';
   static const slashCommands_empty = 'slashCommands.empty';
-  static const slashCommands_source_cliBuiltin =
-      'slashCommands.source.cliBuiltin';
+  static const slashCommands_source_cliBuiltin = 'slashCommands.source.cliBuiltin';
   static const slashCommands_source_user = 'slashCommands.source.user';
   static const slashCommands_source_project = 'slashCommands.source.project';
   static const slashCommands_source_plugin = 'slashCommands.source.plugin';
   static const slashCommands_source_skill = 'slashCommands.source.skill';
   static const slashCommands_source = 'slashCommands.source';
-  static const slashCommands_chip_removeTooltip =
-      'slashCommands.chip.removeTooltip';
+  static const slashCommands_chip_removeTooltip = 'slashCommands.chip.removeTooltip';
   static const slashCommands_chip = 'slashCommands.chip';
   static const slashCommands = 'slashCommands';
   static const sessions_list_headerLabel = 'sessions.list.headerLabel';
@@ -287,35 +212,23 @@ abstract class LocaleKeys {
   static const sessions_list_newChat = 'sessions.list.newChat';
   static const sessions_list_refresh = 'sessions.list.refresh';
   static const sessions_list_untitled = 'sessions.list.untitled';
-  static const sessions_list_relativeDate_now =
-      'sessions.list.relativeDate.now';
-  static const sessions_list_relativeDate_minutesAgo =
-      'sessions.list.relativeDate.minutesAgo';
-  static const sessions_list_relativeDate_hoursAgo =
-      'sessions.list.relativeDate.hoursAgo';
-  static const sessions_list_relativeDate_yesterday =
-      'sessions.list.relativeDate.yesterday';
+  static const sessions_list_relativeDate_now = 'sessions.list.relativeDate.now';
+  static const sessions_list_relativeDate_minutesAgo = 'sessions.list.relativeDate.minutesAgo';
+  static const sessions_list_relativeDate_hoursAgo = 'sessions.list.relativeDate.hoursAgo';
+  static const sessions_list_relativeDate_yesterday = 'sessions.list.relativeDate.yesterday';
   static const sessions_list_relativeDate = 'sessions.list.relativeDate';
   static const sessions_list = 'sessions.list';
   static const sessions_preview_empty = 'sessions.preview.empty';
   static const sessions_preview_resume = 'sessions.preview.resume';
-  static const sessions_preview_resumeConfirmTitle =
-      'sessions.preview.resumeConfirmTitle';
-  static const sessions_preview_resumeConfirmBody =
-      'sessions.preview.resumeConfirmBody';
-  static const sessions_preview_resumeConfirmOk =
-      'sessions.preview.resumeConfirmOk';
-  static const sessions_preview_resumeConfirmCancel =
-      'sessions.preview.resumeConfirmCancel';
+  static const sessions_preview_resumeConfirmTitle = 'sessions.preview.resumeConfirmTitle';
+  static const sessions_preview_resumeConfirmBody = 'sessions.preview.resumeConfirmBody';
+  static const sessions_preview_resumeConfirmOk = 'sessions.preview.resumeConfirmOk';
+  static const sessions_preview_resumeConfirmCancel = 'sessions.preview.resumeConfirmCancel';
   static const sessions_preview_delete = 'sessions.preview.delete';
-  static const sessions_preview_deleteConfirmTitle =
-      'sessions.preview.deleteConfirmTitle';
-  static const sessions_preview_deleteConfirmBody =
-      'sessions.preview.deleteConfirmBody';
-  static const sessions_preview_deleteConfirmOk =
-      'sessions.preview.deleteConfirmOk';
-  static const sessions_preview_deleteConfirmCancel =
-      'sessions.preview.deleteConfirmCancel';
+  static const sessions_preview_deleteConfirmTitle = 'sessions.preview.deleteConfirmTitle';
+  static const sessions_preview_deleteConfirmBody = 'sessions.preview.deleteConfirmBody';
+  static const sessions_preview_deleteConfirmOk = 'sessions.preview.deleteConfirmOk';
+  static const sessions_preview_deleteConfirmCancel = 'sessions.preview.deleteConfirmCancel';
   static const sessions_preview_export = 'sessions.preview.export';
   static const sessions_preview_exportDone = 'sessions.preview.exportDone';
   static const sessions_preview = 'sessions.preview';
@@ -326,22 +239,17 @@ abstract class LocaleKeys {
   static const appLogs_deleteAllConfirmTitle = 'appLogs.deleteAllConfirmTitle';
   static const appLogs_deleteAllConfirmBody = 'appLogs.deleteAllConfirmBody';
   static const appLogs_deleteAllConfirmOk = 'appLogs.deleteAllConfirmOk';
-  static const appLogs_deleteAllConfirmCancel =
-      'appLogs.deleteAllConfirmCancel';
+  static const appLogs_deleteAllConfirmCancel = 'appLogs.deleteAllConfirmCancel';
   static const appLogs_back = 'appLogs.back';
   static const appLogs_session_inProgress = 'appLogs.session.inProgress';
   static const appLogs_session_errors = 'appLogs.session.errors';
   static const appLogs_session_warnings = 'appLogs.session.warnings';
   static const appLogs_session_total = 'appLogs.session.total';
   static const appLogs_session_delete = 'appLogs.session.delete';
-  static const appLogs_session_deleteConfirmTitle =
-      'appLogs.session.deleteConfirmTitle';
-  static const appLogs_session_deleteConfirmBody =
-      'appLogs.session.deleteConfirmBody';
-  static const appLogs_session_deleteConfirmOk =
-      'appLogs.session.deleteConfirmOk';
-  static const appLogs_session_deleteConfirmCancel =
-      'appLogs.session.deleteConfirmCancel';
+  static const appLogs_session_deleteConfirmTitle = 'appLogs.session.deleteConfirmTitle';
+  static const appLogs_session_deleteConfirmBody = 'appLogs.session.deleteConfirmBody';
+  static const appLogs_session_deleteConfirmOk = 'appLogs.session.deleteConfirmOk';
+  static const appLogs_session_deleteConfirmCancel = 'appLogs.session.deleteConfirmCancel';
   static const appLogs_session = 'appLogs.session';
   static const appLogs_detail_filterLevel = 'appLogs.detail.filterLevel';
   static const appLogs_detail_search = 'appLogs.detail.search';
@@ -387,8 +295,7 @@ abstract class LocaleKeys {
   static const editor_find_caseSensitive = 'editor.find.caseSensitive';
   static const editor_find_regex = 'editor.find.regex';
   static const editor_find = 'editor.find';
-  static const editor_markdown_toggleRendered =
-      'editor.markdown.toggleRendered';
+  static const editor_markdown_toggleRendered = 'editor.markdown.toggleRendered';
   static const editor_markdown_toggleSource = 'editor.markdown.toggleSource';
   static const editor_markdown = 'editor.markdown';
   static const editor_image_loadError = 'editor.image.loadError';
@@ -396,8 +303,8 @@ abstract class LocaleKeys {
   static const editor_pdf_loadError = 'editor.pdf.loadError';
   static const editor_pdf = 'editor.pdf';
   static const editor_unsupported_title = 'editor.unsupported.title';
-  static const editor_unsupported_revealInFinder =
-      'editor.unsupported.revealInFinder';
+  static const editor_unsupported_revealInFinder = 'editor.unsupported.revealInFinder';
   static const editor_unsupported = 'editor.unsupported';
   static const editor = 'editor';
+
 }

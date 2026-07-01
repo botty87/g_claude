@@ -67,6 +67,7 @@ abstract class Locales {
 
   /// Translations for workspace
   static const Workspace = _Workspace._();
+
 }
 
 /// Nested class for app translations
@@ -82,21 +83,18 @@ class _AppLogs {
 
   String get back => LocaleKeys.appLogs_back.tr();
   String get deleteAll => LocaleKeys.appLogs_deleteAll.tr();
-  String get deleteAllConfirmBody =>
-      LocaleKeys.appLogs_deleteAllConfirmBody.tr();
-  String get deleteAllConfirmCancel =>
-      LocaleKeys.appLogs_deleteAllConfirmCancel.tr();
+  String get deleteAllConfirmBody => LocaleKeys.appLogs_deleteAllConfirmBody.tr();
+  String get deleteAllConfirmCancel => LocaleKeys.appLogs_deleteAllConfirmCancel.tr();
   String get deleteAllConfirmOk => LocaleKeys.appLogs_deleteAllConfirmOk.tr();
-  String get deleteAllConfirmTitle =>
-      LocaleKeys.appLogs_deleteAllConfirmTitle.tr();
+  String get deleteAllConfirmTitle => LocaleKeys.appLogs_deleteAllConfirmTitle.tr();
   String get empty => LocaleKeys.appLogs_empty.tr();
   String get title => LocaleKeys.appLogs_title.tr();
-
   /// Translations for detail
   final Detail = const _AppLogsDetail._();
 
   /// Translations for session
   final Session = const _AppLogsSession._();
+
 }
 
 /// Nested class for detail translations
@@ -108,9 +106,9 @@ class _AppLogsDetail {
   String get filterLevel => LocaleKeys.appLogs_detail_filterLevel.tr();
   String get search => LocaleKeys.appLogs_detail_search.tr();
   String get stackTrace => LocaleKeys.appLogs_detail_stackTrace.tr();
-
   /// Translations for level
   final Level = const _AppLogsDetailLevel._();
+
 }
 
 /// Nested class for level translations
@@ -130,25 +128,29 @@ class _AppLogsSession {
   const _AppLogsSession._();
 
   String get delete => LocaleKeys.appLogs_session_delete.tr();
-  String get deleteConfirmBody =>
-      LocaleKeys.appLogs_session_deleteConfirmBody.tr();
-  String get deleteConfirmCancel =>
-      LocaleKeys.appLogs_session_deleteConfirmCancel.tr();
+  String get deleteConfirmBody => LocaleKeys.appLogs_session_deleteConfirmBody.tr();
+  String get deleteConfirmCancel => LocaleKeys.appLogs_session_deleteConfirmCancel.tr();
   String get deleteConfirmOk => LocaleKeys.appLogs_session_deleteConfirmOk.tr();
-  String get deleteConfirmTitle =>
-      LocaleKeys.appLogs_session_deleteConfirmTitle.tr();
+  String get deleteConfirmTitle => LocaleKeys.appLogs_session_deleteConfirmTitle.tr();
   String errors({required String count}) {
-    return LocaleKeys.appLogs_session_errors.tr(namedArgs: {'count': count});
+    return LocaleKeys.appLogs_session_errors.tr(namedArgs: {
+      'count': count,
+    });
   }
 
   String get inProgress => LocaleKeys.appLogs_session_inProgress.tr();
   String total({required String count}) {
-    return LocaleKeys.appLogs_session_total.tr(namedArgs: {'count': count});
+    return LocaleKeys.appLogs_session_total.tr(namedArgs: {
+      'count': count,
+    });
   }
 
   String warnings({required String count}) {
-    return LocaleKeys.appLogs_session_warnings.tr(namedArgs: {'count': count});
+    return LocaleKeys.appLogs_session_warnings.tr(namedArgs: {
+      'count': count,
+    });
   }
+
 }
 
 /// Nested class for claude translations
@@ -179,11 +181,15 @@ class _Claude {
   /// Translations for permissionRequest
   final PermissionRequest = const _ClaudePermissionRequest._();
 
+  /// Translations for plan
+  final Plan = const _ClaudePlan._();
+
   /// Translations for terminal
   final Terminal = const _ClaudeTerminal._();
 
   /// Translations for thinking
   final Thinking = const _ClaudeThinking._();
+
 }
 
 /// Nested class for askUser translations
@@ -195,12 +201,12 @@ class _ClaudeAskUser {
   String get multiSelectHint => LocaleKeys.claude_askUser_multiSelectHint.tr();
   String get next => LocaleKeys.claude_askUser_next.tr();
   String get otherOption => LocaleKeys.claude_askUser_otherOption.tr();
-  String get otherPlaceholder =>
-      LocaleKeys.claude_askUser_otherPlaceholder.tr();
+  String get otherPlaceholder => LocaleKeys.claude_askUser_otherPlaceholder.tr();
   String stepCounter({required String current, required String total}) {
-    return LocaleKeys.claude_askUser_stepCounter.tr(
-      namedArgs: {'current': current, 'total': total},
-    );
+    return LocaleKeys.claude_askUser_stepCounter.tr(namedArgs: {
+      'current': current,
+      'total': total,
+    });
   }
 
   String get submit => LocaleKeys.claude_askUser_submit.tr();
@@ -232,22 +238,25 @@ class _ClaudeError {
 
   String get binaryNotFound => LocaleKeys.claude_error_binaryNotFound.tr();
   String exitedNonZero({required String code}) {
-    return LocaleKeys.claude_error_exitedNonZero.tr(namedArgs: {'code': code});
+    return LocaleKeys.claude_error_exitedNonZero.tr(namedArgs: {
+      'code': code,
+    });
   }
 
   String get killed => LocaleKeys.claude_error_killed.tr();
   String get parseFailed => LocaleKeys.claude_error_parseFailed.tr();
   String rateLimited({required String status}) {
-    return LocaleKeys.claude_error_rateLimited.tr(
-      namedArgs: {'status': status},
-    );
+    return LocaleKeys.claude_error_rateLimited.tr(namedArgs: {
+      'status': status,
+    });
   }
 
   String spawnFailed({required String message}) {
-    return LocaleKeys.claude_error_spawnFailed.tr(
-      namedArgs: {'message': message},
-    );
+    return LocaleKeys.claude_error_spawnFailed.tr(namedArgs: {
+      'message': message,
+    });
   }
+
 }
 
 /// Nested class for message translations
@@ -256,28 +265,33 @@ class _ClaudeMessage {
 
   String get assistantLabel => LocaleKeys.claude_message_assistantLabel.tr();
   String get completionStub => LocaleKeys.claude_message_completionStub.tr();
-  String get scrollToBottomTooltip =>
-      LocaleKeys.claude_message_scrollToBottomTooltip.tr();
+  String get scrollToBottomTooltip => LocaleKeys.claude_message_scrollToBottomTooltip.tr();
   String get systemLabel => LocaleKeys.claude_message_systemLabel.tr();
   String get toolCompleted => LocaleKeys.claude_message_toolCompleted.tr();
   String get toolError => LocaleKeys.claude_message_toolError.tr();
   String get toolErrorOutput => LocaleKeys.claude_message_toolErrorOutput.tr();
   String toolGroupDone({required String n}) {
-    return LocaleKeys.claude_message_toolGroupDone.tr(namedArgs: {'n': n});
+    return LocaleKeys.claude_message_toolGroupDone.tr(namedArgs: {
+      'n': n,
+    });
   }
 
   String toolGroupErrors({required String n}) {
-    return LocaleKeys.claude_message_toolGroupErrors.tr(namedArgs: {'n': n});
+    return LocaleKeys.claude_message_toolGroupErrors.tr(namedArgs: {
+      'n': n,
+    });
   }
 
   String toolGroupRunning({required String n}) {
-    return LocaleKeys.claude_message_toolGroupRunning.tr(namedArgs: {'n': n});
+    return LocaleKeys.claude_message_toolGroupRunning.tr(namedArgs: {
+      'n': n,
+    });
   }
 
   String toolGroupTitle({required String count}) {
-    return LocaleKeys.claude_message_toolGroupTitle.tr(
-      namedArgs: {'count': count},
-    );
+    return LocaleKeys.claude_message_toolGroupTitle.tr(namedArgs: {
+      'count': count,
+    });
   }
 
   String get toolInput => LocaleKeys.claude_message_toolInput.tr();
@@ -300,8 +314,8 @@ class _ClaudePermission {
   const _ClaudePermission._();
 
   String get acceptEdits => LocaleKeys.claude_permission_acceptEdits.tr();
-  String get bypassPermissions =>
-      LocaleKeys.claude_permission_bypassPermissions.tr();
+  String get auto => LocaleKeys.claude_permission_auto.tr();
+  String get bypassPermissions => LocaleKeys.claude_permission_bypassPermissions.tr();
   String get default$ => LocaleKeys.claude_permission_default.tr();
   String get plan => LocaleKeys.claude_permission_plan.tr();
 }
@@ -310,24 +324,31 @@ class _ClaudePermission {
 class _ClaudePermissionRequest {
   const _ClaudePermissionRequest._();
 
-  String get allowAlways =>
-      LocaleKeys.claude_permissionRequest_allowAlways.tr();
+  String get allowAlways => LocaleKeys.claude_permissionRequest_allowAlways.tr();
   String get allowOnce => LocaleKeys.claude_permissionRequest_allowOnce.tr();
-  String get answeredAllowAlways =>
-      LocaleKeys.claude_permissionRequest_answeredAllowAlways.tr();
-  String get answeredAllowOnce =>
-      LocaleKeys.claude_permissionRequest_answeredAllowOnce.tr();
-  String get answeredDeny =>
-      LocaleKeys.claude_permissionRequest_answeredDeny.tr();
+  String get answeredAllowAlways => LocaleKeys.claude_permissionRequest_answeredAllowAlways.tr();
+  String get answeredAllowOnce => LocaleKeys.claude_permissionRequest_answeredAllowOnce.tr();
+  String get answeredDeny => LocaleKeys.claude_permissionRequest_answeredDeny.tr();
   String get deny => LocaleKeys.claude_permissionRequest_deny.tr();
   String get inputLabel => LocaleKeys.claude_permissionRequest_inputLabel.tr();
   String subtitle({required String tool}) {
-    return LocaleKeys.claude_permissionRequest_subtitle.tr(
-      namedArgs: {'tool': tool},
-    );
+    return LocaleKeys.claude_permissionRequest_subtitle.tr(namedArgs: {
+      'tool': tool,
+    });
   }
 
   String get title => LocaleKeys.claude_permissionRequest_title.tr();
+}
+
+/// Nested class for plan translations
+class _ClaudePlan {
+  const _ClaudePlan._();
+
+  String get answeredApproved => LocaleKeys.claude_plan_answeredApproved.tr();
+  String get answeredRejected => LocaleKeys.claude_plan_answeredRejected.tr();
+  String get approve => LocaleKeys.claude_plan_approve.tr();
+  String get reject => LocaleKeys.claude_plan_reject.tr();
+  String get title => LocaleKeys.claude_plan_title.tr();
 }
 
 /// Nested class for terminal translations
@@ -335,7 +356,6 @@ class _ClaudeTerminal {
   const _ClaudeTerminal._();
 
   String get title => LocaleKeys.claude_terminal_title.tr();
-
   /// Translations for actions
   final Actions = const _ClaudeTerminalActions._();
 
@@ -365,6 +385,7 @@ class _ClaudeTerminal {
 
   /// Translations for thinking
   final Thinking = const _ClaudeTerminalThinking._();
+
 }
 
 /// Nested class for actions translations
@@ -380,42 +401,32 @@ class _ClaudeTerminalCompact {
   const _ClaudeTerminalCompact._();
 
   String cardTitle({required String count}) {
-    return LocaleKeys.claude_terminal_compact_cardTitle.tr(
-      namedArgs: {'count': count},
-    );
+    return LocaleKeys.claude_terminal_compact_cardTitle.tr(namedArgs: {
+      'count': count,
+    });
   }
 
-  String get expand => LocaleKeys.claude_terminal_compact_expand.tr();
   String get collapse => LocaleKeys.claude_terminal_compact_collapse.tr();
-  String get summaryHeader =>
-      LocaleKeys.claude_terminal_compact_summaryHeader.tr();
+  String get expand => LocaleKeys.claude_terminal_compact_expand.tr();
+  String get summaryHeader => LocaleKeys.claude_terminal_compact_summaryHeader.tr();
 }
 
 /// Nested class for context translations
 class _ClaudeTerminalContext {
   const _ClaudeTerminalContext._();
 
-  String tooltip({
-    required String input,
-    required String cacheRead,
-    required String cacheCreation,
-    required String output,
-    required String total,
-    required String limit,
-    required String pct,
-  }) {
-    return LocaleKeys.claude_terminal_context_tooltip.tr(
-      namedArgs: {
-        'input': input,
-        'cacheRead': cacheRead,
-        'cacheCreation': cacheCreation,
-        'output': output,
-        'total': total,
-        'limit': limit,
-        'pct': pct,
-      },
-    );
+  String tooltip({required String input, required String cacheRead, required String cacheCreation, required String output, required String total, required String limit, required String pct}) {
+    return LocaleKeys.claude_terminal_context_tooltip.tr(namedArgs: {
+      'input': input,
+      'cacheRead': cacheRead,
+      'cacheCreation': cacheCreation,
+      'output': output,
+      'total': total,
+      'limit': limit,
+      'pct': pct,
+    });
   }
+
 }
 
 /// Nested class for effort translations
@@ -430,77 +441,55 @@ class _ClaudeTerminalEffort {
 class _ClaudeTerminalInput {
   const _ClaudeTerminalInput._();
 
-  String get escConfirmStop =>
-      LocaleKeys.claude_terminal_input_escConfirmStop.tr();
+  String get escConfirmStop => LocaleKeys.claude_terminal_input_escConfirmStop.tr();
   String get placeholder => LocaleKeys.claude_terminal_input_placeholder.tr();
-  String get placeholderQueueing =>
-      LocaleKeys.claude_terminal_input_placeholderQueueing.tr();
-  String get placeholderRunning =>
-      LocaleKeys.claude_terminal_input_placeholderRunning.tr();
+  String get placeholderQueueing => LocaleKeys.claude_terminal_input_placeholderQueueing.tr();
+  String get placeholderRunning => LocaleKeys.claude_terminal_input_placeholderRunning.tr();
   String get send => LocaleKeys.claude_terminal_input_send.tr();
   String get stop => LocaleKeys.claude_terminal_input_stop.tr();
-
   /// Translations for attachments
   final Attachments = const _ClaudeTerminalInputAttachments._();
 
   /// Translations for queue
   final Queue = const _ClaudeTerminalInputQueue._();
+
 }
 
 /// Nested class for attachments translations
 class _ClaudeTerminalInputAttachments {
   const _ClaudeTerminalInputAttachments._();
 
-  String get addFile =>
-      LocaleKeys.claude_terminal_input_attachments_addFile.tr();
-  String get addFolder =>
-      LocaleKeys.claude_terminal_input_attachments_addFolder.tr();
-  String get addScreenshot =>
-      LocaleKeys.claude_terminal_input_attachments_addScreenshot.tr();
-  String get dropHint =>
-      LocaleKeys.claude_terminal_input_attachments_dropHint.tr();
-  String get removeTooltip =>
-      LocaleKeys.claude_terminal_input_attachments_removeTooltip.tr();
+  String get addFile => LocaleKeys.claude_terminal_input_attachments_addFile.tr();
+  String get addFolder => LocaleKeys.claude_terminal_input_attachments_addFolder.tr();
+  String get addScreenshot => LocaleKeys.claude_terminal_input_attachments_addScreenshot.tr();
+  String get dropHint => LocaleKeys.claude_terminal_input_attachments_dropHint.tr();
+  String get removeTooltip => LocaleKeys.claude_terminal_input_attachments_removeTooltip.tr();
   String screenshotDisplay({required String index}) {
-    return LocaleKeys.claude_terminal_input_attachments_screenshotDisplay.tr(
-      namedArgs: {'index': index},
-    );
+    return LocaleKeys.claude_terminal_input_attachments_screenshotDisplay.tr(namedArgs: {
+      'index': index,
+    });
   }
 
-  String get screenshotDisplayName =>
-      LocaleKeys.claude_terminal_input_attachments_screenshotDisplayName.tr();
-  String get screenshotError =>
-      LocaleKeys.claude_terminal_input_attachments_screenshotError.tr();
-  String get screenshotFullScreen =>
-      LocaleKeys.claude_terminal_input_attachments_screenshotFullScreen.tr();
-  String get screenshotPickDisplay =>
-      LocaleKeys.claude_terminal_input_attachments_screenshotPickDisplay.tr();
-  String get screenshotPreview =>
-      LocaleKeys.claude_terminal_input_attachments_screenshotPreview.tr();
-  String get screenshotPreviewAttach =>
-      LocaleKeys.claude_terminal_input_attachments_screenshotPreviewAttach.tr();
-  String get screenshotPreviewClose =>
-      LocaleKeys.claude_terminal_input_attachments_screenshotPreviewClose.tr();
-  String get screenshotPreviewDiscard => LocaleKeys
-      .claude_terminal_input_attachments_screenshotPreviewDiscard
-      .tr();
-  String get screenshotPreviewTitle =>
-      LocaleKeys.claude_terminal_input_attachments_screenshotPreviewTitle.tr();
-  String get screenshotRegion =>
-      LocaleKeys.claude_terminal_input_attachments_screenshotRegion.tr();
-  String get screenshotWindow =>
-      LocaleKeys.claude_terminal_input_attachments_screenshotWindow.tr();
+  String get screenshotDisplayName => LocaleKeys.claude_terminal_input_attachments_screenshotDisplayName.tr();
+  String get screenshotError => LocaleKeys.claude_terminal_input_attachments_screenshotError.tr();
+  String get screenshotFullScreen => LocaleKeys.claude_terminal_input_attachments_screenshotFullScreen.tr();
+  String get screenshotPickDisplay => LocaleKeys.claude_terminal_input_attachments_screenshotPickDisplay.tr();
+  String get screenshotPreview => LocaleKeys.claude_terminal_input_attachments_screenshotPreview.tr();
+  String get screenshotPreviewAttach => LocaleKeys.claude_terminal_input_attachments_screenshotPreviewAttach.tr();
+  String get screenshotPreviewClose => LocaleKeys.claude_terminal_input_attachments_screenshotPreviewClose.tr();
+  String get screenshotPreviewDiscard => LocaleKeys.claude_terminal_input_attachments_screenshotPreviewDiscard.tr();
+  String get screenshotPreviewTitle => LocaleKeys.claude_terminal_input_attachments_screenshotPreviewTitle.tr();
+  String get screenshotRegion => LocaleKeys.claude_terminal_input_attachments_screenshotRegion.tr();
+  String get screenshotWindow => LocaleKeys.claude_terminal_input_attachments_screenshotWindow.tr();
 }
 
 /// Nested class for queue translations
 class _ClaudeTerminalInputQueue {
   const _ClaudeTerminalInputQueue._();
 
-  String get editPlaceholder =>
-      LocaleKeys.claude_terminal_input_queue_editPlaceholder.tr();
+  String get editPlaceholder => LocaleKeys.claude_terminal_input_queue_editPlaceholder.tr();
   String get label => LocaleKeys.claude_terminal_input_queue_label.tr();
-  String get removeTooltip =>
-      LocaleKeys.claude_terminal_input_queue_removeTooltip.tr();
+  String get removeTooltip => LocaleKeys.claude_terminal_input_queue_removeTooltip.tr();
   String get send => LocaleKeys.claude_terminal_input_queue_send.tr();
 }
 
@@ -517,12 +506,11 @@ class _ClaudeTerminalMcp {
   String get refresh => LocaleKeys.claude_terminal_mcp_refresh.tr();
   String get title => LocaleKeys.claude_terminal_mcp_title.tr();
   String get toggleError => LocaleKeys.claude_terminal_mcp_toggleError.tr();
-  String get toggleNoSession =>
-      LocaleKeys.claude_terminal_mcp_toggleNoSession.tr();
+  String get toggleNoSession => LocaleKeys.claude_terminal_mcp_toggleNoSession.tr();
   String get tooltip => LocaleKeys.claude_terminal_mcp_tooltip.tr();
-
   /// Translations for status
   final Status = const _ClaudeTerminalMcpStatus._();
+
 }
 
 /// Nested class for status translations
@@ -549,17 +537,16 @@ class _ClaudeTerminalPermission {
 
   String get label => LocaleKeys.claude_terminal_permission_label.tr();
   String get tooltip => LocaleKeys.claude_terminal_permission_tooltip.tr();
-
   /// Translations for warning
   final Warning = const _ClaudeTerminalPermissionWarning._();
+
 }
 
 /// Nested class for warning translations
 class _ClaudeTerminalPermissionWarning {
   const _ClaudeTerminalPermissionWarning._();
 
-  String get default$ =>
-      LocaleKeys.claude_terminal_permission_warning_default.tr();
+  String get default$ => LocaleKeys.claude_terminal_permission_warning_default.tr();
 }
 
 /// Nested class for status translations
@@ -588,9 +575,7 @@ class _ClaudeThinking {
   const _ClaudeThinking._();
 
   String get off => LocaleKeys.claude_thinking_off.tr();
-  String get think => LocaleKeys.claude_thinking_think.tr();
-  String get thinkHard => LocaleKeys.claude_thinking_thinkHard.tr();
-  String get ultrathink => LocaleKeys.claude_thinking_ultrathink.tr();
+  String get on => LocaleKeys.claude_thinking_on.tr();
 }
 
 /// Nested class for editor translations
@@ -601,7 +586,6 @@ class _Editor {
   String get fileLoadError => LocaleKeys.editor_fileLoadError.tr();
   String get fileTooLarge => LocaleKeys.editor_fileTooLarge.tr();
   String get noFileOpen => LocaleKeys.editor_noFileOpen.tr();
-
   /// Translations for find
   final Find = const _EditorFind._();
 
@@ -622,6 +606,7 @@ class _Editor {
 
   /// Translations for unsupported
   final Unsupported = const _EditorUnsupported._();
+
 }
 
 /// Nested class for find translations
@@ -682,8 +667,7 @@ class _EditorTab {
 class _EditorUnsupported {
   const _EditorUnsupported._();
 
-  String get revealInFinder =>
-      LocaleKeys.editor_unsupported_revealInFinder.tr();
+  String get revealInFinder => LocaleKeys.editor_unsupported_revealInFinder.tr();
   String get title => LocaleKeys.editor_unsupported_title.tr();
 }
 
@@ -696,6 +680,7 @@ class _Sessions {
 
   /// Translations for preview
   final Preview = const _SessionsPreview._();
+
 }
 
 /// Nested class for list translations
@@ -708,9 +693,9 @@ class _SessionsList {
   String get refresh => LocaleKeys.sessions_list_refresh.tr();
   String get search => LocaleKeys.sessions_list_search.tr();
   String get untitled => LocaleKeys.sessions_list_untitled.tr();
-
   /// Translations for relativeDate
   final RelativeDate = const _SessionsListRelativeDate._();
+
 }
 
 /// Nested class for relativeDate translations
@@ -718,15 +703,15 @@ class _SessionsListRelativeDate {
   const _SessionsListRelativeDate._();
 
   String hoursAgo({required String n}) {
-    return LocaleKeys.sessions_list_relativeDate_hoursAgo.tr(
-      namedArgs: {'n': n},
-    );
+    return LocaleKeys.sessions_list_relativeDate_hoursAgo.tr(namedArgs: {
+      'n': n,
+    });
   }
 
   String minutesAgo({required String n}) {
-    return LocaleKeys.sessions_list_relativeDate_minutesAgo.tr(
-      namedArgs: {'n': n},
-    );
+    return LocaleKeys.sessions_list_relativeDate_minutesAgo.tr(namedArgs: {
+      'n': n,
+    });
   }
 
   String get now => LocaleKeys.sessions_list_relativeDate_now.tr();
@@ -738,29 +723,23 @@ class _SessionsPreview {
   const _SessionsPreview._();
 
   String get delete => LocaleKeys.sessions_preview_delete.tr();
-  String get deleteConfirmBody =>
-      LocaleKeys.sessions_preview_deleteConfirmBody.tr();
-  String get deleteConfirmCancel =>
-      LocaleKeys.sessions_preview_deleteConfirmCancel.tr();
-  String get deleteConfirmOk =>
-      LocaleKeys.sessions_preview_deleteConfirmOk.tr();
-  String get deleteConfirmTitle =>
-      LocaleKeys.sessions_preview_deleteConfirmTitle.tr();
+  String get deleteConfirmBody => LocaleKeys.sessions_preview_deleteConfirmBody.tr();
+  String get deleteConfirmCancel => LocaleKeys.sessions_preview_deleteConfirmCancel.tr();
+  String get deleteConfirmOk => LocaleKeys.sessions_preview_deleteConfirmOk.tr();
+  String get deleteConfirmTitle => LocaleKeys.sessions_preview_deleteConfirmTitle.tr();
   String get empty => LocaleKeys.sessions_preview_empty.tr();
   String get export => LocaleKeys.sessions_preview_export.tr();
   String exportDone({required String path}) {
-    return LocaleKeys.sessions_preview_exportDone.tr(namedArgs: {'path': path});
+    return LocaleKeys.sessions_preview_exportDone.tr(namedArgs: {
+      'path': path,
+    });
   }
 
   String get resume => LocaleKeys.sessions_preview_resume.tr();
-  String get resumeConfirmBody =>
-      LocaleKeys.sessions_preview_resumeConfirmBody.tr();
-  String get resumeConfirmCancel =>
-      LocaleKeys.sessions_preview_resumeConfirmCancel.tr();
-  String get resumeConfirmOk =>
-      LocaleKeys.sessions_preview_resumeConfirmOk.tr();
-  String get resumeConfirmTitle =>
-      LocaleKeys.sessions_preview_resumeConfirmTitle.tr();
+  String get resumeConfirmBody => LocaleKeys.sessions_preview_resumeConfirmBody.tr();
+  String get resumeConfirmCancel => LocaleKeys.sessions_preview_resumeConfirmCancel.tr();
+  String get resumeConfirmOk => LocaleKeys.sessions_preview_resumeConfirmOk.tr();
+  String get resumeConfirmTitle => LocaleKeys.sessions_preview_resumeConfirmTitle.tr();
 }
 
 /// Nested class for shell translations
@@ -778,14 +757,14 @@ class _Shell {
 
   /// Translations for workspace
   final Workspace = const _ShellWorkspace._();
+
 }
 
 /// Nested class for activity translations
 class _ShellActivity {
   const _ShellActivity._();
 
-  String get comingLaterSuffix =>
-      LocaleKeys.shell_activity_comingLaterSuffix.tr();
+  String get comingLaterSuffix => LocaleKeys.shell_activity_comingLaterSuffix.tr();
   String get explorer => LocaleKeys.shell_activity_explorer.tr();
   String get git => LocaleKeys.shell_activity_git.tr();
   String get logs => LocaleKeys.shell_activity_logs.tr();
@@ -801,36 +780,36 @@ class _ShellShortcuts {
 
   String get alreadyAttached => LocaleKeys.shell_shortcuts_alreadyAttached.tr();
   String attachedFile({required String name}) {
-    return LocaleKeys.shell_shortcuts_attachedFile.tr(
-      namedArgs: {'name': name},
-    );
+    return LocaleKeys.shell_shortcuts_attachedFile.tr(namedArgs: {
+      'name': name,
+    });
   }
 
   String attachedRange({required String name}) {
-    return LocaleKeys.shell_shortcuts_attachedRange.tr(
-      namedArgs: {'name': name},
-    );
+    return LocaleKeys.shell_shortcuts_attachedRange.tr(namedArgs: {
+      'name': name,
+    });
   }
 
   String effortChanged({required String value}) {
-    return LocaleKeys.shell_shortcuts_effortChanged.tr(
-      namedArgs: {'value': value},
-    );
+    return LocaleKeys.shell_shortcuts_effortChanged.tr(namedArgs: {
+      'value': value,
+    });
   }
 
-  String get noActiveWorkspace =>
-      LocaleKeys.shell_shortcuts_noActiveWorkspace.tr();
+  String get noActiveWorkspace => LocaleKeys.shell_shortcuts_noActiveWorkspace.tr();
   String permissionChanged({required String value}) {
-    return LocaleKeys.shell_shortcuts_permissionChanged.tr(
-      namedArgs: {'value': value},
-    );
+    return LocaleKeys.shell_shortcuts_permissionChanged.tr(namedArgs: {
+      'value': value,
+    });
   }
 
   String thinkingChanged({required String value}) {
-    return LocaleKeys.shell_shortcuts_thinkingChanged.tr(
-      namedArgs: {'value': value},
-    );
+    return LocaleKeys.shell_shortcuts_thinkingChanged.tr(namedArgs: {
+      'value': value,
+    });
   }
+
 }
 
 /// Nested class for sidePanel translations
@@ -841,20 +820,16 @@ class _ShellSidePanel {
   String get explorerLabel => LocaleKeys.shell_sidePanel_explorerLabel.tr();
   String get loadError => LocaleKeys.shell_sidePanel_loadError.tr();
   String get refresh => LocaleKeys.shell_sidePanel_refresh.tr();
-  String get toggleHiddenHide =>
-      LocaleKeys.shell_sidePanel_toggleHiddenHide.tr();
-  String get toggleHiddenShow =>
-      LocaleKeys.shell_sidePanel_toggleHiddenShow.tr();
+  String get toggleHiddenHide => LocaleKeys.shell_sidePanel_toggleHiddenHide.tr();
+  String get toggleHiddenShow => LocaleKeys.shell_sidePanel_toggleHiddenShow.tr();
 }
 
 /// Nested class for workspace translations
 class _ShellWorkspace {
   const _ShellWorkspace._();
 
-  String get toggleToFullscreen =>
-      LocaleKeys.shell_workspace_toggleToFullscreen.tr();
-  String get toggleToWorkspace =>
-      LocaleKeys.shell_workspace_toggleToWorkspace.tr();
+  String get toggleToFullscreen => LocaleKeys.shell_workspace_toggleToFullscreen.tr();
+  String get toggleToWorkspace => LocaleKeys.shell_workspace_toggleToWorkspace.tr();
 }
 
 /// Nested class for slashCommands translations
@@ -862,12 +837,12 @@ class _SlashCommands {
   const _SlashCommands._();
 
   String get empty => LocaleKeys.slashCommands_empty.tr();
-
   /// Translations for chip
   final Chip = const _SlashCommandsChip._();
 
   /// Translations for source
   final Source = const _SlashCommandsSource._();
+
 }
 
 /// Nested class for chip translations
@@ -893,19 +868,23 @@ class _Terminal {
   const _Terminal._();
 
   String exited({required String code}) {
-    return LocaleKeys.terminal_exited.tr(namedArgs: {'code': code});
+    return LocaleKeys.terminal_exited.tr(namedArgs: {
+      'code': code,
+    });
   }
 
   String get noWorkspace => LocaleKeys.terminal_noWorkspace.tr();
   String get restart => LocaleKeys.terminal_restart.tr();
   String spawnFailed({required String message}) {
-    return LocaleKeys.terminal_spawnFailed.tr(namedArgs: {'message': message});
+    return LocaleKeys.terminal_spawnFailed.tr(namedArgs: {
+      'message': message,
+    });
   }
 
   String get starting => LocaleKeys.terminal_starting.tr();
-
   /// Translations for menu
   final Menu = const _TerminalMenu._();
+
 }
 
 /// Nested class for menu translations
@@ -928,14 +907,14 @@ class _Workspace {
 
   /// Translations for picker
   final Picker = const _WorkspacePicker._();
+
 }
 
 /// Nested class for dropdown translations
 class _WorkspaceDropdown {
   const _WorkspaceDropdown._();
 
-  String get closeWorkspace =>
-      LocaleKeys.workspace_dropdown_closeWorkspace.tr();
+  String get closeWorkspace => LocaleKeys.workspace_dropdown_closeWorkspace.tr();
   String get empty => LocaleKeys.workspace_dropdown_empty.tr();
   String get openFolder => LocaleKeys.workspace_dropdown_openFolder.tr();
 }
@@ -954,3 +933,4 @@ class _WorkspacePicker {
 
   String get title => LocaleKeys.workspace_picker_title.tr();
 }
+

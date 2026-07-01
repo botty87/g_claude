@@ -1,15 +1,13 @@
 enum ClaudeThinkingMode {
-  off('', 'claude.thinking.off'),
-  think('think', 'claude.thinking.think'),
-  thinkHard('think hard', 'claude.thinking.thinkHard'),
-  ultrathink('ultrathink', 'claude.thinking.ultrathink');
+  off('off', 'claude.thinking.off'),
+  on('on', 'claude.thinking.on');
 
-  const ClaudeThinkingMode(this.keyword, this.labelKey);
+  const ClaudeThinkingMode(this.cliId, this.labelKey);
 
-  final String keyword;
+  final String cliId;
   final String labelKey;
 
-  static const ClaudeThinkingMode defaultMode = ClaudeThinkingMode.off;
+  static const ClaudeThinkingMode defaultMode = ClaudeThinkingMode.on;
 
   ClaudeThinkingMode get next {
     final list = ClaudeThinkingMode.values;

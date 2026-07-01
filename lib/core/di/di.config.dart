@@ -41,17 +41,15 @@ import '../../features/claude/data/datasources/claude_binary_resolver.dart'
     as _i1073;
 import '../../features/claude/data/datasources/claude_history_datasource.dart'
     as _i278;
-import '../../features/claude/data/datasources/claude_process_datasource.dart'
-    as _i457;
-import '../../features/claude/data/datasources/claude_settings_writer.dart'
-    as _i880;
 import '../../features/claude/data/datasources/mcp_list_datasource.dart'
     as _i340;
-import '../../features/claude/data/datasources/permission_server.dart' as _i407;
 import '../../features/claude/data/datasources/sessions_database.dart'
     as _i1060;
 import '../../features/claude/data/datasources/sessions_index_datasource.dart'
     as _i627;
+import '../../features/claude/data/datasources/sidecar_client_datasource.dart'
+    as _i330;
+import '../../features/claude/data/datasources/sidecar_transport.dart' as _i583;
 import '../../features/claude/data/repositories/chat_history_repository_impl.dart'
     as _i682;
 import '../../features/claude/data/repositories/claude_repository_impl.dart'
@@ -212,13 +210,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1073.ClaudeBinaryResolver>(
       () => _i1073.ClaudeBinaryResolver(gh<_i207.Talker>()),
     );
-    gh.lazySingleton<_i880.ClaudeSettingsWriter>(
-      () => _i880.ClaudeSettingsWriter(gh<_i207.Talker>()),
-    );
-    gh.lazySingleton<_i407.PermissionServer>(
-      () => _i407.PermissionServer(gh<_i207.Talker>()),
-      dispose: (i) => i.stop(),
-    );
     gh.lazySingleton<_i986.CommandsDiscoveryDataSource>(
       () => _i986.CommandsDiscoveryDataSource(gh<_i207.Talker>()),
     );
@@ -241,25 +232,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i278.ClaudeHistoryDataSource>(
       () => _i278.ClaudeHistoryDataSourceImpl(gh<_i207.Talker>()),
     );
-    gh.lazySingleton<_i457.ClaudeProcessDataSource>(
-      () => _i457.ClaudeProcessDataSourceImpl(
-        gh<_i207.Talker>(),
-        gh<_i407.PermissionServer>(),
-        gh<_i880.ClaudeSettingsWriter>(),
-        gh<_i1073.ClaudeBinaryResolver>(),
-      ),
-    );
     gh.lazySingleton<_i12.FileSystemDataSource>(
       () => _i12.FileSystemDataSourceImpl(),
     );
     gh.lazySingleton<_i494.KeyValueStore>(
       () => _i494.SharedPreferencesKeyValueStore(gh<_i460.SharedPreferences>()),
-    );
-    gh.lazySingleton<_i139.ClaudeRepository>(
-      () => _i1009.ClaudeRepositoryImpl(
-        gh<_i457.ClaudeProcessDataSource>(),
-        gh<_i407.PermissionServer>(),
-      ),
     );
     gh.lazySingleton<_i1043.FileContentRepository>(
       () => _i574.FileContentRepositoryImpl(gh<_i630.FileContentDataSource>()),
@@ -300,17 +277,17 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1073.ClaudeBinaryResolver>(),
       ),
     );
+    gh.lazySingleton<_i583.SidecarTransport>(
+      () => _i583.StdioSidecarTransport(
+        gh<_i207.Talker>(),
+        gh<_i1073.ClaudeBinaryResolver>(),
+      ),
+    );
     gh.factory<_i268.LoadClaudeMd>(
       () => _i268.LoadClaudeMd(gh<_i268.WorkspaceRepository>()),
     );
     gh.factory<_i305.OpenWorkspace>(
       () => _i305.OpenWorkspace(gh<_i268.WorkspaceRepository>()),
-    );
-    gh.factory<_i338.SendPrompt>(
-      () => _i338.SendPrompt(gh<_i139.ClaudeRepository>()),
-    );
-    gh.factory<_i328.StopRun>(
-      () => _i328.StopRun(gh<_i139.ClaudeRepository>()),
     );
     gh.lazySingleton<_i283.FileTabsPersistenceDataSource>(
       () => _i283.FileTabsPersistenceDataSourceImpl(
@@ -330,12 +307,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i585.McpRepository>(
       () => _i629.McpRepositoryImpl(gh<_i340.McpListDataSource>()),
-    );
-    gh.factory<_i407.AuthenticateMcpServer>(
-      () => _i407.AuthenticateMcpServer(gh<_i139.ClaudeRepository>()),
-    );
-    gh.factory<_i920.ToggleMcpServer>(
-      () => _i920.ToggleMcpServer(gh<_i139.ClaudeRepository>()),
     );
     gh.lazySingleton<_i420.WorkspacesPersistenceDataSource>(
       () => _i420.WorkspacesPersistenceDataSourceImpl(
@@ -383,6 +354,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i207.Talker>(),
       )..init(),
     );
+    gh.lazySingleton<_i330.SidecarClientDataSource>(
+      () => _i330.SidecarClientDataSource(
+        gh<_i583.SidecarTransport>(),
+        gh<_i207.Talker>(),
+      ),
+    );
     gh.factory<_i977.ListMcpServers>(
       () => _i977.ListMcpServers(gh<_i585.McpRepository>()),
     );
@@ -394,22 +371,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i179.WorkspacesCubit>(),
         gh<_i283.FileTabsPersistenceDataSource>(),
         gh<_i167.WorkspaceFileWatcher>(),
-        gh<_i207.Talker>(),
-      )..init(),
-    );
-    gh.lazySingleton<_i838.ClaudeSessionsCubit>(
-      () => _i838.ClaudeSessionsCubit(
-        gh<_i338.SendPrompt>(),
-        gh<_i328.StopRun>(),
-        gh<_i977.ListMcpServers>(),
-        gh<_i920.ToggleMcpServer>(),
-        gh<_i407.AuthenticateMcpServer>(),
-        gh<_i992.LoadSessionMessages>(),
-        gh<_i278.ClaudeHistoryDataSource>(),
-        gh<_i179.WorkspacesCubit>(),
-        gh<_i407.PermissionServer>(),
-        gh<_i139.ClaudeRepository>(),
-        gh<_i460.SharedPreferences>(),
         gh<_i207.Talker>(),
       )..init(),
     );
@@ -425,6 +386,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i179.WorkspacesCubit>(),
         gh<_i207.Talker>(),
       )..init(),
+    );
+    gh.lazySingleton<_i139.ClaudeRepository>(
+      () => _i1009.ClaudeRepositoryImpl(gh<_i330.SidecarClientDataSource>()),
     );
     gh.lazySingleton<_i709.AppLogDetailCubit>(
       () => _i709.AppLogDetailCubit(
@@ -452,6 +416,33 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i179.WorkspacesCubit>(),
         gh<_i648.FileTabsCubit>(),
         gh<_i167.WorkspaceFileWatcher>(),
+        gh<_i207.Talker>(),
+      )..init(),
+    );
+    gh.factory<_i338.SendPrompt>(
+      () => _i338.SendPrompt(gh<_i139.ClaudeRepository>()),
+    );
+    gh.factory<_i328.StopRun>(
+      () => _i328.StopRun(gh<_i139.ClaudeRepository>()),
+    );
+    gh.factory<_i407.AuthenticateMcpServer>(
+      () => _i407.AuthenticateMcpServer(gh<_i139.ClaudeRepository>()),
+    );
+    gh.factory<_i920.ToggleMcpServer>(
+      () => _i920.ToggleMcpServer(gh<_i139.ClaudeRepository>()),
+    );
+    gh.lazySingleton<_i838.ClaudeSessionsCubit>(
+      () => _i838.ClaudeSessionsCubit(
+        gh<_i338.SendPrompt>(),
+        gh<_i328.StopRun>(),
+        gh<_i977.ListMcpServers>(),
+        gh<_i920.ToggleMcpServer>(),
+        gh<_i407.AuthenticateMcpServer>(),
+        gh<_i992.LoadSessionMessages>(),
+        gh<_i278.ClaudeHistoryDataSource>(),
+        gh<_i179.WorkspacesCubit>(),
+        gh<_i139.ClaudeRepository>(),
+        gh<_i460.SharedPreferences>(),
         gh<_i207.Talker>(),
       )..init(),
     );

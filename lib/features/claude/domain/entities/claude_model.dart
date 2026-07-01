@@ -28,6 +28,15 @@ enum ClaudeModel {
 }
 
 extension ClaudeModelContext on ClaudeModel {
-  /// Standard context window in tokens (200k for all current models).
-  int get contextLimit => 200000;
+  /// Context window in tokens. Sonnet and Opus run with the 1M-context beta
+  /// enabled by the sidecar automatically; Haiku stays at the standard 200k.
+  int get contextLimit {
+    switch (this) {
+      case ClaudeModel.sonnet:
+      case ClaudeModel.opus:
+        return 1000000;
+      case ClaudeModel.haiku:
+        return 200000;
+    }
+  }
 }

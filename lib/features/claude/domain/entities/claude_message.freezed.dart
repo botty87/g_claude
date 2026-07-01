@@ -87,7 +87,7 @@ extension ClaudeMessagePatterns on ClaudeMessage {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ClaudeMessageUser value)?  user,TResult Function( ClaudeMessageAssistant value)?  assistant,TResult Function( ClaudeMessageTool value)?  tool,TResult Function( ClaudeMessageSystem value)?  system,TResult Function( ClaudeMessageAskUserQuestion value)?  askUserQuestion,TResult Function( ClaudeMessagePermissionRequest value)?  permissionRequest,TResult Function( ClaudeMessageCompactSummary value)?  compactSummary,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ClaudeMessageUser value)?  user,TResult Function( ClaudeMessageAssistant value)?  assistant,TResult Function( ClaudeMessageTool value)?  tool,TResult Function( ClaudeMessageSystem value)?  system,TResult Function( ClaudeMessageAskUserQuestion value)?  askUserQuestion,TResult Function( ClaudeMessagePermissionRequest value)?  permissionRequest,TResult Function( ClaudeMessageCompactSummary value)?  compactSummary,TResult Function( ClaudeMessagePlan value)?  plan,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
@@ -97,7 +97,8 @@ return tool(_that);case ClaudeMessageSystem() when system != null:
 return system(_that);case ClaudeMessageAskUserQuestion() when askUserQuestion != null:
 return askUserQuestion(_that);case ClaudeMessagePermissionRequest() when permissionRequest != null:
 return permissionRequest(_that);case ClaudeMessageCompactSummary() when compactSummary != null:
-return compactSummary(_that);case _:
+return compactSummary(_that);case ClaudeMessagePlan() when plan != null:
+return plan(_that);case _:
   return orElse();
 
 }
@@ -115,7 +116,7 @@ return compactSummary(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ClaudeMessageUser value)  user,required TResult Function( ClaudeMessageAssistant value)  assistant,required TResult Function( ClaudeMessageTool value)  tool,required TResult Function( ClaudeMessageSystem value)  system,required TResult Function( ClaudeMessageAskUserQuestion value)  askUserQuestion,required TResult Function( ClaudeMessagePermissionRequest value)  permissionRequest,required TResult Function( ClaudeMessageCompactSummary value)  compactSummary,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ClaudeMessageUser value)  user,required TResult Function( ClaudeMessageAssistant value)  assistant,required TResult Function( ClaudeMessageTool value)  tool,required TResult Function( ClaudeMessageSystem value)  system,required TResult Function( ClaudeMessageAskUserQuestion value)  askUserQuestion,required TResult Function( ClaudeMessagePermissionRequest value)  permissionRequest,required TResult Function( ClaudeMessageCompactSummary value)  compactSummary,required TResult Function( ClaudeMessagePlan value)  plan,}){
 final _that = this;
 switch (_that) {
 case ClaudeMessageUser():
@@ -125,7 +126,8 @@ return tool(_that);case ClaudeMessageSystem():
 return system(_that);case ClaudeMessageAskUserQuestion():
 return askUserQuestion(_that);case ClaudeMessagePermissionRequest():
 return permissionRequest(_that);case ClaudeMessageCompactSummary():
-return compactSummary(_that);}
+return compactSummary(_that);case ClaudeMessagePlan():
+return plan(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -139,7 +141,7 @@ return compactSummary(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ClaudeMessageUser value)?  user,TResult? Function( ClaudeMessageAssistant value)?  assistant,TResult? Function( ClaudeMessageTool value)?  tool,TResult? Function( ClaudeMessageSystem value)?  system,TResult? Function( ClaudeMessageAskUserQuestion value)?  askUserQuestion,TResult? Function( ClaudeMessagePermissionRequest value)?  permissionRequest,TResult? Function( ClaudeMessageCompactSummary value)?  compactSummary,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ClaudeMessageUser value)?  user,TResult? Function( ClaudeMessageAssistant value)?  assistant,TResult? Function( ClaudeMessageTool value)?  tool,TResult? Function( ClaudeMessageSystem value)?  system,TResult? Function( ClaudeMessageAskUserQuestion value)?  askUserQuestion,TResult? Function( ClaudeMessagePermissionRequest value)?  permissionRequest,TResult? Function( ClaudeMessageCompactSummary value)?  compactSummary,TResult? Function( ClaudeMessagePlan value)?  plan,}){
 final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
@@ -149,7 +151,8 @@ return tool(_that);case ClaudeMessageSystem() when system != null:
 return system(_that);case ClaudeMessageAskUserQuestion() when askUserQuestion != null:
 return askUserQuestion(_that);case ClaudeMessagePermissionRequest() when permissionRequest != null:
 return permissionRequest(_that);case ClaudeMessageCompactSummary() when compactSummary != null:
-return compactSummary(_that);case _:
+return compactSummary(_that);case ClaudeMessagePlan() when plan != null:
+return plan(_that);case _:
   return null;
 
 }
@@ -166,7 +169,7 @@ return compactSummary(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String id,  String text,  DateTime createdAt,  List<String> slashTriggers,  List<ChatAttachment> attachments)?  user,TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult Function( String id,  String text,  DateTime createdAt)?  system,TResult Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)?  askUserQuestion,TResult Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)?  permissionRequest,TResult Function( String id,  String summary,  int hiddenMessageCount,  DateTime createdAt,  bool expanded)?  compactSummary,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String id,  String text,  DateTime createdAt,  List<String> slashTriggers,  List<ChatAttachment> attachments)?  user,TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult Function( String id,  String text,  DateTime createdAt)?  system,TResult Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)?  askUserQuestion,TResult Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)?  permissionRequest,TResult Function( String id,  String summary,  int hiddenMessageCount,  DateTime createdAt,  bool expanded)?  compactSummary,TResult Function( String id,  String toolUseId,  String plan,  String? planFilePath,  DateTime createdAt,  bool? approved,  bool answered)?  plan,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
 return user(_that.id,_that.text,_that.createdAt,_that.slashTriggers,_that.attachments);case ClaudeMessageAssistant() when assistant != null:
@@ -175,7 +178,8 @@ return tool(_that.id,_that.toolName,_that.status,_that.createdAt,_that.toolUseId
 return system(_that.id,_that.text,_that.createdAt);case ClaudeMessageAskUserQuestion() when askUserQuestion != null:
 return askUserQuestion(_that.id,_that.toolUseId,_that.questions,_that.createdAt,_that.answers,_that.answered);case ClaudeMessagePermissionRequest() when permissionRequest != null:
 return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput,_that.createdAt,_that.decision,_that.answered);case ClaudeMessageCompactSummary() when compactSummary != null:
-return compactSummary(_that.id,_that.summary,_that.hiddenMessageCount,_that.createdAt,_that.expanded);case _:
+return compactSummary(_that.id,_that.summary,_that.hiddenMessageCount,_that.createdAt,_that.expanded);case ClaudeMessagePlan() when plan != null:
+return plan(_that.id,_that.toolUseId,_that.plan,_that.planFilePath,_that.createdAt,_that.approved,_that.answered);case _:
   return orElse();
 
 }
@@ -193,7 +197,7 @@ return compactSummary(_that.id,_that.summary,_that.hiddenMessageCount,_that.crea
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String id,  String text,  DateTime createdAt,  List<String> slashTriggers,  List<ChatAttachment> attachments)  user,required TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)  assistant,required TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)  tool,required TResult Function( String id,  String text,  DateTime createdAt)  system,required TResult Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)  askUserQuestion,required TResult Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)  permissionRequest,required TResult Function( String id,  String summary,  int hiddenMessageCount,  DateTime createdAt,  bool expanded)  compactSummary,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String id,  String text,  DateTime createdAt,  List<String> slashTriggers,  List<ChatAttachment> attachments)  user,required TResult Function( String id,  String text,  bool isStreaming,  DateTime createdAt)  assistant,required TResult Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)  tool,required TResult Function( String id,  String text,  DateTime createdAt)  system,required TResult Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)  askUserQuestion,required TResult Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)  permissionRequest,required TResult Function( String id,  String summary,  int hiddenMessageCount,  DateTime createdAt,  bool expanded)  compactSummary,required TResult Function( String id,  String toolUseId,  String plan,  String? planFilePath,  DateTime createdAt,  bool? approved,  bool answered)  plan,}) {final _that = this;
 switch (_that) {
 case ClaudeMessageUser():
 return user(_that.id,_that.text,_that.createdAt,_that.slashTriggers,_that.attachments);case ClaudeMessageAssistant():
@@ -202,7 +206,8 @@ return tool(_that.id,_that.toolName,_that.status,_that.createdAt,_that.toolUseId
 return system(_that.id,_that.text,_that.createdAt);case ClaudeMessageAskUserQuestion():
 return askUserQuestion(_that.id,_that.toolUseId,_that.questions,_that.createdAt,_that.answers,_that.answered);case ClaudeMessagePermissionRequest():
 return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput,_that.createdAt,_that.decision,_that.answered);case ClaudeMessageCompactSummary():
-return compactSummary(_that.id,_that.summary,_that.hiddenMessageCount,_that.createdAt,_that.expanded);}
+return compactSummary(_that.id,_that.summary,_that.hiddenMessageCount,_that.createdAt,_that.expanded);case ClaudeMessagePlan():
+return plan(_that.id,_that.toolUseId,_that.plan,_that.planFilePath,_that.createdAt,_that.approved,_that.answered);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -216,7 +221,7 @@ return compactSummary(_that.id,_that.summary,_that.hiddenMessageCount,_that.crea
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String id,  String text,  DateTime createdAt,  List<String> slashTriggers,  List<ChatAttachment> attachments)?  user,TResult? Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult? Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult? Function( String id,  String text,  DateTime createdAt)?  system,TResult? Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)?  askUserQuestion,TResult? Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)?  permissionRequest,TResult? Function( String id,  String summary,  int hiddenMessageCount,  DateTime createdAt,  bool expanded)?  compactSummary,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String id,  String text,  DateTime createdAt,  List<String> slashTriggers,  List<ChatAttachment> attachments)?  user,TResult? Function( String id,  String text,  bool isStreaming,  DateTime createdAt)?  assistant,TResult? Function( String id,  String toolName,  ClaudeToolStatus status,  DateTime createdAt,  String? toolUseId,  Map<String, dynamic>? input,  String? output,  bool isError)?  tool,TResult? Function( String id,  String text,  DateTime createdAt)?  system,TResult? Function( String id,  String toolUseId,  List<AskUserQuestionItem> questions,  DateTime createdAt,  Map<String, String> answers,  bool answered)?  askUserQuestion,TResult? Function( String id,  String requestId,  String toolName,  Map<String, dynamic> toolInput,  DateTime createdAt,  ClaudePermissionDecision? decision,  bool answered)?  permissionRequest,TResult? Function( String id,  String summary,  int hiddenMessageCount,  DateTime createdAt,  bool expanded)?  compactSummary,TResult? Function( String id,  String toolUseId,  String plan,  String? planFilePath,  DateTime createdAt,  bool? approved,  bool answered)?  plan,}) {final _that = this;
 switch (_that) {
 case ClaudeMessageUser() when user != null:
 return user(_that.id,_that.text,_that.createdAt,_that.slashTriggers,_that.attachments);case ClaudeMessageAssistant() when assistant != null:
@@ -225,7 +230,8 @@ return tool(_that.id,_that.toolName,_that.status,_that.createdAt,_that.toolUseId
 return system(_that.id,_that.text,_that.createdAt);case ClaudeMessageAskUserQuestion() when askUserQuestion != null:
 return askUserQuestion(_that.id,_that.toolUseId,_that.questions,_that.createdAt,_that.answers,_that.answered);case ClaudeMessagePermissionRequest() when permissionRequest != null:
 return permissionRequest(_that.id,_that.requestId,_that.toolName,_that.toolInput,_that.createdAt,_that.decision,_that.answered);case ClaudeMessageCompactSummary() when compactSummary != null:
-return compactSummary(_that.id,_that.summary,_that.hiddenMessageCount,_that.createdAt,_that.expanded);case _:
+return compactSummary(_that.id,_that.summary,_that.hiddenMessageCount,_that.createdAt,_that.expanded);case ClaudeMessagePlan() when plan != null:
+return plan(_that.id,_that.toolUseId,_that.plan,_that.planFilePath,_that.createdAt,_that.approved,_that.answered);case _:
   return null;
 
 }
@@ -788,6 +794,84 @@ as String,summary: null == summary ? _self.summary : summary // ignore: cast_nul
 as String,hiddenMessageCount: null == hiddenMessageCount ? _self.hiddenMessageCount : hiddenMessageCount // ignore: cast_nullable_to_non_nullable
 as int,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,expanded: null == expanded ? _self.expanded : expanded // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ClaudeMessagePlan extends ClaudeMessage {
+  const ClaudeMessagePlan({required this.id, required this.toolUseId, required this.plan, this.planFilePath, required this.createdAt, this.approved, this.answered = false}): super._();
+  
+
+@override final  String id;
+ final  String toolUseId;
+ final  String plan;
+ final  String? planFilePath;
+@override final  DateTime createdAt;
+ final  bool? approved;
+@JsonKey() final  bool answered;
+
+/// Create a copy of ClaudeMessage
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ClaudeMessagePlanCopyWith<ClaudeMessagePlan> get copyWith => _$ClaudeMessagePlanCopyWithImpl<ClaudeMessagePlan>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeMessagePlan&&(identical(other.id, id) || other.id == id)&&(identical(other.toolUseId, toolUseId) || other.toolUseId == toolUseId)&&(identical(other.plan, plan) || other.plan == plan)&&(identical(other.planFilePath, planFilePath) || other.planFilePath == planFilePath)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.approved, approved) || other.approved == approved)&&(identical(other.answered, answered) || other.answered == answered));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,toolUseId,plan,planFilePath,createdAt,approved,answered);
+
+@override
+String toString() {
+  return 'ClaudeMessage.plan(id: $id, toolUseId: $toolUseId, plan: $plan, planFilePath: $planFilePath, createdAt: $createdAt, approved: $approved, answered: $answered)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ClaudeMessagePlanCopyWith<$Res> implements $ClaudeMessageCopyWith<$Res> {
+  factory $ClaudeMessagePlanCopyWith(ClaudeMessagePlan value, $Res Function(ClaudeMessagePlan) _then) = _$ClaudeMessagePlanCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String toolUseId, String plan, String? planFilePath, DateTime createdAt, bool? approved, bool answered
+});
+
+
+
+
+}
+/// @nodoc
+class _$ClaudeMessagePlanCopyWithImpl<$Res>
+    implements $ClaudeMessagePlanCopyWith<$Res> {
+  _$ClaudeMessagePlanCopyWithImpl(this._self, this._then);
+
+  final ClaudeMessagePlan _self;
+  final $Res Function(ClaudeMessagePlan) _then;
+
+/// Create a copy of ClaudeMessage
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? toolUseId = null,Object? plan = null,Object? planFilePath = freezed,Object? createdAt = null,Object? approved = freezed,Object? answered = null,}) {
+  return _then(ClaudeMessagePlan(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,toolUseId: null == toolUseId ? _self.toolUseId : toolUseId // ignore: cast_nullable_to_non_nullable
+as String,plan: null == plan ? _self.plan : plan // ignore: cast_nullable_to_non_nullable
+as String,planFilePath: freezed == planFilePath ? _self.planFilePath : planFilePath // ignore: cast_nullable_to_non_nullable
+as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime,approved: freezed == approved ? _self.approved : approved // ignore: cast_nullable_to_non_nullable
+as bool?,answered: null == answered ? _self.answered : answered // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

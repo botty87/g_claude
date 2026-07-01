@@ -52,3 +52,9 @@ class ParsingFailure extends Failure {
   final String message;
   const ParsingFailure(this.message);
 }
+
+/// A feature or method is not yet implemented.
+class NotImplementedFailure extends Failure {
+  final String message;
+  const NotImplementedFailure(this.message);
+}
