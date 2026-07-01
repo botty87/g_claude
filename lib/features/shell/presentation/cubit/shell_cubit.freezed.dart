@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ShellState {
 
- bool get workspaceOpen; ActivityId get selectedActivity; bool get sidebarCollapsed; Map<String, double> get paneSizes;
+ ActivityId get selectedActivity; bool get sidebarCollapsed; Map<String, double> get paneSizes;
 /// Create a copy of ShellState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ShellStateCopyWith<ShellState> get copyWith => _$ShellStateCopyWithImpl<ShellSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShellState&&(identical(other.workspaceOpen, workspaceOpen) || other.workspaceOpen == workspaceOpen)&&(identical(other.selectedActivity, selectedActivity) || other.selectedActivity == selectedActivity)&&(identical(other.sidebarCollapsed, sidebarCollapsed) || other.sidebarCollapsed == sidebarCollapsed)&&const DeepCollectionEquality().equals(other.paneSizes, paneSizes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShellState&&(identical(other.selectedActivity, selectedActivity) || other.selectedActivity == selectedActivity)&&(identical(other.sidebarCollapsed, sidebarCollapsed) || other.sidebarCollapsed == sidebarCollapsed)&&const DeepCollectionEquality().equals(other.paneSizes, paneSizes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,workspaceOpen,selectedActivity,sidebarCollapsed,const DeepCollectionEquality().hash(paneSizes));
+int get hashCode => Object.hash(runtimeType,selectedActivity,sidebarCollapsed,const DeepCollectionEquality().hash(paneSizes));
 
 @override
 String toString() {
-  return 'ShellState(workspaceOpen: $workspaceOpen, selectedActivity: $selectedActivity, sidebarCollapsed: $sidebarCollapsed, paneSizes: $paneSizes)';
+  return 'ShellState(selectedActivity: $selectedActivity, sidebarCollapsed: $sidebarCollapsed, paneSizes: $paneSizes)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ShellStateCopyWith<$Res>  {
   factory $ShellStateCopyWith(ShellState value, $Res Function(ShellState) _then) = _$ShellStateCopyWithImpl;
 @useResult
 $Res call({
- bool workspaceOpen, ActivityId selectedActivity, bool sidebarCollapsed, Map<String, double> paneSizes
+ ActivityId selectedActivity, bool sidebarCollapsed, Map<String, double> paneSizes
 });
 
 
@@ -62,10 +62,9 @@ class _$ShellStateCopyWithImpl<$Res>
 
 /// Create a copy of ShellState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? workspaceOpen = null,Object? selectedActivity = null,Object? sidebarCollapsed = null,Object? paneSizes = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? selectedActivity = null,Object? sidebarCollapsed = null,Object? paneSizes = null,}) {
   return _then(_self.copyWith(
-workspaceOpen: null == workspaceOpen ? _self.workspaceOpen : workspaceOpen // ignore: cast_nullable_to_non_nullable
-as bool,selectedActivity: null == selectedActivity ? _self.selectedActivity : selectedActivity // ignore: cast_nullable_to_non_nullable
+selectedActivity: null == selectedActivity ? _self.selectedActivity : selectedActivity // ignore: cast_nullable_to_non_nullable
 as ActivityId,sidebarCollapsed: null == sidebarCollapsed ? _self.sidebarCollapsed : sidebarCollapsed // ignore: cast_nullable_to_non_nullable
 as bool,paneSizes: null == paneSizes ? _self.paneSizes : paneSizes // ignore: cast_nullable_to_non_nullable
 as Map<String, double>,
@@ -153,10 +152,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool workspaceOpen,  ActivityId selectedActivity,  bool sidebarCollapsed,  Map<String, double> paneSizes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ActivityId selectedActivity,  bool sidebarCollapsed,  Map<String, double> paneSizes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ShellState() when $default != null:
-return $default(_that.workspaceOpen,_that.selectedActivity,_that.sidebarCollapsed,_that.paneSizes);case _:
+return $default(_that.selectedActivity,_that.sidebarCollapsed,_that.paneSizes);case _:
   return orElse();
 
 }
@@ -174,10 +173,10 @@ return $default(_that.workspaceOpen,_that.selectedActivity,_that.sidebarCollapse
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool workspaceOpen,  ActivityId selectedActivity,  bool sidebarCollapsed,  Map<String, double> paneSizes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ActivityId selectedActivity,  bool sidebarCollapsed,  Map<String, double> paneSizes)  $default,) {final _that = this;
 switch (_that) {
 case _ShellState():
-return $default(_that.workspaceOpen,_that.selectedActivity,_that.sidebarCollapsed,_that.paneSizes);case _:
+return $default(_that.selectedActivity,_that.sidebarCollapsed,_that.paneSizes);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +193,10 @@ return $default(_that.workspaceOpen,_that.selectedActivity,_that.sidebarCollapse
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool workspaceOpen,  ActivityId selectedActivity,  bool sidebarCollapsed,  Map<String, double> paneSizes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ActivityId selectedActivity,  bool sidebarCollapsed,  Map<String, double> paneSizes)?  $default,) {final _that = this;
 switch (_that) {
 case _ShellState() when $default != null:
-return $default(_that.workspaceOpen,_that.selectedActivity,_that.sidebarCollapsed,_that.paneSizes);case _:
+return $default(_that.selectedActivity,_that.sidebarCollapsed,_that.paneSizes);case _:
   return null;
 
 }
@@ -209,10 +208,9 @@ return $default(_that.workspaceOpen,_that.selectedActivity,_that.sidebarCollapse
 
 
 class _ShellState implements ShellState {
-  const _ShellState({required this.workspaceOpen, required this.selectedActivity, this.sidebarCollapsed = false, final  Map<String, double> paneSizes = const <String, double>{}}): _paneSizes = paneSizes;
+  const _ShellState({required this.selectedActivity, this.sidebarCollapsed = false, final  Map<String, double> paneSizes = const <String, double>{}}): _paneSizes = paneSizes;
   
 
-@override final  bool workspaceOpen;
 @override final  ActivityId selectedActivity;
 @override@JsonKey() final  bool sidebarCollapsed;
  final  Map<String, double> _paneSizes;
@@ -233,16 +231,16 @@ _$ShellStateCopyWith<_ShellState> get copyWith => __$ShellStateCopyWithImpl<_She
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShellState&&(identical(other.workspaceOpen, workspaceOpen) || other.workspaceOpen == workspaceOpen)&&(identical(other.selectedActivity, selectedActivity) || other.selectedActivity == selectedActivity)&&(identical(other.sidebarCollapsed, sidebarCollapsed) || other.sidebarCollapsed == sidebarCollapsed)&&const DeepCollectionEquality().equals(other._paneSizes, _paneSizes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShellState&&(identical(other.selectedActivity, selectedActivity) || other.selectedActivity == selectedActivity)&&(identical(other.sidebarCollapsed, sidebarCollapsed) || other.sidebarCollapsed == sidebarCollapsed)&&const DeepCollectionEquality().equals(other._paneSizes, _paneSizes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,workspaceOpen,selectedActivity,sidebarCollapsed,const DeepCollectionEquality().hash(_paneSizes));
+int get hashCode => Object.hash(runtimeType,selectedActivity,sidebarCollapsed,const DeepCollectionEquality().hash(_paneSizes));
 
 @override
 String toString() {
-  return 'ShellState(workspaceOpen: $workspaceOpen, selectedActivity: $selectedActivity, sidebarCollapsed: $sidebarCollapsed, paneSizes: $paneSizes)';
+  return 'ShellState(selectedActivity: $selectedActivity, sidebarCollapsed: $sidebarCollapsed, paneSizes: $paneSizes)';
 }
 
 
@@ -253,7 +251,7 @@ abstract mixin class _$ShellStateCopyWith<$Res> implements $ShellStateCopyWith<$
   factory _$ShellStateCopyWith(_ShellState value, $Res Function(_ShellState) _then) = __$ShellStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool workspaceOpen, ActivityId selectedActivity, bool sidebarCollapsed, Map<String, double> paneSizes
+ ActivityId selectedActivity, bool sidebarCollapsed, Map<String, double> paneSizes
 });
 
 
@@ -270,10 +268,9 @@ class __$ShellStateCopyWithImpl<$Res>
 
 /// Create a copy of ShellState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? workspaceOpen = null,Object? selectedActivity = null,Object? sidebarCollapsed = null,Object? paneSizes = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? selectedActivity = null,Object? sidebarCollapsed = null,Object? paneSizes = null,}) {
   return _then(_ShellState(
-workspaceOpen: null == workspaceOpen ? _self.workspaceOpen : workspaceOpen // ignore: cast_nullable_to_non_nullable
-as bool,selectedActivity: null == selectedActivity ? _self.selectedActivity : selectedActivity // ignore: cast_nullable_to_non_nullable
+selectedActivity: null == selectedActivity ? _self.selectedActivity : selectedActivity // ignore: cast_nullable_to_non_nullable
 as ActivityId,sidebarCollapsed: null == sidebarCollapsed ? _self.sidebarCollapsed : sidebarCollapsed // ignore: cast_nullable_to_non_nullable
 as bool,paneSizes: null == paneSizes ? _self._paneSizes : paneSizes // ignore: cast_nullable_to_non_nullable
 as Map<String, double>,

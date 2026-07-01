@@ -32,9 +32,7 @@ abstract class  LocaleKeys {
   static const shell_sidebar = 'shell.sidebar';
   static const shell_rightPanel_files = 'shell.rightPanel.files';
   static const shell_rightPanel_diff = 'shell.rightPanel.diff';
-  static const shell_rightPanel_editor = 'shell.rightPanel.editor';
   static const shell_rightPanel_diffComingSoon = 'shell.rightPanel.diffComingSoon';
-  static const shell_rightPanel_noFileOpen = 'shell.rightPanel.noFileOpen';
   static const shell_rightPanel = 'shell.rightPanel';
   static const shell_shortcuts_attachedFile = 'shell.shortcuts.attachedFile';
   static const shell_shortcuts_attachedRange = 'shell.shortcuts.attachedRange';

@@ -35,9 +35,7 @@
     "rightPanel": {
       "files": "Files",
       "diff": "Diff",
-      "editor": "Editor",
-      "diffComingSoon": "Diff in arrivo",
-      "noFileOpen": "Nessun file aperto"
+      "diffComingSoon": "Diff in arrivo"
     },
     "shortcuts": {
       "attachedFile": "Allegato {name}",

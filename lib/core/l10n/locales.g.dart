@@ -810,9 +810,7 @@ class _ShellRightPanel {
 
   String get diff => LocaleKeys.shell_rightPanel_diff.tr();
   String get diffComingSoon => LocaleKeys.shell_rightPanel_diffComingSoon.tr();
-  String get editor => LocaleKeys.shell_rightPanel_editor.tr();
   String get files => LocaleKeys.shell_rightPanel_files.tr();
-  String get noFileOpen => LocaleKeys.shell_rightPanel_noFileOpen.tr();
 }
 
 /// Nested class for shortcuts translations
