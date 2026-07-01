@@ -376,6 +376,11 @@
       "chat": "Chat",
       "code": "Codice",
       "terminal": "Terminale"
+    },
+    "peek": {
+      "openFull": "Apri a schermo intero",
+      "reduceToPeek": "Riduci a sbircia",
+      "close": "Chiudi"
     }
   }
 }

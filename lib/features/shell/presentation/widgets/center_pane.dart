@@ -17,6 +17,7 @@ import '../../../editor/presentation/widgets/file_viewer.dart';
 import '../../../terminal/presentation/widgets/terminal_pane.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
+import 'peek_sheet.dart';
 
 /// Center area of the shell: a segmented control (Chat / Code / Terminal) over
 /// the active surface. The open-files set lives in [FileTabsCubit]; the current
@@ -30,6 +31,7 @@ class CenterPane extends HookWidget {
     if (activeId == null) return const ClaudeTerminalPane();
 
     final view = context.select<EditorViewCubit, CenterView>((c) => c.state.dataFor(activeId).view);
+    final peekOpen = context.select<EditorViewCubit, bool>((c) => c.state.dataFor(activeId).peekOpen);
     final openCount = context.select<FileTabsCubit, int>((c) => c.state.filesFor(activeId)?.openPaths.length ?? 0);
     final hasFiles = openCount > 0;
     // Code is only reachable with at least one open file.
@@ -41,7 +43,11 @@ class CenterPane extends HookWidget {
       listener: (context, state) {
         final activePath = state.filesFor(activeId)?.activePath;
         if (activePath != null && activePath != lastActivePath.value) {
-          context.read<EditorViewCubit>().setView(activeId, CenterView.code);
+          // Opening a file peeks over the chat; from full code we stay full.
+          final editorView = context.read<EditorViewCubit>();
+          if (editorView.state.dataFor(activeId).view != CenterView.code) {
+            editorView.openPeek(activeId);
+          }
         }
         lastActivePath.value = activePath;
       },
@@ -55,13 +61,46 @@ class CenterPane extends HookWidget {
           ),
           Expanded(
             child: switch (effectiveView) {
-              CenterView.chat => const ClaudeTerminalPane(),
+              CenterView.chat => _ChatSurface(workspaceId: activeId, peekOpen: peekOpen && hasFiles),
               CenterView.code => _CodeView(workspaceId: activeId),
               CenterView.terminal => const TerminalPane(),
             },
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Chat with an optional peek sheet rising from the bottom.
+class _ChatSurface extends StatelessWidget {
+  const _ChatSurface({required this.workspaceId, required this.peekOpen});
+
+  final WorkspaceId workspaceId;
+  final bool peekOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!peekOpen) return const ClaudeTerminalPane();
+    return Stack(
+      children: [
+        const Positioned.fill(child: ClaudeTerminalPane()),
+        Positioned.fill(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: FractionallySizedBox(
+              heightFactor: 0.58,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 1, end: 0),
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                builder: (context, t, child) => FractionalTranslation(translation: Offset(0, t), child: child),
+                child: PeekSheet(workspaceId: workspaceId),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -212,21 +251,53 @@ class _CodeView extends HookWidget {
             color: AppColors.surfaceContainerLowest,
             border: Border(bottom: BorderSide(color: AppColors.outlineVariant, width: 1)),
           ),
-          child: SingleChildScrollView(
-            controller: scrollController,
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final path in openPaths)
-                  FileTab(
-                    key: ValueKey('code-tab-$path'),
-                    workspaceId: workspaceId,
-                    path: path,
-                    isActive: path == activePath,
-                    isPreview: path == previewPath,
+          child: Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final path in openPaths)
+                        FileTab(
+                          key: ValueKey('code-tab-$path'),
+                          workspaceId: workspaceId,
+                          path: path,
+                          isActive: path == activePath,
+                          isPreview: path == previewPath,
+                        ),
+                    ],
                   ),
-              ],
-            ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Hoverable(
+                onTap: () => context.read<EditorViewCubit>().demoteToPeek(workspaceId),
+                builder: (context, hover) => Container(
+                  key: const ValueKey('code_reduce_to_peek'),
+                  height: 26,
+                  padding: const EdgeInsets.symmetric(horizontal: 11),
+                  decoration: BoxDecoration(
+                    color: hover ? AppColors.glassHover : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
+                    border: Border.all(color: AppColors.glassBorder),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Symbols.close_fullscreen, size: 13, color: AppColors.onSurfaceVariant),
+                      const SizedBox(width: 6),
+                      Text(
+                        Locales.Editor.Peek.reduceToPeek,
+                        style: AppTypography.navTab.copyWith(color: AppColors.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+            ],
           ),
         ),
         const Expanded(child: FileViewer()),

@@ -604,6 +604,9 @@ class _Editor {
   /// Translations for pdf
   final Pdf = const _EditorPdf._();
 
+  /// Translations for peek
+  final Peek = const _EditorPeek._();
+
   /// Translations for tab
   final Tab = const _EditorTab._();
 
@@ -665,6 +668,15 @@ class _EditorPdf {
   const _EditorPdf._();
 
   String get loadError => LocaleKeys.editor_pdf_loadError.tr();
+}
+
+/// Nested class for peek translations
+class _EditorPeek {
+  const _EditorPeek._();
+
+  String get close => LocaleKeys.editor_peek_close.tr();
+  String get openFull => LocaleKeys.editor_peek_openFull.tr();
+  String get reduceToPeek => LocaleKeys.editor_peek_reduceToPeek.tr();
 }
 
 /// Nested class for tab translations

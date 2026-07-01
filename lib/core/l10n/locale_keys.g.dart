@@ -321,6 +321,10 @@ abstract class  LocaleKeys {
   static const editor_centerView_code = 'editor.centerView.code';
   static const editor_centerView_terminal = 'editor.centerView.terminal';
   static const editor_centerView = 'editor.centerView';
+  static const editor_peek_openFull = 'editor.peek.openFull';
+  static const editor_peek_reduceToPeek = 'editor.peek.reduceToPeek';
+  static const editor_peek_close = 'editor.peek.close';
+  static const editor_peek = 'editor.peek';
   static const editor = 'editor';
 
 }
