@@ -749,11 +749,17 @@ class _Shell {
   /// Translations for activity
   final Activity = const _ShellActivity._();
 
+  /// Translations for rightPanel
+  final RightPanel = const _ShellRightPanel._();
+
   /// Translations for shortcuts
   final Shortcuts = const _ShellShortcuts._();
 
   /// Translations for sidePanel
   final SidePanel = const _ShellSidePanel._();
+
+  /// Translations for sidebar
+  final Sidebar = const _ShellSidebar._();
 
   /// Translations for workspace
   final Workspace = const _ShellWorkspace._();
@@ -772,6 +778,17 @@ class _ShellActivity {
   String get sessions => LocaleKeys.shell_activity_sessions.tr();
   String get settings => LocaleKeys.shell_activity_settings.tr();
   String get terminal => LocaleKeys.shell_activity_terminal.tr();
+}
+
+/// Nested class for rightPanel translations
+class _ShellRightPanel {
+  const _ShellRightPanel._();
+
+  String get diff => LocaleKeys.shell_rightPanel_diff.tr();
+  String get diffComingSoon => LocaleKeys.shell_rightPanel_diffComingSoon.tr();
+  String get editor => LocaleKeys.shell_rightPanel_editor.tr();
+  String get files => LocaleKeys.shell_rightPanel_files.tr();
+  String get noFileOpen => LocaleKeys.shell_rightPanel_noFileOpen.tr();
 }
 
 /// Nested class for shortcuts translations
@@ -822,6 +839,17 @@ class _ShellSidePanel {
   String get refresh => LocaleKeys.shell_sidePanel_refresh.tr();
   String get toggleHiddenHide => LocaleKeys.shell_sidePanel_toggleHiddenHide.tr();
   String get toggleHiddenShow => LocaleKeys.shell_sidePanel_toggleHiddenShow.tr();
+}
+
+/// Nested class for sidebar translations
+class _ShellSidebar {
+  const _ShellSidebar._();
+
+  String get collapse => LocaleKeys.shell_sidebar_collapse.tr();
+  String get expand => LocaleKeys.shell_sidebar_expand.tr();
+  String get header => LocaleKeys.shell_sidebar_header.tr();
+  String get newWorkspace => LocaleKeys.shell_sidebar_newWorkspace.tr();
+  String get search => LocaleKeys.shell_sidebar_search.tr();
 }
 
 /// Nested class for workspace translations

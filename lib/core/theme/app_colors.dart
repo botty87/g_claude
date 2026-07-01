@@ -58,4 +58,11 @@ abstract final class AppColors {
   static const trafficClose = Color(0xFFFF5F56);
   static const trafficMinimize = Color(0xFFFFBD2E);
   static const trafficMaximize = Color(0xFF27C93F);
+
+  // Status — agent run indicator (pulsing dot)
+  static const agentRunning = Color(0xFF27C93F);
+
+  // Diff (git-like semantics, not brand)
+  static const diffAdd = Color(0xFF3FB950);
+  static const diffDel = Color(0xFFF85149);
 }

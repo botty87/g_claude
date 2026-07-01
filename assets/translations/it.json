@@ -25,6 +25,20 @@
       "toggleToFullscreen": "Nascondi workspace, focus Claude",
       "toggleToWorkspace": "Mostra workspace"
     },
+    "sidebar": {
+      "header": "WORKSPACE",
+      "newWorkspace": "Nuovo workspace",
+      "collapse": "Comprimi sidebar",
+      "expand": "Espandi sidebar",
+      "search": "Cerca workspace"
+    },
+    "rightPanel": {
+      "files": "Files",
+      "diff": "Diff",
+      "editor": "Editor",
+      "diffComingSoon": "Diff in arrivo",
+      "noFileOpen": "Nessun file aperto"
+    },
     "shortcuts": {
       "attachedFile": "Allegato {name}",
       "attachedRange": "Allegate righe {name}",

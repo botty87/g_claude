@@ -38,6 +38,15 @@ class ShellCubit extends Cubit<ShellState> {
     emit(state.copyWith(workspaceOpen: !state.workspaceOpen));
   }
 
+  void toggleSidebar() {
+    emit(state.copyWith(sidebarCollapsed: !state.sidebarCollapsed));
+  }
+
+  void setSidebarCollapsed(bool value) {
+    if (state.sidebarCollapsed == value) return;
+    emit(state.copyWith(sidebarCollapsed: value));
+  }
+
   void setWorkspaceOpen(bool value) {
     if (state.workspaceOpen == value) return;
     emit(state.copyWith(workspaceOpen: value));

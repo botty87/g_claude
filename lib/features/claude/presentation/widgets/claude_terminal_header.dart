@@ -9,9 +9,6 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
-import '../../../editor/presentation/widgets/file_tabs_bar.dart';
-import '../../../shell/presentation/cubit/shell_cubit.dart';
-import '../../../shell/presentation/widgets/workspace_dropdown.dart';
 import '../../domain/entities/claude_effort.dart';
 import '../../domain/entities/claude_model.dart';
 import '../../domain/entities/claude_permission_mode.dart';
@@ -54,7 +51,6 @@ class ClaudeTerminalHeader extends StatelessWidget {
         runStatus == ClaudeRunStatus.running ||
         runStatus == ClaudeRunStatus.connecting ||
         runStatus == ClaudeRunStatus.compacting;
-    final showWorkspaceControls = context.select<ShellCubit, bool>((c) => !c.state.workspaceOpen);
 
     return Container(
       height: AppSpacing.toolbarHeight,
@@ -62,7 +58,7 @@ class ClaudeTerminalHeader extends StatelessWidget {
         color: AppColors.surfaceContainerLow,
         border: Border(bottom: BorderSide(color: AppColors.outlineVariant, width: 1)),
       ),
-      padding: EdgeInsets.only(left: AppSpacing.lg, right: showWorkspaceControls ? 0 : AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 520;
@@ -125,12 +121,6 @@ class ClaudeTerminalHeader extends StatelessWidget {
               _ContextMeter(workspaceId: workspaceId),
               const SizedBox(width: AppSpacing.sm),
               _StatusIndicator(status: runStatus, compact: compact),
-              if (showWorkspaceControls) ...[
-                const SizedBox(width: AppSpacing.sm),
-                const WorkspaceDropdown(),
-                const SizedBox(width: AppSpacing.xs),
-                const WorkspaceToggleButton(),
-              ],
             ],
           );
         },
