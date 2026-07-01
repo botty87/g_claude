@@ -59,8 +59,9 @@ class CenterPane extends HookWidget {
 
 /// Chat with an optional peek sheet docked below it. The chat keeps the top
 /// portion (input bar stays reachable); the peek fills the bottom and is
-/// resized by dragging its handle.
-class _ChatSurface extends HookWidget {
+/// resized by dragging its handle. The split ratio is per-workspace state in
+/// [EditorViewCubit].
+class _ChatSurface extends StatelessWidget {
   const _ChatSurface({required this.workspaceId, required this.peekOpen});
 
   final WorkspaceId workspaceId;
@@ -71,22 +72,22 @@ class _ChatSurface extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fraction = useState(0.56);
     if (!peekOpen) return const ClaudeTerminalPane();
+    final fraction = context.select<EditorViewCubit, double>((c) => c.state.dataFor(workspaceId).peekFraction);
     return LayoutBuilder(
       builder: (context, constraints) {
         final total = constraints.maxHeight;
-        final peekHeight = total * fraction.value;
         return Column(
           children: [
             const Expanded(child: ClaudeTerminalPane()),
             SizedBox(
-              height: peekHeight,
+              height: total * fraction,
               child: PeekSheet(
                 workspaceId: workspaceId,
                 onResizeDrag: (dy) {
                   if (total <= 0) return;
-                  fraction.value = (fraction.value - dy / total).clamp(_minFraction, _maxFraction);
+                  final next = (fraction - dy / total).clamp(_minFraction, _maxFraction);
+                  context.read<EditorViewCubit>().setPeekFraction(workspaceId, next);
                 },
               ),
             ),

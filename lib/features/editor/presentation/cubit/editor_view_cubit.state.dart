@@ -5,8 +5,11 @@ enum CenterView { chat, code, terminal }
 
 @freezed
 abstract class EditorViewData with _$EditorViewData {
-  const factory EditorViewData({@Default(CenterView.chat) CenterView view, @Default(false) bool peekOpen}) =
-      _EditorViewData;
+  const factory EditorViewData({
+    @Default(CenterView.chat) CenterView view,
+    @Default(false) bool peekOpen,
+    @Default(0.56) double peekFraction,
+  }) = _EditorViewData;
 }
 
 @freezed

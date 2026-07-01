@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$EditorViewData {
 
- CenterView get view; bool get peekOpen;
+ CenterView get view; bool get peekOpen; double get peekFraction;
 /// Create a copy of EditorViewData
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $EditorViewDataCopyWith<EditorViewData> get copyWith => _$EditorViewDataCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is EditorViewData&&(identical(other.view, view) || other.view == view)&&(identical(other.peekOpen, peekOpen) || other.peekOpen == peekOpen));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is EditorViewData&&(identical(other.view, view) || other.view == view)&&(identical(other.peekOpen, peekOpen) || other.peekOpen == peekOpen)&&(identical(other.peekFraction, peekFraction) || other.peekFraction == peekFraction));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,view,peekOpen);
+int get hashCode => Object.hash(runtimeType,view,peekOpen,peekFraction);
 
 @override
 String toString() {
-  return 'EditorViewData(view: $view, peekOpen: $peekOpen)';
+  return 'EditorViewData(view: $view, peekOpen: $peekOpen, peekFraction: $peekFraction)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $EditorViewDataCopyWith<$Res>  {
   factory $EditorViewDataCopyWith(EditorViewData value, $Res Function(EditorViewData) _then) = _$EditorViewDataCopyWithImpl;
 @useResult
 $Res call({
- CenterView view, bool peekOpen
+ CenterView view, bool peekOpen, double peekFraction
 });
 
 
@@ -62,11 +62,12 @@ class _$EditorViewDataCopyWithImpl<$Res>
 
 /// Create a copy of EditorViewData
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? view = null,Object? peekOpen = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? view = null,Object? peekOpen = null,Object? peekFraction = null,}) {
   return _then(_self.copyWith(
 view: null == view ? _self.view : view // ignore: cast_nullable_to_non_nullable
 as CenterView,peekOpen: null == peekOpen ? _self.peekOpen : peekOpen // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,peekFraction: null == peekFraction ? _self.peekFraction : peekFraction // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 
@@ -151,10 +152,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( CenterView view,  bool peekOpen)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( CenterView view,  bool peekOpen,  double peekFraction)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _EditorViewData() when $default != null:
-return $default(_that.view,_that.peekOpen);case _:
+return $default(_that.view,_that.peekOpen,_that.peekFraction);case _:
   return orElse();
 
 }
@@ -172,10 +173,10 @@ return $default(_that.view,_that.peekOpen);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( CenterView view,  bool peekOpen)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( CenterView view,  bool peekOpen,  double peekFraction)  $default,) {final _that = this;
 switch (_that) {
 case _EditorViewData():
-return $default(_that.view,_that.peekOpen);case _:
+return $default(_that.view,_that.peekOpen,_that.peekFraction);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -192,10 +193,10 @@ return $default(_that.view,_that.peekOpen);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( CenterView view,  bool peekOpen)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( CenterView view,  bool peekOpen,  double peekFraction)?  $default,) {final _that = this;
 switch (_that) {
 case _EditorViewData() when $default != null:
-return $default(_that.view,_that.peekOpen);case _:
+return $default(_that.view,_that.peekOpen,_that.peekFraction);case _:
   return null;
 
 }
@@ -207,11 +208,12 @@ return $default(_that.view,_that.peekOpen);case _:
 
 
 class _EditorViewData implements EditorViewData {
-  const _EditorViewData({this.view = CenterView.chat, this.peekOpen = false});
+  const _EditorViewData({this.view = CenterView.chat, this.peekOpen = false, this.peekFraction = 0.56});
   
 
 @override@JsonKey() final  CenterView view;
 @override@JsonKey() final  bool peekOpen;
+@override@JsonKey() final  double peekFraction;
 
 /// Create a copy of EditorViewData
 /// with the given fields replaced by the non-null parameter values.
@@ -223,16 +225,16 @@ _$EditorViewDataCopyWith<_EditorViewData> get copyWith => __$EditorViewDataCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _EditorViewData&&(identical(other.view, view) || other.view == view)&&(identical(other.peekOpen, peekOpen) || other.peekOpen == peekOpen));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _EditorViewData&&(identical(other.view, view) || other.view == view)&&(identical(other.peekOpen, peekOpen) || other.peekOpen == peekOpen)&&(identical(other.peekFraction, peekFraction) || other.peekFraction == peekFraction));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,view,peekOpen);
+int get hashCode => Object.hash(runtimeType,view,peekOpen,peekFraction);
 
 @override
 String toString() {
-  return 'EditorViewData(view: $view, peekOpen: $peekOpen)';
+  return 'EditorViewData(view: $view, peekOpen: $peekOpen, peekFraction: $peekFraction)';
 }
 
 
@@ -243,7 +245,7 @@ abstract mixin class _$EditorViewDataCopyWith<$Res> implements $EditorViewDataCo
   factory _$EditorViewDataCopyWith(_EditorViewData value, $Res Function(_EditorViewData) _then) = __$EditorViewDataCopyWithImpl;
 @override @useResult
 $Res call({
- CenterView view, bool peekOpen
+ CenterView view, bool peekOpen, double peekFraction
 });
 
 
@@ -260,11 +262,12 @@ class __$EditorViewDataCopyWithImpl<$Res>
 
 /// Create a copy of EditorViewData
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? view = null,Object? peekOpen = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? view = null,Object? peekOpen = null,Object? peekFraction = null,}) {
   return _then(_EditorViewData(
 view: null == view ? _self.view : view // ignore: cast_nullable_to_non_nullable
 as CenterView,peekOpen: null == peekOpen ? _self.peekOpen : peekOpen // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,peekFraction: null == peekFraction ? _self.peekFraction : peekFraction // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 

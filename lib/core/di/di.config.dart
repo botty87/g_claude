@@ -178,7 +178,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i81.AppRouter>(() => routerModule.router);
     gh.lazySingleton<_i207.Talker>(() => talkerModule.talker);
     gh.lazySingleton<_i207.ActiveEditorCubit>(() => _i207.ActiveEditorCubit());
-    gh.lazySingleton<_i465.EditorViewCubit>(() => _i465.EditorViewCubit());
     gh.lazySingleton<_i68.ShellCubit>(() => _i68.ShellCubit());
     gh.lazySingleton<_i644.AppLogsRepository>(
       () => _i413.AppLogsRepositoryImpl(gh<_i126.AppLogsDatabase>()),
@@ -357,6 +356,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i167.WorkspaceFileWatcher>(),
         gh<_i207.Talker>(),
       )..init(),
+    );
+    gh.lazySingleton<_i465.EditorViewCubit>(
+      () => _i465.EditorViewCubit(gh<_i179.WorkspacesCubit>())..init(),
     );
     gh.lazySingleton<_i330.SidecarClientDataSource>(
       () => _i330.SidecarClientDataSource(
