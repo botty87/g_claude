@@ -1,0 +1,22 @@
+{
+  "name": "clyde-backend",
+  "version": "0.1.0",
+  "description": "Clyde backend: Agent SDK sidecar (single message protocol over stdio). See PROTOCOL.md",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "sidecar": "tsx src/sidecar.ts",
+    "client": "tsx test/client.ts",
+    "typecheck": "tsc --noEmit",
+    "spike:plan": "tsx src/index.ts plan",
+    "spike:question": "tsx src/index.ts question"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.197"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}
