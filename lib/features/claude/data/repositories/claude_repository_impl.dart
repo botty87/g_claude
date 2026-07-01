@@ -26,6 +26,7 @@ class ClaudeRepositoryImpl implements ClaudeRepository {
     bool thinking = true,
     String? resumeSessionId,
     List<String> imagePaths = const [],
+    Set<String> disabledMcp = const {},
   }) async* {
     try {
       final source = _datasource.startRun(
@@ -37,6 +38,7 @@ class ClaudeRepositoryImpl implements ClaudeRepository {
         thinking: thinking,
         resumeSessionId: resumeSessionId,
         imagePaths: imagePaths,
+        disabledMcp: disabledMcp,
       );
       await for (final event in source) {
         yield Right(event);

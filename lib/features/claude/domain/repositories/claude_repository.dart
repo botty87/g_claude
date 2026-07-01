@@ -18,6 +18,7 @@ abstract interface class ClaudeRepository {
     bool thinking = true,
     String? resumeSessionId,
     List<String> imagePaths = const [],
+    Set<String> disabledMcp = const {},
   });
 
   /// Interrupts the running session identified by [sid].

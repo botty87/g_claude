@@ -28,7 +28,8 @@ export type Req =
 export type DomainEvt =
   | { t: 'sessionInit'; sid: string; sessionId: string; model: string; tools: string[];
       skills: string[]; slashCommands: string[];
-      plugins: { name: string; path: string; source?: string }[]; apiKeySource: string; cwd: string }
+      plugins: { name: string; path: string; source?: string }[]; apiKeySource: string; cwd: string;
+      mcpServers: { name: string; status: string }[] }
   | { t: 'textChunk'; sid: string; text: string }
   | { t: 'toolCall'; sid: string; toolName: string; toolId: string; index: number }
   | { t: 'toolCallUpdate'; sid: string; toolId: string; partialInput: string }

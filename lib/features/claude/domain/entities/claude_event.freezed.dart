@@ -953,10 +953,10 @@ return planProposed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)?  sessionInit,TResult Function( String text)?  textChunk,TResult Function( String toolName,  String toolId,  int index)?  toolCall,TResult Function( String toolId,  String partialInput)?  toolCallUpdate,TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult Function( String text)?  assistantMessage,TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult Function( String message)?  errorEvent,TResult Function( String status,  int? resetsAt)?  rateLimit,TResult Function( int? exitCode,  List<String> stderrTail)?  sessionDead,TResult Function( String toolUseId,  List<AskUserQuestionItem> questions)?  askUserQuestion,TResult Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)?  permissionRequest,TResult Function( int? inputTokens,  int? cacheReadTokens,  int? cacheCreationTokens,  int? outputTokens)?  usageUpdate,TResult Function( String toolUseId,  String plan,  String? planFilePath)?  planProposed,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins,  List<McpServer> mcpServers)?  sessionInit,TResult Function( String text)?  textChunk,TResult Function( String toolName,  String toolId,  int index)?  toolCall,TResult Function( String toolId,  String partialInput)?  toolCallUpdate,TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult Function( String text)?  assistantMessage,TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult Function( String message)?  errorEvent,TResult Function( String status,  int? resetsAt)?  rateLimit,TResult Function( int? exitCode,  List<String> stderrTail)?  sessionDead,TResult Function( String toolUseId,  List<AskUserQuestionItem> questions)?  askUserQuestion,TResult Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)?  permissionRequest,TResult Function( int? inputTokens,  int? cacheReadTokens,  int? cacheCreationTokens,  int? outputTokens)?  usageUpdate,TResult Function( String toolUseId,  String plan,  String? planFilePath)?  planProposed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
-return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins);case ClaudeEventTextChunk() when textChunk != null:
+return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins,_that.mcpServers);case ClaudeEventTextChunk() when textChunk != null:
 return textChunk(_that.text);case ClaudeEventToolCall() when toolCall != null:
 return toolCall(_that.toolName,_that.toolId,_that.index);case ClaudeEventToolCallUpdate() when toolCallUpdate != null:
 return toolCallUpdate(_that.toolId,_that.partialInput);case ClaudeEventToolCallComplete() when toolCallComplete != null:
@@ -988,10 +988,10 @@ return planProposed(_that.toolUseId,_that.plan,_that.planFilePath);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)  sessionInit,required TResult Function( String text)  textChunk,required TResult Function( String toolName,  String toolId,  int index)  toolCall,required TResult Function( String toolId,  String partialInput)  toolCallUpdate,required TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)  toolCallComplete,required TResult Function( String toolUseId,  String content,  bool isError)  toolResult,required TResult Function( String text)  assistantMessage,required TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)  taskComplete,required TResult Function( String message)  errorEvent,required TResult Function( String status,  int? resetsAt)  rateLimit,required TResult Function( int? exitCode,  List<String> stderrTail)  sessionDead,required TResult Function( String toolUseId,  List<AskUserQuestionItem> questions)  askUserQuestion,required TResult Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)  permissionRequest,required TResult Function( int? inputTokens,  int? cacheReadTokens,  int? cacheCreationTokens,  int? outputTokens)  usageUpdate,required TResult Function( String toolUseId,  String plan,  String? planFilePath)  planProposed,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins,  List<McpServer> mcpServers)  sessionInit,required TResult Function( String text)  textChunk,required TResult Function( String toolName,  String toolId,  int index)  toolCall,required TResult Function( String toolId,  String partialInput)  toolCallUpdate,required TResult Function( int index,  String? toolId,  Map<String, dynamic>? input)  toolCallComplete,required TResult Function( String toolUseId,  String content,  bool isError)  toolResult,required TResult Function( String text)  assistantMessage,required TResult Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)  taskComplete,required TResult Function( String message)  errorEvent,required TResult Function( String status,  int? resetsAt)  rateLimit,required TResult Function( int? exitCode,  List<String> stderrTail)  sessionDead,required TResult Function( String toolUseId,  List<AskUserQuestionItem> questions)  askUserQuestion,required TResult Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)  permissionRequest,required TResult Function( int? inputTokens,  int? cacheReadTokens,  int? cacheCreationTokens,  int? outputTokens)  usageUpdate,required TResult Function( String toolUseId,  String plan,  String? planFilePath)  planProposed,}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit():
-return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins);case ClaudeEventTextChunk():
+return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins,_that.mcpServers);case ClaudeEventTextChunk():
 return textChunk(_that.text);case ClaudeEventToolCall():
 return toolCall(_that.toolName,_that.toolId,_that.index);case ClaudeEventToolCallUpdate():
 return toolCallUpdate(_that.toolId,_that.partialInput);case ClaudeEventToolCallComplete():
@@ -1019,10 +1019,10 @@ return planProposed(_that.toolUseId,_that.plan,_that.planFilePath);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins)?  sessionInit,TResult? Function( String text)?  textChunk,TResult? Function( String toolName,  String toolId,  int index)?  toolCall,TResult? Function( String toolId,  String partialInput)?  toolCallUpdate,TResult? Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult? Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult? Function( String text)?  assistantMessage,TResult? Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult? Function( String message)?  errorEvent,TResult? Function( String status,  int? resetsAt)?  rateLimit,TResult? Function( int? exitCode,  List<String> stderrTail)?  sessionDead,TResult? Function( String toolUseId,  List<AskUserQuestionItem> questions)?  askUserQuestion,TResult? Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)?  permissionRequest,TResult? Function( int? inputTokens,  int? cacheReadTokens,  int? cacheCreationTokens,  int? outputTokens)?  usageUpdate,TResult? Function( String toolUseId,  String plan,  String? planFilePath)?  planProposed,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String sessionId,  String model,  List<String> tools,  List<String> skills,  List<String> slashCommands,  List<ClaudePluginInfo> plugins,  List<McpServer> mcpServers)?  sessionInit,TResult? Function( String text)?  textChunk,TResult? Function( String toolName,  String toolId,  int index)?  toolCall,TResult? Function( String toolId,  String partialInput)?  toolCallUpdate,TResult? Function( int index,  String? toolId,  Map<String, dynamic>? input)?  toolCallComplete,TResult? Function( String toolUseId,  String content,  bool isError)?  toolResult,TResult? Function( String text)?  assistantMessage,TResult? Function( String? result,  double? costUsd,  int? durationMs,  int? numTurns)?  taskComplete,TResult? Function( String message)?  errorEvent,TResult? Function( String status,  int? resetsAt)?  rateLimit,TResult? Function( int? exitCode,  List<String> stderrTail)?  sessionDead,TResult? Function( String toolUseId,  List<AskUserQuestionItem> questions)?  askUserQuestion,TResult? Function( String requestId,  String toolName,  Map<String, dynamic> toolInput)?  permissionRequest,TResult? Function( int? inputTokens,  int? cacheReadTokens,  int? cacheCreationTokens,  int? outputTokens)?  usageUpdate,TResult? Function( String toolUseId,  String plan,  String? planFilePath)?  planProposed,}) {final _that = this;
 switch (_that) {
 case ClaudeEventSessionInit() when sessionInit != null:
-return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins);case ClaudeEventTextChunk() when textChunk != null:
+return sessionInit(_that.sessionId,_that.model,_that.tools,_that.skills,_that.slashCommands,_that.plugins,_that.mcpServers);case ClaudeEventTextChunk() when textChunk != null:
 return textChunk(_that.text);case ClaudeEventToolCall() when toolCall != null:
 return toolCall(_that.toolName,_that.toolId,_that.index);case ClaudeEventToolCallUpdate() when toolCallUpdate != null:
 return toolCallUpdate(_that.toolId,_that.partialInput);case ClaudeEventToolCallComplete() when toolCallComplete != null:
@@ -1048,7 +1048,7 @@ return planProposed(_that.toolUseId,_that.plan,_that.planFilePath);case _:
 
 
 class ClaudeEventSessionInit implements ClaudeEvent {
-  const ClaudeEventSessionInit({required this.sessionId, required this.model, final  List<String> tools = const <String>[], final  List<String> skills = const <String>[], final  List<String> slashCommands = const <String>[], final  List<ClaudePluginInfo> plugins = const <ClaudePluginInfo>[]}): _tools = tools,_skills = skills,_slashCommands = slashCommands,_plugins = plugins;
+  const ClaudeEventSessionInit({required this.sessionId, required this.model, final  List<String> tools = const <String>[], final  List<String> skills = const <String>[], final  List<String> slashCommands = const <String>[], final  List<ClaudePluginInfo> plugins = const <ClaudePluginInfo>[], final  List<McpServer> mcpServers = const <McpServer>[]}): _tools = tools,_skills = skills,_slashCommands = slashCommands,_plugins = plugins,_mcpServers = mcpServers;
   
 
  final  String sessionId;
@@ -1081,6 +1081,13 @@ class ClaudeEventSessionInit implements ClaudeEvent {
   return EqualUnmodifiableListView(_plugins);
 }
 
+ final  List<McpServer> _mcpServers;
+@JsonKey() List<McpServer> get mcpServers {
+  if (_mcpServers is EqualUnmodifiableListView) return _mcpServers;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_mcpServers);
+}
+
 
 /// Create a copy of ClaudeEvent
 /// with the given fields replaced by the non-null parameter values.
@@ -1092,16 +1099,16 @@ $ClaudeEventSessionInitCopyWith<ClaudeEventSessionInit> get copyWith => _$Claude
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeEventSessionInit&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.model, model) || other.model == model)&&const DeepCollectionEquality().equals(other._tools, _tools)&&const DeepCollectionEquality().equals(other._skills, _skills)&&const DeepCollectionEquality().equals(other._slashCommands, _slashCommands)&&const DeepCollectionEquality().equals(other._plugins, _plugins));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeEventSessionInit&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.model, model) || other.model == model)&&const DeepCollectionEquality().equals(other._tools, _tools)&&const DeepCollectionEquality().equals(other._skills, _skills)&&const DeepCollectionEquality().equals(other._slashCommands, _slashCommands)&&const DeepCollectionEquality().equals(other._plugins, _plugins)&&const DeepCollectionEquality().equals(other._mcpServers, _mcpServers));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,sessionId,model,const DeepCollectionEquality().hash(_tools),const DeepCollectionEquality().hash(_skills),const DeepCollectionEquality().hash(_slashCommands),const DeepCollectionEquality().hash(_plugins));
+int get hashCode => Object.hash(runtimeType,sessionId,model,const DeepCollectionEquality().hash(_tools),const DeepCollectionEquality().hash(_skills),const DeepCollectionEquality().hash(_slashCommands),const DeepCollectionEquality().hash(_plugins),const DeepCollectionEquality().hash(_mcpServers));
 
 @override
 String toString() {
-  return 'ClaudeEvent.sessionInit(sessionId: $sessionId, model: $model, tools: $tools, skills: $skills, slashCommands: $slashCommands, plugins: $plugins)';
+  return 'ClaudeEvent.sessionInit(sessionId: $sessionId, model: $model, tools: $tools, skills: $skills, slashCommands: $slashCommands, plugins: $plugins, mcpServers: $mcpServers)';
 }
 
 
@@ -1112,7 +1119,7 @@ abstract mixin class $ClaudeEventSessionInitCopyWith<$Res> implements $ClaudeEve
   factory $ClaudeEventSessionInitCopyWith(ClaudeEventSessionInit value, $Res Function(ClaudeEventSessionInit) _then) = _$ClaudeEventSessionInitCopyWithImpl;
 @useResult
 $Res call({
- String sessionId, String model, List<String> tools, List<String> skills, List<String> slashCommands, List<ClaudePluginInfo> plugins
+ String sessionId, String model, List<String> tools, List<String> skills, List<String> slashCommands, List<ClaudePluginInfo> plugins, List<McpServer> mcpServers
 });
 
 
@@ -1129,7 +1136,7 @@ class _$ClaudeEventSessionInitCopyWithImpl<$Res>
 
 /// Create a copy of ClaudeEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? sessionId = null,Object? model = null,Object? tools = null,Object? skills = null,Object? slashCommands = null,Object? plugins = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? sessionId = null,Object? model = null,Object? tools = null,Object? skills = null,Object? slashCommands = null,Object? plugins = null,Object? mcpServers = null,}) {
   return _then(ClaudeEventSessionInit(
 sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
 as String,model: null == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
@@ -1137,7 +1144,8 @@ as String,tools: null == tools ? _self._tools : tools // ignore: cast_nullable_t
 as List<String>,skills: null == skills ? _self._skills : skills // ignore: cast_nullable_to_non_nullable
 as List<String>,slashCommands: null == slashCommands ? _self._slashCommands : slashCommands // ignore: cast_nullable_to_non_nullable
 as List<String>,plugins: null == plugins ? _self._plugins : plugins // ignore: cast_nullable_to_non_nullable
-as List<ClaudePluginInfo>,
+as List<ClaudePluginInfo>,mcpServers: null == mcpServers ? _self._mcpServers : mcpServers // ignore: cast_nullable_to_non_nullable
+as List<McpServer>,
   ));
 }
 

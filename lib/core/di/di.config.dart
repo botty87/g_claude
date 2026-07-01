@@ -436,7 +436,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i338.SendPrompt>(),
         gh<_i328.StopRun>(),
         gh<_i977.ListMcpServers>(),
-        gh<_i920.ToggleMcpServer>(),
         gh<_i407.AuthenticateMcpServer>(),
         gh<_i992.LoadSessionMessages>(),
         gh<_i278.ClaudeHistoryDataSource>(),

@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'mcp_server.dart';
+
 part 'claude_event.freezed.dart';
 
 /// Normalized stream events emitted by the `claude -p` subprocess.
@@ -39,6 +41,7 @@ sealed class ClaudeEvent with _$ClaudeEvent {
     @Default(<String>[]) List<String> skills,
     @Default(<String>[]) List<String> slashCommands,
     @Default(<ClaudePluginInfo>[]) List<ClaudePluginInfo> plugins,
+    @Default(<McpServer>[]) List<McpServer> mcpServers,
   }) = ClaudeEventSessionInit;
 
   /// Streaming text delta for the current assistant message.

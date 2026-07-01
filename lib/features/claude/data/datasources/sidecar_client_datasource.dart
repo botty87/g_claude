@@ -8,6 +8,7 @@ import '../../domain/entities/claude_effort.dart';
 import '../../domain/entities/claude_event.dart';
 import '../../domain/entities/claude_model.dart';
 import '../../domain/entities/claude_permission_mode.dart';
+import '../../domain/entities/mcp_server.dart';
 import 'sidecar_transport.dart';
 
 @lazySingleton
@@ -30,6 +31,7 @@ class SidecarClientDataSource {
     bool thinking = true,
     String? resumeSessionId,
     List<String> imagePaths = const [],
+    Set<String> disabledMcp = const {},
   }) async* {
     await _transport.start();
 
@@ -46,6 +48,7 @@ class SidecarClientDataSource {
       // ignore: use_null_aware_elements
       if (resumeSessionId != null) 'resume': resumeSessionId,
       if (imagePaths.isNotEmpty) 'images': imagePaths,
+      if (disabledMcp.isNotEmpty) 'disabledMcp': disabledMcp.toList(),
     };
     _transport.send(req);
 
@@ -144,6 +147,14 @@ class SidecarClientDataSource {
                   .where((p) => p.name.isNotEmpty && p.path.isNotEmpty)
                   .toList()
             : const <ClaudePluginInfo>[];
+        final mcpServersRaw = raw['mcpServers'];
+        final mcpServers = mcpServersRaw is List
+            ? mcpServersRaw
+                  .whereType<Map<String, dynamic>>()
+                  .map(_parseInitMcpServer)
+                  .where((s) => s.name.isNotEmpty)
+                  .toList()
+            : const <McpServer>[];
         return ClaudeEvent.sessionInit(
           sessionId: raw['sessionId'] as String? ?? '',
           model: raw['model'] as String? ?? '',
@@ -151,6 +162,7 @@ class SidecarClientDataSource {
           skills: (raw['skills'] as List?)?.cast<String>() ?? const [],
           slashCommands: (raw['slashCommands'] as List?)?.cast<String>() ?? const [],
           plugins: plugins,
+          mcpServers: mcpServers,
         );
 
       case 'textChunk':
@@ -257,6 +269,32 @@ class SidecarClientDataSource {
 
       default:
         return null;
+    }
+  }
+
+  static const _claudeAiPrefix = 'claude.ai ';
+
+  McpServer _parseInitMcpServer(Map<String, dynamic> m) {
+    final name = m['name'] as String? ?? '';
+    final displayName = name.startsWith(_claudeAiPrefix) ? name.substring(_claudeAiPrefix.length) : name;
+    return McpServer(
+      name: name,
+      displayName: displayName,
+      commandOrUrl: '',
+      status: _mapInitMcpStatus(m['status'] as String?),
+    );
+  }
+
+  McpServerStatus _mapInitMcpStatus(String? raw) {
+    switch (raw) {
+      case 'connected':
+        return McpServerStatus.connected;
+      case 'failed':
+        return McpServerStatus.failed;
+      case 'needs-auth':
+        return McpServerStatus.needsAuth;
+      default:
+        return McpServerStatus.unknown;
     }
   }
 

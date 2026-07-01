@@ -112,6 +112,10 @@ class Session {
           : req.thinking === false ? { thinking: { type: 'disabled' } as never } : {}),
         // 1M context window, auto-enabled where supported (documented: Sonnet).
         ...(oneMillionBetas(req.model)),
+        // Disabled MCP servers → block all their tools (mcp__<name>__*).
+        ...(req.disabledMcp && req.disabledMcp.length
+          ? { disallowedTools: req.disabledMcp.map((n) => `mcp__${n}__*`) }
+          : {}),
         ...(process.env.CLAUDE_CLI_PATH ? { pathToClaudeCodeExecutable: process.env.CLAUDE_CLI_PATH } : {}),
         stderr: (d: string) => {
           this.stderrTail.push(d);

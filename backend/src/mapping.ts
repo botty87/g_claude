@@ -25,6 +25,7 @@ export class EventMapper {
             plugins: (m.plugins ?? []).map((p: Any) => ({ name: p.name, path: p.path, source: p.source })),
             apiKeySource: m.apiKeySource ?? 'unknown',
             cwd: m.cwd ?? '',
+            mcpServers: (m.mcp_servers ?? []).map((s: Any) => ({ name: s.name, status: s.status })),
           }];
         }
         return [];
