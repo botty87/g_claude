@@ -324,28 +324,37 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              Locales.Claude.Empty.title,
-              style: AppTypography.bodyMain.copyWith(
-                color: AppColors.onSurface,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+    // Centered when there is room, scrollable when the chat pane is short
+    // (e.g. peek open) — avoids a RenderFlex overflow.
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    Locales.Claude.Empty.title,
+                    style: AppTypography.bodyMain.copyWith(
+                      color: AppColors.onSurface,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    Locales.Claude.Empty.hint,
+                    style: AppTypography.bodyMain.copyWith(color: AppColors.outline, fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              Locales.Claude.Empty.hint,
-              style: AppTypography.bodyMain.copyWith(color: AppColors.outline, fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ],
+          ),
         ),
       ),
     );

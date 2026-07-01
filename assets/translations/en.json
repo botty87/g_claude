@@ -25,6 +25,18 @@
       "toggleToFullscreen": "Hide workspace, focus Claude",
       "toggleToWorkspace": "Show workspace"
     },
+    "sidebar": {
+      "header": "WORKSPACE",
+      "newWorkspace": "New workspace",
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar",
+      "search": "Search workspaces"
+    },
+    "rightPanel": {
+      "files": "Files",
+      "diff": "Diff",
+      "diffComingSoon": "Diff coming soon"
+    },
     "shortcuts": {
       "attachedFile": "Attached {name}",
       "attachedRange": "Attached lines {name}",
@@ -357,6 +369,16 @@
     "unsupported": {
       "title": "Preview not available",
       "revealInFinder": "Reveal in Finder"
+    },
+    "centerView": {
+      "chat": "Chat",
+      "code": "Code",
+      "terminal": "Terminal"
+    },
+    "peek": {
+      "openFull": "Open full screen",
+      "reduceToPeek": "Reduce to peek",
+      "close": "Close"
     }
   }
 }

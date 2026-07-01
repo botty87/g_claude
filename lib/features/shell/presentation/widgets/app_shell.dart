@@ -7,32 +7,29 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 
 import 'package:path/path.dart' as p;
+import 'package:window_manager/window_manager.dart';
 
 import '../../../../core/di/di.dart';
 import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../app_logs/presentation/cubit/app_logs_cubit.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../app_logs/presentation/widgets/logs_view.dart';
 import '../../../claude/domain/entities/chat_attachment.dart';
 import '../../../claude/domain/entities/chat_input_draft.dart';
 import '../../../claude/domain/entities/claude_effort.dart';
 import '../../../claude/domain/entities/claude_permission_mode.dart';
 import '../../../claude/domain/entities/claude_thinking_mode.dart';
-import '../../../claude/presentation/cubit/chat_history_cubit.dart';
 import '../../../claude/presentation/cubit/claude_sessions_cubit.dart';
-import '../../../claude/presentation/widgets/claude_terminal_pane.dart';
 import '../../../claude/presentation/widgets/session_preview_view.dart';
+import '../../../claude/presentation/widgets/sessions_list_view.dart';
 import '../../../editor/presentation/cubit/active_editor_cubit.dart';
 import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
-import '../../../editor/presentation/widgets/file_tabs_bar.dart';
-import '../../../editor/presentation/widgets/file_viewer.dart';
-import '../../../terminal/presentation/widgets/terminal_pane.dart';
-import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../../workspace/presentation/widgets/empty_state_view.dart';
 import '../cubit/shell_cubit.dart';
-import 'activity_bar.dart';
-import 'side_panel.dart';
+import 'center_pane.dart';
+import 'right_panel.dart';
+import 'workspace_sidebar.dart';
 
 @RoutePage()
 class AppShellPage extends HookWidget {
@@ -42,8 +39,8 @@ class AppShellPage extends HookWidget {
   Widget build(BuildContext context) {
     final focusNode = useFocusNode();
 
-    bool toggleWorkspace() {
-      context.read<ShellCubit>().toggleWorkspace();
+    bool toggleSidebar() {
+      context.read<ShellCubit>().toggleSidebar();
       return true;
     }
 
@@ -240,7 +237,7 @@ class AppShellPage extends HookWidget {
       // Cmd+B / Cmd+W
       else if (!alt && !shift && !ctrl) {
         handled = switch (key) {
-          LogicalKeyboardKey.keyB => toggleWorkspace(),
+          LogicalKeyboardKey.keyB => toggleSidebar(),
           LogicalKeyboardKey.keyW => closeActiveTab(),
           _ => false,
         };
@@ -282,27 +279,42 @@ class AppShellPage extends HookWidget {
       return handled ? KeyEventResult.handled : KeyEventResult.ignored;
     }
 
-    final workspaceOpen = context.select<ShellCubit, bool>((c) => c.state.workspaceOpen);
-
     return Focus(
       focusNode: focusNode,
       autofocus: true,
       onKeyEvent: onKey,
-      child: Scaffold(
+      child: const Scaffold(
         backgroundColor: AppColors.surface,
         body: Column(
           children: [
-            const FileTabsBar(),
-            Expanded(
-              child: workspaceOpen
-                  ? const Row(
-                      children: [
-                        ActivityBar(),
-                        Expanded(child: _MainArea()),
-                      ],
-                    )
-                  : const ClaudeTerminalPane(),
-            ),
+            _TitleBar(),
+            Expanded(child: _MainArea()),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Slim draggable window strip replacing the hidden native title bar. Leaves
+/// room on the left for the macOS traffic lights and carries the wordmark.
+class _TitleBar extends StatelessWidget {
+  const _TitleBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return DragToMoveArea(
+      child: Container(
+        height: 36,
+        decoration: const BoxDecoration(
+          color: AppColors.surfaceContainerLowest,
+          border: Border(bottom: BorderSide(color: AppColors.outlineVariant, width: 1)),
+        ),
+        alignment: Alignment.centerLeft,
+        child: Row(
+          children: [
+            const SizedBox(width: 78),
+            Text('CLYDE', style: AppTypography.brand),
           ],
         ),
       ),
@@ -313,19 +325,12 @@ class AppShellPage extends HookWidget {
 class _MainArea extends HookWidget {
   const _MainArea();
 
-  static const _idSide = 'side';
-  static const _idPreview = 'preview';
-  static const _idClaude = 'claude';
-  static const _idTerminal = 'terminal';
+  static const _idCenter = 'center';
+  static const _idRight = 'right';
 
-  static const _sideMin = 200.0;
-  static const _sideMax = 480.0;
-  static const _sideDefault = 280.0;
-  static const _previewMin = 320.0;
-  static const _previewDefault = 380.0;
-  static const _claudeMin = 360.0;
-  static const _terminalMin = 320.0;
-  static const _terminalDefault = 480.0;
+  static const _centerMin = 360.0;
+  static const _rightMin = 290.0;
+  static const _rightDefault = 320.0;
 
   static final _splitTheme = MultiSplitViewThemeData(
     dividerThickness: 1,
@@ -338,43 +343,25 @@ class _MainArea extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedActivity = context.select<ShellCubit, ActivityId>((c) => c.state.selectedActivity);
-    final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
+    final hasWorkspace = context.select<WorkspacesCubit, bool>((c) => c.state.workspacesOrEmpty.isNotEmpty);
+    if (!hasWorkspace) {
+      return const EmptyStateView();
+    }
 
-    final hasPreviewItem = switch (selectedActivity) {
-      ActivityId.explorer => context.select<FileTabsCubit, bool>(
-        (c) => activeId != null && (c.state.filesFor(activeId)?.activePath != null),
-      ),
-      ActivityId.sessions => context.select<ChatHistoryCubit, bool>(
-        (c) => activeId != null && (c.state.historyFor(activeId)?.selectedId != null),
-      ),
-      ActivityId.logs => context.select<AppLogsCubit, bool>((c) => c.state.selectedSessionId != null),
-      // Terminal owns its own pane via `showTerminal` below — no preview item.
-      ActivityId.terminal => false,
-      // Stub activities: not implemented yet.
-      ActivityId.search || ActivityId.git || ActivityId.settings => false,
-    };
+    final selectedActivity = context.select<ShellCubit, ActivityId>((c) => c.state.selectedActivity);
+    // The right-hand Files/Diff/Editor panel only makes sense in the default
+    // workspace (chat) view; history/logs/terminal take the whole center.
+    final showRight = selectedActivity == ActivityId.explorer;
 
     final savedSizes = context.read<ShellCubit>().state.paneSizes;
-    final showTerminal = selectedActivity == ActivityId.terminal;
-
     final controller = useMemoized(() {
-      final savedSide = (savedSizes[_idSide] ?? _sideDefault).clamp(_sideMin, _sideMax);
       return MultiSplitViewController(
         areas: [
-          // Terminal mode dedicates the full main area to terminal+Claude;
-          // the side panel and preview are skipped.
-          if (showTerminal) ...[
-            Area(id: _idTerminal, size: savedSizes[_idTerminal] ?? _terminalDefault, min: _terminalMin),
-            Area(id: _idClaude, flex: 1, min: _claudeMin),
-          ] else ...[
-            Area(id: _idSide, size: savedSide, min: _sideMin, max: _sideMax),
-            if (hasPreviewItem) Area(id: _idPreview, size: savedSizes[_idPreview] ?? _previewDefault, min: _previewMin),
-            Area(id: _idClaude, flex: 1, min: _claudeMin),
-          ],
+          Area(id: _idCenter, flex: 1, min: _centerMin),
+          if (showRight) Area(id: _idRight, size: savedSizes[_idRight] ?? _rightDefault, min: _rightMin),
         ],
       );
-    }, [hasPreviewItem, showTerminal]);
+    }, [showRight]);
     useEffect(() => controller.dispose, [controller]);
 
     void persistSizes() {
@@ -391,36 +378,67 @@ class _MainArea extends HookWidget {
       }
     }
 
-    final active = context.select<WorkspacesCubit, Workspace?>((c) => c.state.activeWorkspace);
-    if (active == null) {
-      return const EmptyStateView();
-    }
-    return MultiSplitViewTheme(
-      data: _splitTheme,
-      child: MultiSplitView(
-        controller: controller,
-        sizeOverflowPolicy: SizeOverflowPolicy.shrinkFirst,
-        onDividerDragEnd: (_) => persistSizes(),
-        builder: (context, area) {
-          switch (area.id) {
-            case _idSide:
-              return const SidePanel();
-            case _idPreview:
-              return switch (selectedActivity) {
-                ActivityId.sessions => const SessionPreviewView(),
-                ActivityId.explorer => const FileViewer(),
-                ActivityId.logs => const LogsDetailView(),
-                _ => const SizedBox.shrink(),
-              };
-            case _idClaude:
-              return const ClaudeTerminalPane();
-            case _idTerminal:
-              return const TerminalPane();
-            default:
-              return const SizedBox.shrink();
-          }
-        },
-      ),
+    return Row(
+      children: [
+        const WorkspaceSidebar(),
+        Expanded(
+          child: MultiSplitViewTheme(
+            data: _splitTheme,
+            child: MultiSplitView(
+              controller: controller,
+              sizeOverflowPolicy: SizeOverflowPolicy.shrinkFirst,
+              onDividerDragEnd: (_) => persistSizes(),
+              builder: (context, area) {
+                switch (area.id) {
+                  case _idCenter:
+                    return _CenterView(activity: selectedActivity);
+                  case _idRight:
+                    return const RightPanel();
+                  default:
+                    return const SizedBox.shrink();
+                }
+              },
+            ),
+          ),
+        ),
+      ],
     );
+  }
+}
+
+/// Center content for the current activity. Default (explorer) = Claude chat;
+/// history/logs render list + detail; terminal takes the full center.
+class _CenterView extends StatelessWidget {
+  const _CenterView({required this.activity});
+
+  final ActivityId activity;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (activity) {
+      case ActivityId.sessions:
+        return const Row(
+          children: [
+            SizedBox(width: 280, child: SessionsListView()),
+            VerticalDivider(width: 1, thickness: 1, color: AppColors.outlineVariant),
+            Expanded(child: SessionPreviewView()),
+          ],
+        );
+      case ActivityId.logs:
+        return const Row(
+          children: [
+            SizedBox(width: 280, child: LogsView()),
+            VerticalDivider(width: 1, thickness: 1, color: AppColors.outlineVariant),
+            Expanded(child: LogsDetailView()),
+          ],
+        );
+      // Chat / Code / Terminal live inside the segmented center.
+      case ActivityId.explorer:
+      case ActivityId.terminal:
+      case ActivityId.search:
+      case ActivityId.git:
+      case ActivityId.settings:
+        return const CenterPane();
+    }
   }
 }

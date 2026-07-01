@@ -586,6 +586,9 @@ class _Editor {
   String get fileLoadError => LocaleKeys.editor_fileLoadError.tr();
   String get fileTooLarge => LocaleKeys.editor_fileTooLarge.tr();
   String get noFileOpen => LocaleKeys.editor_noFileOpen.tr();
+  /// Translations for centerView
+  final CenterView = const _EditorCenterView._();
+
   /// Translations for find
   final Find = const _EditorFind._();
 
@@ -601,12 +604,24 @@ class _Editor {
   /// Translations for pdf
   final Pdf = const _EditorPdf._();
 
+  /// Translations for peek
+  final Peek = const _EditorPeek._();
+
   /// Translations for tab
   final Tab = const _EditorTab._();
 
   /// Translations for unsupported
   final Unsupported = const _EditorUnsupported._();
 
+}
+
+/// Nested class for centerView translations
+class _EditorCenterView {
+  const _EditorCenterView._();
+
+  String get chat => LocaleKeys.editor_centerView_chat.tr();
+  String get code => LocaleKeys.editor_centerView_code.tr();
+  String get terminal => LocaleKeys.editor_centerView_terminal.tr();
 }
 
 /// Nested class for find translations
@@ -653,6 +668,15 @@ class _EditorPdf {
   const _EditorPdf._();
 
   String get loadError => LocaleKeys.editor_pdf_loadError.tr();
+}
+
+/// Nested class for peek translations
+class _EditorPeek {
+  const _EditorPeek._();
+
+  String get close => LocaleKeys.editor_peek_close.tr();
+  String get openFull => LocaleKeys.editor_peek_openFull.tr();
+  String get reduceToPeek => LocaleKeys.editor_peek_reduceToPeek.tr();
 }
 
 /// Nested class for tab translations
@@ -749,11 +773,17 @@ class _Shell {
   /// Translations for activity
   final Activity = const _ShellActivity._();
 
+  /// Translations for rightPanel
+  final RightPanel = const _ShellRightPanel._();
+
   /// Translations for shortcuts
   final Shortcuts = const _ShellShortcuts._();
 
   /// Translations for sidePanel
   final SidePanel = const _ShellSidePanel._();
+
+  /// Translations for sidebar
+  final Sidebar = const _ShellSidebar._();
 
   /// Translations for workspace
   final Workspace = const _ShellWorkspace._();
@@ -772,6 +802,15 @@ class _ShellActivity {
   String get sessions => LocaleKeys.shell_activity_sessions.tr();
   String get settings => LocaleKeys.shell_activity_settings.tr();
   String get terminal => LocaleKeys.shell_activity_terminal.tr();
+}
+
+/// Nested class for rightPanel translations
+class _ShellRightPanel {
+  const _ShellRightPanel._();
+
+  String get diff => LocaleKeys.shell_rightPanel_diff.tr();
+  String get diffComingSoon => LocaleKeys.shell_rightPanel_diffComingSoon.tr();
+  String get files => LocaleKeys.shell_rightPanel_files.tr();
 }
 
 /// Nested class for shortcuts translations
@@ -822,6 +861,17 @@ class _ShellSidePanel {
   String get refresh => LocaleKeys.shell_sidePanel_refresh.tr();
   String get toggleHiddenHide => LocaleKeys.shell_sidePanel_toggleHiddenHide.tr();
   String get toggleHiddenShow => LocaleKeys.shell_sidePanel_toggleHiddenShow.tr();
+}
+
+/// Nested class for sidebar translations
+class _ShellSidebar {
+  const _ShellSidebar._();
+
+  String get collapse => LocaleKeys.shell_sidebar_collapse.tr();
+  String get expand => LocaleKeys.shell_sidebar_expand.tr();
+  String get header => LocaleKeys.shell_sidebar_header.tr();
+  String get newWorkspace => LocaleKeys.shell_sidebar_newWorkspace.tr();
+  String get search => LocaleKeys.shell_sidebar_search.tr();
 }
 
 /// Nested class for workspace translations

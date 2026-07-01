@@ -25,6 +25,18 @@
       "toggleToFullscreen": "Nascondi workspace, focus Claude",
       "toggleToWorkspace": "Mostra workspace"
     },
+    "sidebar": {
+      "header": "WORKSPACE",
+      "newWorkspace": "Nuovo workspace",
+      "collapse": "Comprimi sidebar",
+      "expand": "Espandi sidebar",
+      "search": "Cerca workspace"
+    },
+    "rightPanel": {
+      "files": "Files",
+      "diff": "Diff",
+      "diffComingSoon": "Diff in arrivo"
+    },
     "shortcuts": {
       "attachedFile": "Allegato {name}",
       "attachedRange": "Allegate righe {name}",
@@ -357,6 +369,16 @@
     "unsupported": {
       "title": "Anteprima non disponibile",
       "revealInFinder": "Mostra nel Finder"
+    },
+    "centerView": {
+      "chat": "Chat",
+      "code": "Codice",
+      "terminal": "Terminale"
+    },
+    "peek": {
+      "openFull": "Apri a schermo intero",
+      "reduceToPeek": "Riduci a sbircia",
+      "close": "Chiudi"
     }
   }
 }

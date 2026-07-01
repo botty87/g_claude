@@ -24,6 +24,16 @@ abstract class  LocaleKeys {
   static const shell_workspace_toggleToFullscreen = 'shell.workspace.toggleToFullscreen';
   static const shell_workspace_toggleToWorkspace = 'shell.workspace.toggleToWorkspace';
   static const shell_workspace = 'shell.workspace';
+  static const shell_sidebar_header = 'shell.sidebar.header';
+  static const shell_sidebar_newWorkspace = 'shell.sidebar.newWorkspace';
+  static const shell_sidebar_collapse = 'shell.sidebar.collapse';
+  static const shell_sidebar_expand = 'shell.sidebar.expand';
+  static const shell_sidebar_search = 'shell.sidebar.search';
+  static const shell_sidebar = 'shell.sidebar';
+  static const shell_rightPanel_files = 'shell.rightPanel.files';
+  static const shell_rightPanel_diff = 'shell.rightPanel.diff';
+  static const shell_rightPanel_diffComingSoon = 'shell.rightPanel.diffComingSoon';
+  static const shell_rightPanel = 'shell.rightPanel';
   static const shell_shortcuts_attachedFile = 'shell.shortcuts.attachedFile';
   static const shell_shortcuts_attachedRange = 'shell.shortcuts.attachedRange';
   static const shell_shortcuts_alreadyAttached = 'shell.shortcuts.alreadyAttached';
@@ -305,6 +315,14 @@ abstract class  LocaleKeys {
   static const editor_unsupported_title = 'editor.unsupported.title';
   static const editor_unsupported_revealInFinder = 'editor.unsupported.revealInFinder';
   static const editor_unsupported = 'editor.unsupported';
+  static const editor_centerView_chat = 'editor.centerView.chat';
+  static const editor_centerView_code = 'editor.centerView.code';
+  static const editor_centerView_terminal = 'editor.centerView.terminal';
+  static const editor_centerView = 'editor.centerView';
+  static const editor_peek_openFull = 'editor.peek.openFull';
+  static const editor_peek_reduceToPeek = 'editor.peek.reduceToPeek';
+  static const editor_peek_close = 'editor.peek.close';
+  static const editor_peek = 'editor.peek';
   static const editor = 'editor';
 
 }

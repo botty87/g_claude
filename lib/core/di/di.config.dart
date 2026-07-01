@@ -92,6 +92,8 @@ import '../../features/editor/domain/repositories/file_content_repository.dart'
 import '../../features/editor/domain/usecases/read_file.dart' as _i622;
 import '../../features/editor/presentation/cubit/active_editor_cubit.dart'
     as _i207;
+import '../../features/editor/presentation/cubit/editor_view_cubit.dart'
+    as _i465;
 import '../../features/editor/presentation/cubit/file_tabs_cubit.dart' as _i648;
 import '../../features/explorer/data/datasources/file_system_datasource.dart'
     as _i12;
@@ -176,6 +178,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i81.AppRouter>(() => routerModule.router);
     gh.lazySingleton<_i207.Talker>(() => talkerModule.talker);
     gh.lazySingleton<_i207.ActiveEditorCubit>(() => _i207.ActiveEditorCubit());
+    gh.lazySingleton<_i68.ShellCubit>(() => _i68.ShellCubit());
     gh.lazySingleton<_i644.AppLogsRepository>(
       () => _i413.AppLogsRepositoryImpl(gh<_i126.AppLogsDatabase>()),
     );
@@ -354,6 +357,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i207.Talker>(),
       )..init(),
     );
+    gh.lazySingleton<_i465.EditorViewCubit>(
+      () => _i465.EditorViewCubit(gh<_i179.WorkspacesCubit>())..init(),
+    );
     gh.lazySingleton<_i330.SidecarClientDataSource>(
       () => _i330.SidecarClientDataSource(
         gh<_i583.SidecarTransport>(),
@@ -401,12 +407,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i216.PtyDataSource>(),
         gh<_i179.WorkspacesCubit>(),
         gh<_i207.Talker>(),
-      )..init(),
-    );
-    gh.lazySingleton<_i68.ShellCubit>(
-      () => _i68.ShellCubit(
-        gh<_i648.FileTabsCubit>(),
-        gh<_i179.WorkspacesCubit>(),
       )..init(),
     );
     gh.lazySingleton<_i188.ExplorerCubit>(
