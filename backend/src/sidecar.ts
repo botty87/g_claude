@@ -9,10 +9,16 @@ function emit(e: Evt) {
   stdout.write(JSON.stringify(e) + '\n');
 }
 
-const require = createRequire(import.meta.url);
+// Cosmetic SDK version for the `ready` event. import.meta.url exists under
+// tsx/ESM (dev); in the esbuild→SEA CJS bundle it's undefined, so fall back to
+// __filename (defined by esbuild in CJS). Guarded: worst case reports 'unknown'.
 const sdkVersion: string = (() => {
-  try { return require('@anthropic-ai/claude-agent-sdk/package.json').version as string; }
-  catch { return 'unknown'; }
+  try {
+    const req = createRequire(import.meta.url ?? __filename);
+    return req('@anthropic-ai/claude-agent-sdk/package.json').version as string;
+  } catch {
+    return 'unknown';
+  }
 })();
 
 const manager = new SessionManager(emit);

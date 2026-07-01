@@ -61,9 +61,15 @@ doctor:
 # RELEASE BUILD (macOS)
 # ==============================================================================
 
-# Build macOS release app + strip unused Symbol font variants (~27MB saved)
-build-mac:
+# Bundle the Agent SDK sidecar into a single self-contained .cjs (esbuild)
+build-sidecar:
+    cd {{project_root}}/backend && npm run bundle
+
+# Build macOS release app: bundle sidecar, build, embed sidecar in Resources,
+# strip unused Symbol font variants (~27MB saved)
+build-mac: build-sidecar
     {{flutter}} build macos --release --no-tree-shake-icons
+    cp "{{project_root}}/backend/dist/clyde-sidecar.cjs" "{{release_app}}/Contents/Resources/clyde-sidecar.cjs"
     bash {{strip_fonts_script}} {{release_app}}
     @echo ""
     @echo "=== Build complete ==="

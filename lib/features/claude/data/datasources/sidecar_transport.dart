@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -44,28 +45,49 @@ class StdioSidecarTransport implements SidecarTransport {
       return _readyCompleter!.future;
     }
 
-    final backendDir = _findBackendDir();
-    if (backendDir == null) {
-      _talker.error(
-        'SidecarTransport: could not locate backend/ directory with src/sidecar.ts. '
-        'Search started from ${Directory.current.path} up to 6 parent levels.',
-      );
-      throw StateError('sidecar: backend directory not found');
-    }
-
     final claudePath = await _binaryResolver.resolve();
     if (claudePath == null) {
       throw StateError('sidecar: claude binary not found');
     }
 
+    // Release: spawn the bundled single-file sidecar (clyde-sidecar.cjs in the
+    // .app Resources) with the system node. Debug: run the TS source via tsx.
+    final String exe;
+    final List<String> args;
+    String? workingDirectory;
+    if (kReleaseMode) {
+      final cjs = _bundledSidecarPath();
+      if (cjs == null || !File(cjs).existsSync()) {
+        throw StateError('sidecar: bundled clyde-sidecar.cjs not found (expected in app Resources)');
+      }
+      final node = await _resolveNode();
+      if (node == null) {
+        throw StateError('sidecar: node runtime not found');
+      }
+      exe = node;
+      args = [cjs];
+    } else {
+      final backendDir = _findBackendDir();
+      if (backendDir == null) {
+        _talker.error(
+          'SidecarTransport: could not locate backend/ directory with src/sidecar.ts. '
+          'Search started from ${Directory.current.path} up to 6 parent levels.',
+        );
+        throw StateError('sidecar: backend directory not found');
+      }
+      exe = 'npx';
+      args = ['tsx', 'src/sidecar.ts'];
+      workingDirectory = backendDir;
+    }
+
     _readyCompleter = Completer<void>();
 
-    _talker.info('SidecarTransport: starting sidecar in $backendDir');
+    _talker.info('SidecarTransport: starting sidecar ($exe ${args.join(' ')})');
 
     _process = await Process.start(
-      'npx',
-      ['tsx', 'src/sidecar.ts'],
-      workingDirectory: backendDir,
+      exe,
+      args,
+      workingDirectory: workingDirectory,
       environment: {...Platform.environment, 'CLAUDE_CLI_PATH': claudePath},
       runInShell: false,
     );
@@ -162,6 +184,37 @@ class StdioSidecarTransport implements SidecarTransport {
       final parent = dir.parent;
       if (parent.path == dir.path) break; // filesystem root
       dir = parent;
+    }
+    return null;
+  }
+
+  /// Release: `Clyde.app/Contents/MacOS/Clyde` → `../Resources/clyde-sidecar.cjs`.
+  String? _bundledSidecarPath() {
+    try {
+      final macosDir = File(Platform.resolvedExecutable).parent; // Contents/MacOS
+      return '${macosDir.parent.path}/Resources/clyde-sidecar.cjs';
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Resolves the `node` runtime. A Finder-launched app has a minimal PATH, so
+  /// probe common locations and fall back to a login shell (like the claude resolver).
+  Future<String?> _resolveNode() async {
+    for (final c in ['/opt/homebrew/bin/node', '/usr/local/bin/node', 'node']) {
+      try {
+        final r = await Process.run(c, ['--version'], runInShell: false);
+        if (r.exitCode == 0) return c;
+      } catch (_) {}
+    }
+    if (Platform.isMacOS || Platform.isLinux) {
+      try {
+        final r = await Process.run('zsh', ['-ilc', 'command -v node'], runInShell: false);
+        if (r.exitCode == 0) {
+          final out = (r.stdout as String).trim();
+          if (out.isNotEmpty) return out.split('\n').first;
+        }
+      } catch (_) {}
     }
     return null;
   }

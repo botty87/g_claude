@@ -1,7 +1,9 @@
 # Piano migrazione Clyde → Agent SDK (sidecar locale, protocollo unico)
 
-> Stato: **Fase 0+1+2+3 FATTE e verificate**. Decisioni: long-lived multi-sessione · stdio dietro interfaccia · `spike-agent-sdk`→`backend/`.
-> Prossimo: Fase 4 (packaging). Branch `feature/claude-sdk`. Remoto/WS/Tailscale = fuori scope.
+> Stato: **Fase 0→4 FATTE e verificate** (+ controlli modi/thinking/1M/model, MCP fast-list+toggle). Decisioni: long-lived multi-sessione · stdio dietro interfaccia · `spike-agent-sdk`→`backend/`. **Uso interno: niente Developer ID/notarization** (deciso).
+> Prossimo: Fase 5 (test/cleanup/docs) + rifiniture. Branch `feature/claude-sdk`. Remoto/WS/Tailscale = fuori scope.
+>
+> **Fase 4 (packaging)**: sidecar bundlato in un singolo `.cjs` self-contained via esbuild (banner+define per `import.meta.url` in CJS), embedded in `Clyde.app/Contents/Resources`. Transport: dev → `npx tsx`; release (`kReleaseMode`) → `node <Resources>/clyde-sidecar.cjs` con `node` risolto (path assoluti + `zsh -ilc`, gestisce PATH minimo da Finder). `just build-sidecar` + `build-mac` (bundle→build→copia→strip font). Niente SEA (il `node` di sistema è shared-lib) e niente binario da firmare (il `.cjs` è dati; l'app la firma Flutter). Verificato: bundle gira con env spogliato (sim Finder), app release parte, e l'artefatto spedito guida un round-trip completo con `CLAUDE_CLI_PATH` settato (come fa il transport). **Nota**: il bundle isolato richiede sempre `pathToClaudeCodeExecutable` (via `CLAUDE_CLI_PATH`), che il transport passa sempre. Manuale non automatizzabile (no marionette in release): 30s di click-through nella GUI release.
 >
 > **Verifica Fase 2+3**: `dart analyze` pulito · 78 test claude verdi · DI corretto (Shelf/process-datasource rimossi, sidecar registrato) · **integration test live (Dart↔sidecar→CLI)**: lifecycle (start→taskComplete→sessionDead, stream completa) ✓ e plan round-trip (planProposed→approve→scrive calc.js in cwd) ✓.
 > **Bug trovato+fixato in verifica**: il sidecar non chiudeva la sessione dopo `taskComplete` (streaming-input resta viva) → lo stream Dart non si completava. Aggiunto auto-close one-shot (keepAlive=false default) in `backend/src/session.ts`.

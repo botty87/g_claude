@@ -8,6 +8,7 @@
     "sidecar": "tsx src/sidecar.ts",
     "client": "tsx test/client.ts",
     "typecheck": "tsc --noEmit",
+    "bundle": "esbuild src/sidecar.ts --bundle --platform=node --target=node22 --format=cjs --banner:js='const __self_url=require(\"url\").pathToFileURL(__filename).href;' --define:import.meta.url=__self_url --outfile=dist/clyde-sidecar.cjs",
     "spike:plan": "tsx src/index.ts plan",
     "spike:question": "tsx src/index.ts question"
   },
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.0.1",
+    "esbuild": "^0.28.1",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }

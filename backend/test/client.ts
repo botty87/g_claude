@@ -33,7 +33,11 @@ const PROMPTS: Record<string, { prompt: string; mode: string }> = {
   },
 };
 
-const child = spawn('npx', ['tsx', join(ROOT, 'src/sidecar.ts')], { stdio: ['pipe', 'pipe', 'inherit'] });
+// Default: run the TS source via tsx. Set CLYDE_SIDECAR_CJS to a bundled .cjs
+// to exercise the packaged sidecar (spawned with system node).
+const cjs = process.env.CLYDE_SIDECAR_CJS;
+const [cmd, cmdArgs] = cjs ? ['node', [cjs]] : ['npx', ['tsx', join(ROOT, 'src/sidecar.ts')]];
+const child = spawn(cmd, cmdArgs, { stdio: ['pipe', 'pipe', 'inherit'] });
 const send = (req: object) => child.stdin.write(JSON.stringify(req) + '\n');
 const rl = readline.createInterface({ input: child.stdout });
 
