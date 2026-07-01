@@ -7,6 +7,7 @@
   "scripts": {
     "sidecar": "tsx src/sidecar.ts",
     "client": "tsx test/client.ts",
+    "test": "node --import tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
     "bundle": "esbuild src/sidecar.ts --bundle --platform=node --target=node22 --format=cjs --banner:js='const __self_url=require(\"url\").pathToFileURL(__filename).href;' --define:import.meta.url=__self_url --outfile=dist/clyde-sidecar.cjs",
     "spike:plan": "tsx src/index.ts plan",
