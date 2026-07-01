@@ -36,71 +36,63 @@ class CenterPane extends HookWidget {
     final hasFiles = openCount > 0;
     // Code is only reachable with at least one open file.
     final effectiveView = (view == CenterView.code && !hasFiles) ? CenterView.chat : view;
-    final lastActivePath = useRef<String?>(null);
 
-    return BlocListener<FileTabsCubit, FileTabsState>(
-      listenWhen: (prev, curr) => prev.filesFor(activeId)?.activePath != curr.filesFor(activeId)?.activePath,
-      listener: (context, state) {
-        final activePath = state.filesFor(activeId)?.activePath;
-        if (activePath != null && activePath != lastActivePath.value) {
-          // Opening a file peeks over the chat; from full code we stay full.
-          final editorView = context.read<EditorViewCubit>();
-          if (editorView.state.dataFor(activeId).view != CenterView.code) {
-            editorView.openPeek(activeId);
-          }
-        }
-        lastActivePath.value = activePath;
-      },
-      child: Column(
-        children: [
-          _Segmented(
-            current: effectiveView,
-            codeCount: openCount,
-            codeEnabled: hasFiles,
-            onSelect: (v) => context.read<EditorViewCubit>().setView(activeId, v),
-          ),
-          Expanded(
-            child: switch (effectiveView) {
-              CenterView.chat => _ChatSurface(workspaceId: activeId, peekOpen: peekOpen && hasFiles),
-              CenterView.code => _CodeView(workspaceId: activeId),
-              CenterView.terminal => const TerminalPane(),
-            },
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        _Segmented(
+          current: effectiveView,
+          codeCount: openCount,
+          codeEnabled: hasFiles,
+          onSelect: (v) => context.read<EditorViewCubit>().setView(activeId, v),
+        ),
+        Expanded(
+          child: switch (effectiveView) {
+            CenterView.chat => _ChatSurface(workspaceId: activeId, peekOpen: peekOpen && hasFiles),
+            CenterView.code => _CodeView(workspaceId: activeId),
+            CenterView.terminal => const TerminalPane(),
+          },
+        ),
+      ],
     );
   }
 }
 
-/// Chat with an optional peek sheet rising from the bottom.
-class _ChatSurface extends StatelessWidget {
+/// Chat with an optional peek sheet docked below it. The chat keeps the top
+/// portion (input bar stays reachable); the peek fills the bottom and is
+/// resized by dragging its handle.
+class _ChatSurface extends HookWidget {
   const _ChatSurface({required this.workspaceId, required this.peekOpen});
 
   final WorkspaceId workspaceId;
   final bool peekOpen;
 
+  static const _minFraction = 0.25;
+  static const _maxFraction = 0.75;
+
   @override
   Widget build(BuildContext context) {
+    final fraction = useState(0.56);
     if (!peekOpen) return const ClaudeTerminalPane();
-    return Stack(
-      children: [
-        const Positioned.fill(child: ClaudeTerminalPane()),
-        Positioned.fill(
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: FractionallySizedBox(
-              heightFactor: 0.58,
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 1, end: 0),
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOut,
-                builder: (context, t, child) => FractionalTranslation(translation: Offset(0, t), child: child),
-                child: PeekSheet(workspaceId: workspaceId),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final total = constraints.maxHeight;
+        final peekHeight = total * fraction.value;
+        return Column(
+          children: [
+            const Expanded(child: ClaudeTerminalPane()),
+            SizedBox(
+              height: peekHeight,
+              child: PeekSheet(
+                workspaceId: workspaceId,
+                onResizeDrag: (dy) {
+                  if (total <= 0) return;
+                  fraction.value = (fraction.value - dy / total).clamp(_minFraction, _maxFraction);
+                },
               ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

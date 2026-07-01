@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
+import '../../../editor/presentation/cubit/editor_view_cubit.dart';
 import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../domain/entities/file_node.dart';
@@ -41,16 +42,30 @@ class ExplorerNodeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDir = node.isDir;
 
+    // Opening a file surfaces it in the center: peek over the chat, unless the
+    // full Code view is already showing (then it just adds a tab). Explicit —
+    // re-clicking the already-active file re-opens the peek.
+    void surface() {
+      final editorView = context.read<EditorViewCubit>();
+      if (editorView.state.dataFor(workspaceId).view != CenterView.code) {
+        editorView.openPeek(workspaceId);
+      }
+    }
+
     return Hoverable(
       onTap: isDir
           ? () => context.read<ExplorerCubit>().toggleFolder(workspaceId, node.path)
-          : () => context.read<FileTabsCubit>().openFile(workspaceId, node.path),
+          : () {
+              context.read<FileTabsCubit>().openFile(workspaceId, node.path);
+              surface();
+            },
       onDoubleTap: isDir
           ? null
           : () {
               final cubit = context.read<FileTabsCubit>();
               cubit.openFile(workspaceId, node.path);
               cubit.pinFile(workspaceId, node.path);
+              surface();
             },
       builder: (context, hover) {
         final Color background;

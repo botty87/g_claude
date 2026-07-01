@@ -6,6 +6,7 @@ import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../editor/presentation/cubit/editor_view_cubit.dart';
 import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
@@ -21,42 +22,49 @@ class ExplorerView extends HookWidget {
   Widget build(BuildContext context) {
     final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
 
+    // The tree highlights the file currently *visible* in the center — i.e.
+    // shown in the full Code view or peeked over the chat. On plain Chat with
+    // no peek there is nothing to view, so the highlight is cleared even though
+    // the file stays open as a tab.
+    void syncSelection() {
+      final active = context.read<WorkspacesCubit>().state.activeWorkspace;
+      if (active == null) return;
+      final explorer = context.read<ExplorerCubit>();
+      final activePath = context.read<FileTabsCubit>().state.filesFor(active.id)?.activePath;
+      final editorView = context.read<EditorViewCubit>().state.dataFor(active.id);
+      final visible = (editorView.view == CenterView.code || editorView.peekOpen) ? activePath : null;
+      if (visible == null) {
+        explorer.clearSelection(active.id);
+      } else {
+        explorer.revealPath(active.id, active.path, visible);
+      }
+    }
+
     useEffect(() {
       if (activeId == null) return null;
       final active = context.read<WorkspacesCubit>().state.activeWorkspace;
       if (active == null) return null;
-      final explorer = context.read<ExplorerCubit>();
-      final fileTabs = context.read<FileTabsCubit>();
-      explorer.ensureRootLoaded(active.id, active.path).then((_) {
+      context.read<ExplorerCubit>().ensureRootLoaded(active.id, active.path).then((_) {
         if (!context.mounted) return;
-        final activePath = fileTabs.state.filesFor(active.id)?.activePath;
-        if (activePath != null) {
-          explorer.revealPath(active.id, active.path, activePath);
-        } else {
-          explorer.clearSelection(active.id);
-        }
+        syncSelection();
       });
       return null;
     }, [activeId]);
 
     final active = context.select<WorkspacesCubit, Workspace?>((c) => c.state.activeWorkspace);
 
-    return BlocListener<FileTabsCubit, FileTabsState>(
-      listenWhen: (prev, curr) {
-        if (activeId == null) return false;
-        return prev.filesFor(activeId)?.activePath != curr.filesFor(activeId)?.activePath;
-      },
-      listener: (context, state) {
-        final active = context.read<WorkspacesCubit>().state.activeWorkspace;
-        if (active == null) return;
-        final activePath = state.filesFor(active.id)?.activePath;
-        final explorer = context.read<ExplorerCubit>();
-        if (activePath == null) {
-          explorer.clearSelection(active.id);
-        } else {
-          explorer.revealPath(active.id, active.path, activePath);
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<FileTabsCubit, FileTabsState>(
+          listenWhen: (prev, curr) =>
+              activeId != null && prev.filesFor(activeId)?.activePath != curr.filesFor(activeId)?.activePath,
+          listener: (context, _) => syncSelection(),
+        ),
+        BlocListener<EditorViewCubit, EditorViewState>(
+          listenWhen: (prev, curr) => activeId != null && prev.dataFor(activeId) != curr.dataFor(activeId),
+          listener: (context, _) => syncSelection(),
+        ),
+      ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

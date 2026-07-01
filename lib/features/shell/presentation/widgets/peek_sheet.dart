@@ -20,14 +20,16 @@ import '../../../workspace/domain/entities/workspace.dart';
 /// dismiss (× / drag the handle down). Shares the open-files set with the
 /// full Code view.
 class PeekSheet extends HookWidget {
-  const PeekSheet({super.key, required this.workspaceId});
+  const PeekSheet({super.key, required this.workspaceId, required this.onResizeDrag});
 
   final WorkspaceId workspaceId;
+
+  /// Called on each vertical drag delta of the handle (dy > 0 = downward).
+  final ValueChanged<double> onResizeDrag;
 
   @override
   Widget build(BuildContext context) {
     final scrollController = useScrollController();
-    final dragAccum = useRef<double>(0);
     final openPaths = context.select<FileTabsCubit, List<String>>(
       (c) => c.state.filesFor(workspaceId)?.openPaths ?? const [],
     );
@@ -45,11 +47,7 @@ class PeekSheet extends HookWidget {
         children: [
           GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onVerticalDragUpdate: (d) => dragAccum.value += d.delta.dy,
-            onVerticalDragEnd: (_) {
-              if (dragAccum.value > 60) context.read<EditorViewCubit>().closePeek(workspaceId);
-              dragAccum.value = 0;
-            },
+            onVerticalDragUpdate: (d) => onResizeDrag(d.delta.dy),
             child: MouseRegion(
               cursor: SystemMouseCursors.resizeUpDown,
               child: SizedBox(
