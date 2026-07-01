@@ -270,12 +270,23 @@ void main() {
     });
 
     test('toolCall maps toolName/toolId/index', () async {
-      final event = await firstEventFor({'t': 'toolCall', 'sid': '/w', 'toolName': 'Bash', 'toolId': 'tid-1', 'index': 2});
+      final event = await firstEventFor({
+        't': 'toolCall',
+        'sid': '/w',
+        'toolName': 'Bash',
+        'toolId': 'tid-1',
+        'index': 2,
+      });
       expect(event, const ClaudeEvent.toolCall(toolName: 'Bash', toolId: 'tid-1', index: 2));
     });
 
     test('toolCallUpdate maps toolId/partialInput', () async {
-      final event = await firstEventFor({'t': 'toolCallUpdate', 'sid': '/w', 'toolId': 'tid-1', 'partialInput': '{"comm'});
+      final event = await firstEventFor({
+        't': 'toolCallUpdate',
+        'sid': '/w',
+        'toolId': 'tid-1',
+        'partialInput': '{"comm',
+      });
       expect(event, const ClaudeEvent.toolCallUpdate(toolId: 'tid-1', partialInput: '{"comm'));
     });
 
