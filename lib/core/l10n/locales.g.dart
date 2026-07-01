@@ -586,6 +586,9 @@ class _Editor {
   String get fileLoadError => LocaleKeys.editor_fileLoadError.tr();
   String get fileTooLarge => LocaleKeys.editor_fileTooLarge.tr();
   String get noFileOpen => LocaleKeys.editor_noFileOpen.tr();
+  /// Translations for centerView
+  final CenterView = const _EditorCenterView._();
+
   /// Translations for find
   final Find = const _EditorFind._();
 
@@ -607,6 +610,15 @@ class _Editor {
   /// Translations for unsupported
   final Unsupported = const _EditorUnsupported._();
 
+}
+
+/// Nested class for centerView translations
+class _EditorCenterView {
+  const _EditorCenterView._();
+
+  String get chat => LocaleKeys.editor_centerView_chat.tr();
+  String get code => LocaleKeys.editor_centerView_code.tr();
+  String get terminal => LocaleKeys.editor_centerView_terminal.tr();
 }
 
 /// Nested class for find translations

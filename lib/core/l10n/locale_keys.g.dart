@@ -317,6 +317,10 @@ abstract class  LocaleKeys {
   static const editor_unsupported_title = 'editor.unsupported.title';
   static const editor_unsupported_revealInFinder = 'editor.unsupported.revealInFinder';
   static const editor_unsupported = 'editor.unsupported';
+  static const editor_centerView_chat = 'editor.centerView.chat';
+  static const editor_centerView_code = 'editor.centerView.code';
+  static const editor_centerView_terminal = 'editor.centerView.terminal';
+  static const editor_centerView = 'editor.centerView';
   static const editor = 'editor';
 
 }

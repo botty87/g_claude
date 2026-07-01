@@ -371,6 +371,11 @@
     "unsupported": {
       "title": "Anteprima non disponibile",
       "revealInFinder": "Mostra nel Finder"
+    },
+    "centerView": {
+      "chat": "Chat",
+      "code": "Codice",
+      "terminal": "Terminale"
     }
   }
 }

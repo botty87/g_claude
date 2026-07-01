@@ -20,15 +20,14 @@ import '../../../claude/domain/entities/claude_effort.dart';
 import '../../../claude/domain/entities/claude_permission_mode.dart';
 import '../../../claude/domain/entities/claude_thinking_mode.dart';
 import '../../../claude/presentation/cubit/claude_sessions_cubit.dart';
-import '../../../claude/presentation/widgets/claude_terminal_pane.dart';
 import '../../../claude/presentation/widgets/session_preview_view.dart';
 import '../../../claude/presentation/widgets/sessions_list_view.dart';
 import '../../../editor/presentation/cubit/active_editor_cubit.dart';
 import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
-import '../../../terminal/presentation/widgets/terminal_pane.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../../workspace/presentation/widgets/empty_state_view.dart';
 import '../cubit/shell_cubit.dart';
+import 'center_pane.dart';
 import 'right_panel.dart';
 import 'workspace_sidebar.dart';
 
@@ -433,13 +432,13 @@ class _CenterView extends StatelessWidget {
             Expanded(child: LogsDetailView()),
           ],
         );
-      case ActivityId.terminal:
-        return const TerminalPane();
+      // Chat / Code / Terminal live inside the segmented center.
       case ActivityId.explorer:
+      case ActivityId.terminal:
       case ActivityId.search:
       case ActivityId.git:
       case ActivityId.settings:
-        return const ClaudeTerminalPane();
+        return const CenterPane();
     }
   }
 }

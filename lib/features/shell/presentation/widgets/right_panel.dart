@@ -1,60 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
-import '../../../editor/presentation/widgets/file_viewer.dart';
 import '../../../explorer/presentation/widgets/explorer_view.dart';
-import '../../../workspace/domain/entities/workspace.dart';
-import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 
-enum _RightTab { files, diff, editor }
+enum _RightTab { files, diff }
 
-/// Right-hand navigation panel: Files tree, Diff (stub), and an Editor view for
-/// the active file. Opening a file from the tree auto-focuses the Editor tab.
+/// Right-hand navigation panel: Files tree and Diff (stub). Pure navigation —
+/// clicking a file opens it in the center (Code view), not here.
 class RightPanel extends HookWidget {
   const RightPanel({super.key});
 
   @override
   Widget build(BuildContext context) {
     final tab = useState(_RightTab.files);
-    final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
-    final lastActivePath = useRef<String?>(null);
 
-    return BlocListener<FileTabsCubit, FileTabsState>(
-      listenWhen: (prev, curr) {
-        if (activeId == null) return false;
-        return prev.filesFor(activeId)?.activePath != curr.filesFor(activeId)?.activePath;
-      },
-      listener: (context, state) {
-        final activePath = activeId == null ? null : state.filesFor(activeId)?.activePath;
-        if (activePath != null && activePath != lastActivePath.value) {
-          tab.value = _RightTab.editor;
-        }
-        lastActivePath.value = activePath;
-      },
-      child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surfaceContainer,
-          border: Border(left: BorderSide(color: AppColors.outlineVariant, width: 1)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _TabBar(current: tab.value, onSelect: (t) => tab.value = t),
-            Expanded(
-              child: switch (tab.value) {
-                _RightTab.files => const ExplorerView(),
-                _RightTab.diff => const _StubMessage(),
-                _RightTab.editor => const FileViewer(),
-              },
-            ),
-          ],
-        ),
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surfaceContainer,
+        border: Border(left: BorderSide(color: AppColors.outlineVariant, width: 1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _TabBar(current: tab.value, onSelect: (t) => tab.value = t),
+          Expanded(
+            child: switch (tab.value) {
+              _RightTab.files => const ExplorerView(),
+              _RightTab.diff => const _StubMessage(),
+            },
+          ),
+        ],
       ),
     );
   }
@@ -88,13 +67,6 @@ class _TabBar extends StatelessWidget {
             label: Locales.Shell.RightPanel.diff,
             isActive: current == _RightTab.diff,
             onTap: () => onSelect(_RightTab.diff),
-          ),
-          _TabButton(
-            keyName: 'right_tab_editor',
-            icon: Symbols.code,
-            label: Locales.Shell.RightPanel.editor,
-            isActive: current == _RightTab.editor,
-            onTap: () => onSelect(_RightTab.editor),
           ),
         ],
       ),

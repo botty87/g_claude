@@ -9,6 +9,7 @@ import 'features/app_logs/presentation/cubit/app_log_detail_cubit.dart';
 import 'features/app_logs/presentation/cubit/app_logs_cubit.dart';
 import 'features/claude/presentation/cubit/chat_history_cubit.dart';
 import 'features/claude/presentation/cubit/claude_sessions_cubit.dart';
+import 'features/editor/presentation/cubit/editor_view_cubit.dart';
 import 'features/editor/presentation/cubit/file_tabs_cubit.dart';
 import 'features/explorer/presentation/cubit/explorer_cubit.dart';
 import 'features/shell/presentation/cubit/shell_cubit.dart';
@@ -28,6 +29,7 @@ class App extends StatelessWidget {
         BlocProvider<ShellCubit>.value(value: getIt<ShellCubit>()),
         BlocProvider<ExplorerCubit>.value(value: getIt<ExplorerCubit>()),
         BlocProvider<FileTabsCubit>.value(value: getIt<FileTabsCubit>()),
+        BlocProvider<EditorViewCubit>.value(value: getIt<EditorViewCubit>()),
         BlocProvider<ClaudeSessionsCubit>.value(value: getIt<ClaudeSessionsCubit>()),
         BlocProvider<ChatHistoryCubit>.value(value: getIt<ChatHistoryCubit>()),
         BlocProvider<AppLogsCubit>.value(value: getIt<AppLogsCubit>()),

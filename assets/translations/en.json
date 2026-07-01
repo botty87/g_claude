@@ -371,6 +371,11 @@
     "unsupported": {
       "title": "Preview not available",
       "revealInFinder": "Reveal in Finder"
+    },
+    "centerView": {
+      "chat": "Chat",
+      "code": "Code",
+      "terminal": "Terminal"
     }
   }
 }

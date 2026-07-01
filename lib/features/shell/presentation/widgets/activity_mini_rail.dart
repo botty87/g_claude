@@ -18,8 +18,9 @@ class _RailEntry {
   final String keyName;
 }
 
-// "Chat" maps to explorer (the default workspace/chat view). History/Terminal/
-// Logs/Settings mirror the old activity bar entries.
+// "Chat" maps to explorer (the default workspace view, with its Chat/Code/
+// Terminal segmented control). History/Logs/Settings mirror the old activity
+// bar entries. Terminal is no longer here — it is a center segment.
 const _entries = [
   _RailEntry(id: ActivityId.explorer, icon: Symbols.forum, tooltipKey: 'shell.activity.explorer', keyName: 'rail_chat'),
   _RailEntry(
@@ -27,12 +28,6 @@ const _entries = [
     icon: Symbols.history,
     tooltipKey: 'shell.activity.sessions',
     keyName: 'rail_sessions',
-  ),
-  _RailEntry(
-    id: ActivityId.terminal,
-    icon: Symbols.terminal,
-    tooltipKey: 'shell.activity.terminal',
-    keyName: 'rail_terminal',
   ),
   _RailEntry(id: ActivityId.logs, icon: Symbols.receipt_long, tooltipKey: 'shell.activity.logs', keyName: 'rail_logs'),
 ];
