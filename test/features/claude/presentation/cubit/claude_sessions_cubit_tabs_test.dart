@@ -48,7 +48,10 @@ const _wid = '/proj';
 
 late SharedPreferences _prefs;
 
-ClaudeSessionsCubit _makeCubit({Either<Failure, List<ClaudeMessage>>? loadSessionResult}) {
+ClaudeSessionsCubit _makeCubit({
+  Either<Failure, List<ClaudeMessage>>? loadSessionResult,
+  Stream<Either<Failure, ClaudeEvent>>? runStream,
+}) {
   final sendPrompt = _MockSendPrompt();
   final stopRun = _MockStopRun();
   final listMcpServers = _MockListMcpServers();
@@ -61,7 +64,7 @@ ClaudeSessionsCubit _makeCubit({Either<Failure, List<ClaudeMessage>>? loadSessio
   final ws = Workspace(id: _wid, path: _wid, name: 'proj', openedAt: DateTime.utc(2026, 1, 1));
   when(() => wsCubit.state).thenReturn(WorkspacesState.loaded(workspaces: [ws], activeId: ws.id));
   when(() => wsCubit.stream).thenAnswer((_) => const Stream.empty());
-  when(() => sendPrompt.call(any())).thenAnswer((_) => const Stream<Either<Failure, ClaudeEvent>>.empty());
+  when(() => sendPrompt.call(any())).thenAnswer((_) => runStream ?? const Stream<Either<Failure, ClaudeEvent>>.empty());
   when(() => stopRun.call(sid: any(named: 'sid'))).thenAnswer((_) async {});
   when(() => listMcpServers.call()).thenAnswer((_) async => const Right(<McpServer>[]));
   if (loadSessionResult != null) {
@@ -190,6 +193,48 @@ void main() {
     expect(tab.lastError, isNull);
     // Pref rewritten without the ghost id → no retry on next launch.
     expect(_prefs.getString('claude.openSessions.$_wid'), isNot(contains('stale-id')));
+    await cubit.close();
+  });
+
+  test('sending on an idle tab while a sibling runs queues (never drops) on the target tab', () async {
+    // A run stays in flight on tab A (open, non-completing stream).
+    final running = StreamController<Either<Failure, ClaudeEvent>>.broadcast();
+    addTearDown(running.close);
+    final cubit = _makeCubit(runStream: running.stream);
+
+    final tabA = cubit.state.sessionFor(_wid)!.tabId;
+    await cubit.sendPrompt(_wid, 'first'); // A is now running
+    await Future<void>.delayed(Duration.zero);
+
+    cubit.openNewSession(_wid); // tab B, now active
+    final tabB = cubit.state.sessionFor(_wid)!.tabId;
+    expect(tabB, isNot(tabA));
+
+    await cubit.sendPrompt(_wid, 'queued on B'); // sibling A still running
+
+    // The message is parked on B (not dropped, not sent into A).
+    final bTab = cubit.state.tabsFor(_wid)!.tabById(tabB)!;
+    expect(bTab.queuedPrompt?.text, 'queued on B');
+    expect(bTab.runStatus, ClaudeRunStatus.idle);
+    final aTab = cubit.state.tabsFor(_wid)!.tabById(tabA)!;
+    expect(aTab.queuedPrompt, isNull, reason: 'the queued prompt must land on B, not the running tab A');
+    expect(aTab.messages.whereType<ClaudeMessageUser>().map((m) => m.text), contains('first'));
+    await cubit.close();
+  });
+
+  test('restore honors the persisted active tab index (fresh active tab)', () async {
+    // Two tabs: index 0 has a session id, index 1 is a fresh chat and is active.
+    SharedPreferences.setMockInitialValues({'claude.openSessions.$_wid': '{"activeIndex":1,"ids":["sess-0",""]}'});
+    _prefs = await SharedPreferences.getInstance();
+
+    final cubit = _makeCubit(loadSessionResult: const Right(<ClaudeMessage>[]));
+    await Future<void>.delayed(Duration.zero);
+
+    final tabs = cubit.state.tabsList(_wid);
+    expect(tabs, hasLength(2));
+    // Active is the second tab (the fresh one), not tabs.first.
+    expect(cubit.state.sessionFor(_wid)!.tabId, tabs[1].tabId);
+    expect(cubit.state.sessionFor(_wid)!.claudeSessionId, isNull);
     await cubit.close();
   });
 

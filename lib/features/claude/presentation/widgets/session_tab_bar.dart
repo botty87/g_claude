@@ -145,6 +145,7 @@ class _SessionTab extends StatelessWidget {
             if (showClose) ...[
               const SizedBox(width: AppSpacing.sm),
               Hoverable(
+                key: ValueKey('session_tab_close_$tabId'),
                 onTap: () => cubit.closeTab(workspaceId, tabId),
                 builder: (context, closeHover) => Tooltip(
                   message: Locales.Editor.Tab.close,

@@ -234,20 +234,15 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     for (final w in added) {
       final openSessions = _readOpenSessions(w.id);
       if (openSessions != null && openSessions.ids.isNotEmpty) {
-        final tabs = <ClaudeSessionData>[];
-        var activeTabId = '';
-        for (final claudeId in openSessions.ids) {
-          final tab = _freshTab(w.id, claudeSessionId: claudeId.isEmpty ? null : claudeId);
-          if (claudeId.isNotEmpty && claudeId == openSessions.active) activeTabId = tab.tabId;
-          tabs.add(tab);
-        }
-        if (activeTabId.isEmpty) activeTabId = tabs.first.tabId;
-        map[w.id] = WorkspaceSessions(tabs: tabs, activeTabId: activeTabId);
+        final tabs = [
+          for (final claudeId in openSessions.ids) _freshTab(w.id, claudeSessionId: claudeId.isEmpty ? null : claudeId),
+        ];
+        final activeTab = tabs[openSessions.activeIndex]; // index clamped in _readOpenSessions
+        map[w.id] = WorkspaceSessions(tabs: tabs, activeTabId: activeTab.tabId);
         // Eagerly hydrate ONLY the active tab; other tabs stay lazy (loaded
         // on demand when switched to, see [switchTab]).
-        final activeTab = tabs.firstWhere((t) => t.tabId == activeTabId);
         if (activeTab.claudeSessionId != null) {
-          pendingHydrations.add((w.id, activeTabId, activeTab.claudeSessionId!));
+          pendingHydrations.add((w.id, activeTab.tabId, activeTab.claudeSessionId!));
         }
       } else {
         // Retro-compat: migrate from the old single-session pref.
@@ -363,14 +358,25 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   /// `openSessions` entry exists yet; never written again after this point.
   String? _readActiveSession(String wid) => _prefs.getString('$_activeSessionPrefix$wid');
 
-  ({String active, List<String> ids})? _readOpenSessions(String wid) {
+  ({int activeIndex, List<String> ids})? _readOpenSessions(String wid) {
     final raw = _prefs.getString('$_openSessionsPrefix$wid');
     if (raw == null) return null;
     try {
       final map = jsonDecode(raw) as Map<String, dynamic>;
       final ids = (map['ids'] as List?)?.cast<String>() ?? const <String>[];
-      final active = map['active'] as String? ?? '';
-      return (active: active, ids: ids);
+      int activeIndex;
+      final ai = map['activeIndex'];
+      if (ai is int) {
+        activeIndex = ai;
+      } else {
+        // Legacy format stored `active` as a claudeSessionId. A fresh active
+        // tab had an empty id (unmatchable) → default to the first tab.
+        final active = map['active'] as String? ?? '';
+        final i = ids.indexOf(active);
+        activeIndex = i >= 0 ? i : 0;
+      }
+      if (activeIndex < 0 || activeIndex >= ids.length) activeIndex = 0;
+      return (activeIndex: activeIndex, ids: ids);
     } catch (e) {
       _talker.warning('openSessions parse failed for $wid: $e');
       return null;
@@ -385,8 +391,10 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       return;
     }
     final ids = [for (final t in ws.tabs) t.claudeSessionId ?? ''];
-    final activeClaudeId = ws.activeTab?.claudeSessionId ?? '';
-    await _prefs.setString(key, jsonEncode({'active': activeClaudeId, 'ids': ids}));
+    // Persist the active tab by index: a fresh "New chat" has an empty
+    // claudeSessionId, so an id-based marker could not identify it on restore.
+    final activeIndex = ws.tabs.indexWhere((t) => t.tabId == ws.activeTabId);
+    await _prefs.setString(key, jsonEncode({'activeIndex': activeIndex < 0 ? 0 : activeIndex, 'ids': ids}));
   }
 
   void setModel(String workspaceId, ClaudeModel model) {
@@ -440,7 +448,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     }
     final oldId = session.claudeSessionId;
     if (oldId != null) _sessionToWorkspace.remove(oldId);
-    _pendingCompactBootstrap.remove(workspaceId);
+    _pendingCompactBootstrap.remove(session.tabId);
     _emitActive(
       workspaceId,
       session.copyWith(
@@ -506,6 +514,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
     final closedClaudeId = ws.tabs[idx].claudeSessionId;
     if (closedClaudeId != null) _sessionToWorkspace.remove(closedClaudeId);
+    _pendingCompactBootstrap.remove(tabId);
 
     final remaining = [...ws.tabs]..removeAt(idx);
     List<ClaudeSessionData> finalTabs;
@@ -693,7 +702,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       createdAt: DateTime.now(),
     );
 
-    _pendingCompactBootstrap[workspaceId] = summary;
+    _pendingCompactBootstrap[current.tabId] = summary;
     _emitTab(
       workspaceId,
       current.tabId,
@@ -885,13 +894,36 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _emitActive(workspaceId, session.copyWith(queuedPrompt: null));
   }
 
-  void _drainQueuedPrompt(String workspaceId, String tabId) {
-    final session = state.workspaces[workspaceId]?.tabById(tabId);
-    if (session == null) return;
-    final queued = session.queuedPrompt;
-    if (queued == null) return;
-    _emitTab(workspaceId, tabId, session.copyWith(queuedPrompt: null));
-    Future.microtask(() => sendPrompt(workspaceId, queued.text));
+  /// After a run finishes, start the next queued prompt (single-run model).
+  /// Prefers the just-finished tab, then falls back to the globally oldest
+  /// queued prompt by `enqueuedAt` so nothing sits stuck behind a busy tab.
+  void _drainNextQueued({String? preferWid, String? preferTabId}) {
+    if (_runningWorkspaceId != null) return;
+
+    (String wid, ClaudeSessionData tab)? pick;
+    if (preferWid != null && preferTabId != null) {
+      final t = state.workspaces[preferWid]?.tabById(preferTabId);
+      if (t?.queuedPrompt != null) pick = (preferWid, t!);
+    }
+    if (pick == null) {
+      DateTime? oldest;
+      state.workspaces.forEach((wid, ws) {
+        for (final t in ws.tabs) {
+          final q = t.queuedPrompt;
+          if (q == null) continue;
+          if (oldest == null || q.enqueuedAt.isBefore(oldest!)) {
+            oldest = q.enqueuedAt;
+            pick = (wid, t);
+          }
+        }
+      });
+    }
+    if (pick == null) return;
+
+    final (wid, tab) = pick!;
+    final text = tab.queuedPrompt!.text;
+    _emitTab(wid, tab.tabId, tab.copyWith(queuedPrompt: null));
+    Future.microtask(() => sendPrompt(wid, text, tabId: tab.tabId));
   }
 
   Future<void> sendPrompt(
@@ -899,17 +931,33 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     String text, {
     List<String> slashTriggers = const [],
     List<ChatAttachment> attachments = const [],
+    String? tabId,
   }) async {
     final trimmed = text.trim();
     final hasContent = trimmed.isNotEmpty || slashTriggers.isNotEmpty || attachments.isNotEmpty;
     if (!hasContent) return;
-    final session = _active(workspaceId);
-    if (session == null) {
-      _talker.warning('sendPrompt for unknown workspace: $workspaceId');
+    // Target the requested tab, defaulting to the active one. Threading the id
+    // keeps a drained queued prompt on its origin tab instead of the (possibly
+    // different) active tab.
+    final targetTabId = tabId ?? state.workspaces[workspaceId]?.activeTabId;
+    final session = targetTabId == null ? null : state.workspaces[workspaceId]?.tabById(targetTabId);
+    if (session == null || targetTabId == null) {
+      _talker.warning('sendPrompt for unknown workspace/tab: $workspaceId/$tabId');
       return;
     }
     if (_runningWorkspaceId != null) {
-      _talker.warning('sendPrompt while another run in progress; ignored');
+      // Single-run model: a run is already in flight (this or another tab).
+      // Don't drop the message — queue it on its target tab, FIFO-drained when
+      // the current run finishes (see _drainNextQueued).
+      if (trimmed.isNotEmpty) {
+        _emitTab(
+          workspaceId,
+          targetTabId,
+          session.copyWith(
+            queuedPrompt: QueuedPrompt(text: trimmed, enqueuedAt: session.queuedPrompt?.enqueuedAt ?? DateTime.now()),
+          ),
+        );
+      }
       return;
     }
 
@@ -956,7 +1004,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     // `thinking` is now sent as a proper protocol field on `start` (see
     // SendPromptParams below) rather than prepended as a CLI keyword prefix.
     final basePrompt = concatPrompt;
-    final bootstrap = _pendingCompactBootstrap[workspaceId];
+    final bootstrap = _pendingCompactBootstrap[targetTabId];
     final cliPrompt = (bootstrap != null && bootstrap.isNotEmpty)
         ? 'The following is a recap of our prior conversation (compacted to '
               'save context). Treat it as already-shared history between us — '
@@ -983,8 +1031,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       ClaudeMessage.assistant(id: assistantMsgId, text: '', isStreaming: true, createdAt: now),
     ];
 
-    _emitActive(
+    _emitTab(
       workspaceId,
+      targetTabId,
       session.copyWith(
         messages: messages,
         runStatus: ClaudeRunStatus.connecting,
@@ -999,7 +1048,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _talker.debug('[cc] u> ${_oneLine(_truncate(cliPrompt, 800))}');
 
     _runningWorkspaceId = workspaceId;
-    _runningTabId = session.tabId;
+    _runningTabId = targetTabId;
     _streamingText = '';
     _lastFlushAt = null;
 
@@ -1052,7 +1101,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         }
         // Subprocess has read the prompt — safe to drop the consumed
         // post-compact bootstrap so it is not re-injected on the next turn.
-        _pendingCompactBootstrap.remove(wid);
+        _pendingCompactBootstrap.remove(tabId);
         _emitTab(
           wid,
           tabId,
@@ -1349,9 +1398,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       }
     }
     _cleanupRun();
-    if (wid != null && tabId != null && status == ClaudeRunStatus.idle) {
-      _drainQueuedPrompt(wid, tabId);
-    }
+    // Drain on ANY terminal status (idle/error/sessionDead) so a queued prompt
+    // never gets stuck behind a run that ended badly.
+    _drainNextQueued(preferWid: wid, preferTabId: tabId);
   }
 
   void _cleanupRun() {
