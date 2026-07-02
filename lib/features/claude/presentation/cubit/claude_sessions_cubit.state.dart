@@ -5,6 +5,7 @@ enum ClaudeRunStatus { idle, connecting, running, compacting, error, sessionDead
 @freezed
 abstract class ClaudeSessionData with _$ClaudeSessionData {
   const factory ClaudeSessionData({
+    @Default('') String tabId,
     @Default(<ClaudeMessage>[]) List<ClaudeMessage> messages,
     @Default(ClaudeRunStatus.idle) ClaudeRunStatus runStatus,
     required ClaudeModel model,
@@ -24,14 +25,42 @@ abstract class ClaudeSessionData with _$ClaudeSessionData {
 }
 
 @freezed
+abstract class WorkspaceSessions with _$WorkspaceSessions {
+  const WorkspaceSessions._();
+  const factory WorkspaceSessions({
+    @Default(<ClaudeSessionData>[]) List<ClaudeSessionData> tabs,
+    @Default('') String activeTabId,
+  }) = _WorkspaceSessions;
+
+  ClaudeSessionData? get activeTab {
+    for (final t in tabs) {
+      if (t.tabId == activeTabId) return t;
+    }
+    return tabs.isEmpty ? null : tabs.first;
+  }
+
+  ClaudeSessionData? tabById(String tabId) {
+    for (final t in tabs) {
+      if (t.tabId == tabId) return t;
+    }
+    return null;
+  }
+}
+
+@freezed
 abstract class ClaudeSessionsState with _$ClaudeSessionsState {
   const ClaudeSessionsState._();
 
-  const factory ClaudeSessionsState({@Default(<String, ClaudeSessionData>{}) Map<String, ClaudeSessionData> sessions}) =
-      _ClaudeSessionsState;
+  const factory ClaudeSessionsState({
+    @Default(<String, WorkspaceSessions>{}) Map<String, WorkspaceSessions> workspaces,
+  }) = _ClaudeSessionsState;
 
   ClaudeSessionData? sessionFor(String? workspaceId) {
     if (workspaceId == null) return null;
-    return sessions[workspaceId];
+    return workspaces[workspaceId]?.activeTab;
   }
+
+  WorkspaceSessions? tabsFor(String? id) => id == null ? null : workspaces[id];
+
+  List<ClaudeSessionData> tabsList(String? id) => id == null ? const [] : (workspaces[id]?.tabs ?? const []);
 }

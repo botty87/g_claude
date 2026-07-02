@@ -107,7 +107,7 @@ class SessionsListView extends HookWidget {
           child: TextButton.icon(
             key: const ValueKey<String>('sessions_new_chat'),
             onPressed: () {
-              context.read<ClaudeSessionsCubit>().newSession(active.id);
+              context.read<ClaudeSessionsCubit>().openNewSession(active.id);
               context.read<ChatHistoryCubit>().clearSelection(active.id);
             },
             icon: const Icon(Symbols.add, size: 16),

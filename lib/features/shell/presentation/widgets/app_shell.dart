@@ -91,7 +91,7 @@ class AppShellPage extends HookWidget {
       if (activePath == null) return false;
       final sessions = context.read<ClaudeSessionsCubit>();
       final selection = getIt<ActiveEditorCubit>().snapshotFor(activeId);
-      final current = sessions.state.sessions[activeId]?.inputDraft;
+      final current = sessions.state.sessionFor(activeId)?.inputDraft;
       final currentAttachments = current?.attachments ?? const <ChatAttachment>[];
 
       final ChatAttachment newAttachment;
@@ -164,7 +164,7 @@ class AppShellPage extends HookWidget {
       if (noWorkspaceGuard()) return true;
       final id = activeWorkspaceId()!;
       final cubit = context.read<ClaudeSessionsCubit>();
-      final current = cubit.state.sessions[id]?.effort ?? ClaudeEffort.defaultEffort;
+      final current = cubit.state.sessionFor(id)?.effort ?? ClaudeEffort.defaultEffort;
       final next = current.next;
       cubit.setEffort(id, next);
       showSnack(Locales.Shell.Shortcuts.effortChanged(value: next.labelKey.tr()));
@@ -175,7 +175,7 @@ class AppShellPage extends HookWidget {
       if (noWorkspaceGuard()) return true;
       final id = activeWorkspaceId()!;
       final cubit = context.read<ClaudeSessionsCubit>();
-      final current = cubit.state.sessions[id]?.thinkingMode ?? ClaudeThinkingMode.defaultMode;
+      final current = cubit.state.sessionFor(id)?.thinkingMode ?? ClaudeThinkingMode.defaultMode;
       final next = current.next;
       cubit.setThinking(id, next);
       showSnack(Locales.Shell.Shortcuts.thinkingChanged(value: next.labelKey.tr()));
@@ -186,7 +186,7 @@ class AppShellPage extends HookWidget {
       if (noWorkspaceGuard()) return true;
       final id = activeWorkspaceId()!;
       final cubit = context.read<ClaudeSessionsCubit>();
-      final current = cubit.state.sessions[id]?.permissionMode ?? ClaudePermissionMode.defaultChoice;
+      final current = cubit.state.sessionFor(id)?.permissionMode ?? ClaudePermissionMode.defaultChoice;
       final next = current.next;
       cubit.setPermissionMode(id, next);
       showSnack(Locales.Shell.Shortcuts.permissionChanged(value: next.labelKey.tr()));

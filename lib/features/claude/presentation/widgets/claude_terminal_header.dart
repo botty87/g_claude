@@ -29,22 +29,22 @@ class ClaudeTerminalHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<ClaudeSessionsCubit>();
     final runStatus = context.select<ClaudeSessionsCubit, ClaudeRunStatus>(
-      (c) => c.state.sessions[workspaceId]?.runStatus ?? ClaudeRunStatus.idle,
+      (c) => c.state.sessionFor(workspaceId)?.runStatus ?? ClaudeRunStatus.idle,
     );
     final model = context.select<ClaudeSessionsCubit, ClaudeModel>(
-      (c) => c.state.sessions[workspaceId]?.model ?? ClaudeModel.defaultModel,
+      (c) => c.state.sessionFor(workspaceId)?.model ?? ClaudeModel.defaultModel,
     );
     final effort = context.select<ClaudeSessionsCubit, ClaudeEffort>(
-      (c) => c.state.sessions[workspaceId]?.effort ?? ClaudeEffort.defaultEffort,
+      (c) => c.state.sessionFor(workspaceId)?.effort ?? ClaudeEffort.defaultEffort,
     );
     final thinkingMode = context.select<ClaudeSessionsCubit, ClaudeThinkingMode>(
-      (c) => c.state.sessions[workspaceId]?.thinkingMode ?? ClaudeThinkingMode.defaultMode,
+      (c) => c.state.sessionFor(workspaceId)?.thinkingMode ?? ClaudeThinkingMode.defaultMode,
     );
     final permissionMode = context.select<ClaudeSessionsCubit, ClaudePermissionMode>(
-      (c) => c.state.sessions[workspaceId]?.permissionMode ?? ClaudePermissionMode.defaultChoice,
+      (c) => c.state.sessionFor(workspaceId)?.permissionMode ?? ClaudePermissionMode.defaultChoice,
     );
     final hasMessages = context.select<ClaudeSessionsCubit, bool>(
-      (c) => (c.state.sessions[workspaceId]?.messages.isNotEmpty) ?? false,
+      (c) => (c.state.sessionFor(workspaceId)?.messages.isNotEmpty) ?? false,
     );
 
     final isBusy =
@@ -188,7 +188,7 @@ class _ContextMeter extends StatelessWidget {
             int limit,
           })
         >((c) {
-          final session = c.state.sessions[workspaceId];
+          final session = c.state.sessionFor(workspaceId);
           final u = session?.usage;
           final model = session?.model ?? ClaudeModel.defaultModel;
           return (

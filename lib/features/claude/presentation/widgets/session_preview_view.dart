@@ -164,7 +164,7 @@ class _PreviewToolbar extends StatelessWidget {
     if (!context.mounted) return;
 
     if (liveSessionId == summary.id) {
-      sessionsCubit.newSession(workspace.id);
+      sessionsCubit.openNewSession(workspace.id);
     }
   }
 

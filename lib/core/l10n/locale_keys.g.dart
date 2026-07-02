@@ -195,6 +195,8 @@ abstract class  LocaleKeys {
   static const claude_plan_answeredApproved = 'claude.plan.answeredApproved';
   static const claude_plan_answeredRejected = 'claude.plan.answeredRejected';
   static const claude_plan = 'claude.plan';
+  static const claude_session_newTab = 'claude.session.newTab';
+  static const claude_session = 'claude.session';
   static const claude = 'claude';
   static const workspace_picker_title = 'workspace.picker.title';
   static const workspace_picker = 'workspace.picker';
