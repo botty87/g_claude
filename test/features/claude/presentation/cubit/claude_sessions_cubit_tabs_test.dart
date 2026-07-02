@@ -11,6 +11,7 @@ import 'package:g_claude/core/l10n/l10n.dart';
 import 'package:g_claude/core/utils/either.dart';
 import 'package:g_claude/features/claude/data/datasources/claude_history_datasource.dart';
 import 'package:g_claude/features/claude/domain/entities/claude_event.dart';
+import 'package:g_claude/features/claude/domain/entities/claude_message.dart';
 import 'package:g_claude/features/claude/domain/entities/claude_permission_mode.dart';
 import 'package:g_claude/features/claude/domain/entities/mcp_server.dart';
 import 'package:g_claude/features/claude/domain/repositories/claude_repository.dart';
@@ -47,7 +48,7 @@ const _wid = '/proj';
 
 late SharedPreferences _prefs;
 
-ClaudeSessionsCubit _makeCubit() {
+ClaudeSessionsCubit _makeCubit({Either<Failure, List<ClaudeMessage>>? loadSessionResult}) {
   final sendPrompt = _MockSendPrompt();
   final stopRun = _MockStopRun();
   final listMcpServers = _MockListMcpServers();
@@ -63,6 +64,15 @@ ClaudeSessionsCubit _makeCubit() {
   when(() => sendPrompt.call(any())).thenAnswer((_) => const Stream<Either<Failure, ClaudeEvent>>.empty());
   when(() => stopRun.call(sid: any(named: 'sid'))).thenAnswer((_) async {});
   when(() => listMcpServers.call()).thenAnswer((_) async => const Right(<McpServer>[]));
+  if (loadSessionResult != null) {
+    when(() => historyDs.encodeCwd(any())).thenReturn('enc');
+    when(
+      () => loadSessionMessages.call(
+        encodedPath: any(named: 'encodedPath'),
+        sessionId: any(named: 'sessionId'),
+      ),
+    ).thenAnswer((_) async => loadSessionResult);
+  }
 
   final cubit = ClaudeSessionsCubit(
     sendPrompt,
@@ -150,6 +160,37 @@ void main() {
     expect(tabs.single.tabId, isNot(onlyId));
     expect(tabs.single.messages, isEmpty);
     cubit.close();
+  });
+
+  test('restore eagerly hydrates the active tab (messages loaded from history)', () async {
+    SharedPreferences.setMockInitialValues({'claude.openSessions.$_wid': '{"active":"sess-1","ids":["sess-1"]}'});
+    _prefs = await SharedPreferences.getInstance();
+
+    final restored = ClaudeMessage.user(id: 'u1', text: 'ciao dal passato', createdAt: DateTime.utc(2026, 1, 1));
+    final cubit = _makeCubit(loadSessionResult: Right([restored]));
+    await Future<void>.delayed(Duration.zero); // let eager hydration land
+
+    final tab = cubit.state.sessionFor(_wid)!;
+    expect(tab.claudeSessionId, 'sess-1');
+    expect(tab.messages, hasLength(1), reason: 'boot must hydrate the active tab, not leave it empty');
+    await cubit.close();
+  });
+
+  test('a restored tab whose session file is gone heals into a fresh chat', () async {
+    // openSessions pref points at a session whose JSONL no longer exists.
+    SharedPreferences.setMockInitialValues({'claude.openSessions.$_wid': '{"active":"stale-id","ids":["stale-id"]}'});
+    _prefs = await SharedPreferences.getInstance();
+
+    final cubit = _makeCubit(loadSessionResult: const Left(NotFoundFailure('session file not found')));
+    await Future<void>.delayed(Duration.zero); // let eager hydration fail
+
+    final tab = cubit.state.sessionFor(_wid)!;
+    expect(tab.claudeSessionId, isNull, reason: 'stale id must be dropped so the tab is a usable fresh chat');
+    expect(tab.messages, isEmpty);
+    expect(tab.lastError, isNull);
+    // Pref rewritten without the ghost id → no retry on next launch.
+    expect(_prefs.getString('claude.openSessions.$_wid'), isNot(contains('stale-id')));
+    await cubit.close();
   });
 
   test('sessionTitle: first user message wins, else the new-tab label', () {

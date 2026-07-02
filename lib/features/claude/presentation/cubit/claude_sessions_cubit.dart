@@ -227,6 +227,10 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     if (added.isEmpty && removed.isEmpty) return;
 
     final map = Map<String, WorkspaceSessions>.from(state.workspaces);
+    // Hydrations must be dispatched AFTER the emit below: _hydrateSession
+    // reads state.workspaces to find the tab, which does not exist until the
+    // new map is emitted.
+    final pendingHydrations = <(String wid, String tabId, String sessionId)>[];
     for (final w in added) {
       final openSessions = _readOpenSessions(w.id);
       if (openSessions != null && openSessions.ids.isNotEmpty) {
@@ -243,7 +247,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         // on demand when switched to, see [switchTab]).
         final activeTab = tabs.firstWhere((t) => t.tabId == activeTabId);
         if (activeTab.claudeSessionId != null) {
-          unawaited(_hydrateSession(w.id, activeTabId, activeTab.claudeSessionId!));
+          pendingHydrations.add((w.id, activeTabId, activeTab.claudeSessionId!));
         }
       } else {
         // Retro-compat: migrate from the old single-session pref.
@@ -251,7 +255,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         final tab = _freshTab(w.id, claudeSessionId: legacyId);
         map[w.id] = WorkspaceSessions(tabs: [tab], activeTabId: tab.tabId);
         if (legacyId != null) {
-          unawaited(_hydrateSession(w.id, tab.tabId, legacyId));
+          pendingHydrations.add((w.id, tab.tabId, legacyId));
         }
       }
       // Warm the TTL cache in the background so the MCP picker opens
@@ -273,6 +277,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       _cleanupRun();
     }
     emit(state.copyWith(workspaces: map));
+    for (final (wid, tabId, sessionId) in pendingHydrations) {
+      unawaited(_hydrateSession(wid, tabId, sessionId));
+    }
   }
 
   Future<void> _hydrateSession(String workspaceId, String tabId, String sessionId) async {
@@ -287,7 +294,15 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     final result = await _loadSessionMessages(encodedPath: encoded, sessionId: sessionId);
     result.fold(
       (f) {
-        _talker.error('hydrateSession failed for $sessionId: $f');
+        // Stale persisted id (JSONL deleted/moved): strip it so the tab heals
+        // into a genuinely fresh chat instead of re-failing on every switch
+        // (and instead of resuming a nonexistent session on the next prompt).
+        _talker.warning('hydrateSession: dropping stale session $sessionId: $f');
+        final current = state.workspaces[workspaceId]?.tabById(tabId);
+        if (current == null || current.messages.isNotEmpty) return;
+        _sessionToWorkspace.remove(sessionId);
+        _emitTab(workspaceId, tabId, current.copyWith(claudeSessionId: null, lastError: null));
+        unawaited(_writeOpenSessions(workspaceId));
       },
       (messages) {
         final current = state.workspaces[workspaceId]?.tabById(tabId);
