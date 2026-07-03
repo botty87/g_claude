@@ -53,6 +53,7 @@ class _TabBar extends StatelessWidget {
         border: Border(bottom: BorderSide(color: AppColors.outlineVariant, width: 1)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _TabButton(
             keyName: 'right_tab_files',

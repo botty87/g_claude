@@ -18,7 +18,6 @@ import '../../domain/entities/claude_message.dart';
 import '../cubit/claude_sessions_cubit.dart';
 import 'claude_input_bar.dart';
 import 'claude_message_list.dart';
-import 'claude_terminal_header.dart';
 import 'queued_prompt_card.dart';
 
 class ClaudeTerminalPane extends HookWidget {
@@ -99,7 +98,6 @@ class _ClaudeTerminalPaneActive extends HookWidget {
             color: AppColors.surface,
             child: Column(
               children: [
-                ClaudeTerminalHeader(workspaceId: workspaceId),
                 _RunProgressBar(visible: isBusy),
                 Expanded(
                   child: ClaudeMessageList(

@@ -30,7 +30,27 @@
       "newWorkspace": "Nuovo workspace",
       "collapse": "Comprimi sidebar",
       "expand": "Espandi sidebar",
-      "search": "Cerca workspace"
+      "search": "Cerca workspace",
+      "worktrees": {
+        "showAll": "Mostra tutti",
+        "showOpenOnly": "Solo aperti",
+        "openedCount": "{count} aperti",
+        "openTooltip": "Apri questo worktree"
+      }
+    },
+    "closeWorktree": {
+      "title": "Chiudi worktree",
+      "optionCloseOnly": "Chiudi soltanto",
+      "optionCloseOnlyDescr": "Rimuovilo dall'elenco di Clyde. Il worktree e i suoi file restano su disco.",
+      "optionRemoveWorktree": "Rimuovi worktree",
+      "optionRemoveWorktreeDescr": "Cancella la cartella e i file locali del worktree. Il branch resta.",
+      "optionRemoveBranch": "Rimuovi worktree e branch",
+      "optionRemoveBranchDescr": "Cancella la cartella del worktree e il suo branch.",
+      "mainCannotRemove": "Il checkout principale non può essere rimosso come worktree.",
+      "force": "Forza",
+      "cancel": "Annulla",
+      "confirm": "Conferma",
+      "closeTooltip": "Chiudi"
     },
     "rightPanel": {
       "files": "Files",
@@ -123,6 +143,7 @@
       },
       "mcp": {
         "label": "MCP",
+        "activeCount": "{count} attivi",
         "tooltip": "Server MCP",
         "title": "Server MCP",
         "refresh": "Aggiorna",
@@ -142,6 +163,15 @@
       },
       "context": {
         "tooltip": "Input: {input} · Cache letta: {cacheRead} · Cache creata: {cacheCreation} · Output: {output}\nContext: {total} / {limit} ({pct}%)"
+      },
+      "sessionSettings": {
+        "title": "Impostazioni sessione",
+        "editHint": "clic per modificare"
+      },
+      "worktreeChip": {
+        "switchTooltip": "Cambia worktree",
+        "detached": "scollegato",
+        "root": "root"
       }
     },
     "model": {
@@ -154,7 +184,14 @@
       "medium": "Media",
       "high": "Alta",
       "xhigh": "Molto alta",
-      "max": "Massima"
+      "max": "Massima",
+      "short": {
+        "low": "Bassa",
+        "medium": "Media",
+        "high": "Alta",
+        "xhigh": "Molto",
+        "max": "Max"
+      }
     },
     "thinking": {
       "off": "Off",
@@ -165,7 +202,14 @@
       "acceptEdits": "Accetta modifiche",
       "auto": "Auto",
       "bypassPermissions": "Bypass (yolo)",
-      "default": "Default"
+      "default": "Default",
+      "short": {
+        "plan": "Plan",
+        "acceptEdits": "Accetta",
+        "auto": "Auto",
+        "bypassPermissions": "Bypass",
+        "default": "Default"
+      }
     },
     "message": {
       "assistantLabel": "Claude",

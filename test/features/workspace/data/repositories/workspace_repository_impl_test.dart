@@ -7,19 +7,28 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:g_claude/core/error/exceptions.dart';
 import 'package:g_claude/core/error/failures.dart';
+import 'package:g_claude/core/utils/either.dart';
+import 'package:g_claude/features/git/domain/entities/git_worktree.dart';
+import 'package:g_claude/features/git/domain/repositories/git_repository.dart';
 import 'package:g_claude/features/workspace/data/datasources/workspace_local_datasource.dart';
 import 'package:g_claude/features/workspace/data/repositories/workspace_repository_impl.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockDs extends Mock implements WorkspaceLocalDataSource {}
 
+class _MockGit extends Mock implements GitRepository {}
+
 void main() {
   late _MockDs ds;
+  late _MockGit git;
   late WorkspaceRepositoryImpl repo;
 
   setUp(() {
     ds = _MockDs();
-    repo = WorkspaceRepositoryImpl(ds);
+    git = _MockGit();
+    // Default: not a git repo (plain folder).
+    when(() => git.detect(path: any(named: 'path'))).thenAnswer((_) async => const Right(null));
+    repo = WorkspaceRepositoryImpl(ds, git);
   });
 
   group('openWorkspace — happy path', () {
@@ -42,6 +51,41 @@ void main() {
 
       final out = await repo.openWorkspace(path: '/x/y');
       expect(out.right.claudeMd, isNull);
+    });
+
+    test('git detection annotates repoRoot/branch without touching id/path', () async {
+      when(() => ds.ensureDirectoryExists(any())).thenAnswer((_) async {});
+      when(() => ds.readClaudeMd(any())).thenAnswer((_) async => null);
+      when(
+        () => git.detect(path: any(named: 'path')),
+      ).thenAnswer((_) async => const Right(GitRepoInfo(repoRoot: '/repo', branch: 'feature/x')));
+
+      final out = await repo.openWorkspace(path: '/repo/wt');
+      expect(out.right.id, '/repo/wt');
+      expect(out.right.path, '/repo/wt');
+      expect(out.right.repoRoot, '/repo');
+      expect(out.right.branch, 'feature/x');
+    });
+
+    test('plain folder leaves repoRoot/branch null', () async {
+      when(() => ds.ensureDirectoryExists(any())).thenAnswer((_) async {});
+      when(() => ds.readClaudeMd(any())).thenAnswer((_) async => null);
+
+      final out = await repo.openWorkspace(path: '/home/me');
+      expect(out.right.repoRoot, isNull);
+      expect(out.right.branch, isNull);
+    });
+
+    test('git detection failure degrades to a plain folder (never blocks open)', () async {
+      when(() => ds.ensureDirectoryExists(any())).thenAnswer((_) async {});
+      when(() => ds.readClaudeMd(any())).thenAnswer((_) async => null);
+      when(
+        () => git.detect(path: any(named: 'path')),
+      ).thenAnswer((_) async => const Left(UnexpectedFailure('git broken')));
+
+      final out = await repo.openWorkspace(path: '/x/y');
+      expect(out.isRight, isTrue);
+      expect(out.right.repoRoot, isNull);
     });
   });
 

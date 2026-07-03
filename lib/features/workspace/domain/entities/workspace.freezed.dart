@@ -14,7 +14,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Workspace {
 
- WorkspaceId get id; String get path; String get name; String? get claudeMd; DateTime get openedAt;
+ WorkspaceId get id; String get path; String get name; String? get claudeMd; DateTime get openedAt;// Git worktree metadata, populated at open time (never persisted — re-derived
+// on restore). `repoRoot` is the shared main-worktree root and is the key
+// that groups all worktrees of the same repo. Null for a plain folder.
+ String? get repoRoot; String? get branch;
 /// Create a copy of Workspace
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +28,16 @@ $WorkspaceCopyWith<Workspace> get copyWith => _$WorkspaceCopyWithImpl<Workspace>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Workspace&&(identical(other.id, id) || other.id == id)&&(identical(other.path, path) || other.path == path)&&(identical(other.name, name) || other.name == name)&&(identical(other.claudeMd, claudeMd) || other.claudeMd == claudeMd)&&(identical(other.openedAt, openedAt) || other.openedAt == openedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Workspace&&(identical(other.id, id) || other.id == id)&&(identical(other.path, path) || other.path == path)&&(identical(other.name, name) || other.name == name)&&(identical(other.claudeMd, claudeMd) || other.claudeMd == claudeMd)&&(identical(other.openedAt, openedAt) || other.openedAt == openedAt)&&(identical(other.repoRoot, repoRoot) || other.repoRoot == repoRoot)&&(identical(other.branch, branch) || other.branch == branch));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,path,name,claudeMd,openedAt);
+int get hashCode => Object.hash(runtimeType,id,path,name,claudeMd,openedAt,repoRoot,branch);
 
 @override
 String toString() {
-  return 'Workspace(id: $id, path: $path, name: $name, claudeMd: $claudeMd, openedAt: $openedAt)';
+  return 'Workspace(id: $id, path: $path, name: $name, claudeMd: $claudeMd, openedAt: $openedAt, repoRoot: $repoRoot, branch: $branch)';
 }
 
 
@@ -45,7 +48,7 @@ abstract mixin class $WorkspaceCopyWith<$Res>  {
   factory $WorkspaceCopyWith(Workspace value, $Res Function(Workspace) _then) = _$WorkspaceCopyWithImpl;
 @useResult
 $Res call({
- WorkspaceId id, String path, String name, String? claudeMd, DateTime openedAt
+ WorkspaceId id, String path, String name, String? claudeMd, DateTime openedAt, String? repoRoot, String? branch
 });
 
 
@@ -62,14 +65,16 @@ class _$WorkspaceCopyWithImpl<$Res>
 
 /// Create a copy of Workspace
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? path = null,Object? name = null,Object? claudeMd = freezed,Object? openedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? path = null,Object? name = null,Object? claudeMd = freezed,Object? openedAt = null,Object? repoRoot = freezed,Object? branch = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as WorkspaceId,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,claudeMd: freezed == claudeMd ? _self.claudeMd : claudeMd // ignore: cast_nullable_to_non_nullable
 as String?,openedAt: null == openedAt ? _self.openedAt : openedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,repoRoot: freezed == repoRoot ? _self.repoRoot : repoRoot // ignore: cast_nullable_to_non_nullable
+as String?,branch: freezed == branch ? _self.branch : branch // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -154,10 +159,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( WorkspaceId id,  String path,  String name,  String? claudeMd,  DateTime openedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( WorkspaceId id,  String path,  String name,  String? claudeMd,  DateTime openedAt,  String? repoRoot,  String? branch)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Workspace() when $default != null:
-return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.openedAt);case _:
+return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.openedAt,_that.repoRoot,_that.branch);case _:
   return orElse();
 
 }
@@ -175,10 +180,10 @@ return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.openedAt);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( WorkspaceId id,  String path,  String name,  String? claudeMd,  DateTime openedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( WorkspaceId id,  String path,  String name,  String? claudeMd,  DateTime openedAt,  String? repoRoot,  String? branch)  $default,) {final _that = this;
 switch (_that) {
 case _Workspace():
-return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.openedAt);case _:
+return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.openedAt,_that.repoRoot,_that.branch);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +200,10 @@ return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.openedAt);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( WorkspaceId id,  String path,  String name,  String? claudeMd,  DateTime openedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( WorkspaceId id,  String path,  String name,  String? claudeMd,  DateTime openedAt,  String? repoRoot,  String? branch)?  $default,) {final _that = this;
 switch (_that) {
 case _Workspace() when $default != null:
-return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.openedAt);case _:
+return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.openedAt,_that.repoRoot,_that.branch);case _:
   return null;
 
 }
@@ -210,7 +215,7 @@ return $default(_that.id,_that.path,_that.name,_that.claudeMd,_that.openedAt);ca
 
 
 class _Workspace implements Workspace {
-  const _Workspace({required this.id, required this.path, required this.name, this.claudeMd, required this.openedAt});
+  const _Workspace({required this.id, required this.path, required this.name, this.claudeMd, required this.openedAt, this.repoRoot, this.branch});
   
 
 @override final  WorkspaceId id;
@@ -218,6 +223,11 @@ class _Workspace implements Workspace {
 @override final  String name;
 @override final  String? claudeMd;
 @override final  DateTime openedAt;
+// Git worktree metadata, populated at open time (never persisted — re-derived
+// on restore). `repoRoot` is the shared main-worktree root and is the key
+// that groups all worktrees of the same repo. Null for a plain folder.
+@override final  String? repoRoot;
+@override final  String? branch;
 
 /// Create a copy of Workspace
 /// with the given fields replaced by the non-null parameter values.
@@ -229,16 +239,16 @@ _$WorkspaceCopyWith<_Workspace> get copyWith => __$WorkspaceCopyWithImpl<_Worksp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Workspace&&(identical(other.id, id) || other.id == id)&&(identical(other.path, path) || other.path == path)&&(identical(other.name, name) || other.name == name)&&(identical(other.claudeMd, claudeMd) || other.claudeMd == claudeMd)&&(identical(other.openedAt, openedAt) || other.openedAt == openedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Workspace&&(identical(other.id, id) || other.id == id)&&(identical(other.path, path) || other.path == path)&&(identical(other.name, name) || other.name == name)&&(identical(other.claudeMd, claudeMd) || other.claudeMd == claudeMd)&&(identical(other.openedAt, openedAt) || other.openedAt == openedAt)&&(identical(other.repoRoot, repoRoot) || other.repoRoot == repoRoot)&&(identical(other.branch, branch) || other.branch == branch));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,path,name,claudeMd,openedAt);
+int get hashCode => Object.hash(runtimeType,id,path,name,claudeMd,openedAt,repoRoot,branch);
 
 @override
 String toString() {
-  return 'Workspace(id: $id, path: $path, name: $name, claudeMd: $claudeMd, openedAt: $openedAt)';
+  return 'Workspace(id: $id, path: $path, name: $name, claudeMd: $claudeMd, openedAt: $openedAt, repoRoot: $repoRoot, branch: $branch)';
 }
 
 
@@ -249,7 +259,7 @@ abstract mixin class _$WorkspaceCopyWith<$Res> implements $WorkspaceCopyWith<$Re
   factory _$WorkspaceCopyWith(_Workspace value, $Res Function(_Workspace) _then) = __$WorkspaceCopyWithImpl;
 @override @useResult
 $Res call({
- WorkspaceId id, String path, String name, String? claudeMd, DateTime openedAt
+ WorkspaceId id, String path, String name, String? claudeMd, DateTime openedAt, String? repoRoot, String? branch
 });
 
 
@@ -266,14 +276,16 @@ class __$WorkspaceCopyWithImpl<$Res>
 
 /// Create a copy of Workspace
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? path = null,Object? name = null,Object? claudeMd = freezed,Object? openedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? path = null,Object? name = null,Object? claudeMd = freezed,Object? openedAt = null,Object? repoRoot = freezed,Object? branch = freezed,}) {
   return _then(_Workspace(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as WorkspaceId,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,claudeMd: freezed == claudeMd ? _self.claudeMd : claudeMd // ignore: cast_nullable_to_non_nullable
 as String?,openedAt: null == openedAt ? _self.openedAt : openedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,repoRoot: freezed == repoRoot ? _self.repoRoot : repoRoot // ignore: cast_nullable_to_non_nullable
+as String?,branch: freezed == branch ? _self.branch : branch // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

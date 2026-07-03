@@ -63,4 +63,17 @@ abstract class ClaudeSessionsState with _$ClaudeSessionsState {
   WorkspaceSessions? tabsFor(String? id) => id == null ? null : workspaces[id];
 
   List<ClaudeSessionData> tabsList(String? id) => id == null ? const [] : (workspaces[id]?.tabs ?? const []);
+
+  /// True when any tab of [workspaceId] has an agent run in flight — drives the
+  /// per-worktree status dot in the sidebar / worktree chip.
+  bool isWorkspaceRunning(String workspaceId) {
+    final ws = workspaces[workspaceId];
+    if (ws == null) return false;
+    return ws.tabs.any(
+      (t) =>
+          t.runStatus == ClaudeRunStatus.running ||
+          t.runStatus == ClaudeRunStatus.connecting ||
+          t.runStatus == ClaudeRunStatus.compacting,
+    );
+  }
 }

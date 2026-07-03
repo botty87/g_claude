@@ -27,4 +27,7 @@ sealed class WorkspacesState with _$WorkspacesState {
     if (id == null) return null;
     return workspacesOrEmpty.firstWhereOrNull((w) => w.id == id);
   }
+
+  /// Open workspaces split into repo groups + flat folders (for the sidebar).
+  GroupedWorkspaces get grouped => groupWorkspaces(workspacesOrEmpty);
 }

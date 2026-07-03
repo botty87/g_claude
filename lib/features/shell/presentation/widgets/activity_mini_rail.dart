@@ -19,8 +19,8 @@ class _RailEntry {
 }
 
 // "Chat" maps to explorer (the default workspace view, with its Chat/Code/
-// Terminal segmented control). History/Logs/Settings mirror the old activity
-// bar entries. Terminal is no longer here — it is a center segment.
+// Terminal segmented control). History mirrors the old activity bar entry.
+// Terminal is no longer here — it is a center segment.
 const _entries = [
   _RailEntry(id: ActivityId.explorer, icon: Symbols.forum, tooltipKey: 'shell.activity.explorer', keyName: 'rail_chat'),
   _RailEntry(
@@ -29,9 +29,19 @@ const _entries = [
     tooltipKey: 'shell.activity.sessions',
     keyName: 'rail_sessions',
   ),
-  _RailEntry(id: ActivityId.logs, icon: Symbols.receipt_long, tooltipKey: 'shell.activity.logs', keyName: 'rail_logs'),
 ];
 
+// Logs and Settings are hidden until those views are implemented. Entries kept
+// (and their ActivityId pages/cubits remain fully wired) so re-enabling is a
+// one-line add back into [_entries] / the rendered rail.
+// ignore: unused_element
+const _logsEntry = _RailEntry(
+  id: ActivityId.logs,
+  icon: Symbols.receipt_long,
+  tooltipKey: 'shell.activity.logs',
+  keyName: 'rail_logs',
+);
+// ignore: unused_element
 const _settingsEntry = _RailEntry(
   id: ActivityId.settings,
   icon: Symbols.settings,
@@ -51,10 +61,9 @@ class ActivityMiniRail extends StatelessWidget {
     final selected = context.select<ShellCubit, ActivityId>((c) => c.state.selectedActivity);
 
     final items = <Widget>[for (final e in _entries) _RailItem(entry: e, isActive: selected == e.id)];
-    final settings = _RailItem(entry: _settingsEntry, isActive: selected == _settingsEntry.id);
 
     if (axis == Axis.horizontal) {
-      return Row(children: [...items, const Spacer(), settings]);
+      return Row(children: items);
     }
     return Column(
       children: [
@@ -63,8 +72,6 @@ class ActivityMiniRail extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
             child: item,
           ),
-        const SizedBox(height: AppSpacing.xs),
-        settings,
       ],
     );
   }

@@ -13,7 +13,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///
 /// Without this wrapper, `tr()` lookups fail because the easy_localization
 /// `Localization` instance is missing from the context.
-Future<void> pumpAppWidget(WidgetTester tester, Widget child, {Locale? locale, ThemeData? theme}) async {
+///
+/// [appBuilder] plugs into `MaterialApp.builder`, i.e. it wraps the
+/// `Navigator` itself rather than just the home route's content. Use it to
+/// provide ambient state (e.g. a `BlocProvider`) that must also reach widgets
+/// pushed via `showDialog`/`Navigator.push` — those routes are siblings of
+/// the home route inside the Overlay, so a provider placed only around
+/// [child] would not be visible to them.
+Future<void> pumpAppWidget(
+  WidgetTester tester,
+  Widget child, {
+  Locale? locale,
+  ThemeData? theme,
+  TransitionBuilder? appBuilder,
+}) async {
   // EasyLocalization persists the active locale via SharedPreferences. Under
   // `flutter_test` the platform plugin is not registered, so the call hangs
   // inside a FutureBuilder and `pumpAndSettle` never returns. Mocking the
@@ -30,20 +43,23 @@ Future<void> pumpAppWidget(WidgetTester tester, Widget child, {Locale? locale, T
       startLocale: locale ?? Locales.fallbackLocale,
       useOnlyLangCode: true,
       assetLoader: const RootBundleAssetLoader(),
-      child: _LocalizedHost(theme: theme, child: child),
+      child: _LocalizedHost(theme: theme, appBuilder: appBuilder, child: child),
     ),
   );
 
   // EasyLocalization loads translations asynchronously: settle so the first
   // resolved frame replaces the loading placeholder.
   await tester.pumpAndSettle();
+  await tester.pump(const Duration(milliseconds: 50));
+  await tester.pump(const Duration(milliseconds: 50));
 }
 
 class _LocalizedHost extends StatelessWidget {
-  const _LocalizedHost({required this.child, this.theme});
+  const _LocalizedHost({required this.child, this.theme, this.appBuilder});
 
   final Widget child;
   final ThemeData? theme;
+  final TransitionBuilder? appBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +69,7 @@ class _LocalizedHost extends StatelessWidget {
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
+      builder: appBuilder,
       home: Scaffold(body: child),
     );
   }
