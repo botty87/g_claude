@@ -117,7 +117,13 @@ class _WorktreeChip extends HookWidget {
     final gitWorktrees = snap.data ?? const <GitWorktree>[];
 
     final tint = _chipTints[repoRoot.hashCode.abs() % _chipTints.length];
-    final label = branch ?? Locales.Claude.Terminal.WorktreeChip.detached;
+    // Bare repo container (root == the workspace itself, no branch) → "root";
+    // a branchless linked worktree is a detached HEAD.
+    final label =
+        branch ??
+        (repoRoot == workspaceId
+            ? Locales.Claude.Terminal.WorktreeChip.root
+            : Locales.Claude.Terminal.WorktreeChip.detached);
 
     final opened = wsCubit.state.workspacesOrEmpty.where((w) => w.repoRoot == repoRoot).toList(growable: false);
     final openedPaths = opened.map((w) => w.path).toSet();

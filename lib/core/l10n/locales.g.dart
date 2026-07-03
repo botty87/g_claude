@@ -633,6 +633,7 @@ class _ClaudeTerminalWorktreeChip {
   const _ClaudeTerminalWorktreeChip._();
 
   String get detached => LocaleKeys.claude_terminal_worktreeChip_detached.tr();
+  String get root => LocaleKeys.claude_terminal_worktreeChip_root.tr();
   String get switchTooltip => LocaleKeys.claude_terminal_worktreeChip_switchTooltip.tr();
 }
 
@@ -839,6 +840,9 @@ class _Shell {
   /// Translations for activity
   final Activity = const _ShellActivity._();
 
+  /// Translations for closeWorktree
+  final CloseWorktree = const _ShellCloseWorktree._();
+
   /// Translations for rightPanel
   final RightPanel = const _ShellRightPanel._();
 
@@ -868,6 +872,24 @@ class _ShellActivity {
   String get sessions => LocaleKeys.shell_activity_sessions.tr();
   String get settings => LocaleKeys.shell_activity_settings.tr();
   String get terminal => LocaleKeys.shell_activity_terminal.tr();
+}
+
+/// Nested class for closeWorktree translations
+class _ShellCloseWorktree {
+  const _ShellCloseWorktree._();
+
+  String get cancel => LocaleKeys.shell_closeWorktree_cancel.tr();
+  String get closeTooltip => LocaleKeys.shell_closeWorktree_closeTooltip.tr();
+  String get confirm => LocaleKeys.shell_closeWorktree_confirm.tr();
+  String get force => LocaleKeys.shell_closeWorktree_force.tr();
+  String get mainCannotRemove => LocaleKeys.shell_closeWorktree_mainCannotRemove.tr();
+  String get optionCloseOnly => LocaleKeys.shell_closeWorktree_optionCloseOnly.tr();
+  String get optionCloseOnlyDescr => LocaleKeys.shell_closeWorktree_optionCloseOnlyDescr.tr();
+  String get optionRemoveBranch => LocaleKeys.shell_closeWorktree_optionRemoveBranch.tr();
+  String get optionRemoveBranchDescr => LocaleKeys.shell_closeWorktree_optionRemoveBranchDescr.tr();
+  String get optionRemoveWorktree => LocaleKeys.shell_closeWorktree_optionRemoveWorktree.tr();
+  String get optionRemoveWorktreeDescr => LocaleKeys.shell_closeWorktree_optionRemoveWorktreeDescr.tr();
+  String get title => LocaleKeys.shell_closeWorktree_title.tr();
 }
 
 /// Nested class for rightPanel translations

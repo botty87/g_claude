@@ -308,6 +308,31 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
+  // 5b. run stream error (sidecar death) — must reset, never hang
+  // ---------------------------------------------------------------------------
+
+  group('run stream error — terminates the run instead of hanging on connecting', () {
+    test('an error on the run stream flips runStatus off connecting to error', () async {
+      final fixture = _makeFixture();
+      await _startRun(fixture);
+      expect(fixture.cubit.state.sessionFor(_wid)?.runStatus, ClaudeRunStatus.connecting);
+
+      // The transport surfaces sidecar death (e.g. the Node process exiting
+      // before `ready`) as a stream error — see StdioSidecarTransport._handleDeath.
+      // Regression guard: before that fix the run hung on `connecting` forever
+      // and Stop was dropped; now the run must reach a terminal status.
+      fixture.runController.addError(StateError('sidecar exited (code=1): ERR_MODULE_NOT_FOUND'));
+      await _drain();
+
+      final session = fixture.cubit.state.sessionFor(_wid)!;
+      expect(session.runStatus, ClaudeRunStatus.error);
+      expect(session.lastError, isA<UnexpectedFailure>());
+
+      await fixture.cubit.close();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // 6. answerPlan(approve: true)
   // ---------------------------------------------------------------------------
 

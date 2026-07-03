@@ -27,6 +27,16 @@ class StdioSidecarTransport implements SidecarTransport {
   StreamSubscription<String>? _stderrSub;
   final StreamController<Map<String, dynamic>> _eventsController = StreamController<Map<String, dynamic>>.broadcast();
 
+  // Last stderr lines of the current process — surfaced in the death reason so a
+  // crash (e.g. ERR_MODULE_NOT_FOUND) becomes an actionable error, not a silent
+  // "dead chat".
+  final List<String> _stderrTail = [];
+  static const _stderrTailMax = 20;
+
+  // Guards [_handleDeath] against the double signal (stdout `onDone` + process
+  // `exitCode`) that both fire when the process dies.
+  bool _dead = false;
+
   // Completer that resolves when the sidecar emits the `ready` event.
   Completer<void>? _readyCompleter;
 
@@ -81,6 +91,8 @@ class StdioSidecarTransport implements SidecarTransport {
     }
 
     _readyCompleter = Completer<void>();
+    _dead = false;
+    _stderrTail.clear();
 
     _talker.info('SidecarTransport: starting sidecar ($exe ${args.join(' ')})');
 
@@ -92,24 +104,21 @@ class StdioSidecarTransport implements SidecarTransport {
       runInShell: false,
     );
 
-    _stderrSub = _process!.stderr
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .listen((line) => _talker.warning('[sidecar stderr] $line'));
+    _stderrSub = _process!.stderr.transform(utf8.decoder).transform(const LineSplitter()).listen((line) {
+      _talker.warning('[sidecar stderr] $line');
+      _stderrTail.add(line);
+      if (_stderrTail.length > _stderrTailMax) _stderrTail.removeAt(0);
+    });
 
     _stdoutSub = _process!.stdout
         .transform(utf8.decoder)
         .transform(const LineSplitter())
-        .listen(_onLine, onDone: _onProcessDone);
+        .listen(_onLine, onDone: () => _handleDeath());
 
-    // Handle unexpected process exit before ready.
-    _process!.exitCode.then((code) {
-      _talker.warning('SidecarTransport: process exited with code $code');
-      if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
-        _readyCompleter!.completeError(StateError('sidecar exited before ready (code=$code)'));
-      }
-      _process = null;
-    });
+    // Death arrives as two racing signals (stdout onDone + exitCode); whichever
+    // wins, [_handleDeath] both unblocks a pending start() AND errors any active
+    // run stream so runStatus never stays stuck at `connecting`/`running`.
+    _process!.exitCode.then((code) => _handleDeath(exitCode: code));
 
     return _readyCompleter!.future;
   }
@@ -143,8 +152,22 @@ class StdioSidecarTransport implements SidecarTransport {
     }
   }
 
-  void _onProcessDone() {
-    _talker.info('SidecarTransport: stdout closed');
+  /// Handles process death from either racing signal exactly once: unblocks a
+  /// pending [start] with an error and errors the shared event stream so every
+  /// in-flight run terminates (the datasource maps it to a run error). The
+  /// broadcast controller stays open so the next prompt can respawn.
+  void _handleDeath({int? exitCode}) {
+    if (_dead) return;
+    _dead = true;
+    final tail = _stderrTail.isEmpty ? '' : ': ${_stderrTail.join(' | ')}';
+    final reason = 'sidecar exited (code=${exitCode ?? 'unknown'})$tail';
+    _talker.warning('SidecarTransport: $reason');
+    if (_readyCompleter != null && !_readyCompleter!.isCompleted) {
+      _readyCompleter!.completeError(StateError(reason));
+    }
+    if (!_eventsController.isClosed) {
+      _eventsController.addError(StateError(reason));
+    }
     _process = null;
     _readyCompleter = null;
   }

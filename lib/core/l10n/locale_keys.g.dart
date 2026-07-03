@@ -35,6 +35,19 @@ abstract class  LocaleKeys {
   static const shell_sidebar_worktrees_openTooltip = 'shell.sidebar.worktrees.openTooltip';
   static const shell_sidebar_worktrees = 'shell.sidebar.worktrees';
   static const shell_sidebar = 'shell.sidebar';
+  static const shell_closeWorktree_title = 'shell.closeWorktree.title';
+  static const shell_closeWorktree_optionCloseOnly = 'shell.closeWorktree.optionCloseOnly';
+  static const shell_closeWorktree_optionCloseOnlyDescr = 'shell.closeWorktree.optionCloseOnlyDescr';
+  static const shell_closeWorktree_optionRemoveWorktree = 'shell.closeWorktree.optionRemoveWorktree';
+  static const shell_closeWorktree_optionRemoveWorktreeDescr = 'shell.closeWorktree.optionRemoveWorktreeDescr';
+  static const shell_closeWorktree_optionRemoveBranch = 'shell.closeWorktree.optionRemoveBranch';
+  static const shell_closeWorktree_optionRemoveBranchDescr = 'shell.closeWorktree.optionRemoveBranchDescr';
+  static const shell_closeWorktree_mainCannotRemove = 'shell.closeWorktree.mainCannotRemove';
+  static const shell_closeWorktree_force = 'shell.closeWorktree.force';
+  static const shell_closeWorktree_cancel = 'shell.closeWorktree.cancel';
+  static const shell_closeWorktree_confirm = 'shell.closeWorktree.confirm';
+  static const shell_closeWorktree_closeTooltip = 'shell.closeWorktree.closeTooltip';
+  static const shell_closeWorktree = 'shell.closeWorktree';
   static const shell_rightPanel_files = 'shell.rightPanel.files';
   static const shell_rightPanel_diff = 'shell.rightPanel.diff';
   static const shell_rightPanel_diffComingSoon = 'shell.rightPanel.diffComingSoon';
@@ -134,6 +147,7 @@ abstract class  LocaleKeys {
   static const claude_terminal_sessionSettings = 'claude.terminal.sessionSettings';
   static const claude_terminal_worktreeChip_switchTooltip = 'claude.terminal.worktreeChip.switchTooltip';
   static const claude_terminal_worktreeChip_detached = 'claude.terminal.worktreeChip.detached';
+  static const claude_terminal_worktreeChip_root = 'claude.terminal.worktreeChip.root';
   static const claude_terminal_worktreeChip = 'claude.terminal.worktreeChip';
   static const claude_terminal = 'claude.terminal';
   static const claude_model_haiku = 'claude.model.haiku';

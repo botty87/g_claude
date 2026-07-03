@@ -12,7 +12,9 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:g_claude/core/error/failures.dart';
 import 'package:g_claude/core/utils/either.dart';
+import 'package:g_claude/features/git/domain/usecases/delete_branch.dart';
 import 'package:g_claude/features/git/domain/usecases/list_worktrees.dart';
+import 'package:g_claude/features/git/domain/usecases/remove_worktree.dart';
 import 'package:g_claude/features/workspace/data/datasources/workspace_file_watcher.dart';
 import 'package:g_claude/features/workspace/data/datasources/workspaces_persistence_datasource.dart';
 import 'package:g_claude/features/workspace/domain/entities/workspace.dart';
@@ -25,6 +27,10 @@ import '../../../../helpers/fakes.dart';
 class _MockOpenWs extends Mock implements OpenWorkspace {}
 
 class _MockListWorktrees extends Mock implements ListWorktrees {}
+
+class _MockRemoveWorktree extends Mock implements RemoveWorktree {}
+
+class _MockDeleteBranch extends Mock implements DeleteBranch {}
 
 class _MockPersistence extends Mock implements WorkspacesPersistenceDataSource {}
 
@@ -41,12 +47,16 @@ void main() {
 
   late _MockOpenWs openWs;
   late _MockListWorktrees listWorktrees;
+  late _MockRemoveWorktree removeWorktreeUsecase;
+  late _MockDeleteBranch deleteBranchUsecase;
   late _MockPersistence persistence;
   late _MockWatcher watcher;
 
   setUp(() {
     openWs = _MockOpenWs();
     listWorktrees = _MockListWorktrees();
+    removeWorktreeUsecase = _MockRemoveWorktree();
+    deleteBranchUsecase = _MockDeleteBranch();
     persistence = _MockPersistence();
     watcher = _MockWatcher();
     // Default stubs.
@@ -56,7 +66,15 @@ void main() {
   });
 
   WorkspacesCubit make() {
-    final cubit = WorkspacesCubit(openWs, listWorktrees, persistence, watcher, makeTestTalker());
+    final cubit = WorkspacesCubit(
+      openWs,
+      listWorktrees,
+      removeWorktreeUsecase,
+      deleteBranchUsecase,
+      persistence,
+      watcher,
+      makeTestTalker(),
+    );
     cubit.init();
     return cubit;
   }
@@ -192,6 +210,173 @@ void main() {
       act: (c) => c.closeWorkspace('/never-opened'),
       expect: () => const <WorkspacesState>[],
     );
+  });
+
+  group('removeWorktree', () {
+    test('success closes the workspace and shrinks the list', () async {
+      when(
+        () => removeWorktreeUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          worktreePath: any(named: 'worktreePath'),
+        ),
+      ).thenAnswer((_) async => const Right(null));
+
+      final dir = await makeTmpDir('wt_');
+      final ws = makeWorkspace(id: dir.path, path: dir.path, repoRoot: '/repo', branch: 'feature/x');
+      final cubit = make();
+      cubit.emit(WorkspacesState.loaded(workspaces: [ws], activeId: ws.id));
+
+      await cubit.removeWorktree(ws.id);
+
+      expect(cubit.state.workspacesOrEmpty, isEmpty);
+      await cubit.close();
+    });
+
+    test('git failure on the worktree-remove step returns Left AND keeps the workspace open', () async {
+      when(
+        () => removeWorktreeUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          worktreePath: any(named: 'worktreePath'),
+        ),
+      ).thenAnswer((_) async => const Left(SubprocessFailure(message: 'not merged')));
+
+      final dir = await makeTmpDir('wt_');
+      final ws = makeWorkspace(id: dir.path, path: dir.path, repoRoot: '/repo', branch: 'feature/x');
+      final cubit = make();
+      cubit.emit(WorkspacesState.loaded(workspaces: [ws], activeId: ws.id));
+
+      final result = await cubit.removeWorktree(ws.id);
+
+      expect(result.isLeft, isTrue);
+      expect(cubit.state.workspacesOrEmpty, hasLength(1));
+      await cubit.close();
+    });
+
+    test('with deleteBranch:true calls both git operations and closes on full success', () async {
+      when(
+        () => removeWorktreeUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          worktreePath: any(named: 'worktreePath'),
+        ),
+      ).thenAnswer((_) async => const Right(null));
+      when(
+        () => deleteBranchUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          branch: any(named: 'branch'),
+        ),
+      ).thenAnswer((_) async => const Right(null));
+
+      final dir = await makeTmpDir('wt_');
+      final ws = makeWorkspace(id: dir.path, path: dir.path, repoRoot: '/repo', branch: 'feature/x');
+      final cubit = make();
+      cubit.emit(WorkspacesState.loaded(workspaces: [ws], activeId: ws.id));
+
+      await cubit.removeWorktree(ws.id, deleteBranch: true);
+
+      expect(cubit.state.workspacesOrEmpty, isEmpty);
+      verify(
+        () => removeWorktreeUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          worktreePath: any(named: 'worktreePath'),
+        ),
+      ).called(1);
+      verify(
+        () => deleteBranchUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          branch: any(named: 'branch'),
+        ),
+      ).called(1);
+      await cubit.close();
+    });
+
+    test('branch-delete failure after a successful worktree removal returns Left, '
+        'keeps the workspace open (dir already gone), and a retry skips straight to the branch step', () async {
+      when(
+        () => removeWorktreeUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          worktreePath: any(named: 'worktreePath'),
+        ),
+      ).thenAnswer((_) async => const Right(null));
+      when(
+        () => deleteBranchUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          branch: any(named: 'branch'),
+        ),
+      ).thenAnswer((_) async => const Left(SubprocessFailure(message: 'branch not fully merged')));
+
+      final dir = await makeTmpDir('wt_');
+      final ws = makeWorkspace(id: dir.path, path: dir.path, repoRoot: '/repo', branch: 'feature/x');
+      final cubit = make();
+      cubit.emit(WorkspacesState.loaded(workspaces: [ws], activeId: ws.id));
+
+      final first = await cubit.removeWorktree(ws.id, deleteBranch: true);
+      expect(first.isLeft, isTrue);
+      expect(cubit.state.workspacesOrEmpty, hasLength(1), reason: 'partial failure keeps the tab open');
+      verify(
+        () => removeWorktreeUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          worktreePath: any(named: 'worktreePath'),
+        ),
+      ).called(1);
+
+      // Simulate that `git worktree remove` actually deleted the folder on
+      // disk during the first call (the mock doesn't touch the filesystem).
+      await dir.delete(recursive: true);
+
+      when(
+        () => deleteBranchUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          branch: any(named: 'branch'),
+        ),
+      ).thenAnswer((_) async => const Right(null));
+
+      final second = await cubit.removeWorktree(ws.id, deleteBranch: true);
+      expect(second.isRight, isTrue);
+      expect(cubit.state.workspacesOrEmpty, isEmpty);
+
+      // Idempotent: the worktree-remove step is never retried once the dir
+      // is gone (the first call was already consumed by the verify above);
+      // only the branch-delete step ran again.
+      verifyNever(
+        () => removeWorktreeUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          worktreePath: any(named: 'worktreePath'),
+        ),
+      );
+      verify(
+        () => deleteBranchUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          branch: any(named: 'branch'),
+        ),
+      ).called(2);
+
+      await cubit.close();
+    });
+
+    test('plain folder workspace (repoRoot == null) returns Left without touching git', () async {
+      final ws = makeWorkspace(id: '/plain/folder', path: '/plain/folder');
+      final cubit = make();
+      cubit.emit(WorkspacesState.loaded(workspaces: [ws], activeId: ws.id));
+
+      final result = await cubit.removeWorktree(ws.id);
+
+      expect(result.isLeft, isTrue);
+      expect(cubit.state.workspacesOrEmpty, hasLength(1));
+      verifyNever(
+        () => removeWorktreeUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          worktreePath: any(named: 'worktreePath'),
+        ),
+      );
+      verifyNever(
+        () => deleteBranchUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          branch: any(named: 'branch'),
+        ),
+      );
+
+      await cubit.close();
+    });
   });
 
   group('setActive', () {

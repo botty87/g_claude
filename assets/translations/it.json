@@ -38,6 +38,20 @@
         "openTooltip": "Apri questo worktree"
       }
     },
+    "closeWorktree": {
+      "title": "Chiudi worktree",
+      "optionCloseOnly": "Chiudi soltanto",
+      "optionCloseOnlyDescr": "Rimuovilo dall'elenco di Clyde. Il worktree e i suoi file restano su disco.",
+      "optionRemoveWorktree": "Rimuovi worktree",
+      "optionRemoveWorktreeDescr": "Cancella la cartella e i file locali del worktree. Il branch resta.",
+      "optionRemoveBranch": "Rimuovi worktree e branch",
+      "optionRemoveBranchDescr": "Cancella la cartella del worktree e il suo branch.",
+      "mainCannotRemove": "Il checkout principale non può essere rimosso come worktree.",
+      "force": "Forza",
+      "cancel": "Annulla",
+      "confirm": "Conferma",
+      "closeTooltip": "Chiudi"
+    },
     "rightPanel": {
       "files": "Files",
       "diff": "Diff",
@@ -156,7 +170,8 @@
       },
       "worktreeChip": {
         "switchTooltip": "Cambia worktree",
-        "detached": "scollegato"
+        "detached": "scollegato",
+        "root": "root"
       }
     },
     "model": {

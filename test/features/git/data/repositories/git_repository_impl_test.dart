@@ -54,4 +54,39 @@ void main() {
       expect(out.right.single.branch, 'main');
     });
   });
+
+  group('removeWorktree', () {
+    test('Right(null) on success, forwards force flag', () async {
+      when(() => ds.removeWorktree(any(), any(), force: any(named: 'force'))).thenAnswer((_) async {});
+      final out = await repo.removeWorktree(repoRoot: '/repo', worktreePath: '/repo/wt', force: true);
+      expect(out.isRight, isTrue);
+      verify(() => ds.removeWorktree('/repo', '/repo/wt', force: true)).called(1);
+    });
+
+    test('GitException (e.g. dirty worktree) → SubprocessFailure carrying the message', () async {
+      when(
+        () => ds.removeWorktree(any(), any(), force: any(named: 'force')),
+      ).thenThrow(const GitException('contains modified or untracked files'));
+      final out = await repo.removeWorktree(repoRoot: '/repo', worktreePath: '/repo/wt');
+      expect(out.left, isA<SubprocessFailure>());
+      expect((out.left as SubprocessFailure).message, contains('modified or untracked'));
+    });
+  });
+
+  group('deleteBranch', () {
+    test('Right(null) on success, forwards force flag', () async {
+      when(() => ds.deleteBranch(any(), any(), force: any(named: 'force'))).thenAnswer((_) async {});
+      final out = await repo.deleteBranch(repoRoot: '/repo', branch: 'feature/x', force: true);
+      expect(out.isRight, isTrue);
+      verify(() => ds.deleteBranch('/repo', 'feature/x', force: true)).called(1);
+    });
+
+    test('GitException (branch not merged) → SubprocessFailure', () async {
+      when(
+        () => ds.deleteBranch(any(), any(), force: any(named: 'force')),
+      ).thenThrow(const GitException('not fully merged'));
+      final out = await repo.deleteBranch(repoRoot: '/repo', branch: 'feature/x');
+      expect(out.left, isA<SubprocessFailure>());
+    });
+  });
 }

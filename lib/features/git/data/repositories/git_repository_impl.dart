@@ -30,4 +30,36 @@ class GitRepositoryImpl implements GitRepository {
       return Left(UnexpectedFailure('git worktree list failed: $e'));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> removeWorktree({
+    required String repoRoot,
+    required String worktreePath,
+    bool force = false,
+  }) async {
+    try {
+      await _ds.removeWorktree(repoRoot, worktreePath, force: force);
+      return const Right(null);
+    } on GitException catch (e) {
+      return Left(SubprocessFailure(message: e.message));
+    } catch (e) {
+      return Left(UnexpectedFailure('git worktree remove failed: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteBranch({
+    required String repoRoot,
+    required String branch,
+    bool force = false,
+  }) async {
+    try {
+      await _ds.deleteBranch(repoRoot, branch, force: force);
+      return const Right(null);
+    } on GitException catch (e) {
+      return Left(SubprocessFailure(message: e.message));
+    } catch (e) {
+      return Left(UnexpectedFailure('git branch delete failed: $e'));
+    }
+  }
 }

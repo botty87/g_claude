@@ -10,7 +10,15 @@ import 'package:talker_flutter/talker_flutter.dart';
 ///
 /// Override only the fields under test to keep the contract under test
 /// front-and-center.
-Workspace makeWorkspace({String? id, String? path, String? name, String? claudeMd, DateTime? openedAt}) {
+Workspace makeWorkspace({
+  String? id,
+  String? path,
+  String? name,
+  String? claudeMd,
+  DateTime? openedAt,
+  String? repoRoot,
+  String? branch,
+}) {
   final resolvedPath = path ?? '/tmp/ws_${id ?? 'a'}';
   return Workspace(
     id: id ?? resolvedPath,
@@ -18,6 +26,8 @@ Workspace makeWorkspace({String? id, String? path, String? name, String? claudeM
     name: name ?? 'ws',
     claudeMd: claudeMd,
     openedAt: openedAt ?? DateTime.utc(2026, 1, 1),
+    repoRoot: repoRoot,
+    branch: branch,
   );
 }
 

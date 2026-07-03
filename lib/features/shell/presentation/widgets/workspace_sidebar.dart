@@ -17,6 +17,7 @@ import '../../../workspace/domain/entities/workspace_group.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../cubit/shell_cubit.dart';
 import 'activity_mini_rail.dart';
+import 'close_worktree_dialog.dart';
 
 const double kSidebarExpandedWidth = 262;
 const double kSidebarCollapsedWidth = 52;
@@ -157,6 +158,13 @@ class _WorkspaceRow extends StatelessWidget {
                 ),
               ),
             ),
+            if (hover) ...[
+              const SizedBox(width: AppSpacing.xs),
+              _CloseAffordance(
+                keyName: 'close_workspace_${workspace.id}',
+                onTap: () => context.read<WorkspacesCubit>().closeWorkspace(workspace.id),
+              ),
+            ],
           ],
         ),
       ),
@@ -201,11 +209,19 @@ class _RepoGroup extends HookWidget {
           branch: w.branch ?? gitByPath[w.path]?.branch,
           opened: true,
           detached: gitByPath[w.path]?.isDetached ?? false,
+          isMain: w.path == group.repoRoot,
         ),
       if (showAll.value)
         for (final g in gitWorktrees)
           if (!g.isBare && !openedSet.contains(g.path))
-            _WtRowData(path: g.path, name: p.basename(g.path), branch: g.branch, opened: false, detached: g.isDetached),
+            _WtRowData(
+              path: g.path,
+              name: p.basename(g.path),
+              branch: g.branch,
+              opened: false,
+              detached: g.isDetached,
+              isMain: g.path == group.repoRoot,
+            ),
     ];
 
     final hasHidden = gitWorktrees.where((g) => !g.isBare).any((g) => !openedSet.contains(g.path));
@@ -225,7 +241,13 @@ class _RepoGroup extends HookWidget {
         ),
         if (expanded.value)
           for (final row in rows)
-            _WorktreeRow(row: row, tint: tint, isActive: row.path == activeId, onTap: () => cubit.openPath(row.path)),
+            _WorktreeRow(
+              row: row,
+              repoRoot: group.repoRoot,
+              tint: tint,
+              isActive: row.path == activeId,
+              onTap: () => cubit.openPath(row.path),
+            ),
       ],
     );
   }
@@ -313,19 +335,34 @@ class _RepoHeader extends StatelessWidget {
 
 /// Local, non-persisted view model for a worktree row.
 class _WtRowData {
-  const _WtRowData({required this.path, required this.name, required this.opened, this.branch, this.detached = false});
+  const _WtRowData({
+    required this.path,
+    required this.name,
+    required this.opened,
+    required this.isMain,
+    this.branch,
+    this.detached = false,
+  });
 
   final String path;
   final String name;
   final String? branch;
   final bool opened;
   final bool detached;
+  final bool isMain;
 }
 
 class _WorktreeRow extends StatelessWidget {
-  const _WorktreeRow({required this.row, required this.tint, required this.isActive, required this.onTap});
+  const _WorktreeRow({
+    required this.row,
+    required this.repoRoot,
+    required this.tint,
+    required this.isActive,
+    required this.onTap,
+  });
 
   final _WtRowData row;
+  final String repoRoot;
   final Color tint;
   final bool isActive;
   final VoidCallback onTap;
@@ -335,7 +372,11 @@ class _WorktreeRow extends StatelessWidget {
     final running = row.opened
         ? context.select<ClaudeSessionsCubit, bool>((c) => c.state.isWorkspaceRunning(row.path))
         : false;
-    final branchLabel = row.detached ? Locales.Claude.Terminal.WorktreeChip.detached : (row.branch ?? '');
+    // A bare repo container (opened root, isMain, no branch) is not a branch
+    // and not detached — label it "root", never a phantom branch.
+    final branchLabel = row.detached
+        ? Locales.Claude.Terminal.WorktreeChip.detached
+        : row.branch ?? (row.isMain ? Locales.Claude.Terminal.WorktreeChip.root : '');
 
     return Hoverable(
       onTap: onTap,
@@ -355,7 +396,10 @@ class _WorktreeRow extends StatelessWidget {
           children: [
             _StatusDot(running: running, opened: row.opened),
             const SizedBox(width: AppSpacing.sm),
-            Flexible(
+            // Two columns: worktree name left-aligned (fills, so the branch is
+            // pushed right), branch right-aligned in a capped column. The
+            // trailing × still lands at the right edge on hover.
+            Expanded(
               child: Text(
                 row.name,
                 maxLines: 1,
@@ -370,17 +414,57 @@ class _WorktreeRow extends StatelessWidget {
             ),
             if (branchLabel.isNotEmpty) ...[
               const SizedBox(width: AppSpacing.sm),
-              Flexible(
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 110),
                 child: Text(
                   branchLabel,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
                   style: AppTypography.terminalCode.copyWith(color: AppColors.outline, fontSize: 10, height: 1.0),
+                ),
+              ),
+            ],
+            if (row.opened && hover) ...[
+              const SizedBox(width: AppSpacing.xs),
+              _CloseAffordance(
+                keyName: 'close_worktree_${row.path}',
+                onTap: () => showCloseWorktreeDialog(
+                  context,
+                  workspaceId: row.path,
+                  name: row.name,
+                  branch: row.branch,
+                  isMain: row.isMain,
                 ),
               ),
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Trailing hover-only "×" affordance used by both flat-folder and worktree
+/// rows to close/remove a workspace. Wrapped in its own [Hoverable] (hence
+/// its own [GestureDetector]) nested inside the row's — Flutter's gesture
+/// arena resolves nested detectors to the innermost one, so tapping the ×
+/// never also fires the row's own onTap. Mirrors [SessionTabBar]'s close tab
+/// affordance.
+class _CloseAffordance extends StatelessWidget {
+  const _CloseAffordance({required this.keyName, required this.onTap});
+
+  final String keyName;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Hoverable(
+      key: ValueKey(keyName),
+      onTap: onTap,
+      builder: (context, closeHover) => Tooltip(
+        message: Locales.Shell.CloseWorktree.closeTooltip,
+        child: Icon(Symbols.close, size: 14, color: AppColors.outline.withValues(alpha: closeHover ? 1.0 : 0.6)),
       ),
     );
   }

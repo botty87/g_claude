@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
@@ -10,8 +11,11 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/utils/either.dart';
 import '../../../git/domain/entities/git_worktree.dart';
+import '../../../git/domain/usecases/delete_branch.dart';
 import '../../../git/domain/usecases/list_worktrees.dart';
+import '../../../git/domain/usecases/remove_worktree.dart';
 import '../../data/datasources/workspace_file_watcher.dart';
 import '../../data/datasources/workspaces_persistence_datasource.dart';
 import '../../domain/entities/workspace.dart';
@@ -23,11 +27,20 @@ part 'workspaces_cubit.state.dart';
 
 @lazySingleton
 class WorkspacesCubit extends Cubit<WorkspacesState> {
-  WorkspacesCubit(this._openWorkspace, this._listWorktrees, this._persistence, this._fileWatcher, this._talker)
-    : super(const WorkspacesState.initial());
+  WorkspacesCubit(
+    this._openWorkspace,
+    this._listWorktrees,
+    this._removeWorktree,
+    this._deleteBranch,
+    this._persistence,
+    this._fileWatcher,
+    this._talker,
+  ) : super(const WorkspacesState.initial());
 
   final OpenWorkspace _openWorkspace;
   final ListWorktrees _listWorktrees;
+  final RemoveWorktree _removeWorktree;
+  final DeleteBranch _deleteBranch;
   final WorkspacesPersistenceDataSource _persistence;
   final WorkspaceFileWatcher _fileWatcher;
   final Talker _talker;
@@ -128,6 +141,51 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
       newActive = next[index < next.length ? index : next.length - 1].id;
     }
     emit(WorkspacesState.loaded(workspaces: next, activeId: newActive));
+  }
+
+  /// Removes a linked worktree from disk via `git worktree remove`, optionally
+  /// deleting its branch too. Does NOT call [closeWorkspace] until the whole
+  /// operation fully succeeds — this is deliberate: nothing in this codebase
+  /// auto-closes a workspace on external deletion (verified: `closeWorkspace`
+  /// is only ever called explicitly), so keeping the tab open on partial
+  /// failure (e.g. branch not merged after the worktree dir is already gone)
+  /// lets the caller retry with `forceBranch` using the same id. The worktree
+  /// removal step is idempotent via an `exists()` check, so a retry after a
+  /// worktree-remove success + branch-delete failure skips straight to the
+  /// branch step instead of erroring on an already-removed path.
+  Future<Either<Failure, void>> removeWorktree(
+    WorkspaceId id, {
+    bool deleteBranch = false,
+    bool force = false,
+    bool forceBranch = false,
+  }) async {
+    final ws = state.workspacesOrEmpty.firstWhereOrNull((w) => w.id == id);
+    if (ws == null) return const Left(NotFoundFailure('Workspace not found'));
+    final repoRoot = ws.repoRoot;
+    if (repoRoot == null) {
+      return const Left(UnexpectedFailure('removeWorktree called on a non-git workspace'));
+    }
+
+    if (await Directory(ws.path).exists()) {
+      final removed = await _removeWorktree(repoRoot: repoRoot, worktreePath: ws.path, force: force);
+      if (removed.isLeft) {
+        _talker.warning('git worktree remove failed for ${ws.path}: ${removed.left}');
+        return removed;
+      }
+    }
+
+    final branch = ws.branch;
+    if (deleteBranch && branch != null) {
+      final branchResult = await _deleteBranch(repoRoot: repoRoot, branch: branch, force: forceBranch);
+      if (branchResult.isLeft) {
+        _talker.warning('git branch delete failed for $branch: ${branchResult.left}');
+        return branchResult;
+      }
+    }
+
+    _talker.info('Removed worktree: ${ws.path}');
+    closeWorkspace(id);
+    return const Right(null);
   }
 
   void setActive(WorkspaceId id) {

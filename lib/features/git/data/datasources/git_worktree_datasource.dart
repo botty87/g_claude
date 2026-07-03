@@ -29,13 +29,24 @@ class GitWorktreeDataSource {
     if (commonDir == null) return null;
     final trimmed = commonDir.trim();
     if (trimmed.isEmpty) return null;
-    // `--git-common-dir` points at the shared `.git`; its parent is the main
-    // worktree root, which is stable across every linked worktree.
+    // `--git-common-dir` points at the shared `.git` (or `.bare`); its parent is
+    // the main worktree root / repo container, stable across every worktree —
+    // this is the grouping key.
     final repoRoot = _normalize(p.dirname(trimmed));
 
-    final head = await _run(path, ['rev-parse', '--abbrev-ref', 'HEAD']);
-    final branchName = head?.trim();
-    final branch = (branchName == null || branchName.isEmpty || branchName == 'HEAD') ? null : branchName;
+    // A bare repo container (e.g. `<repo>/.bare` with all branches as linked
+    // worktrees) is NOT itself a working tree: `--is-inside-work-tree` is false
+    // and HEAD merely points at the default branch, which is checked out
+    // nowhere. Reporting that branch would paint a phantom "main" worktree, so
+    // leave branch null — the row/chip then render it as the repo root, not a
+    // branch. Only read the branch when inside a real work tree.
+    final insideWorkTree = (await _run(path, ['rev-parse', '--is-inside-work-tree']))?.trim() == 'true';
+    String? branch;
+    if (insideWorkTree) {
+      final head = await _run(path, ['rev-parse', '--abbrev-ref', 'HEAD']);
+      final branchName = head?.trim();
+      branch = (branchName == null || branchName.isEmpty || branchName == 'HEAD') ? null : branchName;
+    }
 
     return GitRepoInfo(repoRoot: repoRoot, branch: branch);
   }
@@ -50,6 +61,34 @@ class GitWorktreeDataSource {
     _talker.verbose('git worktree list parsed: ${worktrees.length} worktree(s) for $repoRoot');
     return worktrees;
   }
+
+  Future<void> removeWorktree(String repoRoot, String worktreePath, {bool force = false}) async {
+    await _runOrThrow(repoRoot, ['worktree', 'remove', if (force) '--force', worktreePath]);
+  }
+
+  Future<void> deleteBranch(String repoRoot, String branch, {bool force = false}) async {
+    await _runOrThrow(repoRoot, ['branch', force ? '-D' : '-d', branch]);
+  }
+
+  /// Like [_run] but throws [GitException] (carrying stderr) on non-zero exit,
+  /// timeout, or spawn failure — callers that must know *why* an operation
+  /// failed (not just that it silently no-op'd) use this instead of [_run].
+  Future<void> _runOrThrow(String cwd, List<String> args) async {
+    try {
+      final result = await Process.run('git', ['-C', cwd, ...args]).timeout(_timeout);
+      if (result.exitCode != 0) {
+        throw GitException(_asString(result.stderr).trim());
+      }
+    } on GitException {
+      rethrow;
+    } on TimeoutException {
+      throw GitException('git ${args.join(' ')} timed out');
+    } catch (e) {
+      throw GitException('git ${args.join(' ')} failed: $e');
+    }
+  }
+
+  String _asString(dynamic data) => data is String ? data : utf8.decode(data as List<int>);
 
   /// Runs `git -C <cwd> <args>` and returns stdout, or null on non-zero exit,
   /// spawn failure, or timeout.
