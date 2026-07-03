@@ -41,6 +41,7 @@ void main() {
         deleteBranch: any(named: 'deleteBranch'),
         force: any(named: 'force'),
         forceBranch: any(named: 'forceBranch'),
+        branch: any(named: 'branch'),
       ),
     ).thenAnswer((_) async => const Right(null));
   });
@@ -102,7 +103,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(_confirm));
     await tester.pumpAndSettle();
-    verify(() => cubit.removeWorktree('/repo/wt', deleteBranch: false, force: false, forceBranch: false)).called(1);
+    verify(
+      () =>
+          cubit.removeWorktree('/repo/wt', deleteBranch: false, force: false, forceBranch: false, branch: 'feature/x'),
+    ).called(1);
     clearInteractions(cubit);
 
     // 2) "Remove worktree and branch" → removeWorktree(deleteBranch:true).
@@ -111,7 +115,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(_confirm));
     await tester.pumpAndSettle();
-    verify(() => cubit.removeWorktree('/repo/wt', deleteBranch: true, force: false, forceBranch: false)).called(1);
+    verify(
+      () => cubit.removeWorktree('/repo/wt', deleteBranch: true, force: false, forceBranch: false, branch: 'feature/x'),
+    ).called(1);
     clearInteractions(cubit);
 
     // 3) "Close only" → closeWorkspace, no removeWorktree.
@@ -127,6 +133,7 @@ void main() {
         deleteBranch: any(named: 'deleteBranch'),
         force: any(named: 'force'),
         forceBranch: any(named: 'forceBranch'),
+        branch: any(named: 'branch'),
       ),
     );
     clearInteractions(cubit);
@@ -148,6 +155,7 @@ void main() {
         deleteBranch: any(named: 'deleteBranch'),
         force: any(named: 'force'),
         forceBranch: any(named: 'forceBranch'),
+        branch: any(named: 'branch'),
       ),
     ).thenAnswer((_) async => const Left(SubprocessFailure(message: 'dirty working tree')));
     await openLinked();

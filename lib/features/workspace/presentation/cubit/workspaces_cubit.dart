@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
@@ -153,11 +152,18 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
   /// removal step is idempotent via an `exists()` check, so a retry after a
   /// worktree-remove success + branch-delete failure skips straight to the
   /// branch step instead of erroring on an already-removed path.
+  /// Removes a linked worktree, optionally deleting its branch. [branch] is the
+  /// branch the UI showed the user (which may be enriched from the live git
+  /// list); it takes precedence over the workspace's own `branch` field so the
+  /// branch actually deleted matches what was on screen. The worktree removal
+  /// itself is idempotent in the datasource (a retry after a partial failure —
+  /// worktree gone but branch delete failed — skips the already-done removal).
   Future<Either<Failure, void>> removeWorktree(
     WorkspaceId id, {
     bool deleteBranch = false,
     bool force = false,
     bool forceBranch = false,
+    String? branch,
   }) async {
     final ws = state.workspacesOrEmpty.firstWhereOrNull((w) => w.id == id);
     if (ws == null) return const Left(NotFoundFailure('Workspace not found'));
@@ -166,19 +172,20 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
       return const Left(UnexpectedFailure('removeWorktree called on a non-git workspace'));
     }
 
-    if (await Directory(ws.path).exists()) {
-      final removed = await _removeWorktree(repoRoot: repoRoot, worktreePath: ws.path, force: force);
-      if (removed.isLeft) {
-        _talker.warning('git worktree remove failed for ${ws.path}: ${removed.left}');
-        return removed;
-      }
+    final removed = await _removeWorktree(repoRoot: repoRoot, worktreePath: ws.path, force: force);
+    if (removed.isLeft) {
+      _talker.warning('git worktree remove failed for ${ws.path}: ${removed.left}');
+      return removed;
     }
+    // The worktree dir is gone now — invalidate the cache even if a later step
+    // fails, so the sidebar never keeps showing a removed worktree.
+    _worktreeCache.clear();
 
-    final branch = ws.branch;
-    if (deleteBranch && branch != null) {
-      final branchResult = await _deleteBranch(repoRoot: repoRoot, branch: branch, force: forceBranch);
+    final branchToDelete = branch ?? ws.branch;
+    if (deleteBranch && branchToDelete != null) {
+      final branchResult = await _deleteBranch(repoRoot: repoRoot, branch: branchToDelete, force: forceBranch);
       if (branchResult.isLeft) {
-        _talker.warning('git branch delete failed for $branch: ${branchResult.left}');
+        _talker.warning('git branch delete failed for $branchToDelete: ${branchResult.left}');
         return branchResult;
       }
     }

@@ -75,6 +75,9 @@ class CloseWorktreeDialog extends HookWidget {
         deleteBranch: choice.value == _CloseChoice.removeWorktreeAndBranch,
         force: force.value,
         forceBranch: force.value,
+        // Delete exactly the branch shown to the user (may be enriched from the
+        // live git list when the workspace's own field is stale/null).
+        branch: branch,
       );
       if (!context.mounted) return;
       result.fold((failure) {

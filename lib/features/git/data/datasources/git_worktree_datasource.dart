@@ -63,6 +63,12 @@ class GitWorktreeDataSource {
   }
 
   Future<void> removeWorktree(String repoRoot, String worktreePath, {bool force = false}) async {
+    // Idempotent: if the worktree dir is already gone (e.g. a retry after a
+    // partial failure where the removal succeeded but branch deletion didn't),
+    // treat it as done instead of erroring on `git worktree remove <missing>`.
+    // Keeping this I/O in the datasource keeps the cubit free of filesystem
+    // access (Clean Arch) and mockable.
+    if (!await Directory(worktreePath).exists()) return;
     await _runOrThrow(repoRoot, ['worktree', 'remove', if (force) '--force', worktreePath]);
   }
 

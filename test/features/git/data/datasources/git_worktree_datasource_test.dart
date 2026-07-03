@@ -6,6 +6,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:g_claude/features/git/data/datasources/git_worktree_datasource.dart';
 
+import '../../../../helpers/fakes.dart';
+
 String _fixture(String name) => File('test/fixtures/git/$name').readAsStringSync();
 
 void main() {
@@ -47,6 +49,14 @@ void main() {
 
     test('empty output → empty list', () {
       expect(GitWorktreeDataSource.parseWorktreeList(''), isEmpty);
+    });
+
+    test('removeWorktree on an already-gone path is an idempotent no-op (no git, no throw)', () async {
+      // A retry after a partial failure (worktree removed, branch delete failed)
+      // must not error on `git worktree remove <missing>`. The dir doesn't exist,
+      // so the datasource returns before touching git.
+      final ds = GitWorktreeDataSource(makeTestTalker());
+      await expectLater(ds.removeWorktree('/repo', '/definitely/not/here/xyz-123'), completes);
     });
 
     test('trailing content without a blank line is still flushed', () {
