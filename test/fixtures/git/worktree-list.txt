@@ -1,0 +1,11 @@
+worktree /Users/marco.bottichio/Dev/g_claude
+HEAD 53ce176db1be6817873343407366947c2389855b
+branch refs/heads/main
+
+worktree /Users/marco.bottichio/.superset/worktrees/g_claude/feature/restyle
+HEAD 8b127fd720418a265e20ebf79e4eff9091872be6
+branch refs/heads/feature/restyle
+
+worktree /Users/marco.bottichio/dev/g_claude/.claude/worktrees/elated-banach-655b6f
+HEAD 5dd963d0ff56d47a1f8971847a076cca2dcba5a4
+detached

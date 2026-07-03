@@ -29,6 +29,11 @@ abstract class  LocaleKeys {
   static const shell_sidebar_collapse = 'shell.sidebar.collapse';
   static const shell_sidebar_expand = 'shell.sidebar.expand';
   static const shell_sidebar_search = 'shell.sidebar.search';
+  static const shell_sidebar_worktrees_showAll = 'shell.sidebar.worktrees.showAll';
+  static const shell_sidebar_worktrees_showOpenOnly = 'shell.sidebar.worktrees.showOpenOnly';
+  static const shell_sidebar_worktrees_openedCount = 'shell.sidebar.worktrees.openedCount';
+  static const shell_sidebar_worktrees_openTooltip = 'shell.sidebar.worktrees.openTooltip';
+  static const shell_sidebar_worktrees = 'shell.sidebar.worktrees';
   static const shell_sidebar = 'shell.sidebar';
   static const shell_rightPanel_files = 'shell.rightPanel.files';
   static const shell_rightPanel_diff = 'shell.rightPanel.diff';
@@ -127,6 +132,9 @@ abstract class  LocaleKeys {
   static const claude_terminal_sessionSettings_title = 'claude.terminal.sessionSettings.title';
   static const claude_terminal_sessionSettings_editHint = 'claude.terminal.sessionSettings.editHint';
   static const claude_terminal_sessionSettings = 'claude.terminal.sessionSettings';
+  static const claude_terminal_worktreeChip_switchTooltip = 'claude.terminal.worktreeChip.switchTooltip';
+  static const claude_terminal_worktreeChip_detached = 'claude.terminal.worktreeChip.detached';
+  static const claude_terminal_worktreeChip = 'claude.terminal.worktreeChip';
   static const claude_terminal = 'claude.terminal';
   static const claude_model_haiku = 'claude.model.haiku';
   static const claude_model_sonnet = 'claude.model.sonnet';

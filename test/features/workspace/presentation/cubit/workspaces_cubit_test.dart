@@ -12,6 +12,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:g_claude/core/error/failures.dart';
 import 'package:g_claude/core/utils/either.dart';
+import 'package:g_claude/features/git/domain/usecases/list_worktrees.dart';
 import 'package:g_claude/features/workspace/data/datasources/workspace_file_watcher.dart';
 import 'package:g_claude/features/workspace/data/datasources/workspaces_persistence_datasource.dart';
 import 'package:g_claude/features/workspace/domain/entities/workspace.dart';
@@ -22,6 +23,8 @@ import 'package:mocktail/mocktail.dart';
 import '../../../../helpers/fakes.dart';
 
 class _MockOpenWs extends Mock implements OpenWorkspace {}
+
+class _MockListWorktrees extends Mock implements ListWorktrees {}
 
 class _MockPersistence extends Mock implements WorkspacesPersistenceDataSource {}
 
@@ -37,11 +40,13 @@ void main() {
   });
 
   late _MockOpenWs openWs;
+  late _MockListWorktrees listWorktrees;
   late _MockPersistence persistence;
   late _MockWatcher watcher;
 
   setUp(() {
     openWs = _MockOpenWs();
+    listWorktrees = _MockListWorktrees();
     persistence = _MockPersistence();
     watcher = _MockWatcher();
     // Default stubs.
@@ -51,7 +56,7 @@ void main() {
   });
 
   WorkspacesCubit make() {
-    final cubit = WorkspacesCubit(openWs, persistence, watcher, makeTestTalker());
+    final cubit = WorkspacesCubit(openWs, listWorktrees, persistence, watcher, makeTestTalker());
     cubit.init();
     return cubit;
   }

@@ -427,6 +427,9 @@ class _ClaudeTerminal {
   /// Translations for thinking
   final Thinking = const _ClaudeTerminalThinking._();
 
+  /// Translations for worktreeChip
+  final WorktreeChip = const _ClaudeTerminalWorktreeChip._();
+
 }
 
 /// Nested class for actions translations
@@ -623,6 +626,14 @@ class _ClaudeTerminalThinking {
 
   String get label => LocaleKeys.claude_terminal_thinking_label.tr();
   String get tooltip => LocaleKeys.claude_terminal_thinking_tooltip.tr();
+}
+
+/// Nested class for worktreeChip translations
+class _ClaudeTerminalWorktreeChip {
+  const _ClaudeTerminalWorktreeChip._();
+
+  String get detached => LocaleKeys.claude_terminal_worktreeChip_detached.tr();
+  String get switchTooltip => LocaleKeys.claude_terminal_worktreeChip_switchTooltip.tr();
 }
 
 /// Nested class for thinking translations
@@ -927,6 +938,24 @@ class _ShellSidebar {
   String get header => LocaleKeys.shell_sidebar_header.tr();
   String get newWorkspace => LocaleKeys.shell_sidebar_newWorkspace.tr();
   String get search => LocaleKeys.shell_sidebar_search.tr();
+  /// Translations for worktrees
+  final Worktrees = const _ShellSidebarWorktrees._();
+
+}
+
+/// Nested class for worktrees translations
+class _ShellSidebarWorktrees {
+  const _ShellSidebarWorktrees._();
+
+  String get openTooltip => LocaleKeys.shell_sidebar_worktrees_openTooltip.tr();
+  String openedCount({required String count}) {
+    return LocaleKeys.shell_sidebar_worktrees_openedCount.tr(namedArgs: {
+      'count': count,
+    });
+  }
+
+  String get showAll => LocaleKeys.shell_sidebar_worktrees_showAll.tr();
+  String get showOpenOnly => LocaleKeys.shell_sidebar_worktrees_showOpenOnly.tr();
 }
 
 /// Nested class for workspace translations

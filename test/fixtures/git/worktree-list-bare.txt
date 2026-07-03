@@ -1,0 +1,6 @@
+worktree /Users/me/bare-repo.git
+bare
+
+worktree /Users/me/bare-repo/main
+HEAD aaaabbbbccccdddd0000111122223333
+branch refs/heads/main

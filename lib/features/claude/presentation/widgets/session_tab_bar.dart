@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../../core/l10n/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -8,6 +10,7 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
+import '../../../git/domain/entities/git_worktree.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../cubit/claude_sessions_cubit.dart';
@@ -49,6 +52,7 @@ class SessionTabBar extends StatelessWidget {
       ),
       child: Row(
         children: [
+          _WorktreeChip(workspaceId: workspaceId),
           Expanded(
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
@@ -88,6 +92,129 @@ class SessionTabBar extends StatelessWidget {
       ),
     );
   }
+}
+
+const _chipTints = [AppColors.brandIndigo, AppColors.secondary, AppColors.tertiary, AppColors.primary];
+
+/// Worktree switcher shown to the left of the session tabs when the active
+/// workspace is a git worktree. `[avatar] branch ▾` opens a menu of the repo's
+/// worktrees; picking one reuses [WorkspacesCubit.openPath] (activates if
+/// already open, registers lazily otherwise).
+class _WorktreeChip extends HookWidget {
+  const _WorktreeChip({required this.workspaceId});
+
+  final WorkspaceId workspaceId;
+
+  @override
+  Widget build(BuildContext context) {
+    final repoRoot = context.select<WorkspacesCubit, String?>((c) => c.state.activeWorkspace?.repoRoot);
+    if (repoRoot == null) return const SizedBox.shrink();
+    final branch = context.select<WorkspacesCubit, String?>((c) => c.state.activeWorkspace?.branch);
+
+    final wsCubit = context.read<WorkspacesCubit>();
+    final future = useMemoized(() => wsCubit.ensureWorktrees(repoRoot), [repoRoot]);
+    final snap = useFuture(future, initialData: wsCubit.cachedWorktrees(repoRoot));
+    final gitWorktrees = snap.data ?? const <GitWorktree>[];
+
+    final tint = _chipTints[repoRoot.hashCode.abs() % _chipTints.length];
+    final label = branch ?? Locales.Claude.Terminal.WorktreeChip.detached;
+
+    final opened = wsCubit.state.workspacesOrEmpty.where((w) => w.repoRoot == repoRoot).toList(growable: false);
+    final openedPaths = opened.map((w) => w.path).toSet();
+    final items = <_ChipItem>[
+      for (final w in opened)
+        _ChipItem(path: w.path, label: w.branch ?? p.basename(w.path), opened: true, isActive: w.id == workspaceId),
+      for (final g in gitWorktrees)
+        if (!g.isBare && !openedPaths.contains(g.path))
+          _ChipItem(path: g.path, label: g.branch ?? p.basename(g.path), opened: false, isActive: false),
+    ];
+
+    return MenuAnchor(
+      menuChildren: [
+        for (final item in items)
+          MenuItemButton(
+            key: ValueKey('worktree_menu_${item.path}'),
+            onPressed: () => wsCubit.openPath(item.path),
+            leadingIcon: Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: item.opened ? AppColors.outline : Colors.transparent,
+                border: item.opened ? null : Border.all(color: AppColors.outline.withValues(alpha: 0.5), width: 1.2),
+              ),
+            ),
+            child: Text(
+              item.label,
+              style: AppTypography.navTab.copyWith(
+                color: item.isActive ? AppColors.primary : AppColors.onSurfaceVariant,
+                fontWeight: item.isActive ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+          ),
+      ],
+      builder: (context, controller, child) => Hoverable(
+        onTap: () => controller.isOpen ? controller.close() : controller.open(),
+        builder: (context, hover) => Tooltip(
+          message: Locales.Claude.Terminal.WorktreeChip.switchTooltip,
+          child: Container(
+            key: const ValueKey('worktree_chip'),
+            height: 24,
+            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: hover ? AppColors.glassHover : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppRadii.sm),
+              border: Border.all(color: AppColors.outlineVariant),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 14,
+                  height: 14,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: tint, borderRadius: BorderRadius.circular(4)),
+                  child: Text(
+                    label.isEmpty ? '?' : label.characters.first.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.surfaceContainerLowest,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 120),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.terminalCode.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                      fontSize: 11,
+                      height: 1.0,
+                    ),
+                  ),
+                ),
+                const Icon(Symbols.arrow_drop_down, size: 16, color: AppColors.outline),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ChipItem {
+  const _ChipItem({required this.path, required this.label, required this.opened, required this.isActive});
+
+  final String path;
+  final String label;
+  final bool opened;
+  final bool isActive;
 }
 
 class _SessionTab extends StatelessWidget {

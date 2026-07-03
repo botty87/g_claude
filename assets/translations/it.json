@@ -30,7 +30,13 @@
       "newWorkspace": "Nuovo workspace",
       "collapse": "Comprimi sidebar",
       "expand": "Espandi sidebar",
-      "search": "Cerca workspace"
+      "search": "Cerca workspace",
+      "worktrees": {
+        "showAll": "Mostra tutti",
+        "showOpenOnly": "Solo aperti",
+        "openedCount": "{count} aperti",
+        "openTooltip": "Apri questo worktree"
+      }
     },
     "rightPanel": {
       "files": "Files",
@@ -147,6 +153,10 @@
       "sessionSettings": {
         "title": "Impostazioni sessione",
         "editHint": "clic per modificare"
+      },
+      "worktreeChip": {
+        "switchTooltip": "Cambia worktree",
+        "detached": "scollegato"
       }
     },
     "model": {
