@@ -15,6 +15,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/l10n/l10n.dart';
 import '../../../../core/macos/screenshot_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
@@ -27,6 +28,7 @@ import '../../domain/entities/chat_input_draft.dart';
 import '../cubit/claude_sessions_cubit.dart';
 import 'attachment_chip_row.dart';
 import 'screenshot_preview_dialog.dart';
+import 'session_settings_overlay.dart';
 
 const _kScreenshotPreviewPrefKey = 'screenshot_preview_enabled';
 
@@ -343,20 +345,19 @@ class ClaudeInputBar extends HookWidget {
           ),
           AttachmentChipRow(attachments: attachments, onRemove: removeAttachment),
           Container(
-            decoration: const BoxDecoration(
+            margin: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.md),
+            decoration: BoxDecoration(
               color: AppColors.surfaceContainerLow,
-              border: Border(top: BorderSide(color: AppColors.outlineVariant, width: 1)),
+              borderRadius: BorderRadius.circular(AppRadii.md),
+              border: Border.all(color: AppColors.glassBorder),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
             child: CompositedTransformTarget(
               link: link,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 2),
-                    child: Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
-                  ),
+                  const Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Focus(
@@ -384,11 +385,13 @@ class ClaudeInputBar extends HookWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
+                  SessionSettingsButton(workspaceId: workspaceId, enabled: !_isBusy),
+                  const SizedBox(width: AppSpacing.xs),
                   _ActionButton(
                     key: const ValueKey('claude_input_attach_file'),
                     icon: Symbols.attach_file,
                     tooltipKey: 'claude.terminal.input.attachments.addFile',
-                    color: _isBusy ? AppColors.outline : AppColors.primary,
+                    color: _isBusy ? AppColors.outlineVariant : AppColors.outline,
                     onTap: _isBusy ? () {} : pickFiles,
                   ),
                   const SizedBox(width: AppSpacing.xs),
@@ -396,7 +399,7 @@ class ClaudeInputBar extends HookWidget {
                     key: const ValueKey('claude_input_attach_folder'),
                     icon: Symbols.folder,
                     tooltipKey: 'claude.terminal.input.attachments.addFolder',
-                    color: _isBusy ? AppColors.outline : AppColors.primary,
+                    color: _isBusy ? AppColors.outlineVariant : AppColors.outline,
                     onTap: _isBusy ? () {} : pickFolder,
                   ),
                   const SizedBox(width: AppSpacing.xs),
@@ -417,7 +420,8 @@ class ClaudeInputBar extends HookWidget {
                       key: const ValueKey('claude_input_queue'),
                       icon: Symbols.schedule_send,
                       tooltipKey: 'claude.terminal.input.queue.send',
-                      color: AppColors.primary,
+                      color: AppColors.brandIndigo,
+                      filled: true,
                       onTap: submit,
                     )
                   else if (_isBusy)
@@ -425,13 +429,15 @@ class ClaudeInputBar extends HookWidget {
                       icon: Symbols.stop_circle,
                       tooltipKey: 'claude.terminal.input.stop',
                       color: AppColors.error,
+                      filled: true,
                       onTap: sessionsCubit.stopRun,
                     )
                   else
                     _ActionButton(
                       icon: Symbols.send,
                       tooltipKey: 'claude.terminal.input.send',
-                      color: AppColors.primary,
+                      color: AppColors.brandIndigo,
+                      filled: true,
                       onTap: submit,
                     ),
                 ],
@@ -520,7 +526,7 @@ class _ScreenshotMenu extends HookWidget {
         key: const ValueKey('claude_input_attach_screenshot'),
         icon: Symbols.add_a_photo,
         tooltipKey: 'claude.terminal.input.attachments.addScreenshot',
-        color: isBusy ? AppColors.outline : AppColors.primary,
+        color: isBusy ? AppColors.outlineVariant : AppColors.outline,
         onTap: isBusy
             ? () {}
             : () {
@@ -542,12 +548,18 @@ class _ActionButton extends StatelessWidget {
     required this.tooltipKey,
     required this.color,
     required this.onTap,
+    this.filled = false,
   });
 
   final IconData icon;
   final String tooltipKey;
   final Color color;
   final VoidCallback onTap;
+
+  /// Solid accent button (e.g. send): [color] fills the background and the icon
+  /// flips to the light on-accent tint. Otherwise it's a bare icon with a
+  /// subtle hover wash — the muted, uniform composer-action style (design 5a).
+  final bool filled;
 
   @override
   Widget build(BuildContext context) {
@@ -557,13 +569,15 @@ class _ActionButton extends StatelessWidget {
       builder: (context, hover) => Tooltip(
         message: tooltipKey.tr(),
         child: Container(
-          width: 28,
-          height: 28,
+          width: 30,
+          height: 30,
           decoration: BoxDecoration(
-            color: hover ? AppColors.glassHover : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
+            color: filled
+                ? (hover ? color : color.withValues(alpha: 0.9))
+                : (hover ? AppColors.glassHover : Colors.transparent),
+            borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 16, color: color),
+          child: Icon(icon, size: 16, color: filled ? AppColors.onPrimaryContainer : color),
         ),
       ),
     );

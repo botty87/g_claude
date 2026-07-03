@@ -42,7 +42,7 @@ class SessionTabBar extends StatelessWidget {
     if (tabs.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      height: 40,
+      height: 34,
       decoration: const BoxDecoration(
         color: AppColors.surfaceContainerLowest,
         border: Border(bottom: BorderSide(color: AppColors.outlineVariant, width: 1)),
@@ -115,9 +115,9 @@ class _SessionTab extends StatelessWidget {
       onTap: () => cubit.switchTab(workspaceId, tabId),
       builder: (context, hover) => Container(
         key: ValueKey('session_tab_$tabId'),
-        constraints: const BoxConstraints(maxWidth: 200),
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        constraints: const BoxConstraints(maxWidth: 160),
+        height: 34,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
         decoration: BoxDecoration(
           color: isActive ? AppColors.surface : (hover ? AppColors.glassHover : Colors.transparent),
           border: Border(bottom: BorderSide(color: isActive ? AppColors.brandIndigo : Colors.transparent, width: 2)),
@@ -126,8 +126,8 @@ class _SessionTab extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 7,
-              height: 7,
+              width: 6,
+              height: 6,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: running ? AppColors.agentRunning : AppColors.outline.withValues(alpha: 0.5),

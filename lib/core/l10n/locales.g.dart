@@ -225,6 +225,20 @@ class _ClaudeEffort {
   String get max => LocaleKeys.claude_effort_max.tr();
   String get medium => LocaleKeys.claude_effort_medium.tr();
   String get xhigh => LocaleKeys.claude_effort_xhigh.tr();
+  /// Translations for short
+  final Short = const _ClaudeEffortShort._();
+
+}
+
+/// Nested class for short translations
+class _ClaudeEffortShort {
+  const _ClaudeEffortShort._();
+
+  String get high => LocaleKeys.claude_effort_short_high.tr();
+  String get low => LocaleKeys.claude_effort_short_low.tr();
+  String get max => LocaleKeys.claude_effort_short_max.tr();
+  String get medium => LocaleKeys.claude_effort_short_medium.tr();
+  String get xhigh => LocaleKeys.claude_effort_short_xhigh.tr();
 }
 
 /// Nested class for empty translations
@@ -321,6 +335,20 @@ class _ClaudePermission {
   String get bypassPermissions => LocaleKeys.claude_permission_bypassPermissions.tr();
   String get default$ => LocaleKeys.claude_permission_default.tr();
   String get plan => LocaleKeys.claude_permission_plan.tr();
+  /// Translations for short
+  final Short = const _ClaudePermissionShort._();
+
+}
+
+/// Nested class for short translations
+class _ClaudePermissionShort {
+  const _ClaudePermissionShort._();
+
+  String get acceptEdits => LocaleKeys.claude_permission_short_acceptEdits.tr();
+  String get auto => LocaleKeys.claude_permission_short_auto.tr();
+  String get bypassPermissions => LocaleKeys.claude_permission_short_bypassPermissions.tr();
+  String get default$ => LocaleKeys.claude_permission_short_default.tr();
+  String get plan => LocaleKeys.claude_permission_short_plan.tr();
 }
 
 /// Nested class for permissionRequest translations
@@ -389,6 +417,9 @@ class _ClaudeTerminal {
 
   /// Translations for permission
   final Permission = const _ClaudeTerminalPermission._();
+
+  /// Translations for sessionSettings
+  final SessionSettings = const _ClaudeTerminalSessionSettings._();
 
   /// Translations for status
   final Status = const _ClaudeTerminalStatus._();
@@ -507,6 +538,12 @@ class _ClaudeTerminalInputQueue {
 class _ClaudeTerminalMcp {
   const _ClaudeTerminalMcp._();
 
+  String activeCount({required String count}) {
+    return LocaleKeys.claude_terminal_mcp_activeCount.tr(namedArgs: {
+      'count': count,
+    });
+  }
+
   String get authenticate => LocaleKeys.claude_terminal_mcp_authenticate.tr();
   String get disabledLabel => LocaleKeys.claude_terminal_mcp_disabledLabel.tr();
   String get empty => LocaleKeys.claude_terminal_mcp_empty.tr();
@@ -557,6 +594,14 @@ class _ClaudeTerminalPermissionWarning {
   const _ClaudeTerminalPermissionWarning._();
 
   String get default$ => LocaleKeys.claude_terminal_permission_warning_default.tr();
+}
+
+/// Nested class for sessionSettings translations
+class _ClaudeTerminalSessionSettings {
+  const _ClaudeTerminalSessionSettings._();
+
+  String get editHint => LocaleKeys.claude_terminal_sessionSettings_editHint.tr();
+  String get title => LocaleKeys.claude_terminal_sessionSettings_title.tr();
 }
 
 /// Nested class for status translations

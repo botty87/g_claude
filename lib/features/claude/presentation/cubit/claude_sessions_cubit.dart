@@ -1413,6 +1413,11 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _lastFlushAt = null;
   }
 
+  /// Last known MCP server list from the TTL cache (null until first load).
+  /// Read-only convenience for cheap UI (e.g. the settings snippet count);
+  /// callers that need freshness use [ensureMcpServers].
+  List<McpServer>? get cachedMcpServers => _mcpServersCache;
+
   Future<List<McpServer>> ensureMcpServers({bool force = false}) async {
     final now = DateTime.now();
     if (!force &&

@@ -123,6 +123,7 @@
       },
       "mcp": {
         "label": "MCP",
+        "activeCount": "{count} active",
         "tooltip": "MCP servers",
         "title": "MCP servers",
         "refresh": "Refresh",
@@ -142,6 +143,10 @@
       },
       "context": {
         "tooltip": "Input: {input} · Cache read: {cacheRead} · Cache creation: {cacheCreation} · Output: {output}\nContext: {total} / {limit} ({pct}%)"
+      },
+      "sessionSettings": {
+        "title": "Session settings",
+        "editHint": "click to edit"
       }
     },
     "model": {
@@ -154,7 +159,14 @@
       "medium": "Medium",
       "high": "High",
       "xhigh": "Extra High",
-      "max": "Max"
+      "max": "Max",
+      "short": {
+        "low": "Low",
+        "medium": "Med",
+        "high": "High",
+        "xhigh": "X-High",
+        "max": "Max"
+      }
     },
     "thinking": {
       "off": "Off",
@@ -165,7 +177,14 @@
       "acceptEdits": "Accept Edits",
       "auto": "Auto",
       "bypassPermissions": "Bypass (yolo)",
-      "default": "Default"
+      "default": "Default",
+      "short": {
+        "plan": "Plan",
+        "acceptEdits": "Accept",
+        "auto": "Auto",
+        "bypassPermissions": "Bypass",
+        "default": "Default"
+      }
     },
     "message": {
       "assistantLabel": "Claude",

@@ -105,6 +105,7 @@ abstract class  LocaleKeys {
   static const claude_terminal_thinking_tooltip = 'claude.terminal.thinking.tooltip';
   static const claude_terminal_thinking = 'claude.terminal.thinking';
   static const claude_terminal_mcp_label = 'claude.terminal.mcp.label';
+  static const claude_terminal_mcp_activeCount = 'claude.terminal.mcp.activeCount';
   static const claude_terminal_mcp_tooltip = 'claude.terminal.mcp.tooltip';
   static const claude_terminal_mcp_title = 'claude.terminal.mcp.title';
   static const claude_terminal_mcp_refresh = 'claude.terminal.mcp.refresh';
@@ -123,6 +124,9 @@ abstract class  LocaleKeys {
   static const claude_terminal_mcp = 'claude.terminal.mcp';
   static const claude_terminal_context_tooltip = 'claude.terminal.context.tooltip';
   static const claude_terminal_context = 'claude.terminal.context';
+  static const claude_terminal_sessionSettings_title = 'claude.terminal.sessionSettings.title';
+  static const claude_terminal_sessionSettings_editHint = 'claude.terminal.sessionSettings.editHint';
+  static const claude_terminal_sessionSettings = 'claude.terminal.sessionSettings';
   static const claude_terminal = 'claude.terminal';
   static const claude_model_haiku = 'claude.model.haiku';
   static const claude_model_sonnet = 'claude.model.sonnet';
@@ -133,6 +137,12 @@ abstract class  LocaleKeys {
   static const claude_effort_high = 'claude.effort.high';
   static const claude_effort_xhigh = 'claude.effort.xhigh';
   static const claude_effort_max = 'claude.effort.max';
+  static const claude_effort_short_low = 'claude.effort.short.low';
+  static const claude_effort_short_medium = 'claude.effort.short.medium';
+  static const claude_effort_short_high = 'claude.effort.short.high';
+  static const claude_effort_short_xhigh = 'claude.effort.short.xhigh';
+  static const claude_effort_short_max = 'claude.effort.short.max';
+  static const claude_effort_short = 'claude.effort.short';
   static const claude_effort = 'claude.effort';
   static const claude_thinking_off = 'claude.thinking.off';
   static const claude_thinking_on = 'claude.thinking.on';
@@ -142,6 +152,12 @@ abstract class  LocaleKeys {
   static const claude_permission_auto = 'claude.permission.auto';
   static const claude_permission_bypassPermissions = 'claude.permission.bypassPermissions';
   static const claude_permission_default = 'claude.permission.default';
+  static const claude_permission_short_plan = 'claude.permission.short.plan';
+  static const claude_permission_short_acceptEdits = 'claude.permission.short.acceptEdits';
+  static const claude_permission_short_auto = 'claude.permission.short.auto';
+  static const claude_permission_short_bypassPermissions = 'claude.permission.short.bypassPermissions';
+  static const claude_permission_short_default = 'claude.permission.short.default';
+  static const claude_permission_short = 'claude.permission.short';
   static const claude_permission = 'claude.permission';
   static const claude_message_assistantLabel = 'claude.message.assistantLabel';
   static const claude_message_systemLabel = 'claude.message.systemLabel';

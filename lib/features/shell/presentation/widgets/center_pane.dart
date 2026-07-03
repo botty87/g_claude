@@ -9,6 +9,7 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
+import '../../../claude/presentation/widgets/chat_status_indicators.dart';
 import '../../../claude/presentation/widgets/claude_terminal_pane.dart';
 import '../../../claude/presentation/widgets/session_tab_bar.dart';
 import '../../../editor/presentation/cubit/editor_view_cubit.dart';
@@ -42,6 +43,7 @@ class CenterPane extends HookWidget {
       children: [
         const SessionTabBar(),
         _Segmented(
+          workspaceId: activeId,
           current: effectiveView,
           codeCount: openCount,
           codeEnabled: hasFiles,
@@ -101,8 +103,15 @@ class _ChatSurface extends StatelessWidget {
 }
 
 class _Segmented extends StatelessWidget {
-  const _Segmented({required this.current, required this.codeCount, required this.codeEnabled, required this.onSelect});
+  const _Segmented({
+    required this.workspaceId,
+    required this.current,
+    required this.codeCount,
+    required this.codeEnabled,
+    required this.onSelect,
+  });
 
+  final WorkspaceId workspaceId;
   final CenterView current;
   final int codeCount;
   final bool codeEnabled;
@@ -116,42 +125,49 @@ class _Segmented extends StatelessWidget {
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.outlineVariant, width: 1)),
       ),
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(AppRadii.md),
-          border: Border.all(color: AppColors.glassBorder),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _Segment(
-              keyName: 'segment_chat',
-              icon: Symbols.forum,
-              label: Locales.Editor.CenterView.chat,
-              isActive: current == CenterView.chat,
-              onTap: () => onSelect(CenterView.chat),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(AppRadii.md),
+              border: Border.all(color: AppColors.glassBorder),
             ),
-            _Segment(
-              keyName: 'segment_code',
-              icon: Symbols.code,
-              label: Locales.Editor.CenterView.code,
-              isActive: current == CenterView.code,
-              enabled: codeEnabled,
-              badge: codeCount > 0 ? '$codeCount' : null,
-              onTap: () => onSelect(CenterView.code),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _Segment(
+                  keyName: 'segment_chat',
+                  icon: Symbols.forum,
+                  label: Locales.Editor.CenterView.chat,
+                  isActive: current == CenterView.chat,
+                  onTap: () => onSelect(CenterView.chat),
+                ),
+                _Segment(
+                  keyName: 'segment_code',
+                  icon: Symbols.code,
+                  label: Locales.Editor.CenterView.code,
+                  isActive: current == CenterView.code,
+                  enabled: codeEnabled,
+                  badge: codeCount > 0 ? '$codeCount' : null,
+                  onTap: () => onSelect(CenterView.code),
+                ),
+                _Segment(
+                  keyName: 'segment_terminal',
+                  icon: Symbols.terminal,
+                  label: Locales.Editor.CenterView.terminal,
+                  isActive: current == CenterView.terminal,
+                  onTap: () => onSelect(CenterView.terminal),
+                ),
+              ],
             ),
-            _Segment(
-              keyName: 'segment_terminal',
-              icon: Symbols.terminal,
-              label: Locales.Editor.CenterView.terminal,
-              isActive: current == CenterView.terminal,
-              onTap: () => onSelect(CenterView.terminal),
-            ),
-          ],
-        ),
+          ),
+          const Spacer(),
+          SessionContextMeter(workspaceId: workspaceId),
+          const SizedBox(width: AppSpacing.md),
+          SessionStatusIndicator(workspaceId: workspaceId),
+        ],
       ),
     );
   }

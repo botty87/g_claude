@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,85 +9,37 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/utils/menu_position.dart';
-import '../../../../shared/widgets/hoverable.dart';
 import '../../domain/entities/mcp_server.dart';
 import '../cubit/claude_sessions_cubit.dart';
 
-class McpPicker extends StatelessWidget {
-  const McpPicker({super.key, required this.workspaceId});
+/// Reusable, container-less list of MCP servers with per-server enable toggle
+/// and auth button, plus a refresh control. Meant to be embedded (e.g. the
+/// inline expandable section of the session-settings panel); the host provides
+/// the surrounding surface. Scrolls within [maxHeight].
+class McpServerList extends HookWidget {
+  const McpServerList({super.key, required this.workspaceId, this.maxHeight = 240});
 
   final String workspaceId;
+  final double maxHeight;
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: Locales.Claude.Terminal.Mcp.tooltip,
-      child: Hoverable(
-        key: const ValueKey('mcp_picker'),
-        onTap: () => _openMenu(context),
-        builder: (context, hover) {
-          return Container(
-            height: 24,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: hover ? AppColors.glassHover : Colors.transparent,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppColors.outlineVariant, width: 1),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Symbols.hub, size: 14, color: AppColors.onSurfaceVariant),
-                const SizedBox(width: AppSpacing.xs),
-                Text(
-                  Locales.Claude.Terminal.Mcp.label,
-                  style: AppTypography.bodyMain.copyWith(fontSize: 11, color: AppColors.onSurfaceVariant),
-                ),
-                const SizedBox(width: 2),
-                const Icon(Icons.expand_more, size: 12, color: AppColors.onSurfaceVariant),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _openMenu(BuildContext context) {
     final cubit = context.read<ClaudeSessionsCubit>();
-    unawaited(cubit.ensureMcpServers());
-
-    final box = context.findRenderObject() as RenderBox?;
-    if (box == null) return;
-
-    showMenu<void>(
-      context: context,
-      position: relativeRectBelow(box),
-      color: Colors.transparent,
-      elevation: 8,
-      items: [
-        PopupMenuItem<void>(
-          enabled: false,
-          padding: EdgeInsets.zero,
-          child: _McpOverlayContent(cubit: cubit, workspaceId: workspaceId, width: 360),
-        ),
-      ],
-    );
-  }
-}
-
-class _McpOverlayContent extends HookWidget {
-  const _McpOverlayContent({required this.cubit, required this.workspaceId, required this.width});
-
-  final ClaudeSessionsCubit cubit;
-  final String workspaceId;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final future = useState<Future<List<McpServer>>>(cubit.ensureMcpServers());
-    final snapshot = useFuture(future.value);
+    // Memoize so the load fires exactly once on mount — NOT on every rebuild.
+    // (Embedded in the composer's OverlayPortal, this widget rebuilds far more
+    // often than the old popup did; calling ensureMcpServers() in a useState
+    // initializer would re-spawn a sidecar round-trip on each build.)
+    final future = useState<Future<List<McpServer>>>(useMemoized(() => cubit.ensureMcpServers(), const []));
+    // Seed with the warm cache so the list renders at full size on the FIRST
+    // frame (no loading-row flicker). Otherwise the size changes over two
+    // consecutive frames (loading → loaded), which makes the parent AnimatedSize
+    // treat the expansion as "unstable" and snap instead of animating.
+    final snapshot = useFuture(future.value, initialData: cubit.cachedMcpServers);
+    // Header state (refresh button enable + re-entrancy guard + icon color)
+    // tracks a load in flight regardless of retained data — the `initialData`
+    // seed keeps `hasData` true across a forced refresh, so `&& !hasData` here
+    // would leave the guard dead and let taps spawn concurrent round-trips.
+    // The flicker-free body rendering keeps its own `waiting && !hasData`.
     final loading = snapshot.connectionState == ConnectionState.waiting;
 
     void refresh() {
@@ -97,104 +47,98 @@ class _McpOverlayContent extends HookWidget {
       future.value = cubit.ensureMcpServers(force: true);
     }
 
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        width: width,
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(AppRadii.md),
-          border: Border.all(color: AppColors.outlineVariant),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                Text(
-                  Locales.Claude.Terminal.Mcp.title,
-                  style: AppTypography.bodyMain.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: Icon(Symbols.refresh, size: 16, color: loading ? AppColors.outline : null),
-                  onPressed: loading ? null : refresh,
-                  tooltip: Locales.Claude.Terminal.Mcp.refresh,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints.tightFor(width: 24, height: 24),
-                  splashRadius: 12,
-                ),
-              ],
+            Text(
+              Locales.Claude.Terminal.Mcp.title,
+              style: AppTypography.bodyMain.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
             ),
-            const Divider(color: AppColors.outlineVariant, height: 16, thickness: 1),
-            _buildBody(context, snapshot),
+            const Spacer(),
+            IconButton(
+              icon: Icon(Symbols.refresh, size: 16, color: loading ? AppColors.outline : null),
+              onPressed: loading ? null : refresh,
+              tooltip: Locales.Claude.Terminal.Mcp.refresh,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints.tightFor(width: 22, height: 22),
+              splashRadius: 12,
+            ),
           ],
         ),
-      ),
+        const SizedBox(height: AppSpacing.xs),
+        _mcpBody(context, snapshot, cubit, workspaceId, maxHeight),
+      ],
+    );
+  }
+}
+
+Widget _mcpBody(
+  BuildContext context,
+  AsyncSnapshot<List<McpServer>> snapshot,
+  ClaudeSessionsCubit cubit,
+  String workspaceId,
+  double maxHeight,
+) {
+  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+    return Row(
+      children: [
+        const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+        const SizedBox(width: AppSpacing.sm),
+        Text(
+          Locales.Claude.Terminal.Mcp.loading,
+          style: AppTypography.bodyMain.copyWith(fontSize: 11, color: AppColors.outline),
+        ),
+      ],
     );
   }
 
-  Widget _buildBody(BuildContext context, AsyncSnapshot<List<McpServer>> snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return Row(
-        children: [
-          const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            Locales.Claude.Terminal.Mcp.loading,
-            style: AppTypography.bodyMain.copyWith(fontSize: 11, color: AppColors.outline),
+  if (snapshot.hasError) {
+    return Text(Locales.Claude.Terminal.Mcp.error, style: AppTypography.bodyMain.copyWith(color: AppColors.error));
+  }
+
+  final data = snapshot.data;
+  if (data == null || data.isEmpty) {
+    return Text(Locales.Claude.Terminal.Mcp.empty, style: AppTypography.bodyMain.copyWith(color: AppColors.outline));
+  }
+
+  return ConstrainedBox(
+    constraints: BoxConstraints(maxHeight: maxHeight),
+    child: BlocBuilder<ClaudeSessionsCubit, ClaudeSessionsState>(
+      buildWhen: (a, b) {
+        final sa = a.sessionFor(workspaceId);
+        final sb = b.sessionFor(workspaceId);
+        return sa?.disabledMcpServers != sb?.disabledMcpServers || sa?.runStatus != sb?.runStatus;
+      },
+      builder: (context, sessionsState) {
+        final session = sessionsState.sessionFor(workspaceId);
+        final disabled = session?.disabledMcpServers ?? const <String>{};
+        final canAuth = cubit.isSessionActive(workspaceId);
+        return ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+          child: ListView.separated(
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            itemCount: data.length,
+            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xs),
+            itemBuilder: (_, i) {
+              final server = data[i];
+              final isDisabled = disabled.contains(server.name);
+              return _McpServerTile(
+                server: server,
+                isDisabled: isDisabled,
+                canAuth: canAuth,
+                onToggle: (enabled) => cubit.toggleMcpServer(workspaceId, server.name, enabled),
+                onAuth: () => cubit.authenticateMcpServer(workspaceId, server.name),
+              );
+            },
           ),
-        ],
-      );
-    }
-
-    if (snapshot.hasError) {
-      return Text(Locales.Claude.Terminal.Mcp.error, style: AppTypography.bodyMain.copyWith(color: AppColors.error));
-    }
-
-    final data = snapshot.data;
-    if (data == null || data.isEmpty) {
-      return Text(Locales.Claude.Terminal.Mcp.empty, style: AppTypography.bodyMain.copyWith(color: AppColors.outline));
-    }
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxHeight: 360),
-      child: BlocBuilder<ClaudeSessionsCubit, ClaudeSessionsState>(
-        buildWhen: (a, b) {
-          final sa = a.sessionFor(workspaceId);
-          final sb = b.sessionFor(workspaceId);
-          return sa?.disabledMcpServers != sb?.disabledMcpServers || sa?.runStatus != sb?.runStatus;
-        },
-        builder: (context, sessionsState) {
-          final session = sessionsState.sessionFor(workspaceId);
-          final disabled = session?.disabledMcpServers ?? const <String>{};
-          final canAuth = cubit.isSessionActive(workspaceId);
-          return ScrollConfiguration(
-            behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
-            child: ListView.separated(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              itemCount: data.length,
-              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xs),
-              itemBuilder: (_, i) {
-                final server = data[i];
-                final isDisabled = disabled.contains(server.name);
-                return _McpServerTile(
-                  server: server,
-                  isDisabled: isDisabled,
-                  canAuth: canAuth,
-                  onToggle: (enabled) => cubit.toggleMcpServer(workspaceId, server.name, enabled),
-                  onAuth: () => cubit.authenticateMcpServer(workspaceId, server.name),
-                );
-              },
-            ),
-          );
-        },
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
 }
 
 class _McpServerTile extends StatelessWidget {
