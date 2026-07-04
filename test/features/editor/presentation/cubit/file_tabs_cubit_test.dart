@@ -318,6 +318,23 @@ void main() {
         expect(files.activeDiffId, 'diff.dart');
       },
     );
+
+    blocTest<FileTabsCubit, FileTabsState>(
+      'surfaces a remaining diff tab (no active diff) so the center is not left empty',
+      build: makeCubit,
+      seed: () => FileTabsState(
+        perWorkspace: {
+          // A file is shown (activeDiffId null) while a diff tab sits inactive.
+          wsId: WorkspaceFiles(openPaths: ['a.dart'], activePath: 'a.dart', openDiffs: [ref('diff.dart')]),
+        },
+      ),
+      act: (c) => c.closeAllFiles(wsId),
+      verify: (c) {
+        final files = c.state.filesFor(wsId)!;
+        expect(files.openPaths, isEmpty);
+        expect(files.activeDiffId, 'diff.dart', reason: 'the remaining diff is activated');
+      },
+    );
   });
 
   group('closeAllTabs', () {

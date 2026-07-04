@@ -53,6 +53,13 @@ class GitDiffDataSource {
   /// Reads the unified diff of a single [file]. Untracked files have no HEAD
   /// blob to diff against, so they go through `git diff --no-index` against
   /// `/dev/null` (exit code 1 on differences is expected, not an error).
+  ///
+  /// Known limitation: a renamed file is diffed by its new path only, which git
+  /// (comparing HEAD to the working tree) renders as an all-additions "new
+  /// file". Passing both old+new pathspecs does not help — git emits two
+  /// separate delete/add sections that would merge into one confusing FileDiff.
+  /// A faithful rename diff (HEAD blob of the old path vs the working new file)
+  /// needs extra plumbing; deferred. The +/- counts (from numstat) are correct.
   Future<FileDiff> readFileDiff(String cwd, GitDiffFile file) async {
     if (file.status == GitFileStatus.untracked) {
       final stdout = await _runNoIndexAgainstDevNull(cwd, file.path);

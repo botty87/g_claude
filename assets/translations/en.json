@@ -430,7 +430,7 @@
       "searchHint": "Search open files...",
       "empty": "No files open",
       "noMatches": "No matches",
-      "closeAll": "Close all tabs"
+      "closeAll": "Close all editors"
     },
     "find": {
       "hint": "Find in file",

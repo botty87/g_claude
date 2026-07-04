@@ -146,7 +146,10 @@ class FileTabsCubit extends Cubit<FileTabsState> {
     final nextPreview = files.previewPath == path ? null : files.previewPath;
 
     if (nextPaths.isEmpty) {
-      final next = files.copyWith(openPaths: [], activePath: null, previewPath: null);
+      // No files left: if diff tabs remain but none is active, surface one so
+      // the center shows it instead of falling to the empty state.
+      final nextActiveDiff = files.activeDiffId ?? (files.openDiffs.isEmpty ? null : files.openDiffs.last.path);
+      final next = files.copyWith(openPaths: [], activePath: null, previewPath: null, activeDiffId: nextActiveDiff);
       emit(state.copyWith(perWorkspace: {...state.perWorkspace, id: next}));
       return;
     }
@@ -198,12 +201,15 @@ class FileTabsCubit extends Cubit<FileTabsState> {
     final files = state.perWorkspace[id];
     if (files == null || files.openPaths.isEmpty) return;
     _talker.debug('FileTabsCubit: closed all files in workspace $id');
-    // Keep diff tabs: "close all files" acts on the file set only.
+    // Keep diff tabs: "close all files" acts on the file set only. If diffs
+    // remain but none is active, surface one so the center doesn't fall to the
+    // empty state while a diff tab is still visible in the strip.
+    final nextActiveDiff = files.activeDiffId ?? (files.openDiffs.isEmpty ? null : files.openDiffs.last.path);
     emit(
       state.copyWith(
         perWorkspace: {
           ...state.perWorkspace,
-          id: files.copyWith(openPaths: [], activePath: null, previewPath: null),
+          id: files.copyWith(openPaths: [], activePath: null, previewPath: null, activeDiffId: nextActiveDiff),
         },
       ),
     );

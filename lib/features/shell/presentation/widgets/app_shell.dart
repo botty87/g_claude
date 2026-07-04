@@ -429,7 +429,14 @@ class _MainArea extends HookWidget {
         anim.removeListener(tick);
         lockEnds();
       });
-      return () => anim.removeListener(tick);
+      // Cleanup must stop the ticker before the next toggle re-runs this effect:
+      // a still-running ticker would make the next forward(from:0) restart over
+      // an active ticker, and its (now stale) whenComplete could re-lock with the
+      // previous target. Stopping cancels that future, so only the latest run locks.
+      return () {
+        anim.removeListener(tick);
+        anim.stop();
+      };
     }, [rightCollapsed, controller]);
 
     void persistSizes() {

@@ -227,13 +227,6 @@ class _CloseAllRow extends StatelessWidget {
                 style: AppTypography.bodyMain.copyWith(fontSize: 13, color: AppColors.onSurface),
               ),
             ),
-            Text(
-              '⌘⇧W',
-              style: AppTypography.bodyMain.copyWith(
-                fontSize: 11,
-                color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
-              ),
-            ),
           ],
         ),
       ),
