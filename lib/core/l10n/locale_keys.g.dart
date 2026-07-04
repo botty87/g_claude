@@ -53,8 +53,16 @@ abstract class  LocaleKeys {
   static const shell_closeWorktree = 'shell.closeWorktree';
   static const shell_rightPanel_files = 'shell.rightPanel.files';
   static const shell_rightPanel_diff = 'shell.rightPanel.diff';
-  static const shell_rightPanel_diffComingSoon = 'shell.rightPanel.diffComingSoon';
+  static const shell_rightPanel_collapse = 'shell.rightPanel.collapse';
+  static const shell_rightPanel_expand = 'shell.rightPanel.expand';
   static const shell_rightPanel = 'shell.rightPanel';
+  static const shell_diffPanel_empty = 'shell.diffPanel.empty';
+  static const shell_diffPanel_notRepo = 'shell.diffPanel.notRepo';
+  static const shell_diffPanel_flatView = 'shell.diffPanel.flatView';
+  static const shell_diffPanel_treeView = 'shell.diffPanel.treeView';
+  static const shell_diffPanel_refresh = 'shell.diffPanel.refresh';
+  static const shell_diffPanel_loadError = 'shell.diffPanel.loadError';
+  static const shell_diffPanel = 'shell.diffPanel';
   static const shell_shortcuts_attachedFile = 'shell.shortcuts.attachedFile';
   static const shell_shortcuts_attachedRange = 'shell.shortcuts.attachedRange';
   static const shell_shortcuts_alreadyAttached = 'shell.shortcuts.alreadyAttached';
@@ -402,6 +410,13 @@ abstract class  LocaleKeys {
   static const editor_peek_reduceToPeek = 'editor.peek.reduceToPeek';
   static const editor_peek_close = 'editor.peek.close';
   static const editor_peek = 'editor.peek';
+  static const editor_diff_badge = 'editor.diff.badge';
+  static const editor_diff_unified = 'editor.diff.unified';
+  static const editor_diff_split = 'editor.diff.split';
+  static const editor_diff_binary = 'editor.diff.binary';
+  static const editor_diff_empty = 'editor.diff.empty';
+  static const editor_diff_loadError = 'editor.diff.loadError';
+  static const editor_diff = 'editor.diff';
   static const editor = 'editor';
 
 }

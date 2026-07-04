@@ -1,0 +1,3 @@
+diff --git a/src/lib/image.png b/src/lib/image.png
+index db11f21..1f9308b 100644
+Binary files a/src/lib/image.png and b/src/lib/image.png differ

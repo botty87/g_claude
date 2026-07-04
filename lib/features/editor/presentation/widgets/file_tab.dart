@@ -18,6 +18,7 @@ class FileTab extends StatelessWidget {
     required this.path,
     required this.isActive,
     required this.isPreview,
+    this.isDiff = false,
     super.key,
   });
 
@@ -26,11 +27,22 @@ class FileTab extends StatelessWidget {
   final bool isActive;
   final bool isPreview;
 
+  /// A diff tab (git changes) instead of a file editor tab: different icon,
+  /// a "DIFF" badge, and it is not reorderable (no drag).
+  final bool isDiff;
+
   @override
   Widget build(BuildContext context) {
-    final tab = _TabBody(workspaceId: workspaceId, path: path, isActive: isActive, isPreview: isPreview);
+    final tab = _TabBody(
+      workspaceId: workspaceId,
+      path: path,
+      isActive: isActive,
+      isPreview: isPreview,
+      isDiff: isDiff,
+    );
 
-    if (isPreview) {
+    // Diff tabs and preview tabs are not draggable/reorderable.
+    if (isPreview || isDiff) {
       return tab;
     }
 
@@ -92,6 +104,7 @@ class _TabBody extends StatelessWidget {
     required this.path,
     required this.isActive,
     required this.isPreview,
+    this.isDiff = false,
     this.interactive = true,
   });
 
@@ -99,13 +112,22 @@ class _TabBody extends StatelessWidget {
   final String path;
   final bool isActive;
   final bool isPreview;
+  final bool isDiff;
   final bool interactive;
 
   @override
   Widget build(BuildContext context) {
     return Hoverable(
-      onTap: interactive ? () => context.read<FileTabsCubit>().setActiveFile(workspaceId, path) : null,
-      onDoubleTap: interactive && isPreview ? () => context.read<FileTabsCubit>().pinFile(workspaceId, path) : null,
+      onTap: !interactive
+          ? null
+          : isDiff
+          ? () => context.read<FileTabsCubit>().setActiveDiff(workspaceId, path)
+          : () => context.read<FileTabsCubit>().setActiveFile(workspaceId, path),
+      onDoubleTap: !(interactive && isPreview)
+          ? null
+          : isDiff
+          ? () => context.read<FileTabsCubit>().pinDiff(workspaceId, path)
+          : () => context.read<FileTabsCubit>().pinFile(workspaceId, path),
       builder: (context, hover) {
         final fill = isActive
             ? AppColors.surface
@@ -125,7 +147,7 @@ class _TabBody extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Symbols.description, size: 14, color: textColor),
+              Icon(isDiff ? Symbols.difference : Symbols.description, size: 14, color: textColor),
               const SizedBox(width: AppSpacing.sm),
               Text(
                 p.basename(path),
@@ -134,12 +156,28 @@ class _TabBody extends StatelessWidget {
                   fontStyle: isPreview ? FontStyle.italic : FontStyle.normal,
                 ),
               ),
+              if (isDiff) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: AppColors.brandIndigo.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
+                  ),
+                  child: Text(
+                    Locales.Editor.Diff.badge,
+                    style: AppTypography.navTab.copyWith(fontSize: 9.5, color: AppColors.primary),
+                  ),
+                ),
+              ],
               const SizedBox(width: AppSpacing.sm),
               if (interactive)
                 Tooltip(
                   message: isActive ? '${Locales.Editor.Tab.close} (⌘W)' : Locales.Editor.Tab.close,
                   child: Hoverable(
-                    onTap: () => context.read<FileTabsCubit>().closeFile(workspaceId, path),
+                    onTap: () => isDiff
+                        ? context.read<FileTabsCubit>().closeDiff(workspaceId, path)
+                        : context.read<FileTabsCubit>().closeFile(workspaceId, path),
                     builder: (context, closeHover) => Container(
                       width: 18,
                       height: 18,

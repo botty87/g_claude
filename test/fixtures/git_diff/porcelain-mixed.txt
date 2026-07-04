@@ -1,0 +1,7 @@
+M  src/lib/foo.dart
+D  src/lib/gone.dart
+M  src/lib/image.png
+R  src/lib/old_name.dart -> src/lib/new_name.dart
+?? src/lib/untracked.dart
+?? src/lib/untracked.png
+?? "src/lib/weird \"quoted\" name.dart"

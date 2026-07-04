@@ -1,0 +1,4 @@
+2	1	src/lib/foo.dart
+0	1	src/lib/gone.dart
+-	-	src/lib/image.png
+1	1	src/lib/{old_name.dart => new_name.dart}

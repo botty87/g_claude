@@ -58,7 +58,16 @@
     "rightPanel": {
       "files": "Files",
       "diff": "Diff",
-      "diffComingSoon": "Diff in arrivo"
+      "collapse": "Comprimi pannello",
+      "expand": "Espandi pannello"
+    },
+    "diffPanel": {
+      "empty": "Nessuna modifica non committata",
+      "notRepo": "Non è un repository git",
+      "flatView": "Lista piatta",
+      "treeView": "Albero",
+      "refresh": "Aggiorna",
+      "loadError": "Impossibile caricare le modifiche"
     },
     "shortcuts": {
       "attachedFile": "Allegato {name}",
@@ -432,7 +441,7 @@
       "searchHint": "Cerca file aperti...",
       "empty": "Nessun file aperto",
       "noMatches": "Nessun risultato",
-      "closeAll": "Chiudi tutte le schede"
+      "closeAll": "Chiudi tutti gli editor"
     },
     "find": {
       "hint": "Cerca nel file",
@@ -466,6 +475,14 @@
       "openFull": "Apri a schermo intero",
       "reduceToPeek": "Riduci a sbircia",
       "close": "Chiudi"
+    },
+    "diff": {
+      "badge": "DIFF",
+      "unified": "Unified",
+      "split": "Split",
+      "binary": "File binario — nessuna anteprima",
+      "empty": "Nessuna modifica",
+      "loadError": "Impossibile caricare il diff"
     }
   }
 }

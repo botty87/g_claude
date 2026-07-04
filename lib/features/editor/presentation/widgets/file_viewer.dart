@@ -10,6 +10,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../cubit/file_tabs_cubit.dart';
+import 'diff_view.dart';
 import 'file_preview.dart';
 
 /// Bounded LRU pool of mounted [CodeView]s, switched via [IndexedStack].
@@ -27,6 +28,23 @@ class FileViewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeId = context.select<WorkspacesCubit, WorkspaceId?>((c) => c.state.activeIdOrNull);
+    // A diff tab wins over the file surface when active.
+    final activeDiffId = context.select<FileTabsCubit, String?>(
+      (c) => activeId == null ? null : c.state.filesFor(activeId)?.activeDiffId,
+    );
+    if (activeId != null && activeDiffId != null) {
+      final ref = context.select<FileTabsCubit, DiffTabRef?>((c) {
+        final diffs = c.state.filesFor(activeId)?.openDiffs;
+        if (diffs == null) return null;
+        for (final d in diffs) {
+          if (d.path == activeDiffId) return d;
+        }
+        return null;
+      });
+      if (ref != null) {
+        return DiffView(key: ValueKey('diff-$activeDiffId'), workspaceId: activeId, ref: ref);
+      }
+    }
     final activePath = context.select<FileTabsCubit, String?>(
       (c) => activeId == null ? null : c.state.filesFor(activeId)?.activePath,
     );

@@ -34,7 +34,12 @@ class CenterPane extends HookWidget {
 
     final view = context.select<EditorViewCubit, CenterView>((c) => c.state.dataFor(activeId).view);
     final peekOpen = context.select<EditorViewCubit, bool>((c) => c.state.dataFor(activeId).peekOpen);
-    final openCount = context.select<FileTabsCubit, int>((c) => c.state.filesFor(activeId)?.openPaths.length ?? 0);
+    // The Code segment counts editor tabs + diff tabs; either kind enables it.
+    final openCount = context.select<FileTabsCubit, int>((c) {
+      final f = c.state.filesFor(activeId);
+      if (f == null) return 0;
+      return f.openPaths.length + f.openDiffs.length;
+    });
     final hasFiles = openCount > 0;
     // Code is only reachable with at least one open file.
     final effectiveView = (view == CenterView.code && !hasFiles) ? CenterView.chat : view;
@@ -252,6 +257,12 @@ class _CodeView extends HookWidget {
     );
     final activePath = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.activePath);
     final previewPath = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.previewPath);
+    final activeDiffId = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.activeDiffId);
+    final previewDiffId = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.previewDiffId);
+    final openDiffs = context.select<FileTabsCubit, List<DiffTabRef>>(
+      (c) => c.state.filesFor(workspaceId)?.openDiffs ?? const [],
+    );
+    final showingDiff = activeDiffId != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -275,8 +286,17 @@ class _CodeView extends HookWidget {
                           key: ValueKey('code-tab-$path'),
                           workspaceId: workspaceId,
                           path: path,
-                          isActive: path == activePath,
+                          isActive: !showingDiff && path == activePath,
                           isPreview: path == previewPath,
+                        ),
+                      for (final diff in openDiffs)
+                        FileTab(
+                          key: ValueKey('code-diff-tab-${diff.path}'),
+                          workspaceId: workspaceId,
+                          path: diff.path,
+                          isActive: diff.path == activeDiffId,
+                          isPreview: diff.path == previewDiffId,
+                          isDiff: true,
                         ),
                     ],
                   ),

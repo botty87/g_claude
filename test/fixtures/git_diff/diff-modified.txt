@@ -1,0 +1,12 @@
+diff --git a/src/lib/foo.dart b/src/lib/foo.dart
+index b3c5a95..a68401b 100644
+--- a/src/lib/foo.dart
++++ b/src/lib/foo.dart
+@@ -1,5 +1,6 @@
+ line1
+-line2
++line2 CHANGED
+ line3
+ line4
+ line5
++line6 NEW

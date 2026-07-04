@@ -76,12 +76,29 @@ class _LocalizedHost extends StatelessWidget {
 }
 
 /// Loads translations via `rootBundle` so tests see the same JSON the app ships.
+///
+/// Caches the decoded JSON per `path/locale` in a process-wide static map.
+/// Without this, a *second* `pumpAppWidget` call in the same test file hangs
+/// forever: `TestWidgetsFlutterBinding` tears down the `flutter/assets`
+/// channel's mock handler between tests, so a repeat `rootBundle.loadString`
+/// call never receives a reply and `EasyLocalization`'s loading Future never
+/// resolves — the widget tree gets stuck showing its `SizedBox.shrink()`
+/// "not loaded yet" placeholder. Every existing multi-`testWidgets` file only
+/// ever asserted *absence* (`findsNothing`) in its 2nd+ test, which is also
+/// vacuously true against a stuck-empty tree, so this went unnoticed.
 class RootBundleAssetLoader extends AssetLoader {
   const RootBundleAssetLoader();
 
+  static final Map<String, Map<String, dynamic>> _cache = {};
+
   @override
   Future<Map<String, dynamic>> load(String path, Locale locale) async {
-    final raw = await rootBundle.loadString('$path/${locale.languageCode}.json');
-    return Map<String, dynamic>.from(jsonDecode(raw) as Map);
+    final key = '$path/${locale.languageCode}.json';
+    final cached = _cache[key];
+    if (cached != null) return cached;
+    final raw = await rootBundle.loadString(key);
+    final decoded = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+    _cache[key] = decoded;
+    return decoded;
   }
 }

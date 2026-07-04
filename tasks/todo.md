@@ -1,129 +1,104 @@
-# Fase 5b — Creazione worktree (`+ Nuovo worktree` per repo)
+# Fase 6 — Diff panel + rifiniture di moto (ClickUp 86cahc8ey)
 
-ClickUp: `86caj99en`. Handoff §55/§58 ("+ Nuovo worktree per repo").
+Branch: `feature/diff-panel` da `main`. Vincolo: solo `features/explorer` + pannello destro (`shell`) + `features/editor` (tab "Codice") + NUOVO `features/git` diff datasource. **NON** toccare `git_worktree_datasource.dart` né `features/claude`.
 
-## Obiettivo
-Da un gruppo repo nella sidebar, creare un nuovo worktree — o da **branch nuovo**
-(`-b`) o da **branch esistente** senza worktree — e aprirlo come workspace.
+## Decisioni architetturali (post-esplorazione + advisor)
 
-## Decisioni di prodotto (default sensati, editabili in review)
-1. **Due modalità**: (a) *Nuovo branch* — nome + base ref; (b) *Branch esistente* —
-   dropdown dei branch locali **senza** worktree già attivo.
-2. **Path di default**: parent di un worktree linked esistente (strip del branch
-   dal suo path) + `<branch>`. Es. restyle → `.superset/worktrees/g_claude` →
-   nuovo `feature/foo` = `.superset/worktrees/g_claude/feature/foo` (sibling).
-   Fallback (solo main presente): `dirname(repoRoot)/<branch>`. Sempre editabile +
-   folder picker.
-3. **No `--force`, no pre-validazione**: si lascia fallire git (dir esistente,
-   branch già esistente) e si mostra `GitException → Failure` nella riga errore,
-   stesso pattern di `close_worktree_dialog`.
-4. **Remote-tracking**: differito. Base ref può essere `origin/x` come startPoint,
-   quindi copertura sufficiente per v1.
+- **Tab diff conviventi**: due liste parallele in `WorkspaceFiles` — `openPaths` (file, intatta) + nuova `openDiffs: List<DiffTabRef>`. Diff tab **effimere → NON persistite** in `tabs.v1` (derivano dallo stato git). Puntatore attivo discriminato: `activeDiffId` con invariante *"se != null vince sul file"*; `openFile`/`setActiveFile` azzerano `activeDiffId`. Niente sealed-union su `openPaths` (forzerebbe schema-bump + guardie watcher per zero guadagno).
+- **Persistenza divisa**:
+  - `rightPanelCollapsed` → **in-memory** in `ShellCubit` (la sidebar NON è persistita; per essere "esatta" dev'esserlo anche questo).
+  - vista diff **flat/tree** → **persistita per workspace** via `KeyValueStore` in un nuovo `GitDiffCubit`.
+- **Sorgente diff** = working tree vs `HEAD`: `git status --porcelain` (lista+stato) + `git diff --numstat HEAD` (conteggi). Contenuto viewer: `git diff HEAD -- <path>` (untracked: file intero come additions).
+- **Viewer diff**: rendering custom per riga (parse unified → righe context/add/del/hunk), colori `AppColors.diffAdd`/`diffDel` (già esistenti). Unified prima; Split rifinitura (riusa gli hunk parsati).
 
-## Command form (verificati contro layout reale non-bare)
-- Nuovo branch: `git -C <repoRoot> worktree add -b <newBranch> <path> <baseRef>`
-- Branch esistente: `git -C <repoRoot> worktree add <path> <branch>`
-- Lista branch+mapping: `git -C <repoRoot> branch --list --format='%(refname:short)%09%(worktreepath)'`
+## Piano
 
-## Vincolo git critico
-`worktree add <path> <branch>` **rifiuta** un branch già checked-out in un altro
-worktree → candidati "branch esistente" = branch locali con `worktreepath` vuoto.
+### 1. Feature `git` — datasource/repo/usecase diff (Clean Arch)
+- [ ] `domain/entities/git_diff_file.dart` (freezed): `path`, `status` (enum: modified/added/deleted/renamed/untracked), `added`, `deleted`, `isBinary`, `oldPath?`.
+- [ ] `domain/entities/diff_hunk.dart` + `diff_line.dart` (freezed) per il contenuto unified parsato.
+- [ ] `data/datasources/git_diff_datasource.dart` (`@lazySingleton`, `Talker`): `Process.run('git', ['-C', cwd, ...])` con helper privato `_run` (stile `git_worktree_datasource`). Parser **static `@visibleForTesting`**: `parsePorcelain`, `parseNumstat` (merge per path), `parseUnifiedDiff`.
+- [ ] `domain/repositories/git_diff_repository.dart` + `data/repositories/git_diff_repository_impl.dart` (`SubprocessFailure`/`UnexpectedFailure`).
+- [ ] `domain/usecases/list_changed_files.dart`, `read_file_diff.dart`.
 
-## Piano implementativo
+### 2. `GitDiffCubit` + state
+- [ ] Stato per-workspace: `files`, `viewMode: flat|tree` (**persistito**), `loading`, `failure?`, `expandedDirs`.
+- [ ] Metodi: `load(workspaceId)`, `refresh`, `setViewMode`, `toggleDir`. Persist viewMode via `KeyValueStore` (chiave `persistence.git_diff.v1`).
+- [ ] `@lazySingleton`, restore viewMode al `@PostConstruct`.
 
-### Layer git (data/domain)
-- [ ] Entity `GitBranch {String name, String? worktreePath}` (freezed) + `bool get hasWorktree`.
-- [ ] `GitWorktreeDataSource.addWorktree(repoRoot, worktreePath, {newBranch, baseRef, checkoutBranch})`.
-- [ ] `GitWorktreeDataSource.listBranches(repoRoot)` + static `@visibleForTesting parseBranchList(String)`.
-- [ ] `GitRepository.addWorktree(...)` + `listBranches(...)` (iface + impl, mapping Failure).
-- [ ] Usecases `AddWorktree`, `ListBranches` (`@injectable`, nomi verbali).
+### 3. Pannello Diff (right_panel.dart, tab "Diff")
+- [ ] Sostituire `_StubMessage` (`right_panel.dart:127`) con `DiffPanelView`.
+- [ ] Header: toggle **flat/tree** + refresh + spinner in loading.
+- [ ] **Lista piatta**: path completo + badge M/A/D + `+add`/`−del`.
+- [ ] **Albero**: raggruppa per cartella (contatore file, comprimibile) riusando il flatten di `explorer_view.dart:157`; file con badge + conteggi.
+- [ ] Click file → apre tab diff in "Codice" (`openDiff` + `openPeek`/`promoteToFull` come explorer).
 
-### Logica pura (testabile senza git)
-- [ ] `defaultWorktreePath(repoRoot, worktrees, branch)` — pura, strip-branch-suffix + join.
-- [ ] Filtro candidati = `branches.where((b) => !b.hasWorktree)`.
+### 4. Tab diff nella sezione "Codice" (editor)
+- [ ] `WorkspaceFiles`: `+ openDiffs: List<DiffTabRef>`, `+ activeDiffId`. `DiffTabRef` (freezed): `id`, `path`, `added`, `deleted`.
+- [ ] `FileTabsCubit`: `openDiff`/`closeDiff`/`setActiveDiff`; `openFile`/`setActiveFile`/`closeFile` azzerano `activeDiffId`. Persistenza `tabs.v1` invariata (diff escluse).
+- [ ] Tab bar (`center_pane.dart:273` + `peek_sheet.dart:81`): dopo le tab file, itera `openDiffs` → `FileTab(isDiff: true)`.
+- [ ] `file_tab.dart` `_TabBody`: se `isDiff` → icona `Symbols.difference` + badge "DIFF"; titolo = basename(path).
+- [ ] `FileViewer`/`_PooledStack`: se `activeDiffId != null` monta `DiffView` altrimenti `FilePreview`.
+- [ ] `DiffView` (nuovo): header (path, +/−) + toggle Split/Unified (Unified funzionante); carica via `ReadFileDiff`; rendering righe colorate. Stato locale `sealed _ViewState` (come `code_view.dart`).
+- [ ] Contatore "Codice (n)" (`center_pane.dart:37`): `openPaths.length + openDiffs.length`.
 
-### Cubit
-- [ ] `createWorktree(repoRoot, {newBranch, baseRef, existingBranch, targetPath})`
-      → `Either<Failure,void>`; Right → `_worktreeCache.clear()` + `openPath(targetPath)`.
-- [ ] `branchesFor(repoRoot)` per popolare la dialog. Inietta `AddWorktree` + `ListBranches`.
+### 5. Pannello destro collassabile
+- [ ] `ShellState`: `+ @Default(false) bool rightPanelCollapsed`. `ShellCubit`: `toggleRightPanel`/`setRightPanelCollapsed`. In-memory.
+- [ ] Layout: **SCELTA = mantieni MultiSplitView**, anima `Area.size` (320↔52), divisore disabilitato quando collassato. Resize preservato quando espanso. Toggle nell'header + rail collassata (icona + expand button, come sidebar).
+- [ ] Animazione: `AnimatedSwitcher` sul contenuto (espanso/rail) + size dell'Area guidata dal flag; `_PinnedWidth`-like sul contenuto interno per evitare reflow durante il tween.
 
-### UI
-- [ ] `new_worktree_dialog.dart` (HookWidget): radio nuovo/esistente, TextField nome branch,
-      dropdown base ref / dropdown branch esistenti, TextField path (default) + folder picker,
-      riga errore, busy. Mirror di `close_worktree_dialog`.
-- [ ] `_RepoHeader`: icona `+` (Symbols.add) → `showNewWorktreeDialog(context, repoRoot, worktrees)`.
+### 6. Rifiniture di moto
+- [ ] Pulse dot stato running, spinner (diff loading), transizioni tab/pannello (`AnimatedSwitcher`).
 
-### l10n
-- [ ] `shell.newWorktree.*` + `shell.sidebar.worktrees.addTooltip` (en/it) → `just gen-l10n`.
+### 7. l10n
+- [ ] Chiavi nuove `en.json`+`it.json` (badge, flat/tree, split/unified, empty state) → `dart run lib/core/l10n/tool/l10n_generate.dart`.
 
-### Test (policy CLAUDE.md)
-- [ ] `parseBranchList` — parser puro, fixture reale.
-- [ ] `defaultWorktreePath` — linked esistente / solo main / branch con slash.
-- [ ] `git_repository_impl` — addWorktree/listBranches → Failure mapping.
-- [ ] `workspaces_cubit` — createWorktree: Right→openPath, Left→no open.
-- [ ] `new_worktree_dialog` — widget test consolidato: routing modalità + errore tiene aperta.
+### 8. Test
+- [ ] Parser `parsePorcelain`/`parseNumstat`/`parseUnifiedDiff` — fixture reali con **modify + untracked (??) + binary (- -) + rename (R old -> new)**.
+- [ ] `GitDiffRepositoryImpl` mapping eccezione→Failure.
+- [ ] `GitDiffCubit` state machine (load/viewMode persist).
+- [ ] Widget: lista piatta + albero (comprimi/click) + tab diff (badge DIFF, contatore, convivenza con file tab).
 
-### Chiusura
-- [ ] `just check` verde, `flutter test` verde.
-- [ ] Verifica live Marionette (crea worktree → tab + riga sidebar).
-- [ ] Commit (attende approvazione), aggiorna ClickUp `86caj99en`.
+### 9. Verifica
+- [ ] `just analyze` · `just format-check` · `fvm flutter test`.
+- [ ] Prova live via Marionette (apri diff, toggle viste, collapse pannello).
+- [ ] Mostra diff + risultati test → attendo ok commit.
+- [ ] Aggiorna ClickUp 86cahc8ey (Composio, `clickup_rococo-picot`).
 
-## Note
-- Layout reale g_claude NON è bare: main = repoRoot, restyle = linked worktree.
-- Sync a origin/main: FATTO (fast-forward 949aabc).
+## Stato
 
-## Add-on stessa fase (richiesta 2026-07-03)
+Implementazione completa. Verifica live via Marionette OK (app rilanciata pulita):
+- Pannello Diff: lista piatta (badge M/A/D/U + conteggi +/−) e albero (cartelle annidate, contatori, comprimibili) su dati git reali.
+- Toggle flat/tree (persistito in GitDiffCubit via KeyValueStore).
+- Click file → tab diff in "Codice" (badge DIFF, contatore "Codice n" = file+diff), peek sheet.
+- Viewer diff: Unified (numeri riga, hunk header, aggiunte verdi) + Split (side-by-side allineato).
+- Pannello destro collapse/expand (rail 52px ↔ full, animazione size Area).
 
-### Chip worktree (`_WorktreeChip` in `session_tab_bar.dart`)
-- [x] Visibile **solo** con sidebar collassata (gate nel parent `SessionTabBar`).
-- [x] Lista **solo worktree aperti** (rimosso loop branch-senza-worktree).
-- [x] Test aggiornato + verifica live Marionette OK.
+Quality gate: `just analyze` pulito, `just format-check` pulito.
+Test: git 71 ✓, file_tabs_cubit 14 ✓ (invariante activeDiffId), buildDiffTreeRows 6 ✓, repository mapping ✓.
+Widget test (diff_panel_view, file_tab): flakiness d'ordine nell'harness → in fix dal test-engineer (codice di produzione OK, verificato live).
 
-### Animazione pannello sinistro (`WorkspaceSidebar`)
-- [x] `AnimatedContainer` (width+color) + `AnimatedSwitcher` + `_PinnedWidth`/`ClipRect`. NO Expandable.
-- [x] Verifica live Marionette: nessun overflow (0 errori nel log, entrambe le direzioni).
+Nota: la feature `git` diff (datasource/parser/repo/usecase/cubit + test) è stata implementata da un subagent writer; l'integrazione editor/shell + UI da me.
 
-## Restyle dialog (TURN 6 del design claude — richiesta 2026-07-03)
-- [x] `glass_dialog.dart`: shell condiviso Glass Graphite (panel #1F1F27 r16 glassBorder + scrim,
-      header icona-tint, pill button primary/destructive, segmented, option card + badge, field
-      label-uppercase + field scuro). Tutti su token AppColors/AppTypography.
-- [x] `close_worktree_dialog`: opzioni = card selezionabili con badge SICURO/DISTRUTTIVO,
-      header icona warning + chip branch, Conferma rossa (errorContainer) se distruttivo. Key invariate.
-- [x] `new_worktree_dialog`: header icona + segmented + campi label-uppercase + POSIZIONE con Sfoglia.
-      Key invariate. NB: il design TURN 6c propone "Apri esistente (cartella)" come 2° modo; io ho
-      mantenuto il "Branch esistente" (checkout) di 5b — divergenza funzionale segnalata all'utente.
-- [x] Bug trovato in verifica: `git worktree add` andava in timeout a 3s (checkout completo) →
-      falso errore mentre git creava il worktree. Fix: `_addTimeout` 120s dedicato.
+## Follow-up post-review committente
 
-## Review
-- Layer git (entity GitBranch, datasource addWorktree/listBranches+parseBranchList, repo, usecase): OK, testato.
-- Logica pura `defaultWorktreePath`: OK, testata (linked/main/bare/slash).
-- Cubit createWorktree/branchesFor: OK, testato (Right→open, Left→no open).
-- UI 5b + restyle: verificati live via Marionette (creazione end-to-end + dialog restyle).
-- Add-on (chip solo-collassata, chip solo-aperti, animazione sidebar): verificati live.
-- `just analyze` + `just format-check` puliti. `flutter test`: 312/312 verdi.
-- Worktree di test `test/wt-verify` creato e rimosso durante la verifica (repo pulito).
-- NON committato: attende approvazione utente.
+- Uniformità preview/pin per le tab diff (clic singolo = preview, doppio = pin) come le tab file — `previewDiffId`/`pinDiff`.
+- Fix Cmd+W: chiude la diff attiva; Cmd+Shift+W azzera file + diff (`closeAllTabs`).
+- Compact folders (VS Code) nell'albero diff + tooltip path completo su hover.
 
-## Correzioni dialog (round feedback 2026-07-04)
-- [x] Cursore a manina + feedback hover su tutti gli elementi cliccabili (segmented,
-      card opzioni, pill button, ×, dropdown, browse, switch) via `Hoverable`.
-- [x] BASE: rimosso il letterale "HEAD" → elenca/propone nomi branch reali; default =
-      branch del worktree principale (`main`), fix del vecchio comportamento.
-- [x] POSIZIONE: campo editabile + **precompilato subito**, base = `<repoRoot>/.worktrees/<branch>`
-      (scelta utente "dentro il repo"). `defaultWorktreePath` semplificata (no più param worktrees).
-      NB: `.worktrees/` va aggiunto a `.gitignore` (non toccato da me).
-- [x] Switch "Apri il worktree dopo la creazione" (default ON) → `createWorktree(openAfter:)`;
-      `GlassSwitch` compatto (36×20, design 6b) al posto del Material Switch.
-- [x] Branch elenco = solo LOCALI (`git branch --list`); remote-tracking non inclusi (follow-up).
-- [x] Tutto verificato live (BASE=main, POSIZIONE precompilata, switch, path `.worktrees/<branch>`); 312 test verdi.
+## Review (flutter-code-reviewer, opus)
 
-## 2ª tab "Apri esistente" (round feedback 2026-07-04, design 6c)
-- [x] Sostituito "Branch esistente" (checkout) con **"Apri esistente"**: folder picker/editabile che
-      ispeziona la cartella e mostra una card (cartella semplice / repository / worktree) con
-      Repository/Branch/Stato (modifiche non committate). Confirm → `openPath`.
-- [x] Nuova pipeline `inspect`: entity `GitFolderInspection`, datasource `inspect` (worktree-vs-repo
-      via `--git-dir`, dirty count via `status --porcelain`), repo/usecase `InspectFolder`, cubit `inspectFolder`.
-- [x] Switch "Apri dopo creazione" mostrato SOLO in "Nuovo branch" (aprendo un esistente non si crea).
-- [x] Confirm dinamico: "Crea" (nuovo) / "Apri worktree" (esistente). Verificato live (card "Repository
-      Git rilevato" + main + 3 modifiche). 314 test verdi, analyze/format puliti.
+Nessun Critical. Invariante `activeDiffId`, callback live-read, selettori granulari, animazione `_MainArea` (no leak/race), DI, no-hardcoded-strings, no StatefulWidget → tutti verificati OK.
+
+Fix applicati:
+- **High**: `_SplitBody` usava `VerticalDivider` in un `Row` dentro scroll verticale (rischio "infinite height"). Sostituito con `Border(left:)` sulla colonna destra — più robusto ed economico.
+- **Medium**: `DiffView` useEffect non rileggeva il diff al re-open con conteggi diversi. Aggiunte `ref.added/deleted` alle deps.
+
+Rifiniture non bloccanti lasciate (accettabili per questa fase):
+- Viewer diff non virtualizzato (Column+IntrinsicWidth) — ok per diff tipici; virtualizzare se necessario in futuro.
+- `getIt<ReadFileDiff>` in DiffView (coerente col pattern di `code_view.dart` che usa `getIt<ReadFile>`).
+- double-tap pin su tab file preview non azzera `activeDiffId` (edge UX minore).
+
+## Test finali
+- Suite completa: 386 pass. 2 fail in `test/integration/sidecar_bridge_test.dart` (feature `claude`, NON toccata; test d'integrazione che spawna il sidecar reale → fallisce in ambiente headless, non correlato a questa feature; `git status` conferma 0 modifiche a `backend/`/`features/claude`).
+- `just analyze` pulito · `just format-check` pulito.
+- Verifica live Marionette: tutti i flussi OK (lista/albero, tab diff, Unified+Split, collapse pannello).
