@@ -56,6 +56,9 @@ class NewWorktreeDialog extends HookWidget {
     final branchesFuture = useMemoized(() => cubit.branchesFor(repoRoot), [repoRoot]);
     final branchesSnap = useFuture(branchesFuture, initialData: const <GitBranch>[]);
     final allBranches = branchesSnap.data ?? const <GitBranch>[];
+    // Depends only on the branch list, not on the name being typed — memoize so
+    // keystrokes in the name field don't re-partition + re-allocate the items.
+    final baseItems = useMemoized(() => _baseRefItems(allBranches), [allBranches]);
 
     // Repo default branch = the main worktree, always listed first by git.
     final currentBranch = worktrees.firstWhereOrNull((w) => !w.isBare)?.branch;
@@ -75,6 +78,7 @@ class NewWorktreeDialog extends HookWidget {
 
     final baseRef = useState<String?>(currentBranch);
     final pathController = useTextEditingController();
+    final pathScrollController = useScrollController();
     final pathText = useState('');
     useEffect(() {
       void l() => pathText.value = pathController.text;
@@ -90,6 +94,14 @@ class NewWorktreeDialog extends HookWidget {
         pathController.text = suggested;
         lastSuggested.value = suggested;
       }
+      // The interesting part (the branch just typed) is the path's tail; keep it
+      // in view without the user scrolling the field by hand. Post-frame so the
+      // scroll extent reflects the text set this build.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (pathScrollController.hasClients) {
+          pathScrollController.jumpTo(pathScrollController.position.maxScrollExtent);
+        }
+      });
       return null;
     }, [suggested]);
 
@@ -214,7 +226,9 @@ class NewWorktreeDialog extends HookWidget {
                   nameActive: name.value.trim().isNotEmpty,
                   baseRef: baseRef,
                   allBranches: allBranches,
+                  baseItems: baseItems,
                   pathController: pathController,
+                  pathScrollController: pathScrollController,
                   openAfter: openAfter,
                   onPickFolder: busy.value ? null : pickNewBranchFolder,
                 )
@@ -258,7 +272,9 @@ List<Widget> _newBranchFields({
   required bool nameActive,
   required ValueNotifier<String?> baseRef,
   required List<GitBranch> allBranches,
+  required List<DropdownMenuItem<String?>> baseItems,
   required TextEditingController pathController,
+  required ScrollController pathScrollController,
   required ValueNotifier<bool> openAfter,
   required VoidCallback? onPickFolder,
 }) {
@@ -289,14 +305,19 @@ List<Widget> _newBranchFields({
       child: _GlassDropdown<String?>(
         fieldKey: const ValueKey('new_worktree_base_ref'),
         value: baseRef.value,
-        onChanged: busy ? null : (v) => baseRef.value = v,
-        items: [
-          for (final b in allBranches)
-            DropdownMenuItem(
-              value: b.name,
-              child: Text(b.name, style: _monoInput),
-            ),
-        ],
+        onChanged: busy
+            ? null
+            : (v) {
+                baseRef.value = v;
+                // Basing on a remote (`origin/foo`) with no name typed yet:
+                // suggest the local branch name `foo` (strip the remote prefix).
+                if (v == null || nameController.text.trim().isNotEmpty) return;
+                final picked = allBranches.firstWhereOrNull((b) => b.name == v);
+                if (picked != null && picked.isRemote && v.contains('/')) {
+                  nameController.text = v.substring(v.indexOf('/') + 1);
+                }
+              },
+        items: baseItems,
       ),
     ),
     const SizedBox(height: 14),
@@ -312,6 +333,7 @@ List<Widget> _newBranchFields({
             child: TextField(
               key: const ValueKey('new_worktree_path'),
               controller: pathController,
+              scrollController: pathScrollController,
               enabled: !busy,
               style: _monoInput.copyWith(fontSize: 11.5, color: AppColors.onSurfaceVariant),
               cursorColor: AppColors.brandIndigo,
@@ -400,6 +422,60 @@ List<Widget> _openExistingFields({
     ),
   ];
 }
+
+/// Base-ref dropdown items: local branches, then only the remote-tracking
+/// branches with NO local counterpart, each group under a non-selectable
+/// header. When a branch exists both locally and on origin we keep just the
+/// local (default local) and collapse the `origin/<name>` twin: a remote earns
+/// its own row only when there's no local branch to base on. A remote base
+/// creates a tracking local branch (`worktree add -b <local> <path> origin/x`).
+List<DropdownMenuItem<String?>> _baseRefItems(List<GitBranch> branches) {
+  final locals = branches.where((b) => !b.isRemote).toList(growable: false);
+  final localNames = locals.map((b) => b.name).toSet();
+  final remoteOnly = branches
+      .where((b) => b.isRemote && !localNames.contains(_bareBranchName(b.name)))
+      .toList(growable: false);
+  return [
+    if (locals.isNotEmpty) _dropdownHeader(Locales.Shell.NewWorktree.baseLocalGroup, ':local'),
+    for (final b in locals)
+      DropdownMenuItem(
+        value: b.name,
+        child: Text(b.name, style: _monoInput),
+      ),
+    if (remoteOnly.isNotEmpty) _dropdownHeader(Locales.Shell.NewWorktree.baseRemoteGroup, ':remote'),
+    for (final b in remoteOnly)
+      DropdownMenuItem(
+        value: b.name,
+        child: Row(
+          children: [
+            const Icon(Symbols.cloud, size: 12, color: AppColors.outline),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(b.name, style: _monoInput, overflow: TextOverflow.ellipsis),
+            ),
+          ],
+        ),
+      ),
+  ];
+}
+
+/// The branch name a remote-tracking ref maps to, minus its remote prefix:
+/// `origin/main` -> `main`, `origin/feature/x` -> `feature/x`.
+String _bareBranchName(String remoteRef) {
+  final i = remoteRef.indexOf('/');
+  return i < 0 ? remoteRef : remoteRef.substring(i + 1);
+}
+
+/// A disabled group label inside a dropdown. [sentinel] is a value that can
+/// never equal a branch name, so it never matches the selected `value`.
+DropdownMenuItem<String?> _dropdownHeader(String label, String sentinel) => DropdownMenuItem<String?>(
+  enabled: false,
+  value: sentinel,
+  child: Text(
+    label,
+    style: AppTypography.navTab.copyWith(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.outline),
+  ),
+);
 
 /// Green card summarizing a detected git repo/worktree before opening it.
 class _DetectionCard extends StatelessWidget {

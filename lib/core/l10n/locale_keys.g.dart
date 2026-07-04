@@ -69,6 +69,8 @@ abstract class  LocaleKeys {
   static const shell_newWorktree_branchNameLabel = 'shell.newWorktree.branchNameLabel';
   static const shell_newWorktree_branchNameHint = 'shell.newWorktree.branchNameHint';
   static const shell_newWorktree_baseRefLabel = 'shell.newWorktree.baseRefLabel';
+  static const shell_newWorktree_baseLocalGroup = 'shell.newWorktree.baseLocalGroup';
+  static const shell_newWorktree_baseRemoteGroup = 'shell.newWorktree.baseRemoteGroup';
   static const shell_newWorktree_existingBranchLabel = 'shell.newWorktree.existingBranchLabel';
   static const shell_newWorktree_noExistingBranches = 'shell.newWorktree.noExistingBranches';
   static const shell_newWorktree_pathLabel = 'shell.newWorktree.pathLabel';

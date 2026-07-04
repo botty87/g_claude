@@ -76,6 +76,8 @@
       "branchNameLabel": "Branch name",
       "branchNameHint": "feature/my-work",
       "baseRefLabel": "Base",
+      "baseLocalGroup": "Local",
+      "baseRemoteGroup": "Remote",
       "existingBranchLabel": "Branch",
       "noExistingBranches": "No branch is available without a worktree.",
       "pathLabel": "Location",

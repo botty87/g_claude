@@ -76,6 +76,8 @@
       "branchNameLabel": "Nome branch",
       "branchNameHint": "feature/mio-lavoro",
       "baseRefLabel": "Base",
+      "baseLocalGroup": "Locali",
+      "baseRemoteGroup": "Remoti",
       "existingBranchLabel": "Branch",
       "noExistingBranches": "Nessun branch disponibile senza worktree.",
       "pathLabel": "Posizione",

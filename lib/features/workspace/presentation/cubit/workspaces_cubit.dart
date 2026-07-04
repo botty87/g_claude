@@ -141,8 +141,9 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     }, (inspection) => inspection);
   }
 
-  /// Local branches of [repoRoot], to populate the "new worktree" dialog. On
-  /// failure returns empty (the dialog degrades to new-branch-only).
+  /// Local and remote-tracking branches of [repoRoot], to populate the "new
+  /// worktree" dialog's base picker. On failure returns empty (the dialog
+  /// degrades to new-branch-only).
   Future<List<GitBranch>> branchesFor(String repoRoot) async {
     final result = await _listBranches(repoRoot: repoRoot);
     return result.fold((failure) {

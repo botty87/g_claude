@@ -901,7 +901,9 @@ class _ShellCloseWorktree {
 class _ShellNewWorktree {
   const _ShellNewWorktree._();
 
+  String get baseLocalGroup => LocaleKeys.shell_newWorktree_baseLocalGroup.tr();
   String get baseRefLabel => LocaleKeys.shell_newWorktree_baseRefLabel.tr();
+  String get baseRemoteGroup => LocaleKeys.shell_newWorktree_baseRemoteGroup.tr();
   String get branchNameHint => LocaleKeys.shell_newWorktree_branchNameHint.tr();
   String get branchNameLabel => LocaleKeys.shell_newWorktree_branchNameLabel.tr();
   String get cancel => LocaleKeys.shell_newWorktree_cancel.tr();
