@@ -71,6 +71,15 @@ abstract class  LocaleKeys {
   static const shell_newWorktree_baseRefLabel = 'shell.newWorktree.baseRefLabel';
   static const shell_newWorktree_baseLocalGroup = 'shell.newWorktree.baseLocalGroup';
   static const shell_newWorktree_baseRemoteGroup = 'shell.newWorktree.baseRemoteGroup';
+  static const shell_newWorktree_ccPrefixNoneLabel = 'shell.newWorktree.ccPrefixNoneLabel';
+  static const shell_newWorktree_ccPrefixNoneDesc = 'shell.newWorktree.ccPrefixNoneDesc';
+  static const shell_newWorktree_ccPrefixFeatDesc = 'shell.newWorktree.ccPrefixFeatDesc';
+  static const shell_newWorktree_ccPrefixFixDesc = 'shell.newWorktree.ccPrefixFixDesc';
+  static const shell_newWorktree_ccPrefixRefactorDesc = 'shell.newWorktree.ccPrefixRefactorDesc';
+  static const shell_newWorktree_ccPrefixChoreDesc = 'shell.newWorktree.ccPrefixChoreDesc';
+  static const shell_newWorktree_ccPrefixDocsDesc = 'shell.newWorktree.ccPrefixDocsDesc';
+  static const shell_newWorktree_ccPrefixTestDesc = 'shell.newWorktree.ccPrefixTestDesc';
+  static const shell_newWorktree_ccPrefixHotfixDesc = 'shell.newWorktree.ccPrefixHotfixDesc';
   static const shell_newWorktree_existingBranchLabel = 'shell.newWorktree.existingBranchLabel';
   static const shell_newWorktree_noExistingBranches = 'shell.newWorktree.noExistingBranches';
   static const shell_newWorktree_pathLabel = 'shell.newWorktree.pathLabel';
