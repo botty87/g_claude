@@ -18,9 +18,12 @@ import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../cubit/shell_cubit.dart';
 import 'activity_mini_rail.dart';
 import 'close_worktree_dialog.dart';
+import 'new_worktree_dialog.dart';
 
 const double kSidebarExpandedWidth = 262;
 const double kSidebarCollapsedWidth = 52;
+const Duration kSidebarAnimDuration = Duration(milliseconds: 220);
+const Curve kSidebarAnimCurve = Curves.easeOutCubic;
 
 const _tints = [AppColors.brandIndigo, AppColors.secondary, AppColors.tertiary, AppColors.primary];
 
@@ -36,13 +39,57 @@ class WorkspaceSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final collapsed = context.select<ShellCubit, bool>((c) => c.state.sidebarCollapsed);
-    return Container(
+    return AnimatedContainer(
+      duration: kSidebarAnimDuration,
+      curve: kSidebarAnimCurve,
       width: collapsed ? kSidebarCollapsedWidth : kSidebarExpandedWidth,
       decoration: BoxDecoration(
         color: collapsed ? AppColors.surfaceContainerLowest : AppColors.surfaceContainerLow,
         border: const Border(right: BorderSide(color: AppColors.outlineVariant, width: 1)),
       ),
-      child: collapsed ? const _CollapsedRail() : const _ExpandedSidebar(),
+      // Clip so the two fixed-width contents never paint past the animating
+      // width. Each content is pinned to its own target width via [OverflowBox]
+      // (left-aligned) so it lays out at 262/52 regardless of the intermediate
+      // constraint, and [AnimatedSwitcher] crossfades between them.
+      child: ClipRect(
+        child: AnimatedSwitcher(
+          duration: kSidebarAnimDuration,
+          switchInCurve: kSidebarAnimCurve,
+          switchOutCurve: kSidebarAnimCurve,
+          child: collapsed
+              ? const _PinnedWidth(
+                  key: ValueKey('sidebar_collapsed'),
+                  width: kSidebarCollapsedWidth,
+                  child: _CollapsedRail(),
+                )
+              : const _PinnedWidth(
+                  key: ValueKey('sidebar_expanded'),
+                  width: kSidebarExpandedWidth,
+                  child: _ExpandedSidebar(),
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Forces [child] to lay out at a fixed [width] regardless of the (animating)
+/// constraint from the parent, left-aligned. Overflow is expected — the parent
+/// [ClipRect] trims it — so the content keeps its real width while the sidebar
+/// width tweens, instead of reflowing every frame.
+class _PinnedWidth extends StatelessWidget {
+  const _PinnedWidth({super.key, required this.width, required this.child});
+
+  final double width;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return OverflowBox(
+      alignment: Alignment.centerLeft,
+      minWidth: width,
+      maxWidth: width,
+      child: SizedBox(width: width, child: child),
     );
   }
 }
@@ -238,6 +285,7 @@ class _RepoGroup extends HookWidget {
           hasHidden: hasHidden,
           onToggleExpand: () => expanded.value = !expanded.value,
           onToggleShowAll: () => showAll.value = !showAll.value,
+          onAddWorktree: () => showNewWorktreeDialog(context, repoRoot: group.repoRoot, worktrees: gitWorktrees),
         ),
         if (expanded.value)
           for (final row in rows)
@@ -263,6 +311,7 @@ class _RepoHeader extends StatelessWidget {
     required this.hasHidden,
     required this.onToggleExpand,
     required this.onToggleShowAll,
+    required this.onAddWorktree,
   });
 
   final String name;
@@ -273,6 +322,7 @@ class _RepoHeader extends StatelessWidget {
   final bool hasHidden;
   final VoidCallback onToggleExpand;
   final VoidCallback onToggleShowAll;
+  final VoidCallback onAddWorktree;
 
   @override
   Widget build(BuildContext context) {
@@ -326,6 +376,19 @@ class _RepoHeader extends StatelessWidget {
                 ),
               ),
             ],
+            const SizedBox(width: AppSpacing.xs),
+            Hoverable(
+              onTap: onAddWorktree,
+              builder: (context, h) => Tooltip(
+                message: Locales.Shell.Sidebar.Worktrees.addTooltip,
+                child: Icon(
+                  Symbols.add,
+                  key: ValueKey('add_worktree_$name'),
+                  size: 16,
+                  color: h ? AppColors.primary : AppColors.outline,
+                ),
+              ),
+            ),
           ],
         ),
       ),
