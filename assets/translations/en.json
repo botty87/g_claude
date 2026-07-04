@@ -58,7 +58,16 @@
     "rightPanel": {
       "files": "Files",
       "diff": "Diff",
-      "diffComingSoon": "Diff coming soon"
+      "collapse": "Collapse panel",
+      "expand": "Expand panel"
+    },
+    "diffPanel": {
+      "empty": "No uncommitted changes",
+      "notRepo": "Not a git repository",
+      "flatView": "Flat list",
+      "treeView": "Tree",
+      "refresh": "Refresh",
+      "loadError": "Failed to load changes"
     },
     "shortcuts": {
       "attachedFile": "Attached {name}",
@@ -455,6 +464,14 @@
       "openFull": "Open full screen",
       "reduceToPeek": "Reduce to peek",
       "close": "Close"
+    },
+    "diff": {
+      "badge": "DIFF",
+      "unified": "Unified",
+      "split": "Split",
+      "binary": "Binary file — no preview",
+      "empty": "No changes",
+      "loadError": "Failed to load diff"
     }
   }
 }

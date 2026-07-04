@@ -7,6 +7,9 @@ abstract class ShellState with _$ShellState {
   const factory ShellState({
     required ActivityId selectedActivity,
     @Default(false) bool sidebarCollapsed,
+    // In-memory only (mirrors [sidebarCollapsed]) — the right panel collapse is
+    // deliberately not persisted, to behave exactly like the left sidebar.
+    @Default(false) bool rightPanelCollapsed,
     @Default(<String, double>{}) Map<String, double> paneSizes,
   }) = _ShellState;
 }

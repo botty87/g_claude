@@ -12,6 +12,7 @@ import 'features/claude/presentation/cubit/claude_sessions_cubit.dart';
 import 'features/editor/presentation/cubit/editor_view_cubit.dart';
 import 'features/editor/presentation/cubit/file_tabs_cubit.dart';
 import 'features/explorer/presentation/cubit/explorer_cubit.dart';
+import 'features/git/presentation/cubit/git_diff_cubit.dart';
 import 'features/shell/presentation/cubit/shell_cubit.dart';
 import 'features/terminal/presentation/cubit/terminal_sessions_cubit.dart';
 import 'features/workspace/presentation/cubit/workspaces_cubit.dart';
@@ -28,6 +29,7 @@ class App extends StatelessWidget {
         BlocProvider<WorkspacesCubit>.value(value: getIt<WorkspacesCubit>()),
         BlocProvider<ShellCubit>.value(value: getIt<ShellCubit>()),
         BlocProvider<ExplorerCubit>.value(value: getIt<ExplorerCubit>()),
+        BlocProvider<GitDiffCubit>.value(value: getIt<GitDiffCubit>()),
         BlocProvider<FileTabsCubit>.value(value: getIt<FileTabsCubit>()),
         BlocProvider<EditorViewCubit>.value(value: getIt<EditorViewCubit>()),
         BlocProvider<ClaudeSessionsCubit>.value(value: getIt<ClaudeSessionsCubit>()),

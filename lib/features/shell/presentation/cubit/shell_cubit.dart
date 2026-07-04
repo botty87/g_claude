@@ -18,6 +18,15 @@ class ShellCubit extends Cubit<ShellState> {
     emit(state.copyWith(sidebarCollapsed: value));
   }
 
+  void toggleRightPanel() {
+    emit(state.copyWith(rightPanelCollapsed: !state.rightPanelCollapsed));
+  }
+
+  void setRightPanelCollapsed(bool value) {
+    if (state.rightPanelCollapsed == value) return;
+    emit(state.copyWith(rightPanelCollapsed: value));
+  }
+
   void selectActivity(ActivityId id) {
     if (state.selectedActivity == id) return;
     emit(state.copyWith(selectedActivity: id));

@@ -7,6 +7,7 @@ import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../../../features/git/domain/entities/git_diff_file.dart';
 import '../../../../features/workspace/data/datasources/workspace_file_watcher.dart';
 import '../../../../features/workspace/domain/entities/workspace.dart';
 import '../../../../features/workspace/presentation/cubit/workspaces_cubit.dart';
@@ -113,9 +114,14 @@ class FileTabsCubit extends Cubit<FileTabsState> {
       final previewIdx = files.openPaths.indexOf(files.previewPath!);
       final nextPaths = [...files.openPaths];
       nextPaths[previewIdx] = path;
-      next = files.copyWith(openPaths: nextPaths, activePath: path, previewPath: path);
+      next = files.copyWith(openPaths: nextPaths, activePath: path, previewPath: path, activeDiffId: null);
     } else {
-      next = files.copyWith(openPaths: [...files.openPaths, path], activePath: path, previewPath: path);
+      next = files.copyWith(
+        openPaths: [...files.openPaths, path],
+        activePath: path,
+        previewPath: path,
+        activeDiffId: null,
+      );
     }
 
     _talker.debug('FileTabsCubit: opened $path in workspace $id (preview)');
@@ -192,16 +198,117 @@ class FileTabsCubit extends Cubit<FileTabsState> {
     final files = state.perWorkspace[id];
     if (files == null || files.openPaths.isEmpty) return;
     _talker.debug('FileTabsCubit: closed all files in workspace $id');
-    emit(state.copyWith(perWorkspace: {...state.perWorkspace, id: const WorkspaceFiles()}));
+    // Keep diff tabs: "close all files" acts on the file set only.
+    emit(
+      state.copyWith(
+        perWorkspace: {
+          ...state.perWorkspace,
+          id: files.copyWith(openPaths: [], activePath: null, previewPath: null),
+        },
+      ),
+    );
   }
 
   void setActiveFile(WorkspaceId id, String path) {
     final files = state.perWorkspace[id];
     if (files == null) return;
-    if (files.activePath == path) return;
+    // Still re-activate when the file tab is already `activePath` but a diff
+    // tab is currently shown — clicking the file tab must reveal the file.
+    if (files.activePath == path && files.activeDiffId == null) return;
     if (!files.openPaths.contains(path)) return;
-    final next = files.copyWith(activePath: path);
+    final next = files.copyWith(activePath: path, activeDiffId: null);
     emit(state.copyWith(perWorkspace: {...state.perWorkspace, id: next}));
+  }
+
+  /// Opens (or re-activates) a diff tab beside the file tabs. Mirrors
+  /// [openFile]'s preview behaviour: a single-click diff opens as the (single)
+  /// preview, replacing any existing preview diff in place; [pinDiff]
+  /// (double-click) turns it into a fixed tab. Diff tabs are never persisted.
+  void openDiff(WorkspaceId id, DiffTabRef ref) {
+    final files = state.perWorkspace[id] ?? const WorkspaceFiles();
+    final existingIdx = files.openDiffs.indexWhere((d) => d.path == ref.path);
+    if (existingIdx >= 0) {
+      // Already open (pinned or preview): refresh counts, keep its slot and
+      // preview/pinned state, just activate it.
+      final nextDiffs = [...files.openDiffs]..[existingIdx] = ref;
+      emit(
+        state.copyWith(
+          perWorkspace: {
+            ...state.perWorkspace,
+            id: files.copyWith(openDiffs: nextDiffs, activeDiffId: ref.path),
+          },
+        ),
+      );
+      return;
+    }
+
+    final List<DiffTabRef> nextDiffs;
+    if (files.previewDiffId != null) {
+      final previewIdx = files.openDiffs.indexWhere((d) => d.path == files.previewDiffId);
+      nextDiffs = previewIdx >= 0 ? ([...files.openDiffs]..[previewIdx] = ref) : [...files.openDiffs, ref];
+    } else {
+      nextDiffs = [...files.openDiffs, ref];
+    }
+    _talker.debug('FileTabsCubit: opened diff ${ref.path} in workspace $id (preview)');
+    emit(
+      state.copyWith(
+        perWorkspace: {
+          ...state.perWorkspace,
+          id: files.copyWith(openDiffs: nextDiffs, activeDiffId: ref.path, previewDiffId: ref.path),
+        },
+      ),
+    );
+  }
+
+  /// Pins the preview diff [path] into a fixed tab (clears the preview slot).
+  void pinDiff(WorkspaceId id, String path) {
+    final files = state.perWorkspace[id];
+    if (files == null) return;
+    if (files.previewDiffId != path) return;
+    _talker.debug('FileTabsCubit: pinned diff $path');
+    emit(state.copyWith(perWorkspace: {...state.perWorkspace, id: files.copyWith(previewDiffId: null)}));
+  }
+
+  void setActiveDiff(WorkspaceId id, String path) {
+    final files = state.perWorkspace[id];
+    if (files == null) return;
+    if (files.activeDiffId == path) return;
+    if (!files.openDiffs.any((d) => d.path == path)) return;
+    emit(
+      state.copyWith(
+        perWorkspace: {
+          ...state.perWorkspace,
+          id: files.copyWith(activeDiffId: path),
+        },
+      ),
+    );
+  }
+
+  void closeDiff(WorkspaceId id, String path) {
+    final files = state.perWorkspace[id];
+    if (files == null) return;
+    final index = files.openDiffs.indexWhere((d) => d.path == path);
+    if (index < 0) return;
+    final nextDiffs = [...files.openDiffs]..removeAt(index);
+    final nextPreviewDiff = files.previewDiffId == path ? null : files.previewDiffId;
+
+    // If the closed diff was active, fall back to an adjacent diff, else clear
+    // the diff surface (reveals the active file tab / empty state).
+    String? nextActiveDiff = files.activeDiffId;
+    if (nextActiveDiff == path) {
+      nextActiveDiff = nextDiffs.isEmpty
+          ? null
+          : nextDiffs[index < nextDiffs.length ? index : nextDiffs.length - 1].path;
+    }
+    _talker.debug('FileTabsCubit: closed diff $path in workspace $id');
+    emit(
+      state.copyWith(
+        perWorkspace: {
+          ...state.perWorkspace,
+          id: files.copyWith(openDiffs: nextDiffs, activeDiffId: nextActiveDiff, previewDiffId: nextPreviewDiff),
+        },
+      ),
+    );
   }
 
   Future<void> restore() async {

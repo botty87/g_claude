@@ -35,6 +35,12 @@ class PeekSheet extends HookWidget {
     );
     final activePath = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.activePath);
     final previewPath = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.previewPath);
+    final activeDiffId = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.activeDiffId);
+    final previewDiffId = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.previewDiffId);
+    final openDiffs = context.select<FileTabsCubit, List<DiffTabRef>>(
+      (c) => c.state.filesFor(workspaceId)?.openDiffs ?? const [],
+    );
+    final showingDiff = activeDiffId != null;
 
     return DecoratedBox(
       decoration: const BoxDecoration(
@@ -83,8 +89,17 @@ class PeekSheet extends HookWidget {
                             key: ValueKey('peek-tab-$path'),
                             workspaceId: workspaceId,
                             path: path,
-                            isActive: path == activePath,
+                            isActive: !showingDiff && path == activePath,
                             isPreview: path == previewPath,
+                          ),
+                        for (final diff in openDiffs)
+                          FileTab(
+                            key: ValueKey('peek-diff-tab-${diff.path}'),
+                            workspaceId: workspaceId,
+                            path: diff.path,
+                            isActive: diff.path == activeDiffId,
+                            isPreview: diff.path == previewDiffId,
+                            isDiff: true,
                           ),
                       ],
                     ),

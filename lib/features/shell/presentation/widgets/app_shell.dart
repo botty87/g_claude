@@ -352,17 +352,77 @@ class _MainArea extends HookWidget {
     // The right-hand Files/Diff/Editor panel only makes sense in the default
     // workspace (chat) view; history/logs/terminal take the whole center.
     final showRight = selectedActivity == ActivityId.explorer;
+    final rightCollapsed = context.select<ShellCubit, bool>((c) => c.state.rightPanelCollapsed);
 
     final savedSizes = context.read<ShellCubit>().state.paneSizes;
     final controller = useMemoized(() {
+      final rightW = rightCollapsed ? kRightPanelCollapsedWidth : (savedSizes[_idRight] ?? _rightDefault);
       return MultiSplitViewController(
         areas: [
           Area(id: _idCenter, flex: 1, min: _centerMin),
-          if (showRight) Area(id: _idRight, size: savedSizes[_idRight] ?? _rightDefault, min: _rightMin),
+          if (showRight)
+            Area(
+              id: _idRight,
+              size: rightW,
+              min: rightCollapsed ? kRightPanelCollapsedWidth : _rightMin,
+              max: rightCollapsed ? kRightPanelCollapsedWidth : null,
+            ),
         ],
       );
+      // rightCollapsed only seeds the initial size on (re)creation; runtime
+      // toggles are animated by the effect below, so it is intentionally NOT a
+      // dependency (adding it would recreate the controller and snap, not tween).
     }, [showRight]);
     useEffect(() => controller.dispose, [controller]);
+
+    // Animate the right Area between expanded and collapsed widths, mirroring
+    // the sidebar's motion. The Area's size is driven frame-by-frame; min/max
+    // are opened during the tween and re-locked at the end so a collapsed panel
+    // cannot be drag-resized.
+    final anim = useAnimationController(duration: kSidebarAnimDuration);
+    useEffect(() {
+      if (!showRight) return null;
+      Area? area;
+      for (final a in controller.areas) {
+        if (a.id == _idRight) {
+          area = a;
+          break;
+        }
+      }
+      if (area == null) return null;
+      final expandedW = savedSizes[_idRight] ?? _rightDefault;
+      final target = rightCollapsed ? kRightPanelCollapsedWidth : expandedW;
+      final start = area.size ?? expandedW;
+      final locked = area;
+      void lockEnds() {
+        if (rightCollapsed) {
+          locked
+            ..min = kRightPanelCollapsedWidth
+            ..max = kRightPanelCollapsedWidth
+            ..size = kRightPanelCollapsedWidth;
+        } else {
+          locked
+            ..min = _rightMin
+            ..max = null
+            ..size = expandedW;
+        }
+      }
+
+      if ((start - target).abs() < 0.5) {
+        lockEnds();
+        return null;
+      }
+      locked
+        ..min = kRightPanelCollapsedWidth
+        ..max = null;
+      void tick() => locked.size = start + (target - start) * kSidebarAnimCurve.transform(anim.value);
+      anim.addListener(tick);
+      anim.forward(from: 0).whenComplete(() {
+        anim.removeListener(tick);
+        lockEnds();
+      });
+      return () => anim.removeListener(tick);
+    }, [rightCollapsed, controller]);
 
     void persistSizes() {
       final next = <String, double>{};

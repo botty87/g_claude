@@ -656,6 +656,9 @@ class _Editor {
   /// Translations for centerView
   final CenterView = const _EditorCenterView._();
 
+  /// Translations for diff
+  final Diff = const _EditorDiff._();
+
   /// Translations for find
   final Find = const _EditorFind._();
 
@@ -689,6 +692,18 @@ class _EditorCenterView {
   String get chat => LocaleKeys.editor_centerView_chat.tr();
   String get code => LocaleKeys.editor_centerView_code.tr();
   String get terminal => LocaleKeys.editor_centerView_terminal.tr();
+}
+
+/// Nested class for diff translations
+class _EditorDiff {
+  const _EditorDiff._();
+
+  String get badge => LocaleKeys.editor_diff_badge.tr();
+  String get binary => LocaleKeys.editor_diff_binary.tr();
+  String get empty => LocaleKeys.editor_diff_empty.tr();
+  String get loadError => LocaleKeys.editor_diff_loadError.tr();
+  String get split => LocaleKeys.editor_diff_split.tr();
+  String get unified => LocaleKeys.editor_diff_unified.tr();
 }
 
 /// Nested class for find translations
@@ -843,6 +858,9 @@ class _Shell {
   /// Translations for closeWorktree
   final CloseWorktree = const _ShellCloseWorktree._();
 
+  /// Translations for diffPanel
+  final DiffPanel = const _ShellDiffPanel._();
+
   /// Translations for newWorktree
   final NewWorktree = const _ShellNewWorktree._();
 
@@ -897,6 +915,18 @@ class _ShellCloseWorktree {
   String get title => LocaleKeys.shell_closeWorktree_title.tr();
 }
 
+/// Nested class for diffPanel translations
+class _ShellDiffPanel {
+  const _ShellDiffPanel._();
+
+  String get empty => LocaleKeys.shell_diffPanel_empty.tr();
+  String get flatView => LocaleKeys.shell_diffPanel_flatView.tr();
+  String get loadError => LocaleKeys.shell_diffPanel_loadError.tr();
+  String get notRepo => LocaleKeys.shell_diffPanel_notRepo.tr();
+  String get refresh => LocaleKeys.shell_diffPanel_refresh.tr();
+  String get treeView => LocaleKeys.shell_diffPanel_treeView.tr();
+}
+
 /// Nested class for newWorktree translations
 class _ShellNewWorktree {
   const _ShellNewWorktree._();
@@ -936,8 +966,9 @@ class _ShellNewWorktree {
 class _ShellRightPanel {
   const _ShellRightPanel._();
 
+  String get collapse => LocaleKeys.shell_rightPanel_collapse.tr();
   String get diff => LocaleKeys.shell_rightPanel_diff.tr();
-  String get diffComingSoon => LocaleKeys.shell_rightPanel_diffComingSoon.tr();
+  String get expand => LocaleKeys.shell_rightPanel_expand.tr();
   String get files => LocaleKeys.shell_rightPanel_files.tr();
 }
 

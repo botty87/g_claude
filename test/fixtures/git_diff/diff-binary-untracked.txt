@@ -1,0 +1,4 @@
+diff --git a/src/lib/untracked.png b/src/lib/untracked.png
+new file mode 100644
+index 0000000..6b4d0c4
+Binary files /dev/null and b/src/lib/untracked.png differ

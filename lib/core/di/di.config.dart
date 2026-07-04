@@ -104,17 +104,25 @@ import '../../features/explorer/domain/repositories/file_system_repository.dart'
 import '../../features/explorer/domain/usecases/list_directory.dart' as _i308;
 import '../../features/explorer/presentation/cubit/explorer_cubit.dart'
     as _i188;
+import '../../features/git/data/datasources/git_diff_datasource.dart' as _i731;
 import '../../features/git/data/datasources/git_worktree_datasource.dart'
     as _i203;
+import '../../features/git/data/repositories/git_diff_repository_impl.dart'
+    as _i463;
 import '../../features/git/data/repositories/git_repository_impl.dart' as _i633;
+import '../../features/git/domain/repositories/git_diff_repository.dart'
+    as _i980;
 import '../../features/git/domain/repositories/git_repository.dart' as _i241;
 import '../../features/git/domain/usecases/add_worktree.dart' as _i531;
 import '../../features/git/domain/usecases/delete_branch.dart' as _i933;
 import '../../features/git/domain/usecases/detect_git_repo.dart' as _i76;
 import '../../features/git/domain/usecases/inspect_folder.dart' as _i544;
 import '../../features/git/domain/usecases/list_branches.dart' as _i81;
+import '../../features/git/domain/usecases/list_changed_files.dart' as _i987;
 import '../../features/git/domain/usecases/list_worktrees.dart' as _i795;
+import '../../features/git/domain/usecases/read_file_diff.dart' as _i372;
 import '../../features/git/domain/usecases/remove_worktree.dart' as _i98;
+import '../../features/git/presentation/cubit/git_diff_cubit.dart' as _i20;
 import '../../features/shell/presentation/cubit/shell_cubit.dart' as _i68;
 import '../../features/slash_commands/data/datasources/commands_discovery_datasource.dart'
     as _i986;
@@ -224,6 +232,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1073.ClaudeBinaryResolver>(
       () => _i1073.ClaudeBinaryResolver(gh<_i207.Talker>()),
     );
+    gh.lazySingleton<_i731.GitDiffDataSource>(
+      () => _i731.GitDiffDataSource(gh<_i207.Talker>()),
+    );
     gh.lazySingleton<_i203.GitWorktreeDataSource>(
       () => _i203.GitWorktreeDataSource(gh<_i207.Talker>()),
     );
@@ -261,11 +272,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i622.ReadFile>(
       () => _i622.ReadFile(gh<_i1043.FileContentRepository>()),
     );
+    gh.lazySingleton<_i980.GitDiffRepository>(
+      () => _i463.GitDiffRepositoryImpl(gh<_i731.GitDiffDataSource>()),
+    );
     gh.lazySingleton<_i627.SessionsIndexDataSource>(
       () => _i627.SessionsIndexDataSourceImpl(
         gh<_i1060.SessionsDatabase>(),
         gh<_i278.ClaudeHistoryDataSource>(),
       ),
+    );
+    gh.factory<_i987.ListChangedFiles>(
+      () => _i987.ListChangedFiles(gh<_i980.GitDiffRepository>()),
+    );
+    gh.factory<_i372.ReadFileDiff>(
+      () => _i372.ReadFileDiff(gh<_i980.GitDiffRepository>()),
     );
     gh.factory<_i609.DeleteSession>(
       () => _i609.DeleteSession(gh<_i644.AppLogsRepository>()),
@@ -319,6 +339,15 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i585.McpRepository>(
       () => _i629.McpRepositoryImpl(gh<_i340.McpListDataSource>()),
     );
+    await gh.lazySingletonAsync<_i20.GitDiffCubit>(() {
+      final i = _i20.GitDiffCubit(
+        gh<_i987.ListChangedFiles>(),
+        gh<_i372.ReadFileDiff>(),
+        gh<_i494.KeyValueStore>(),
+        gh<_i207.Talker>(),
+      );
+      return i.restore().then((_) => i);
+    }, preResolve: true);
     gh.lazySingleton<_i420.WorkspacesPersistenceDataSource>(
       () => _i420.WorkspacesPersistenceDataSourceImpl(
         gh<_i494.KeyValueStore>(),
