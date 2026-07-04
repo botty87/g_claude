@@ -139,7 +139,10 @@ class _TopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SessionWorktreePicker(workspaceId: workspaceId),
+          // Loose Flexible so a long "branch · session" label truncates instead
+          // of pushing the segmented off the right edge (RenderFlex overflow).
+          Flexible(child: SessionWorktreePicker(workspaceId: workspaceId)),
+          const SizedBox(width: AppSpacing.md),
           const Spacer(),
           // "Reduce to peek" sits to the LEFT of the segmented so the switcher
           // keeps a fixed position (anchored on the right by meter/status) and

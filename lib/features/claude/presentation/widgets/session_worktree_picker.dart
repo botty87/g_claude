@@ -129,14 +129,17 @@ class SessionWorktreePicker extends HookWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Text(
-                label,
-                style: AppTypography.terminalCode.copyWith(fontSize: 11, color: AppColors.outline, height: 1.0),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.terminalCode.copyWith(fontSize: 11, color: AppColors.outline, height: 1.0),
+                ),
               ),
               if (active != null) ...[
                 Text(' · ', style: TextStyle(color: AppColors.outlineVariant)),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 160),
+                Flexible(
                   child: Text(
                     ClaudeSessionsCubit.sessionTitle(active),
                     maxLines: 1,
