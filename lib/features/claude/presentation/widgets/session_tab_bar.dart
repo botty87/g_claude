@@ -134,7 +134,9 @@ class _WorktreeChip extends HookWidget {
             ? Locales.Claude.Terminal.WorktreeChip.detached
             : repoRoot == workspaceId
             ? Locales.Claude.Terminal.WorktreeChip.root
-            : Locales.Claude.Terminal.WorktreeChip.detached);
+            // Branchless but neither detached nor the repo root: don't mislabel
+            // as "detached" — fall back to the folder name.
+            : p.basename(workspaceId));
 
     // Only opened worktrees, to stay consistent with the sidebar's default
     // "open only" view: branches without an open worktree are hidden there, so

@@ -397,6 +397,35 @@ void main() {
       await cubit.close();
     });
 
+    test('openAfter:false creates the worktree without opening it, and bumps the worktree revision', () async {
+      when(
+        () => addWorktreeUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          worktreePath: any(named: 'worktreePath'),
+          newBranch: any(named: 'newBranch'),
+          baseRef: any(named: 'baseRef'),
+          checkoutBranch: any(named: 'checkoutBranch'),
+        ),
+      ).thenAnswer((_) async => const Right(null));
+
+      final cubit = make();
+      cubit.emit(const WorkspacesState.loaded());
+      final before = cubit.state.worktreesRevisionOrZero;
+
+      final result = await cubit.createWorktree(
+        repoRoot: '/repo',
+        targetPath: '/repo/.worktrees/x',
+        newBranch: 'x',
+        openAfter: false,
+      );
+
+      expect(result.isRight, isTrue);
+      verifyNever(() => openWs(path: any(named: 'path')));
+      expect(cubit.state.workspacesOrEmpty, isEmpty, reason: 'not opened');
+      expect(cubit.state.worktreesRevisionOrZero, before + 1, reason: 'sidebar re-fetch trigger');
+      await cubit.close();
+    });
+
     test('git failure returns Left and does NOT open a workspace', () async {
       when(
         () => addWorktreeUsecase(

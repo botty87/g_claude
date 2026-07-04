@@ -235,13 +235,17 @@ class _RepoGroup extends HookWidget {
     final tint = _tintFor(group.repoRoot.hashCode);
 
     final openedPaths = group.worktrees.map((w) => w.path).toList(growable: false);
+    // Re-fetch when the repo, expand state, opened set, OR the worktree
+    // revision changes — the last covers creating a worktree without opening it
+    // (no opened-set change, so it would otherwise stay invisible).
+    final revision = context.select<WorkspacesCubit, int>((c) => c.state.worktreesRevisionOrZero);
     // Fetch live worktrees only while expanded; seed with the warm cache to
-    // avoid a loading flicker. Re-fetch when the opened set changes.
+    // avoid a loading flicker.
     final future = useMemoized(
       () => expanded.value
           ? cubit.ensureWorktrees(group.repoRoot)
           : Future.value(cubit.cachedWorktrees(group.repoRoot) ?? const <GitWorktree>[]),
-      [group.repoRoot, expanded.value, openedPaths.length],
+      [group.repoRoot, expanded.value, openedPaths.length, revision],
     );
     final snap = useFuture(future, initialData: cubit.cachedWorktrees(group.repoRoot));
     final gitWorktrees = snap.data ?? const <GitWorktree>[];

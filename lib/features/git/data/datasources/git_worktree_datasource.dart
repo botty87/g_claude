@@ -21,7 +21,11 @@ class GitWorktreeDataSource {
 
   static const _timeout = Duration(seconds: 3);
   // `git worktree add` checks out the entire tree — on a large repo this takes
-  // well over the default 3s, so it gets its own generous budget.
+  // well over the default 3s, so it gets its own generous budget. NOTE: a
+  // timeout only abandons the await, it does not kill the git process, so on the
+  // (rare) blow-past-120s case git may still finish and leave a worktree the UI
+  // reported as failed. Accepted: at 120s this only trips on a pathological
+  // hang; the user can prune/remove it manually.
   static const _addTimeout = Duration(seconds: 120);
 
   String _normalize(String path) => p.normalize(p.absolute(path));
@@ -63,10 +67,14 @@ class GitWorktreeDataSource {
   Future<GitFolderInspection> inspect(String path) async {
     final info = await detect(path);
     if (info == null) return const GitFolderInspection();
-    // A linked worktree's `--git-dir` points inside `.git/worktrees/<name>`;
-    // the main checkout's is the plain `.git`.
-    final gitDir = (await _run(path, ['rev-parse', '--git-dir']))?.trim() ?? '';
-    final isWorktree = gitDir.contains('${p.separator}worktrees${p.separator}') || gitDir.contains('/worktrees/');
+    // A linked worktree's `--git-dir` (its private dir under `worktrees/<name>`)
+    // differs from the shared `--git-common-dir`; the main checkout's are equal.
+    // Comparing the two is precise (a mere `/worktrees/` substring match would
+    // false-positive on repos whose path happens to contain that segment).
+    final gitDir = (await _run(path, ['rev-parse', '--path-format=absolute', '--git-dir']))?.trim();
+    final commonDir = (await _run(path, ['rev-parse', '--path-format=absolute', '--git-common-dir']))?.trim();
+    final isWorktree =
+        gitDir != null && commonDir != null && gitDir.isNotEmpty && p.normalize(gitDir) != p.normalize(commonDir);
     final status = await _run(path, ['status', '--porcelain']) ?? '';
     final dirty = const LineSplitter().convert(status).where((l) => l.trim().isNotEmpty).length;
     return GitFolderInspection(

@@ -177,9 +177,17 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     }
     _worktreeCache.clear();
     _talker.info('Created worktree: $normalized (openAfter=$openAfter)');
-    // When not opening, still invalidate the cache above so the sidebar's
-    // "show all" lists the freshly-created worktree.
-    if (openAfter) await openPath(normalized);
+    if (openAfter) {
+      // openPath emits a new loaded state → the sidebar re-fetches worktrees.
+      await openPath(normalized);
+    } else {
+      // No workspace opened: bump the revision so the sidebar's memoized
+      // `git worktree list` future re-runs and shows the new worktree.
+      final s = state;
+      if (s is WorkspacesStateLoaded) {
+        emit(s.copyWith(worktreesRevision: s.worktreesRevision + 1));
+      }
+    }
     return const Right(null);
   }
 

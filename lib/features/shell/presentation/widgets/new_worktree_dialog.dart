@@ -75,6 +75,12 @@ class NewWorktreeDialog extends HookWidget {
 
     final baseRef = useState<String?>(currentBranch);
     final pathController = useTextEditingController();
+    final pathText = useState('');
+    useEffect(() {
+      void l() => pathText.value = pathController.text;
+      pathController.addListener(l);
+      return () => pathController.removeListener(l);
+    }, [pathController]);
     final lastSuggested = useState('');
     final openAfter = useState(true);
 
@@ -116,9 +122,7 @@ class NewWorktreeDialog extends HookWidget {
     final isNew = mode.value == _Mode.newBranch;
     final canConfirm =
         !busy.value &&
-        (isNew
-            ? (name.value.trim().isNotEmpty && pathController.text.trim().isNotEmpty)
-            : existingPath.value.isNotEmpty);
+        (isNew ? (name.value.trim().isNotEmpty && pathText.value.trim().isNotEmpty) : existingPath.value.isNotEmpty);
 
     Future<void> pickNewBranchFolder() async {
       final picked = await FilePicker.getDirectoryPath(
@@ -142,11 +146,13 @@ class NewWorktreeDialog extends HookWidget {
     }
 
     Future<void> confirmNewBranch() async {
+      final target = pathController.text.trim();
+      if (target.isEmpty) return; // guard: never resolve an empty path to the cwd
       busy.value = true;
       error.value = null;
       final result = await cubit.createWorktree(
         repoRoot: repoRoot,
-        targetPath: pathController.text.trim(),
+        targetPath: target,
         newBranch: name.value.trim(),
         baseRef: baseRef.value,
         openAfter: openAfter.value,
