@@ -53,6 +53,13 @@ abstract class ClaudeSessionsState with _$ClaudeSessionsState {
 
   const factory ClaudeSessionsState({
     @Default(<String, WorkspaceSessions>{}) Map<String, WorkspaceSessions> workspaces,
+    // Account-wide MCP server list (from `claude mcp list` + sessionInit merge).
+    // Global, not per-workspace; kept in state so the "N active" count is reactive.
+    @Default(<McpServer>[]) List<McpServer> mcpServers,
+    // Server names with an OAuth flow in flight — guards the auth button against
+    // re-entrancy (a double-click would otherwise spawn duplicate ephemeral
+    // sidecar queries) and drives its pending affordance.
+    @Default(<String>{}) Set<String> mcpAuthInFlight,
   }) = _ClaudeSessionsState;
 
   ClaudeSessionData? sessionFor(String? workspaceId) {

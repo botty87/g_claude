@@ -56,6 +56,25 @@ unknown-server: some-cmd - some-unknown-marker
       expect(servers[3].status, equals(McpServerStatus.unknown));
     });
 
+    test('real CLI glyph ✔ (U+2714) parses as connected (was silently unknown)', () {
+      // The live `claude mcp list` emits U+2714 (✔), not U+2713 (✓); matching on
+      // the "Connected" wording keeps this robust to the glyph.
+      const input = 'claude.ai Slack: https://mcp.slack.com/mcp - ✔ Connected\n';
+      final servers = McpListDataSource.parseOutput(input);
+      expect(servers.single.status, equals(McpServerStatus.connected));
+      expect(servers.single.name, equals('claude.ai Slack'));
+    });
+
+    test('warning-style "Connected · tools fetch failed" counts as connected', () {
+      const input = 'stitch: https://stitch.googleapis.com/mcp (HTTP) - ! Connected · tools fetch failed\n';
+      expect(McpListDataSource.parseOutput(input).single.status, equals(McpServerStatus.connected));
+    });
+
+    test('"Failed to connect" is failed despite containing "connect"', () {
+      const input = 'x: cmd - ✗ Failed to connect\n';
+      expect(McpListDataSource.parseOutput(input).single.status, equals(McpServerStatus.failed));
+    });
+
     test('noisy lines are ignored — header, empty lines, non-matching lines', () {
       const input = '''
 Checking MCP server health…

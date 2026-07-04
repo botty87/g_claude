@@ -21,8 +21,8 @@ Transport corrente: **stdio NDJSON** (una riga JSON per messaggio). Astratto die
 | `setMode` | `sid, mode` | Cambia permission mode a runtime (`setPermissionMode`). |
 | `stop` | `sid` | `interrupt()` della sessione. |
 | `close` | `sid` | Chiude e dealloca la sessione. |
-| `mcpToggle` | `sid, serverName, enabled` | (TODO Fase ≥2) abilita/disabilita MCP server. |
-| `mcpAuth` | `sid, serverName` | (TODO Fase ≥2) avvia OAuth MCP, ritorna authUrl via EVT `mcpAuthUrl`. |
+| `mcpAuth` | `sid, cwd, serverName` | Avvia OAuth per un MCP server `needs-auth`. Gira in una query keep-alive **effimera** (slegata dalla chat: `sid` è usa-e-getta). Attende la registrazione del server (i connettori claude.ai attaccano dopo `init`), poi `mcpAuthenticate` dell'SDK. Ritorna `mcpAuthUrl` o `mcpAuthError`. |
+| `mcpToggle` | `sid, serverName, enabled` | (TODO) toggle MCP live. Oggi il toggle è statico via `disabledMcp` su `start` (→ `disallowedTools mcp__<sanitized>__*`). |
 
 ## EVT — sidecar → client
 
@@ -30,7 +30,7 @@ Eventi di dominio (mappano 1:1 su `ClaudeEvent` lato Dart). Tutti includono `sid
 
 | `t` | Campi | ClaudeEvent |
 |---|---|---|
-| `sessionInit` | `sessionId, model, tools[], skills[], slashCommands[], plugins[{name,path,source?}], apiKeySource` | `sessionInit` |
+| `sessionInit` | `sessionId, model, tools[], skills[], slashCommands[], plugins[{name,path,source?}], apiKeySource, cwd, mcpServers[{name,status}]` | `sessionInit` |
 | `textChunk` | `text` | `textChunk` |
 | `toolCall` | `toolName, toolId, index` | `toolCall` |
 | `toolCallUpdate` | `toolId, partialInput` | `toolCallUpdate` |
@@ -44,7 +44,9 @@ Eventi di dominio (mappano 1:1 su `ClaudeEvent` lato Dart). Tutti includono `sid
 | `sessionDead` | `exitCode?, stderrTail[]` | `sessionDead` |
 | `permissionRequest` | `toolUseID, toolName, toolInput` | `permissionRequest` (solo caso "ask") |
 | `askUserQuestion` | `toolUseID, questions[{question,header,multiSelect,options[{label,description}]}]` | `askUserQuestion` |
-| `planProposed` | `toolUseID, plan, planFilePath?` | `planProposed` (NUOVO) |
+| `planProposed` | `toolUseID, plan, planFilePath?` | `planProposed` |
+| `mcpAuthUrl` | `serverName, authUrl, requiresUserAction?, callbackExpected?` | `mcpAuthUrl` — il client apre `authUrl` nel browser; per i connettori claude.ai `callbackExpected:false` (callback brokerato server-side). |
+| `mcpAuthError` | `serverName, message` | `mcpAuthError` |
 
 Eventi di trasporto/sistema (non sono `ClaudeEvent`):
 

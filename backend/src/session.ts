@@ -64,6 +64,19 @@ function oneMillionBetas(model?: string): { betas?: never } {
   return {};
 }
 
+// Replicates the Claude Code CLI's MCP-server-name → tool-namespace sanitizer.
+// The CLI exposes an MCP server's tools as `mcp__<sanitized>__<tool>`, so a
+// `disallowedTools` spec of `mcp__<name>__*` only matches if <name> is the
+// sanitized form — not the display name the client sends (e.g. "claude.ai
+// Slack" → "claude_ai_Slack"). Rule extracted from the CLI binary (fn `Vl`):
+// replace every char outside [A-Za-z0-9_-] with "_"; for "claude.ai " servers,
+// additionally collapse runs of "_" and trim leading/trailing "_".
+export function sanitizeMcpToolPrefix(name: string): string {
+  let t = name.replace(/[^a-zA-Z0-9_-]/g, '_');
+  if (name.startsWith('claude.ai ')) t = t.replace(/_+/g, '_').replace(/^_|_$/g, '');
+  return t;
+}
+
 function mediaType(path: string): string {
   switch (extname(path).toLowerCase()) {
     case '.png': return 'image/png';
@@ -112,9 +125,11 @@ class Session {
           : req.thinking === false ? { thinking: { type: 'disabled' } as never } : {}),
         // 1M context window, auto-enabled where supported (documented: Sonnet).
         ...(oneMillionBetas(req.model)),
-        // Disabled MCP servers → block all their tools (mcp__<name>__*).
+        // Disabled MCP servers → block all their tools (mcp__<name>__*). Names
+        // must be sanitized to the CLI's tool namespace or the spec won't match
+        // remote/claude.ai servers (see sanitizeMcpToolPrefix).
         ...(req.disabledMcp && req.disabledMcp.length
-          ? { disallowedTools: req.disabledMcp.map((n) => `mcp__${n}__*`) }
+          ? { disallowedTools: req.disabledMcp.map((n) => `mcp__${sanitizeMcpToolPrefix(n)}__*`) }
           : {}),
         ...(process.env.CLAUDE_CLI_PATH ? { pathToClaudeCodeExecutable: process.env.CLAUDE_CLI_PATH } : {}),
         stderr: (d: string) => {
@@ -222,6 +237,90 @@ class Session {
   }
 }
 
+type McpAuthResponse = { authUrl?: string; requiresUserAction?: boolean; callbackExpected?: boolean };
+type McpStatusEntry = { name: string; status: string };
+
+// mcpAuthenticate / mcpServerStatus live on the runtime Query object but aren't
+// in the SDK's public typings (0.3.197). Narrow structural type for the calls.
+type McpAuthQuery = Query & {
+  mcpAuthenticate(serverName: string, redirectUri?: string): Promise<McpAuthResponse>;
+  mcpServerStatus(): Promise<McpStatusEntry[]>;
+};
+
+const sleep = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
+
+// Runs an MCP OAuth flow in a throwaway keep-alive query, decoupled from any
+// chat turn. The SDK control channel (mcpAuthenticate) needs a live streaming
+// query, so we spawn one, wait for the target server to register (claude.ai
+// connectors attach asynchronously *after* `init`), fetch the authUrl, emit it,
+// and tear the query down — the client opens the URL and claude.ai brokers the
+// callback (callbackExpected=false). A trivial prompt only establishes
+// streaming mode; we close before any real turn completes.
+async function runMcpAuth(req: Extract<Req, { t: 'mcpAuth' }>, emit: Emit): Promise<void> {
+  const { sid, serverName } = req;
+  const input = new InputQueue();
+  input.push(userMessage('.'));
+  let q: McpAuthQuery;
+  try {
+    q = query({
+      prompt: input,
+      options: {
+        cwd: req.cwd,
+        permissionMode: 'default',
+        ...(process.env.CLAUDE_CLI_PATH ? { pathToClaudeCodeExecutable: process.env.CLAUDE_CLI_PATH } : {}),
+      },
+    }) as McpAuthQuery;
+  } catch (e) {
+    emit({ t: 'mcpAuthError', sid, serverName, message: String(e) });
+    return;
+  }
+
+  const drain = (async () => {
+    try { for await (const _ of q as AsyncIterable<unknown>) { /* keep the query alive */ } } catch { /* torn down */ }
+  })();
+
+  const deadline = 30_000;
+  try {
+    // Poll until the server registers (control channel also becomes ready here;
+    // claude.ai connectors attach after init, so we can't authenticate at once).
+    const start = Date.now();
+    let found = false;
+    while (Date.now() - start < deadline) {
+      try {
+        const status = await q.mcpServerStatus();
+        if (status.some((s) => s.name === serverName)) { found = true; break; }
+      } catch { /* control channel not ready yet */ }
+      await sleep(400);
+    }
+    if (!found) { emit({ t: 'mcpAuthError', sid, serverName, message: `server not found within ${deadline}ms` }); return; }
+
+    // Bound mcpAuthenticate too: if the SDK never resolves, a bare await would
+    // hang forever and the `finally` (query teardown) would never run, leaking
+    // the ephemeral query + claude subprocess. On timeout we throw → finally
+    // closes the query and kills the subprocess.
+    const timeout = (ms: number) => new Promise<never>((_, rej) => setTimeout(() => rej(new Error(`mcpAuthenticate timeout after ${ms}ms`)), ms));
+    const res = await Promise.race([q.mcpAuthenticate(serverName), timeout(deadline)]);
+    if (res && typeof res.authUrl === 'string' && res.authUrl.length > 0) {
+      // claude.ai connectors broker the callback themselves (callbackExpected
+      // false). A true here means a bare OAuth server expects us to submit the
+      // redirect back via mcpSubmitOAuthCallbackUrl — not yet wired, so warn
+      // loudly instead of silently half-completing.
+      if (res.callbackExpected === true) {
+        process.stderr.write(`[mcpAuth] ${serverName}: callbackExpected=true not supported (only claude.ai connectors)\n`);
+      }
+      emit({ t: 'mcpAuthUrl', sid, serverName, authUrl: res.authUrl, requiresUserAction: res.requiresUserAction, callbackExpected: res.callbackExpected });
+    } else {
+      emit({ t: 'mcpAuthError', sid, serverName, message: 'no authUrl returned by SDK' });
+    }
+  } catch (e) {
+    emit({ t: 'mcpAuthError', sid, serverName, message: String(e) });
+  } finally {
+    input.close();
+    try { q.close(); } catch { /* already closed */ }
+    void drain;
+  }
+}
+
 export class SessionManager {
   private readonly sessions = new Map<string, Session>();
   constructor(private readonly emit: Emit) {}
@@ -233,6 +332,11 @@ export class SessionManager {
       const s = new Session(req, this.emit);
       this.sessions.set(req.sid, s);
       s.start(req);
+      return;
+    }
+    // Ephemeral, session-less: owns its own throwaway query.
+    if (req.t === 'mcpAuth') {
+      void runMcpAuth(req, this.emit);
       return;
     }
     const s = this.sessions.get(req.sid);

@@ -27,8 +27,10 @@ abstract interface class ClaudeRepository {
   /// Toggles an MCP server. Not yet implemented via sidecar protocol.
   Future<Either<Failure, void>> toggleMcpServer({required String serverName, required bool enabled});
 
-  /// Starts OAuth flow for an MCP server. Not yet implemented via sidecar.
-  Future<Either<Failure, String?>> authenticateMcpServer({required String serverName});
+  /// Starts the OAuth flow for a `needs-auth` MCP server, resolving with the
+  /// browser `authUrl` to open (null if none). [cwd] is the workspace path the
+  /// ephemeral auth query runs in.
+  Future<Either<Failure, String?>> authenticateMcpServer({required String cwd, required String serverName});
 
   /// Sends answers for an `AskUserQuestion` interactive card.
   void answerQuestion({required String sid, required String toolUseId, required Map<String, String> answers});
