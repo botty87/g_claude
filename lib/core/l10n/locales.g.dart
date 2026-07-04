@@ -909,6 +909,15 @@ class _ShellNewWorktree {
   String get cancel => LocaleKeys.shell_newWorktree_cancel.tr();
   String get cartellaHint => LocaleKeys.shell_newWorktree_cartellaHint.tr();
   String get cartellaLabel => LocaleKeys.shell_newWorktree_cartellaLabel.tr();
+  String get ccPrefixChoreDesc => LocaleKeys.shell_newWorktree_ccPrefixChoreDesc.tr();
+  String get ccPrefixDocsDesc => LocaleKeys.shell_newWorktree_ccPrefixDocsDesc.tr();
+  String get ccPrefixFeatDesc => LocaleKeys.shell_newWorktree_ccPrefixFeatDesc.tr();
+  String get ccPrefixFixDesc => LocaleKeys.shell_newWorktree_ccPrefixFixDesc.tr();
+  String get ccPrefixHotfixDesc => LocaleKeys.shell_newWorktree_ccPrefixHotfixDesc.tr();
+  String get ccPrefixNoneDesc => LocaleKeys.shell_newWorktree_ccPrefixNoneDesc.tr();
+  String get ccPrefixNoneLabel => LocaleKeys.shell_newWorktree_ccPrefixNoneLabel.tr();
+  String get ccPrefixRefactorDesc => LocaleKeys.shell_newWorktree_ccPrefixRefactorDesc.tr();
+  String get ccPrefixTestDesc => LocaleKeys.shell_newWorktree_ccPrefixTestDesc.tr();
   String get cleanStatus => LocaleKeys.shell_newWorktree_cleanStatus.tr();
   String get create => LocaleKeys.shell_newWorktree_create.tr();
   String get detectedRepo => LocaleKeys.shell_newWorktree_detectedRepo.tr();

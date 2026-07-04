@@ -75,6 +75,9 @@ class NewWorktreeDialog extends HookWidget {
       nameController.addListener(l);
       return () => nameController.removeListener(l);
     }, [nameController]);
+    // Conventional-commit prefix (key, '' = none); the final branch is
+    // `<prefix>/<name>`. Defaults to `feat`.
+    final prefix = useState<String>(_CcPrefix.feat.key);
 
     final baseRef = useState<String?>(currentBranch);
     final pathController = useTextEditingController();
@@ -88,7 +91,8 @@ class NewWorktreeDialog extends HookWidget {
     final lastSuggested = useState('');
     final openAfter = useState(true);
 
-    final suggested = defaultWorktreePath(repoRoot: repoRoot, branch: name.value.trim());
+    final composedBranch = composeBranchName(prefix.value, name.value.trim());
+    final suggested = defaultWorktreePath(repoRoot: repoRoot, branch: composedBranch);
     useEffect(() {
       if (pathController.text.isEmpty || pathController.text == lastSuggested.value) {
         pathController.text = suggested;
@@ -142,7 +146,7 @@ class NewWorktreeDialog extends HookWidget {
         initialDirectory: repoRoot,
       );
       if (picked == null) return;
-      final branch = name.value.trim();
+      final branch = composeBranchName(prefix.value, name.value.trim());
       pathController.text = branch.isEmpty ? picked : p.join(picked, branch);
       lastSuggested.value = '';
     }
@@ -165,7 +169,7 @@ class NewWorktreeDialog extends HookWidget {
       final result = await cubit.createWorktree(
         repoRoot: repoRoot,
         targetPath: target,
-        newBranch: name.value.trim(),
+        newBranch: composeBranchName(prefix.value, name.value.trim()),
         baseRef: baseRef.value,
         openAfter: openAfter.value,
       );
@@ -224,6 +228,7 @@ class NewWorktreeDialog extends HookWidget {
                   busy: busy.value,
                   nameController: nameController,
                   nameActive: name.value.trim().isNotEmpty,
+                  prefix: prefix,
                   baseRef: baseRef,
                   allBranches: allBranches,
                   baseItems: baseItems,
@@ -270,6 +275,7 @@ List<Widget> _newBranchFields({
   required bool busy,
   required TextEditingController nameController,
   required bool nameActive,
+  required ValueNotifier<String> prefix,
   required ValueNotifier<String?> baseRef,
   required List<GitBranch> allBranches,
   required List<DropdownMenuItem<String?>> baseItems,
@@ -278,14 +284,18 @@ List<Widget> _newBranchFields({
   required ValueNotifier<bool> openAfter,
   required VoidCallback? onPickFolder,
 }) {
+  final hasPrefix = prefix.value.isNotEmpty;
   return [
     GlassFieldLabel(Locales.Shell.NewWorktree.branchNameLabel),
     GlassField(
       active: nameActive,
       child: Row(
         children: [
-          const Icon(Symbols.account_tree, size: 14, color: AppColors.brandIndigo),
-          const SizedBox(width: 8),
+          // The branch icon doubles as the always-reachable prefix picker, so a
+          // `(nessuno)` selection (which hides the chip + `/`) is never a trap.
+          _PrefixDropdown(prefix: prefix, enabled: !busy),
+          if (hasPrefix) ...[const SizedBox(width: 6), Text('/', style: _monoInput.copyWith(color: AppColors.outline))],
+          const SizedBox(width: 6),
           Expanded(
             child: TextField(
               key: const ValueKey('new_worktree_branch_name'),
@@ -314,6 +324,9 @@ List<Widget> _newBranchFields({
                 if (v == null || nameController.text.trim().isNotEmpty) return;
                 final picked = allBranches.firstWhereOrNull((b) => b.name == v);
                 if (picked != null && picked.isRemote && v.contains('/')) {
+                  // The remote name already carries its own structure — don't
+                  // wrap it in a conventional-commit prefix.
+                  prefix.value = '';
                   nameController.text = v.substring(v.indexOf('/') + 1);
                 }
               },
@@ -476,6 +489,115 @@ DropdownMenuItem<String?> _dropdownHeader(String label, String sentinel) => Drop
     style: AppTypography.navTab.copyWith(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.outline),
   ),
 );
+
+/// Composes the final branch name from a conventional-commit [prefix] key and
+/// the free-text [name]: `feat` + `nuovo-flusso` → `feat/nuovo-flusso`. An empty
+/// prefix (the "(none)" option) — or an empty name — yields just the name, so a
+/// branch like `main`/`develop` carries no prefix.
+@visibleForTesting
+String composeBranchName(String prefix, String name) => (prefix.isEmpty || name.isEmpty) ? name : '$prefix/$name';
+
+/// Conventional-commit prefixes offered in the branch-name field. [key] is the
+/// literal git prefix (`feat`, `fix`, …); the empty [key] is "(none)" → the
+/// branch gets no prefix. Colors map to Glass Graphite tokens (design 6b).
+enum _CcPrefix {
+  none(''),
+  feat('feat'),
+  fix('fix'),
+  refactor('refactor'),
+  chore('chore'),
+  docs('docs'),
+  test('test'),
+  hotfix('hotfix');
+
+  const _CcPrefix(this.key);
+  final String key;
+
+  String get description => switch (this) {
+    _CcPrefix.none => Locales.Shell.NewWorktree.ccPrefixNoneDesc,
+    _CcPrefix.feat => Locales.Shell.NewWorktree.ccPrefixFeatDesc,
+    _CcPrefix.fix => Locales.Shell.NewWorktree.ccPrefixFixDesc,
+    _CcPrefix.refactor => Locales.Shell.NewWorktree.ccPrefixRefactorDesc,
+    _CcPrefix.chore => Locales.Shell.NewWorktree.ccPrefixChoreDesc,
+    _CcPrefix.docs => Locales.Shell.NewWorktree.ccPrefixDocsDesc,
+    _CcPrefix.test => Locales.Shell.NewWorktree.ccPrefixTestDesc,
+    _CcPrefix.hotfix => Locales.Shell.NewWorktree.ccPrefixHotfixDesc,
+  };
+
+  /// Text shown in the chip / menu key column ("(none)" for [none], else [key]).
+  String get label => this == _CcPrefix.none ? Locales.Shell.NewWorktree.ccPrefixNoneLabel : key;
+
+  Color get color => switch (this) {
+    _CcPrefix.feat => AppColors.primary,
+    _CcPrefix.hotfix => AppColors.tertiary,
+    _CcPrefix.none => AppColors.outline,
+    _ => AppColors.secondary,
+  };
+}
+
+/// The conventional-commit prefix picker inside the branch-name field: a compact
+/// chip (branch icon + colored key + chevron) opening a menu of keyed options
+/// with descriptions. The branch icon is always present, so selecting "(none)"
+/// — which hides the key text and the `/` separator — never traps the user.
+class _PrefixDropdown extends StatelessWidget {
+  const _PrefixDropdown({required this.prefix, required this.enabled});
+
+  final ValueNotifier<String> prefix;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final current = _CcPrefix.values.firstWhere((t) => t.key == prefix.value, orElse: () => _CcPrefix.none);
+    final hasPrefix = current != _CcPrefix.none;
+    return PopupMenuButton<_CcPrefix>(
+      key: const ValueKey('new_worktree_branch_prefix'),
+      enabled: enabled,
+      tooltip: '',
+      padding: EdgeInsets.zero,
+      position: PopupMenuPosition.under,
+      color: AppColors.surfaceContainerHigh,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+      onSelected: (t) => prefix.value = t.key,
+      itemBuilder: (context) => [
+        for (final t in _CcPrefix.values)
+          PopupMenuItem(
+            value: t,
+            height: 40,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 74,
+                  child: Text(t.label, style: _monoInput.copyWith(color: t.color, fontSize: 12)),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    t.description,
+                    style: AppTypography.navTab.copyWith(fontSize: 11.5, color: AppColors.onSurfaceVariant),
+                  ),
+                ),
+                if (t.key == prefix.value) ...[
+                  const SizedBox(width: 8),
+                  const Icon(Symbols.check, size: 14, color: AppColors.primary),
+                ],
+              ],
+            ),
+          ),
+      ],
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Symbols.account_tree, size: 14, color: hasPrefix ? current.color : AppColors.brandIndigo),
+          if (hasPrefix) ...[
+            const SizedBox(width: 5),
+            Text(current.key, style: _monoInput.copyWith(color: current.color)),
+          ],
+          const Icon(Symbols.expand_more, size: 14, color: AppColors.outline),
+        ],
+      ),
+    );
+  }
+}
 
 /// Green card summarizing a detected git repo/worktree before opening it.
 class _DetectionCard extends StatelessWidget {

@@ -92,9 +92,10 @@ void main() {
     }
 
     // 1) New branch: typing the name enables Create and routes to createWorktree
-    //    with the repo's default base ('main') and open-after ON.
+    //    with the repo's default base ('main'), open-after ON, and the default
+    //    conventional-commit prefix ('feat') composed onto the name.
     await openDialog();
-    await tester.enterText(find.byKey(const ValueKey('new_worktree_branch_name')), 'feature/new');
+    await tester.enterText(find.byKey(const ValueKey('new_worktree_branch_name')), 'my-work');
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('new_worktree_confirm')));
     await tester.pumpAndSettle();
@@ -102,7 +103,7 @@ void main() {
       () => cubit.createWorktree(
         repoRoot: repoRoot,
         targetPath: any(named: 'targetPath'),
-        newBranch: 'feature/new',
+        newBranch: 'feat/my-work',
         baseRef: 'main',
         checkoutBranch: null,
         openAfter: true,
@@ -177,5 +178,55 @@ void main() {
       tester.widget<TextField>(find.byKey(const ValueKey('new_worktree_branch_name'))).controller!.text,
       'feature/api',
     );
+    clearInteractions(cubit);
+
+    // 5) Conventional-commit prefix: picking the "(none)" option drops the
+    //    prefix, so the branch is composed without one (for main/develop-style
+    //    names).
+    when(
+      () => cubit.createWorktree(
+        repoRoot: any(named: 'repoRoot'),
+        targetPath: any(named: 'targetPath'),
+        newBranch: any(named: 'newBranch'),
+        baseRef: any(named: 'baseRef'),
+        checkoutBranch: any(named: 'checkoutBranch'),
+        openAfter: any(named: 'openAfter'),
+      ),
+    ).thenAnswer((_) async => const Right(null));
+    await tester.tap(find.text('Cancel')); // dismiss scenario 4's dialog
+    await tester.pumpAndSettle();
+    await openDialog();
+    expect(find.byKey(const ValueKey('new_worktree_branch_prefix')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('new_worktree_branch_prefix')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('(none)').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('new_worktree_branch_name')), 'develop');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('new_worktree_confirm')));
+    await tester.pumpAndSettle();
+    verify(
+      () => cubit.createWorktree(
+        repoRoot: repoRoot,
+        targetPath: any(named: 'targetPath'),
+        newBranch: 'develop',
+        baseRef: any(named: 'baseRef'),
+        checkoutBranch: null,
+        openAfter: any(named: 'openAfter'),
+      ),
+    ).called(1);
+  });
+
+  group('composeBranchName', () {
+    test('prefix + name → prefix/name', () {
+      expect(composeBranchName('feat', 'nuovo-flusso'), 'feat/nuovo-flusso');
+    });
+    test('empty prefix (none) → just the name', () {
+      expect(composeBranchName('', 'develop'), 'develop');
+    });
+    test('empty name → empty (no dangling prefix/)', () {
+      expect(composeBranchName('feat', ''), '');
+      expect(composeBranchName('', ''), '');
+    });
   });
 }
