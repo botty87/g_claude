@@ -79,6 +79,12 @@ Widget test (diff_panel_view, file_tab): flakiness d'ordine nell'harness → in 
 
 Nota: la feature `git` diff (datasource/parser/repo/usecase/cubit + test) è stata implementata da un subagent writer; l'integrazione editor/shell + UI da me.
 
+## Follow-up post-review committente
+
+- Uniformità preview/pin per le tab diff (clic singolo = preview, doppio = pin) come le tab file — `previewDiffId`/`pinDiff`.
+- Fix Cmd+W: chiude la diff attiva; Cmd+Shift+W azzera file + diff (`closeAllTabs`).
+- Compact folders (VS Code) nell'albero diff + tooltip path completo su hover.
+
 ## Review (flutter-code-reviewer, opus)
 
 Nessun Critical. Invariante `activeDiffId`, callback live-read, selettori granulari, animazione `_MainArea` (no leak/race), DI, no-hardcoded-strings, no StatefulWidget → tutti verificati OK.

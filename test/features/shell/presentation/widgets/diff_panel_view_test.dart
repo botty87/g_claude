@@ -49,28 +49,33 @@ void main() {
       expect(rows.single.file!.path, 'README.md');
     });
 
-    test('a nested file produces one dir entry per path segment, then the file entry', () {
+    test('a single-child folder chain is compacted into one dir row (VS Code style)', () {
       final rows = buildDiffTreeRows([_file('lib/features/git/x.dart')], const {});
 
-      expect(rows, hasLength(4));
+      // lib -> features -> git each have a single subfolder and no own files,
+      // so they collapse into one row; the file sits one level below it.
+      expect(rows, hasLength(2));
       expect(rows[0].isDir, isTrue);
-      expect(rows[0].name, 'lib');
-      expect(rows[0].fullPath, 'lib');
+      expect(rows[0].name, 'lib/features/git');
+      expect(rows[0].fullPath, 'lib/features/git');
       expect(rows[0].depth, 0);
+      expect(rows[0].fileCount, 1);
 
-      expect(rows[1].isDir, isTrue);
-      expect(rows[1].name, 'features');
-      expect(rows[1].fullPath, 'lib/features');
+      expect(rows[1].isDir, isFalse);
+      expect(rows[1].file!.path, 'lib/features/git/x.dart');
       expect(rows[1].depth, 1);
+    });
 
-      expect(rows[2].isDir, isTrue);
-      expect(rows[2].name, 'git');
-      expect(rows[2].fullPath, 'lib/features/git');
-      expect(rows[2].depth, 2);
+    test('a folder that also holds files is NOT compacted into its single subfolder', () {
+      // lib has a direct file (other.dart) AND a subfolder chain features/git.
+      final rows = buildDiffTreeRows([_file('lib/features/git/x.dart'), _file('lib/other.dart')], const {});
 
-      expect(rows[3].isDir, isFalse);
-      expect(rows[3].file!.path, 'lib/features/git/x.dart');
-      expect(rows[3].depth, 3);
+      expect(rows.map((r) => r.isDir ? r.fullPath : r.file!.path), [
+        'lib', // kept: has its own file
+        'lib/features/git', // features->git compacted below lib
+        'lib/features/git/x.dart',
+        'lib/other.dart',
+      ]);
     });
 
     test('fileCount of a dir aggregates all descendant files recursively', () {
@@ -85,15 +90,16 @@ void main() {
       expect(bRow.fileCount, 1);
     });
 
-    test('collapsedDirs hides descendants of the matched dir but keeps the dir row itself', () {
+    test('collapsedDirs (keyed on the compacted dir path) hides descendants but keeps the dir row', () {
       final rows = buildDiffTreeRows(
         [_file('lib/features/git/x.dart'), _file('lib/other.dart')],
-        const {'lib/features'},
+        // The compacted folder row's fullPath is the deepest segment.
+        const {'lib/features/git'},
       );
 
-      // lib, lib/features stay; lib/features/git and x.dart are hidden;
+      // lib and the compacted lib/features/git stay; x.dart is hidden;
       // lib/other.dart (a direct child of lib) stays.
-      expect(rows.map((r) => r.isDir ? r.fullPath : r.file!.path), ['lib', 'lib/features', 'lib/other.dart']);
+      expect(rows.map((r) => r.isDir ? r.fullPath : r.file!.path), ['lib', 'lib/features/git', 'lib/other.dart']);
     });
 
     test('siblings sort: dirs alphabetically (fully expanded) before this level\'s own files, '

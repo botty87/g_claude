@@ -320,6 +320,43 @@ void main() {
     );
   });
 
+  group('closeAllTabs', () {
+    blocTest<FileTabsCubit, FileTabsState>(
+      'clears both file tabs and diff tabs (backs Cmd+Shift+W)',
+      build: makeCubit,
+      seed: () => FileTabsState(
+        perWorkspace: {
+          wsId: WorkspaceFiles(
+            openPaths: ['a.dart'],
+            activePath: 'a.dart',
+            openDiffs: [ref('diff.dart')],
+            activeDiffId: 'diff.dart',
+          ),
+        },
+      ),
+      act: (c) => c.closeAllTabs(wsId),
+      verify: (c) {
+        final files = c.state.filesFor(wsId)!;
+        expect(files.openPaths, isEmpty);
+        expect(files.activePath, isNull);
+        expect(files.openDiffs, isEmpty);
+        expect(files.activeDiffId, isNull);
+      },
+    );
+
+    blocTest<FileTabsCubit, FileTabsState>(
+      'closes all when only diff tabs are open (no file tabs)',
+      build: makeCubit,
+      seed: () => FileTabsState(
+        perWorkspace: {
+          wsId: WorkspaceFiles(openDiffs: [ref('diff.dart')], activeDiffId: 'diff.dart'),
+        },
+      ),
+      act: (c) => c.closeAllTabs(wsId),
+      verify: (c) => expect(c.state.filesFor(wsId)!.openDiffs, isEmpty),
+    );
+  });
+
   group('persistence', () {
     test('diff tabs are never included in the persisted snapshot', () async {
       final cubit = makeCubit();

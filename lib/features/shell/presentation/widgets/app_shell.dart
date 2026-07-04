@@ -47,9 +47,17 @@ class AppShellPage extends HookWidget {
     bool closeActiveTab() {
       final activeId = context.read<WorkspacesCubit>().state.activeIdOrNull;
       if (activeId == null) return false;
-      final activePath = context.read<FileTabsCubit>().state.filesFor(activeId)?.activePath;
-      if (activePath == null) return false;
-      context.read<FileTabsCubit>().closeFile(activeId, activePath);
+      final tabs = context.read<FileTabsCubit>();
+      final files = tabs.state.filesFor(activeId);
+      if (files == null) return false;
+      // Close whichever surface is showing: an active diff tab wins over the
+      // file tab (same rule as the viewer), else close the active file tab.
+      if (files.activeDiffId != null) {
+        tabs.closeDiff(activeId, files.activeDiffId!);
+        return true;
+      }
+      if (files.activePath == null) return false;
+      tabs.closeFile(activeId, files.activePath!);
       return true;
     }
 
@@ -57,8 +65,8 @@ class AppShellPage extends HookWidget {
       final activeId = context.read<WorkspacesCubit>().state.activeIdOrNull;
       if (activeId == null) return false;
       final files = context.read<FileTabsCubit>().state.filesFor(activeId);
-      if (files == null || files.openPaths.isEmpty) return false;
-      context.read<FileTabsCubit>().closeAllFiles(activeId);
+      if (files == null || (files.openPaths.isEmpty && files.openDiffs.isEmpty)) return false;
+      context.read<FileTabsCubit>().closeAllTabs(activeId);
       return true;
     }
 

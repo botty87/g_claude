@@ -209,6 +209,16 @@ class FileTabsCubit extends Cubit<FileTabsState> {
     );
   }
 
+  /// Closes every tab in the workspace — file tabs and diff tabs. Backs the
+  /// "close all tabs" keyboard shortcut (unlike [closeAllFiles], the file-only
+  /// "close editors" action).
+  void closeAllTabs(WorkspaceId id) {
+    final files = state.perWorkspace[id];
+    if (files == null || (files.openPaths.isEmpty && files.openDiffs.isEmpty)) return;
+    _talker.debug('FileTabsCubit: closed all tabs in workspace $id');
+    emit(state.copyWith(perWorkspace: {...state.perWorkspace, id: const WorkspaceFiles()}));
+  }
+
   void setActiveFile(WorkspaceId id, String path) {
     final files = state.perWorkspace[id];
     if (files == null) return;

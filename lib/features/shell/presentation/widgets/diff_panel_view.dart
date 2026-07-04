@@ -45,6 +45,11 @@ class _DirNode {
 
 /// Groups [files] by directory into a flattened, depth-annotated row list.
 /// Directories in [collapsedDirs] (by full path) hide their descendants.
+///
+/// Single-child folder chains are compacted VS Code-style: a run of folders
+/// that each hold exactly one subfolder and no files of their own renders as a
+/// single row (e.g. `lib/features/git`). The row's [DiffTreeEntry.fullPath] is
+/// the deepest folder in the chain — that is the key used for [collapsedDirs].
 @visibleForTesting
 List<DiffTreeEntry> buildDiffTreeRows(List<GitDiffFile> files, Set<String> collapsedDirs) {
   final root = _DirNode();
@@ -64,9 +69,16 @@ List<DiffTreeEntry> buildDiffTreeRows(List<GitDiffFile> files, Set<String> colla
   void walk(_DirNode node, String prefix, int depth) {
     final dirNames = node.dirs.keys.toList()..sort();
     for (final name in dirNames) {
-      final child = node.dirs[name]!;
-      final full = prefix.isEmpty ? name : '$prefix/$name';
-      out.add(DiffTreeEntry.dir(fullPath: full, name: name, depth: depth, fileCount: child.count));
+      var child = node.dirs[name]!;
+      var full = prefix.isEmpty ? name : '$prefix/$name';
+      var label = name;
+      while (child.dirs.length == 1 && child.files.isEmpty) {
+        final only = child.dirs.keys.first;
+        child = child.dirs[only]!;
+        full = '$full/$only';
+        label = '$label/$only';
+      }
+      out.add(DiffTreeEntry.dir(fullPath: full, name: label, depth: depth, fileCount: child.count));
       if (!collapsedDirs.contains(full)) {
         walk(child, full, depth + 1);
       }
@@ -277,34 +289,42 @@ class _DiffDirRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Hoverable(
-      onTap: () => context.read<GitDiffCubit>().toggleDir(activeId, fullPath),
-      builder: (context, hover) => Container(
-        height: _DiffFileRow.rowHeight,
-        color: hover ? AppColors.glassHover : Colors.transparent,
-        padding: EdgeInsetsDirectional.only(start: AppSpacing.sm + depth * 14.0, end: AppSpacing.sm),
-        child: Row(
-          children: [
-            Icon(collapsed ? Symbols.chevron_right : Symbols.expand_more, size: 14, color: AppColors.onSurfaceVariant),
-            const SizedBox(width: 2),
-            Icon(collapsed ? Symbols.folder : Symbols.folder_open, size: 15, color: AppColors.onSurfaceVariant),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                name,
-                style: AppTypography.bodyMain.copyWith(fontSize: 13),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
+    return Tooltip(
+      message: fullPath,
+      waitDuration: const Duration(milliseconds: 500),
+      child: Hoverable(
+        onTap: () => context.read<GitDiffCubit>().toggleDir(activeId, fullPath),
+        builder: (context, hover) => Container(
+          height: _DiffFileRow.rowHeight,
+          color: hover ? AppColors.glassHover : Colors.transparent,
+          padding: EdgeInsetsDirectional.only(start: AppSpacing.sm + depth * 14.0, end: AppSpacing.sm),
+          child: Row(
+            children: [
+              Icon(
+                collapsed ? Symbols.chevron_right : Symbols.expand_more,
+                size: 14,
+                color: AppColors.onSurfaceVariant,
               ),
-            ),
-            Text(
-              '$fileCount',
-              style: AppTypography.terminalCode.copyWith(
-                fontSize: 11,
-                color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
+              const SizedBox(width: 2),
+              Icon(collapsed ? Symbols.folder : Symbols.folder_open, size: 15, color: AppColors.onSurfaceVariant),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  name,
+                  style: AppTypography.bodyMain.copyWith(fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ),
-            ),
-          ],
+              Text(
+                '$fileCount',
+                style: AppTypography.terminalCode.copyWith(
+                  fontSize: 11,
+                  color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -343,42 +363,46 @@ class _DiffFileRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = showFullPath ? file.path : p.basename(file.path);
-    return Hoverable(
-      key: ValueKey('diff_file_${file.path}'),
-      onTap: () => _open(context),
-      onDoubleTap: () => _open(context, pin: true),
-      builder: (context, hover) => Container(
-        height: rowHeight,
-        color: hover ? AppColors.glassHover : Colors.transparent,
-        padding: EdgeInsetsDirectional.only(
-          start: AppSpacing.sm + (showFullPath ? 0 : (depth + 1) * 14.0),
-          end: AppSpacing.sm,
-        ),
-        child: Row(
-          children: [
-            _StatusBadge(status: file.status),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                label,
-                style: AppTypography.bodyMain.copyWith(fontSize: 13),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
+    return Tooltip(
+      message: file.path,
+      waitDuration: const Duration(milliseconds: 500),
+      child: Hoverable(
+        key: ValueKey('diff_file_${file.path}'),
+        onTap: () => _open(context),
+        onDoubleTap: () => _open(context, pin: true),
+        builder: (context, hover) => Container(
+          height: rowHeight,
+          color: hover ? AppColors.glassHover : Colors.transparent,
+          padding: EdgeInsetsDirectional.only(
+            start: AppSpacing.sm + (showFullPath ? 0 : (depth + 1) * 14.0),
+            end: AppSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              _StatusBadge(status: file.status),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTypography.bodyMain.copyWith(fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
-            if (file.added > 0)
-              Text(
-                '+${file.added}',
-                style: AppTypography.terminalCode.copyWith(fontSize: 11, color: AppColors.diffAdd),
-              ),
-            if (file.added > 0 && file.deleted > 0) const SizedBox(width: 4),
-            if (file.deleted > 0)
-              Text(
-                '−${file.deleted}',
-                style: AppTypography.terminalCode.copyWith(fontSize: 11, color: AppColors.diffDel),
-              ),
-          ],
+              const SizedBox(width: 6),
+              if (file.added > 0)
+                Text(
+                  '+${file.added}',
+                  style: AppTypography.terminalCode.copyWith(fontSize: 11, color: AppColors.diffAdd),
+                ),
+              if (file.added > 0 && file.deleted > 0) const SizedBox(width: 4),
+              if (file.deleted > 0)
+                Text(
+                  '−${file.deleted}',
+                  style: AppTypography.terminalCode.copyWith(fontSize: 11, color: AppColors.diffDel),
+                ),
+            ],
+          ),
         ),
       ),
     );
