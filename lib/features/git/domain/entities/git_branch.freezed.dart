@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$GitBranch {
 
- String get name; String? get worktreePath;
+ String get name; String? get worktreePath; bool get isRemote;
 /// Create a copy of GitBranch
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $GitBranchCopyWith<GitBranch> get copyWith => _$GitBranchCopyWithImpl<GitBranch>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GitBranch&&(identical(other.name, name) || other.name == name)&&(identical(other.worktreePath, worktreePath) || other.worktreePath == worktreePath));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GitBranch&&(identical(other.name, name) || other.name == name)&&(identical(other.worktreePath, worktreePath) || other.worktreePath == worktreePath)&&(identical(other.isRemote, isRemote) || other.isRemote == isRemote));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,worktreePath);
+int get hashCode => Object.hash(runtimeType,name,worktreePath,isRemote);
 
 @override
 String toString() {
-  return 'GitBranch(name: $name, worktreePath: $worktreePath)';
+  return 'GitBranch(name: $name, worktreePath: $worktreePath, isRemote: $isRemote)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $GitBranchCopyWith<$Res>  {
   factory $GitBranchCopyWith(GitBranch value, $Res Function(GitBranch) _then) = _$GitBranchCopyWithImpl;
 @useResult
 $Res call({
- String name, String? worktreePath
+ String name, String? worktreePath, bool isRemote
 });
 
 
@@ -62,11 +62,12 @@ class _$GitBranchCopyWithImpl<$Res>
 
 /// Create a copy of GitBranch
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? worktreePath = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? worktreePath = freezed,Object? isRemote = null,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,worktreePath: freezed == worktreePath ? _self.worktreePath : worktreePath // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isRemote: null == isRemote ? _self.isRemote : isRemote // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -151,10 +152,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? worktreePath)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? worktreePath,  bool isRemote)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GitBranch() when $default != null:
-return $default(_that.name,_that.worktreePath);case _:
+return $default(_that.name,_that.worktreePath,_that.isRemote);case _:
   return orElse();
 
 }
@@ -172,10 +173,10 @@ return $default(_that.name,_that.worktreePath);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? worktreePath)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? worktreePath,  bool isRemote)  $default,) {final _that = this;
 switch (_that) {
 case _GitBranch():
-return $default(_that.name,_that.worktreePath);case _:
+return $default(_that.name,_that.worktreePath,_that.isRemote);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -192,10 +193,10 @@ return $default(_that.name,_that.worktreePath);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? worktreePath)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? worktreePath,  bool isRemote)?  $default,) {final _that = this;
 switch (_that) {
 case _GitBranch() when $default != null:
-return $default(_that.name,_that.worktreePath);case _:
+return $default(_that.name,_that.worktreePath,_that.isRemote);case _:
   return null;
 
 }
@@ -207,11 +208,12 @@ return $default(_that.name,_that.worktreePath);case _:
 
 
 class _GitBranch extends GitBranch {
-  const _GitBranch({required this.name, this.worktreePath}): super._();
+  const _GitBranch({required this.name, this.worktreePath, this.isRemote = false}): super._();
   
 
 @override final  String name;
 @override final  String? worktreePath;
+@override@JsonKey() final  bool isRemote;
 
 /// Create a copy of GitBranch
 /// with the given fields replaced by the non-null parameter values.
@@ -223,16 +225,16 @@ _$GitBranchCopyWith<_GitBranch> get copyWith => __$GitBranchCopyWithImpl<_GitBra
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GitBranch&&(identical(other.name, name) || other.name == name)&&(identical(other.worktreePath, worktreePath) || other.worktreePath == worktreePath));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GitBranch&&(identical(other.name, name) || other.name == name)&&(identical(other.worktreePath, worktreePath) || other.worktreePath == worktreePath)&&(identical(other.isRemote, isRemote) || other.isRemote == isRemote));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,worktreePath);
+int get hashCode => Object.hash(runtimeType,name,worktreePath,isRemote);
 
 @override
 String toString() {
-  return 'GitBranch(name: $name, worktreePath: $worktreePath)';
+  return 'GitBranch(name: $name, worktreePath: $worktreePath, isRemote: $isRemote)';
 }
 
 
@@ -243,7 +245,7 @@ abstract mixin class _$GitBranchCopyWith<$Res> implements $GitBranchCopyWith<$Re
   factory _$GitBranchCopyWith(_GitBranch value, $Res Function(_GitBranch) _then) = __$GitBranchCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String? worktreePath
+ String name, String? worktreePath, bool isRemote
 });
 
 
@@ -260,11 +262,12 @@ class __$GitBranchCopyWithImpl<$Res>
 
 /// Create a copy of GitBranch
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? worktreePath = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? worktreePath = freezed,Object? isRemote = null,}) {
   return _then(_GitBranch(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,worktreePath: freezed == worktreePath ? _self.worktreePath : worktreePath // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isRemote: null == isRemote ? _self.isRemote : isRemote // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

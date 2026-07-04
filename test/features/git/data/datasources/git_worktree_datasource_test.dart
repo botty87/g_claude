@@ -67,24 +67,113 @@ void main() {
     });
   });
 
-  group('parseBranchList — TAB-separated name + worktree path', () {
-    test('branch with a worktree path is flagged hasWorktree; empty path is not', () {
-      const out = 'main\t/Users/me/repo\nfeature/x\t\ndev\t';
-      final branches = GitWorktreeDataSource.parseBranchList(out);
-      expect(branches.map((b) => b.name), ['main', 'feature/x', 'dev']);
-      expect(branches[0].hasWorktree, isTrue);
-      expect(branches[1].hasWorktree, isFalse, reason: 'empty worktreepath → no worktree');
-      expect(branches[2].hasWorktree, isFalse);
+  group('parseBranchList — for-each-ref refs/heads + refs/remotes', () {
+    // Real `git for-each-ref --format='%(refname)\t%(refname:short)\t%(worktreepath)\t%(symref)'`:
+    // local branches (one checked out), a remote-tracking branch, and the
+    // `origin/HEAD` symbolic alias git always emits under refs/remotes.
+    const out =
+        'refs/heads/main\tmain\t/Users/me/repo\t\n'
+        'refs/heads/feature/x\tfeature/x\t\t\n'
+        'refs/remotes/origin/main\torigin/main\t\t\n'
+        'refs/remotes/origin/HEAD\torigin\t\trefs/remotes/origin/main';
+
+    test('local branch with a worktree path is local + hasWorktree', () {
+      final b = GitWorktreeDataSource.parseBranchList(out).firstWhere((b) => b.name == 'main');
+      expect(b.isRemote, isFalse);
+      expect(b.hasWorktree, isTrue);
     });
 
-    test('a name-only line (no TAB) parses as a branch without a worktree', () {
-      final branches = GitWorktreeDataSource.parseBranchList('solo');
-      expect(branches.single.name, 'solo');
-      expect(branches.single.hasWorktree, isFalse);
+    test('local branch without a worktree path is not hasWorktree', () {
+      final b = GitWorktreeDataSource.parseBranchList(out).firstWhere((b) => b.name == 'feature/x');
+      expect(b.isRemote, isFalse);
+      expect(b.hasWorktree, isFalse);
+    });
+
+    test('remote-tracking branch is flagged isRemote and never hasWorktree', () {
+      final b = GitWorktreeDataSource.parseBranchList(out).firstWhere((b) => b.name == 'origin/main');
+      expect(b.isRemote, isTrue);
+      expect(b.hasWorktree, isFalse);
+    });
+
+    test('the origin/HEAD symbolic ref (symref set) is skipped', () {
+      final names = GitWorktreeDataSource.parseBranchList(out).map((b) => b.name);
+      expect(names, ['main', 'feature/x', 'origin/main']);
+      expect(names, isNot(contains('origin')));
     });
 
     test('blank lines are skipped', () {
       expect(GitWorktreeDataSource.parseBranchList('\n\n'), isEmpty);
+    });
+  });
+
+  group('resolveRepoInfo — repoRoot/branch from real rev-parse output', () {
+    // Values captured from real `git rev-parse` across four repo layouts (normal,
+    // classic bare `git init --bare foo.git`, and the `<repo>/.bare` container
+    // convention, each probed at its root and at a linked worktree).
+
+    test('normal repo: repoRoot = parent of .git, branch read', () {
+      final info = GitWorktreeDataSource.resolveRepoInfo(
+        commonDir: '/x/normal/.git',
+        insideWorkTree: true,
+        head: 'main',
+      );
+      expect(info!.repoRoot, '/x/normal');
+      expect(info.branch, 'main');
+    });
+
+    test('classic bare dir: repoRoot IS the bare dir (not its parent), branch null', () {
+      // The regression M2 fixed: dirname would give /x → wrong grouping key.
+      final info = GitWorktreeDataSource.resolveRepoInfo(
+        commonDir: '/x/classic.git',
+        insideWorkTree: false,
+        head: 'main', // ignored: not inside a work tree
+      );
+      expect(info!.repoRoot, '/x/classic.git');
+      expect(info.branch, isNull, reason: 'bare dir is checked out nowhere → no phantom branch');
+    });
+
+    test('classic bare worktree: same repoRoot as the bare dir, branch read', () {
+      final info = GitWorktreeDataSource.resolveRepoInfo(
+        commonDir: '/x/classic.git',
+        insideWorkTree: true,
+        head: 'wtbranch',
+      );
+      expect(info!.repoRoot, '/x/classic.git', reason: 'must match the bare dir so worktrees group together');
+      expect(info.branch, 'wtbranch');
+    });
+
+    test('.bare container: repoRoot = container (parent of .bare), branch null at root', () {
+      final info = GitWorktreeDataSource.resolveRepoInfo(
+        commonDir: '/x/container/.bare',
+        insideWorkTree: false,
+        head: 'main',
+      );
+      expect(info!.repoRoot, '/x/container');
+      expect(info.branch, isNull);
+    });
+
+    test('.bare container worktree: same repoRoot, branch read', () {
+      final info = GitWorktreeDataSource.resolveRepoInfo(
+        commonDir: '/x/container/.bare',
+        insideWorkTree: true,
+        head: 'main',
+      );
+      expect(info!.repoRoot, '/x/container');
+      expect(info.branch, 'main');
+    });
+
+    test('detached HEAD in a work tree → branch null', () {
+      final info = GitWorktreeDataSource.resolveRepoInfo(
+        commonDir: '/x/normal/.git',
+        insideWorkTree: true,
+        head: 'HEAD',
+      );
+      expect(info!.branch, isNull);
+    });
+
+    test('empty common dir (not a git repo) → null', () {
+      expect(GitWorktreeDataSource.resolveRepoInfo(commonDir: '', insideWorkTree: false, head: null), isNull);
+      expect(GitWorktreeDataSource.resolveRepoInfo(commonDir: null, insideWorkTree: false, head: null), isNull);
     });
   });
 }

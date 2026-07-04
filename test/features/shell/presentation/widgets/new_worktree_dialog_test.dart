@@ -35,9 +35,13 @@ void main() {
   setUp(() {
     cubit = _MockWorkspacesCubit();
     whenListen(cubit, const Stream<WorkspacesState>.empty(), initialState: const WorkspacesState.loaded());
-    when(
-      () => cubit.branchesFor(repoRoot),
-    ).thenAnswer((_) async => const [GitBranch(name: 'main', worktreePath: '/repo'), GitBranch(name: 'dev')]);
+    when(() => cubit.branchesFor(repoRoot)).thenAnswer(
+      (_) async => const [
+        GitBranch(name: 'main', worktreePath: '/repo'),
+        GitBranch(name: 'dev'),
+        GitBranch(name: 'origin/feature/api', isRemote: true),
+      ],
+    );
     when(
       () => cubit.createWorktree(
         repoRoot: any(named: 'repoRoot'),
@@ -105,9 +109,13 @@ void main() {
       ),
     ).called(1);
     clearInteractions(cubit);
-    when(
-      () => cubit.branchesFor(repoRoot),
-    ).thenAnswer((_) async => const [GitBranch(name: 'main', worktreePath: '/repo'), GitBranch(name: 'dev')]);
+    when(() => cubit.branchesFor(repoRoot)).thenAnswer(
+      (_) async => const [
+        GitBranch(name: 'main', worktreePath: '/repo'),
+        GitBranch(name: 'dev'),
+        GitBranch(name: 'origin/feature/api', isRemote: true),
+      ],
+    );
 
     // 2) Open existing: switch mode, type a folder, the inspection card appears,
     //    and confirming opens the folder via openPath.
@@ -152,5 +160,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('fatal: already exists'), findsOneWidget);
     expect(find.byKey(const ValueKey('new_worktree_confirm')), findsOneWidget);
+    clearInteractions(cubit);
+
+    // 4) The base dropdown lists remote-tracking branches under a "Remote" group;
+    //    picking one auto-fills the new-branch name (origin/feature/api →
+    //    feature/api) so basing a worktree on a remote is one gesture.
+    await tester.tap(find.text('Cancel')); // dismiss scenario 3's still-open dialog
+    await tester.pumpAndSettle();
+    await openDialog();
+    await tester.tap(find.byKey(const ValueKey('new_worktree_base_ref')));
+    await tester.pumpAndSettle();
+    expect(find.text('Remote'), findsWidgets);
+    await tester.tap(find.text('origin/feature/api').last);
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(find.byKey(const ValueKey('new_worktree_branch_name'))).controller!.text,
+      'feature/api',
+    );
   });
 }
