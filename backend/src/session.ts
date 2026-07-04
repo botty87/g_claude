@@ -294,7 +294,12 @@ async function runMcpAuth(req: Extract<Req, { t: 'mcpAuth' }>, emit: Emit): Prom
     }
     if (!found) { emit({ t: 'mcpAuthError', sid, serverName, message: `server not found within ${deadline}ms` }); return; }
 
-    const res = await q.mcpAuthenticate(serverName);
+    // Bound mcpAuthenticate too: if the SDK never resolves, a bare await would
+    // hang forever and the `finally` (query teardown) would never run, leaking
+    // the ephemeral query + claude subprocess. On timeout we throw → finally
+    // closes the query and kills the subprocess.
+    const timeout = (ms: number) => new Promise<never>((_, rej) => setTimeout(() => rej(new Error(`mcpAuthenticate timeout after ${ms}ms`)), ms));
+    const res = await Promise.race([q.mcpAuthenticate(serverName), timeout(deadline)]);
     if (res && typeof res.authUrl === 'string' && res.authUrl.length > 0) {
       // claude.ai connectors broker the callback themselves (callbackExpected
       // false). A true here means a bare OAuth server expects us to submit the

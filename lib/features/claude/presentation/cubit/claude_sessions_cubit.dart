@@ -1486,25 +1486,37 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   /// (or the TTL expiry) surfaces the new `connected` status — a forced
   /// `claude mcp list` reflects it since claude.ai auth is account-wide.
   Future<void> authenticateMcpServer(String workspaceId, String serverName) async {
+    // Re-entrancy guard: a second tap while the first flow is in flight would
+    // spawn a duplicate ephemeral sidecar query (same sid, no backend dedup) →
+    // two browser tabs + a doubled leak. Bail if already running.
+    if (state.mcpAuthInFlight.contains(serverName)) {
+      _talker.info('mcp auth: already in flight for $serverName');
+      return;
+    }
+    emit(state.copyWith(mcpAuthInFlight: {...state.mcpAuthInFlight, serverName}));
     _talker.info('mcp auth: starting flow for $serverName');
-    final result = await _authenticateMcpServer(cwd: workspaceId, serverName: serverName);
-    await result.fold(
-      (f) async {
-        _talker.error('mcp auth failed: ${f.toString()}');
-      },
-      (authUrl) async {
-        if (authUrl == null || authUrl.isEmpty) {
-          _talker.warning('mcp auth: no authUrl returned for $serverName');
-          return;
-        }
-        _talker.info('mcp auth: opening $authUrl');
-        try {
-          await Process.run('open', [authUrl]);
-        } catch (e) {
-          _talker.error('mcp auth: failed to open browser: $e');
-        }
-      },
-    );
+    try {
+      final result = await _authenticateMcpServer(cwd: workspaceId, serverName: serverName);
+      await result.fold(
+        (f) async {
+          _talker.error('mcp auth failed: ${f.toString()}');
+        },
+        (authUrl) async {
+          if (authUrl == null || authUrl.isEmpty) {
+            _talker.warning('mcp auth: no authUrl returned for $serverName');
+            return;
+          }
+          _talker.info('mcp auth: opening $authUrl');
+          try {
+            await Process.run('open', [authUrl]);
+          } catch (e) {
+            _talker.error('mcp auth: failed to open browser: $e');
+          }
+        },
+      );
+    } finally {
+      emit(state.copyWith(mcpAuthInFlight: state.mcpAuthInFlight.difference({serverName})));
+    }
   }
 
   /// Derives a human-readable tab title from the first user message, since

@@ -112,12 +112,12 @@ Widget _mcpBody(
     constraints: BoxConstraints(maxHeight: maxHeight),
     child: BlocBuilder<ClaudeSessionsCubit, ClaudeSessionsState>(
       buildWhen: (a, b) =>
-          a.sessionFor(workspaceId)?.disabledMcpServers != b.sessionFor(workspaceId)?.disabledMcpServers,
+          a.sessionFor(workspaceId)?.disabledMcpServers != b.sessionFor(workspaceId)?.disabledMcpServers ||
+          a.mcpAuthInFlight != b.mcpAuthInFlight,
       builder: (context, sessionsState) {
         final session = sessionsState.sessionFor(workspaceId);
         final disabled = session?.disabledMcpServers ?? const <String>{};
-        // Auth runs in an ephemeral sidecar query (no chat run required).
-        const canAuth = true;
+        final authInFlight = sessionsState.mcpAuthInFlight;
         return ScrollConfiguration(
           behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
           child: ListView.separated(
@@ -131,7 +131,7 @@ Widget _mcpBody(
               return _McpServerTile(
                 server: server,
                 isDisabled: isDisabled,
-                canAuth: canAuth,
+                authPending: authInFlight.contains(server.name),
                 onToggle: (enabled) => cubit.toggleMcpServer(workspaceId, server.name, enabled),
                 onAuth: () => cubit.authenticateMcpServer(workspaceId, server.name),
               );
@@ -147,14 +147,14 @@ class _McpServerTile extends StatelessWidget {
   const _McpServerTile({
     required this.server,
     required this.isDisabled,
-    required this.canAuth,
+    required this.authPending,
     required this.onToggle,
     required this.onAuth,
   });
 
   final McpServer server;
   final bool isDisabled;
-  final bool canAuth;
+  final bool authPending;
   final ValueChanged<bool> onToggle;
   final VoidCallback onAuth;
 
@@ -193,7 +193,7 @@ class _McpServerTile extends StatelessWidget {
         ),
         if (server.status == McpServerStatus.needsAuth && !isDisabled) ...[
           const SizedBox(width: AppSpacing.xs),
-          _McpAuthButton(canAuth: canAuth, onTap: onAuth),
+          _McpAuthButton(pending: authPending, onTap: onAuth),
         ],
         const SizedBox(width: AppSpacing.sm),
         _McpToggle(value: !isDisabled, onChanged: onToggle),
@@ -203,36 +203,40 @@ class _McpServerTile extends StatelessWidget {
 }
 
 class _McpAuthButton extends HookWidget {
-  const _McpAuthButton({required this.canAuth, required this.onTap});
+  const _McpAuthButton({required this.pending, required this.onTap});
 
-  final bool canAuth;
+  /// True while an OAuth flow is in flight for this server: the button shows a
+  /// spinner and ignores taps so a second flow can't be spawned.
+  final bool pending;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final hovered = useState(false);
-    final tooltip = canAuth ? Locales.Claude.Terminal.Mcp.authenticate : Locales.Claude.Terminal.Mcp.toggleNoSession;
+    const gold = Color(0xFFFFCC00);
     return Tooltip(
-      message: tooltip,
-      child: Opacity(
-        opacity: canAuth ? 1.0 : 0.4,
-        child: MouseRegion(
-          cursor: canAuth ? SystemMouseCursors.click : SystemMouseCursors.basic,
-          onEnter: canAuth ? (_) => hovered.value = true : null,
-          onExit: canAuth ? (_) => hovered.value = false : null,
-          child: GestureDetector(
-            onTap: canAuth ? onTap : null,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: hovered.value ? const Color(0xFFFFCC00).withValues(alpha: 0.20) : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppRadii.sm),
-                border: Border.all(color: const Color(0xFFFFCC00).withValues(alpha: 0.6)),
-              ),
-              child: const Icon(Symbols.key, size: 12, color: Color(0xFFFFCC00)),
+      message: Locales.Claude.Terminal.Mcp.authenticate,
+      child: MouseRegion(
+        cursor: pending ? SystemMouseCursors.basic : SystemMouseCursors.click,
+        onEnter: pending ? null : (_) => hovered.value = true,
+        onExit: pending ? null : (_) => hovered.value = false,
+        child: GestureDetector(
+          onTap: pending ? null : onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              color: hovered.value && !pending ? gold.withValues(alpha: 0.20) : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppRadii.sm),
+              border: Border.all(color: gold.withValues(alpha: 0.6)),
             ),
+            child: pending
+                ? const Padding(
+                    padding: EdgeInsets.all(5),
+                    child: CircularProgressIndicator(strokeWidth: 1.5, color: gold),
+                  )
+                : const Icon(Symbols.key, size: 12, color: gold),
           ),
         ),
       ),

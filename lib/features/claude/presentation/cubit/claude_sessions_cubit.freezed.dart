@@ -674,7 +674,10 @@ mixin _$ClaudeSessionsState {
 
  Map<String, WorkspaceSessions> get workspaces;// Account-wide MCP server list (from `claude mcp list` + sessionInit merge).
 // Global, not per-workspace; kept in state so the "N active" count is reactive.
- List<McpServer> get mcpServers;
+ List<McpServer> get mcpServers;// Server names with an OAuth flow in flight — guards the auth button against
+// re-entrancy (a double-click would otherwise spawn duplicate ephemeral
+// sidecar queries) and drives its pending affordance.
+ Set<String> get mcpAuthInFlight;
 /// Create a copy of ClaudeSessionsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -685,16 +688,16 @@ $ClaudeSessionsStateCopyWith<ClaudeSessionsState> get copyWith => _$ClaudeSessio
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeSessionsState&&const DeepCollectionEquality().equals(other.workspaces, workspaces)&&const DeepCollectionEquality().equals(other.mcpServers, mcpServers));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeSessionsState&&const DeepCollectionEquality().equals(other.workspaces, workspaces)&&const DeepCollectionEquality().equals(other.mcpServers, mcpServers)&&const DeepCollectionEquality().equals(other.mcpAuthInFlight, mcpAuthInFlight));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(workspaces),const DeepCollectionEquality().hash(mcpServers));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(workspaces),const DeepCollectionEquality().hash(mcpServers),const DeepCollectionEquality().hash(mcpAuthInFlight));
 
 @override
 String toString() {
-  return 'ClaudeSessionsState(workspaces: $workspaces, mcpServers: $mcpServers)';
+  return 'ClaudeSessionsState(workspaces: $workspaces, mcpServers: $mcpServers, mcpAuthInFlight: $mcpAuthInFlight)';
 }
 
 
@@ -705,7 +708,7 @@ abstract mixin class $ClaudeSessionsStateCopyWith<$Res>  {
   factory $ClaudeSessionsStateCopyWith(ClaudeSessionsState value, $Res Function(ClaudeSessionsState) _then) = _$ClaudeSessionsStateCopyWithImpl;
 @useResult
 $Res call({
- Map<String, WorkspaceSessions> workspaces, List<McpServer> mcpServers
+ Map<String, WorkspaceSessions> workspaces, List<McpServer> mcpServers, Set<String> mcpAuthInFlight
 });
 
 
@@ -722,11 +725,12 @@ class _$ClaudeSessionsStateCopyWithImpl<$Res>
 
 /// Create a copy of ClaudeSessionsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? workspaces = null,Object? mcpServers = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? workspaces = null,Object? mcpServers = null,Object? mcpAuthInFlight = null,}) {
   return _then(_self.copyWith(
 workspaces: null == workspaces ? _self.workspaces : workspaces // ignore: cast_nullable_to_non_nullable
 as Map<String, WorkspaceSessions>,mcpServers: null == mcpServers ? _self.mcpServers : mcpServers // ignore: cast_nullable_to_non_nullable
-as List<McpServer>,
+as List<McpServer>,mcpAuthInFlight: null == mcpAuthInFlight ? _self.mcpAuthInFlight : mcpAuthInFlight // ignore: cast_nullable_to_non_nullable
+as Set<String>,
   ));
 }
 
@@ -811,10 +815,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, WorkspaceSessions> workspaces,  List<McpServer> mcpServers)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, WorkspaceSessions> workspaces,  List<McpServer> mcpServers,  Set<String> mcpAuthInFlight)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ClaudeSessionsState() when $default != null:
-return $default(_that.workspaces,_that.mcpServers);case _:
+return $default(_that.workspaces,_that.mcpServers,_that.mcpAuthInFlight);case _:
   return orElse();
 
 }
@@ -832,10 +836,10 @@ return $default(_that.workspaces,_that.mcpServers);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, WorkspaceSessions> workspaces,  List<McpServer> mcpServers)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, WorkspaceSessions> workspaces,  List<McpServer> mcpServers,  Set<String> mcpAuthInFlight)  $default,) {final _that = this;
 switch (_that) {
 case _ClaudeSessionsState():
-return $default(_that.workspaces,_that.mcpServers);case _:
+return $default(_that.workspaces,_that.mcpServers,_that.mcpAuthInFlight);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -852,10 +856,10 @@ return $default(_that.workspaces,_that.mcpServers);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, WorkspaceSessions> workspaces,  List<McpServer> mcpServers)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, WorkspaceSessions> workspaces,  List<McpServer> mcpServers,  Set<String> mcpAuthInFlight)?  $default,) {final _that = this;
 switch (_that) {
 case _ClaudeSessionsState() when $default != null:
-return $default(_that.workspaces,_that.mcpServers);case _:
+return $default(_that.workspaces,_that.mcpServers,_that.mcpAuthInFlight);case _:
   return null;
 
 }
@@ -867,7 +871,7 @@ return $default(_that.workspaces,_that.mcpServers);case _:
 
 
 class _ClaudeSessionsState extends ClaudeSessionsState {
-  const _ClaudeSessionsState({final  Map<String, WorkspaceSessions> workspaces = const <String, WorkspaceSessions>{}, final  List<McpServer> mcpServers = const <McpServer>[]}): _workspaces = workspaces,_mcpServers = mcpServers,super._();
+  const _ClaudeSessionsState({final  Map<String, WorkspaceSessions> workspaces = const <String, WorkspaceSessions>{}, final  List<McpServer> mcpServers = const <McpServer>[], final  Set<String> mcpAuthInFlight = const <String>{}}): _workspaces = workspaces,_mcpServers = mcpServers,_mcpAuthInFlight = mcpAuthInFlight,super._();
   
 
  final  Map<String, WorkspaceSessions> _workspaces;
@@ -888,6 +892,19 @@ class _ClaudeSessionsState extends ClaudeSessionsState {
   return EqualUnmodifiableListView(_mcpServers);
 }
 
+// Server names with an OAuth flow in flight — guards the auth button against
+// re-entrancy (a double-click would otherwise spawn duplicate ephemeral
+// sidecar queries) and drives its pending affordance.
+ final  Set<String> _mcpAuthInFlight;
+// Server names with an OAuth flow in flight — guards the auth button against
+// re-entrancy (a double-click would otherwise spawn duplicate ephemeral
+// sidecar queries) and drives its pending affordance.
+@override@JsonKey() Set<String> get mcpAuthInFlight {
+  if (_mcpAuthInFlight is EqualUnmodifiableSetView) return _mcpAuthInFlight;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableSetView(_mcpAuthInFlight);
+}
+
 
 /// Create a copy of ClaudeSessionsState
 /// with the given fields replaced by the non-null parameter values.
@@ -899,16 +916,16 @@ _$ClaudeSessionsStateCopyWith<_ClaudeSessionsState> get copyWith => __$ClaudeSes
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClaudeSessionsState&&const DeepCollectionEquality().equals(other._workspaces, _workspaces)&&const DeepCollectionEquality().equals(other._mcpServers, _mcpServers));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClaudeSessionsState&&const DeepCollectionEquality().equals(other._workspaces, _workspaces)&&const DeepCollectionEquality().equals(other._mcpServers, _mcpServers)&&const DeepCollectionEquality().equals(other._mcpAuthInFlight, _mcpAuthInFlight));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_workspaces),const DeepCollectionEquality().hash(_mcpServers));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_workspaces),const DeepCollectionEquality().hash(_mcpServers),const DeepCollectionEquality().hash(_mcpAuthInFlight));
 
 @override
 String toString() {
-  return 'ClaudeSessionsState(workspaces: $workspaces, mcpServers: $mcpServers)';
+  return 'ClaudeSessionsState(workspaces: $workspaces, mcpServers: $mcpServers, mcpAuthInFlight: $mcpAuthInFlight)';
 }
 
 
@@ -919,7 +936,7 @@ abstract mixin class _$ClaudeSessionsStateCopyWith<$Res> implements $ClaudeSessi
   factory _$ClaudeSessionsStateCopyWith(_ClaudeSessionsState value, $Res Function(_ClaudeSessionsState) _then) = __$ClaudeSessionsStateCopyWithImpl;
 @override @useResult
 $Res call({
- Map<String, WorkspaceSessions> workspaces, List<McpServer> mcpServers
+ Map<String, WorkspaceSessions> workspaces, List<McpServer> mcpServers, Set<String> mcpAuthInFlight
 });
 
 
@@ -936,11 +953,12 @@ class __$ClaudeSessionsStateCopyWithImpl<$Res>
 
 /// Create a copy of ClaudeSessionsState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? workspaces = null,Object? mcpServers = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? workspaces = null,Object? mcpServers = null,Object? mcpAuthInFlight = null,}) {
   return _then(_ClaudeSessionsState(
 workspaces: null == workspaces ? _self._workspaces : workspaces // ignore: cast_nullable_to_non_nullable
 as Map<String, WorkspaceSessions>,mcpServers: null == mcpServers ? _self._mcpServers : mcpServers // ignore: cast_nullable_to_non_nullable
-as List<McpServer>,
+as List<McpServer>,mcpAuthInFlight: null == mcpAuthInFlight ? _self._mcpAuthInFlight : mcpAuthInFlight // ignore: cast_nullable_to_non_nullable
+as Set<String>,
   ));
 }
 

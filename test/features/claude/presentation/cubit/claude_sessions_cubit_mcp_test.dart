@@ -13,6 +13,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:g_claude/core/error/failures.dart';
 import 'package:g_claude/core/utils/either.dart';
 import 'package:g_claude/features/claude/data/datasources/claude_history_datasource.dart';
 import 'package:g_claude/features/claude/domain/entities/mcp_server.dart';
@@ -55,7 +56,7 @@ McpServer _srv(String name, McpServerStatus status, {String cmd = ''}) =>
 
 /// Builds a cubit with mocked collaborators. [seed] is what `listMcpServers`
 /// returns, so a test can pre-populate `state.mcpServers` via `ensureMcpServers`.
-ClaudeSessionsCubit _makeCubit({List<McpServer> seed = const []}) {
+ClaudeSessionsCubit _makeCubit({List<McpServer> seed = const [], AuthenticateMcpServer? auth}) {
   final listMcpServers = _MockListMcpServers();
   final wsCubit = _MockWorkspacesCubit();
   final ws = Workspace(id: _wid, path: _wid, name: 'proj', openedAt: DateTime.utc(2026, 1, 1));
@@ -67,7 +68,7 @@ ClaudeSessionsCubit _makeCubit({List<McpServer> seed = const []}) {
     _MockSendPrompt(),
     _MockStopRun(),
     listMcpServers,
-    _MockAuthenticateMcpServer(),
+    auth ?? _MockAuthenticateMcpServer(),
     _MockLoadSessionMessages(),
     _MockClaudeHistoryDataSource(),
     wsCubit,
@@ -131,6 +132,41 @@ void main() {
 
       final after = [for (final s in cubit.state.mcpServers) '${s.name}:${s.status}'];
       expect(after, equals(before));
+      await cubit.close();
+    });
+  });
+
+  group('authenticateMcpServer re-entrancy guard', () {
+    test('a second call while one is in flight is ignored (no duplicate flow)', () async {
+      final auth = _MockAuthenticateMcpServer();
+      final gate = Completer<Either<Failure, String?>>();
+      when(
+        () => auth.call(
+          cwd: any(named: 'cwd'),
+          serverName: any(named: 'serverName'),
+        ),
+      ).thenAnswer((_) => gate.future);
+      final cubit = _makeCubit(auth: auth);
+
+      // First call: enters in-flight and awaits the (gated) usecase.
+      final first = cubit.authenticateMcpServer(_wid, 'claude.ai n8n');
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state.mcpAuthInFlight, contains('claude.ai n8n'));
+
+      // Second call while in flight: bails immediately.
+      await cubit.authenticateMcpServer(_wid, 'claude.ai n8n');
+      verify(
+        () => auth.call(
+          cwd: any(named: 'cwd'),
+          serverName: any(named: 'serverName'),
+        ),
+      ).called(1);
+
+      // Complete the first flow (null authUrl → no browser open); flag clears.
+      gate.complete(const Right<Failure, String?>(null));
+      await first;
+      expect(cubit.state.mcpAuthInFlight, isNot(contains('claude.ai n8n')));
+
       await cubit.close();
     });
   });
