@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:g_claude/core/error/failures.dart';
 import 'package:g_claude/features/git/data/datasources/git_worktree_datasource.dart';
 import 'package:g_claude/features/git/data/repositories/git_repository_impl.dart';
+import 'package:g_claude/features/git/domain/entities/git_branch.dart';
+import 'package:g_claude/features/git/domain/entities/git_folder_inspection.dart';
 import 'package:g_claude/features/git/domain/entities/git_worktree.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -86,6 +88,79 @@ void main() {
         () => ds.deleteBranch(any(), any(), force: any(named: 'force')),
       ).thenThrow(const GitException('not fully merged'));
       final out = await repo.deleteBranch(repoRoot: '/repo', branch: 'feature/x');
+      expect(out.left, isA<SubprocessFailure>());
+    });
+  });
+
+  group('addWorktree', () {
+    test('Right(null) on success, forwards the new-branch args', () async {
+      when(
+        () => ds.addWorktree(
+          any(),
+          any(),
+          newBranch: any(named: 'newBranch'),
+          baseRef: any(named: 'baseRef'),
+          checkoutBranch: any(named: 'checkoutBranch'),
+        ),
+      ).thenAnswer((_) async {});
+      final out = await repo.addWorktree(
+        repoRoot: '/repo',
+        worktreePath: '/repo/feat',
+        newBranch: 'feature/x',
+        baseRef: 'main',
+      );
+      expect(out.isRight, isTrue);
+      verify(
+        () => ds.addWorktree('/repo', '/repo/feat', newBranch: 'feature/x', baseRef: 'main', checkoutBranch: null),
+      ).called(1);
+    });
+
+    test('GitException (path exists / branch taken) → SubprocessFailure carrying the message', () async {
+      when(
+        () => ds.addWorktree(
+          any(),
+          any(),
+          newBranch: any(named: 'newBranch'),
+          baseRef: any(named: 'baseRef'),
+          checkoutBranch: any(named: 'checkoutBranch'),
+        ),
+      ).thenThrow(const GitException("'/repo/feat' already exists"));
+      final out = await repo.addWorktree(repoRoot: '/repo', worktreePath: '/repo/feat', newBranch: 'x');
+      expect(out.left, isA<SubprocessFailure>());
+      expect((out.left as SubprocessFailure).message, contains('already exists'));
+    });
+  });
+
+  group('inspect', () {
+    test('Right(inspection) on success', () async {
+      when(() => ds.inspect(any())).thenAnswer(
+        (_) async => const GitFolderInspection(isGit: true, repoRoot: '/repo', branch: 'main', dirtyCount: 2),
+      );
+      final out = await repo.inspect(path: '/repo/wt');
+      expect(out.right.isGit, isTrue);
+      expect(out.right.dirtyCount, 2);
+    });
+
+    test('any throw → Left(UnexpectedFailure)', () async {
+      when(() => ds.inspect(any())).thenThrow(Exception('boom'));
+      final out = await repo.inspect(path: '/x');
+      expect(out.left, isA<UnexpectedFailure>());
+    });
+  });
+
+  group('listBranches', () {
+    test('Right(list) on success', () async {
+      when(
+        () => ds.listBranches(any()),
+      ).thenAnswer((_) async => const [GitBranch(name: 'main', worktreePath: '/repo'), GitBranch(name: 'dev')]);
+      final out = await repo.listBranches(repoRoot: '/repo');
+      expect(out.right.map((b) => b.name), ['main', 'dev']);
+      expect(out.right.last.hasWorktree, isFalse);
+    });
+
+    test('GitException → SubprocessFailure', () async {
+      when(() => ds.listBranches(any())).thenThrow(const GitException('branch list failed'));
+      final out = await repo.listBranches(repoRoot: '/repo');
       expect(out.left, isA<SubprocessFailure>());
     });
   });

@@ -11,8 +11,13 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/l10n/l10n.dart';
 import '../../../../core/utils/either.dart';
+import '../../../git/domain/entities/git_branch.dart';
+import '../../../git/domain/entities/git_folder_inspection.dart';
 import '../../../git/domain/entities/git_worktree.dart';
+import '../../../git/domain/usecases/add_worktree.dart';
 import '../../../git/domain/usecases/delete_branch.dart';
+import '../../../git/domain/usecases/inspect_folder.dart';
+import '../../../git/domain/usecases/list_branches.dart';
 import '../../../git/domain/usecases/list_worktrees.dart';
 import '../../../git/domain/usecases/remove_worktree.dart';
 import '../../data/datasources/workspace_file_watcher.dart';
@@ -31,6 +36,9 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     this._listWorktrees,
     this._removeWorktree,
     this._deleteBranch,
+    this._addWorktree,
+    this._listBranches,
+    this._inspectFolder,
     this._persistence,
     this._fileWatcher,
     this._talker,
@@ -40,6 +48,9 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
   final ListWorktrees _listWorktrees;
   final RemoveWorktree _removeWorktree;
   final DeleteBranch _deleteBranch;
+  final AddWorktree _addWorktree;
+  final ListBranches _listBranches;
+  final InspectFolder _inspectFolder;
   final WorkspacesPersistenceDataSource _persistence;
   final WorkspaceFileWatcher _fileWatcher;
   final Talker _talker;
@@ -119,6 +130,58 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
   }
 
   List<GitWorktree>? cachedWorktrees(String repoRoot) => _worktreeCache[repoRoot];
+
+  /// Inspects [path] (git kind, branch, uncommitted changes) to preview it in
+  /// the "open existing" flow. On failure returns a plain-folder inspection.
+  Future<GitFolderInspection> inspectFolder(String path) async {
+    final result = await _inspectFolder(path: path);
+    return result.fold((failure) {
+      _talker.debug('inspectFolder($path) failed: $failure');
+      return const GitFolderInspection();
+    }, (inspection) => inspection);
+  }
+
+  /// Local branches of [repoRoot], to populate the "new worktree" dialog. On
+  /// failure returns empty (the dialog degrades to new-branch-only).
+  Future<List<GitBranch>> branchesFor(String repoRoot) async {
+    final result = await _listBranches(repoRoot: repoRoot);
+    return result.fold((failure) {
+      _talker.debug('listBranches($repoRoot) failed: $failure');
+      return const <GitBranch>[];
+    }, (branches) => branches);
+  }
+
+  /// Creates a new worktree at [targetPath] (new branch via [newBranch]/[baseRef],
+  /// or checkout of [checkoutBranch]) and opens it as a workspace on success.
+  /// On failure the tab is NOT opened and the [Failure] is returned so the
+  /// dialog can surface git's message (dir exists, branch taken, …).
+  Future<Either<Failure, void>> createWorktree({
+    required String repoRoot,
+    required String targetPath,
+    String? newBranch,
+    String? baseRef,
+    String? checkoutBranch,
+    bool openAfter = true,
+  }) async {
+    final normalized = _normalize(targetPath);
+    final result = await _addWorktree(
+      repoRoot: repoRoot,
+      worktreePath: normalized,
+      newBranch: newBranch,
+      baseRef: baseRef,
+      checkoutBranch: checkoutBranch,
+    );
+    if (result.isLeft) {
+      _talker.warning('git worktree add failed at $normalized: ${result.left}');
+      return result;
+    }
+    _worktreeCache.clear();
+    _talker.info('Created worktree: $normalized (openAfter=$openAfter)');
+    // When not opening, still invalidate the cache above so the sidebar's
+    // "show all" lists the freshly-created worktree.
+    if (openAfter) await openPath(normalized);
+    return const Right(null);
+  }
 
   void closeWorkspace(WorkspaceId id) {
     final list = state.workspacesOrEmpty;

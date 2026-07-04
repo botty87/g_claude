@@ -66,4 +66,25 @@ void main() {
       expect(parsed.single.head, 'abc');
     });
   });
+
+  group('parseBranchList — TAB-separated name + worktree path', () {
+    test('branch with a worktree path is flagged hasWorktree; empty path is not', () {
+      const out = 'main\t/Users/me/repo\nfeature/x\t\ndev\t';
+      final branches = GitWorktreeDataSource.parseBranchList(out);
+      expect(branches.map((b) => b.name), ['main', 'feature/x', 'dev']);
+      expect(branches[0].hasWorktree, isTrue);
+      expect(branches[1].hasWorktree, isFalse, reason: 'empty worktreepath → no worktree');
+      expect(branches[2].hasWorktree, isFalse);
+    });
+
+    test('a name-only line (no TAB) parses as a branch without a worktree', () {
+      final branches = GitWorktreeDataSource.parseBranchList('solo');
+      expect(branches.single.name, 'solo');
+      expect(branches.single.hasWorktree, isFalse);
+    });
+
+    test('blank lines are skipped', () {
+      expect(GitWorktreeDataSource.parseBranchList('\n\n'), isEmpty);
+    });
+  });
 }

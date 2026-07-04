@@ -7,6 +7,8 @@ import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as p;
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../../domain/entities/git_branch.dart';
+import '../../domain/entities/git_folder_inspection.dart';
 import '../../domain/entities/git_worktree.dart';
 
 /// Runs `git` subprocesses to detect repositories and enumerate their
@@ -18,6 +20,9 @@ class GitWorktreeDataSource {
   final Talker _talker;
 
   static const _timeout = Duration(seconds: 3);
+  // `git worktree add` checks out the entire tree — on a large repo this takes
+  // well over the default 3s, so it gets its own generous budget.
+  static const _addTimeout = Duration(seconds: 120);
 
   String _normalize(String path) => p.normalize(p.absolute(path));
 
@@ -51,6 +56,28 @@ class GitWorktreeDataSource {
     return GitRepoInfo(repoRoot: repoRoot, branch: branch);
   }
 
+  /// Inspects [path] before opening it: is it git? a linked worktree or the
+  /// main checkout? which branch, how many uncommitted changes? A non-git path
+  /// (or broken git) yields `isGit: false` so the caller opens it as a plain
+  /// workspace.
+  Future<GitFolderInspection> inspect(String path) async {
+    final info = await detect(path);
+    if (info == null) return const GitFolderInspection();
+    // A linked worktree's `--git-dir` points inside `.git/worktrees/<name>`;
+    // the main checkout's is the plain `.git`.
+    final gitDir = (await _run(path, ['rev-parse', '--git-dir']))?.trim() ?? '';
+    final isWorktree = gitDir.contains('${p.separator}worktrees${p.separator}') || gitDir.contains('/worktrees/');
+    final status = await _run(path, ['status', '--porcelain']) ?? '';
+    final dirty = const LineSplitter().convert(status).where((l) => l.trim().isNotEmpty).length;
+    return GitFolderInspection(
+      isGit: true,
+      repoRoot: info.repoRoot,
+      branch: info.branch,
+      isWorktree: isWorktree,
+      dirtyCount: dirty,
+    );
+  }
+
   /// Lists all worktrees of the repo rooted at [repoRoot].
   Future<List<GitWorktree>> listWorktrees(String repoRoot) async {
     final out = await _run(repoRoot, ['worktree', 'list', '--porcelain']);
@@ -76,12 +103,62 @@ class GitWorktreeDataSource {
     await _runOrThrow(repoRoot, ['branch', force ? '-D' : '-d', branch]);
   }
 
+  /// Creates a new worktree at [worktreePath]. Either creates a new branch
+  /// ([newBranch] set, optionally starting at [baseRef]) or checks out an
+  /// existing branch ([checkoutBranch]). Throws [GitException] carrying git's
+  /// stderr on any failure (dir already exists, branch already exists, branch
+  /// already checked out elsewhere) — callers surface it to the user rather
+  /// than pre-validating.
+  Future<void> addWorktree(
+    String repoRoot,
+    String worktreePath, {
+    String? newBranch,
+    String? baseRef,
+    String? checkoutBranch,
+  }) async {
+    final args = <String>['worktree', 'add'];
+    if (newBranch != null) {
+      args.addAll(['-b', newBranch, worktreePath]);
+      if (baseRef != null && baseRef.isNotEmpty) args.add(baseRef);
+    } else {
+      args.add(worktreePath);
+      if (checkoutBranch != null && checkoutBranch.isNotEmpty) args.add(checkoutBranch);
+    }
+    await _runOrThrow(repoRoot, args, timeout: _addTimeout);
+  }
+
+  /// Lists local branches with the worktree (if any) that has each checked out.
+  Future<List<GitBranch>> listBranches(String repoRoot) async {
+    final out = await _run(repoRoot, ['branch', '--list', '--format=%(refname:short)%09%(worktreepath)']);
+    if (out == null) {
+      throw const GitException('git branch --list failed');
+    }
+    return parseBranchList(out);
+  }
+
+  /// Parses `git branch --list --format='%(refname:short)\t%(worktreepath)'`:
+  /// one branch per line, name and (possibly empty) worktree path split by a
+  /// TAB. An empty worktree path means the branch is not checked out anywhere.
+  @visibleForTesting
+  static List<GitBranch> parseBranchList(String stdout) {
+    final out = <GitBranch>[];
+    for (final line in const LineSplitter().convert(stdout)) {
+      if (line.trim().isEmpty) continue;
+      final tab = line.indexOf('\t');
+      final name = (tab < 0 ? line : line.substring(0, tab)).trim();
+      if (name.isEmpty) continue;
+      final wt = tab < 0 ? '' : line.substring(tab + 1).trim();
+      out.add(GitBranch(name: name, worktreePath: wt.isEmpty ? null : p.normalize(p.absolute(wt))));
+    }
+    return out;
+  }
+
   /// Like [_run] but throws [GitException] (carrying stderr) on non-zero exit,
   /// timeout, or spawn failure — callers that must know *why* an operation
   /// failed (not just that it silently no-op'd) use this instead of [_run].
-  Future<void> _runOrThrow(String cwd, List<String> args) async {
+  Future<void> _runOrThrow(String cwd, List<String> args, {Duration? timeout}) async {
     try {
-      final result = await Process.run('git', ['-C', cwd, ...args]).timeout(_timeout);
+      final result = await Process.run('git', ['-C', cwd, ...args]).timeout(timeout ?? _timeout);
       if (result.exitCode != 0) {
         throw GitException(_asString(result.stderr).trim());
       }

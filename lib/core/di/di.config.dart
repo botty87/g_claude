@@ -108,8 +108,11 @@ import '../../features/git/data/datasources/git_worktree_datasource.dart'
     as _i203;
 import '../../features/git/data/repositories/git_repository_impl.dart' as _i633;
 import '../../features/git/domain/repositories/git_repository.dart' as _i241;
+import '../../features/git/domain/usecases/add_worktree.dart' as _i531;
 import '../../features/git/domain/usecases/delete_branch.dart' as _i933;
 import '../../features/git/domain/usecases/detect_git_repo.dart' as _i76;
+import '../../features/git/domain/usecases/inspect_folder.dart' as _i544;
+import '../../features/git/domain/usecases/list_branches.dart' as _i81;
 import '../../features/git/domain/usecases/list_worktrees.dart' as _i795;
 import '../../features/git/domain/usecases/remove_worktree.dart' as _i98;
 import '../../features/shell/presentation/cubit/shell_cubit.dart' as _i68;
@@ -335,11 +338,20 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i207.Talker>(),
       ),
     );
+    gh.factory<_i531.AddWorktree>(
+      () => _i531.AddWorktree(gh<_i241.GitRepository>()),
+    );
     gh.factory<_i933.DeleteBranch>(
       () => _i933.DeleteBranch(gh<_i241.GitRepository>()),
     );
     gh.factory<_i76.DetectGitRepo>(
       () => _i76.DetectGitRepo(gh<_i241.GitRepository>()),
+    );
+    gh.factory<_i544.InspectFolder>(
+      () => _i544.InspectFolder(gh<_i241.GitRepository>()),
+    );
+    gh.factory<_i81.ListBranches>(
+      () => _i81.ListBranches(gh<_i241.GitRepository>()),
     );
     gh.factory<_i795.ListWorktrees>(
       () => _i795.ListWorktrees(gh<_i241.GitRepository>()),
@@ -390,32 +402,22 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i308.ListDirectory>(
       () => _i308.ListDirectory(gh<_i150.FileSystemRepository>()),
     );
+    gh.lazySingleton<_i139.ClaudeRepository>(
+      () => _i1009.ClaudeRepositoryImpl(gh<_i330.SidecarClientDataSource>()),
+    );
     gh.lazySingleton<_i179.WorkspacesCubit>(
       () => _i179.WorkspacesCubit(
         gh<_i305.OpenWorkspace>(),
         gh<_i795.ListWorktrees>(),
         gh<_i98.RemoveWorktree>(),
         gh<_i933.DeleteBranch>(),
+        gh<_i531.AddWorktree>(),
+        gh<_i81.ListBranches>(),
+        gh<_i544.InspectFolder>(),
         gh<_i420.WorkspacesPersistenceDataSource>(),
         gh<_i167.WorkspaceFileWatcher>(),
         gh<_i207.Talker>(),
       )..init(),
-    );
-    gh.lazySingleton<_i285.ChatHistoryCubit>(
-      () => _i285.ChatHistoryCubit(
-        gh<_i1009.LoadChatHistory>(),
-        gh<_i992.LoadSessionMessages>(),
-        gh<_i374.RefreshSessionsIndex>(),
-        gh<_i927.DeleteChatSession>(),
-        gh<_i691.ExportChatSession>(),
-        gh<_i73.SearchSessions>(),
-        gh<_i278.ClaudeHistoryDataSource>(),
-        gh<_i179.WorkspacesCubit>(),
-        gh<_i207.Talker>(),
-      )..init(),
-    );
-    gh.lazySingleton<_i139.ClaudeRepository>(
-      () => _i1009.ClaudeRepositoryImpl(gh<_i330.SidecarClientDataSource>()),
     );
     gh.lazySingleton<_i709.AppLogDetailCubit>(
       () => _i709.AppLogDetailCubit(
@@ -452,6 +454,19 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i920.ToggleMcpServer>(
       () => _i920.ToggleMcpServer(gh<_i139.ClaudeRepository>()),
+    );
+    gh.lazySingleton<_i285.ChatHistoryCubit>(
+      () => _i285.ChatHistoryCubit(
+        gh<_i1009.LoadChatHistory>(),
+        gh<_i992.LoadSessionMessages>(),
+        gh<_i374.RefreshSessionsIndex>(),
+        gh<_i927.DeleteChatSession>(),
+        gh<_i691.ExportChatSession>(),
+        gh<_i73.SearchSessions>(),
+        gh<_i278.ClaudeHistoryDataSource>(),
+        gh<_i179.WorkspacesCubit>(),
+        gh<_i207.Talker>(),
+      )..init(),
     );
     gh.lazySingleton<_i838.ClaudeSessionsCubit>(
       () => _i838.ClaudeSessionsCubit(
