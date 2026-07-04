@@ -1,7 +1,7 @@
-// [SessionTabBar] worktree chip contracts: when the active workspace is a git
-// worktree, the chip shows the current branch and its menu lists the repo's
-// worktrees; picking one routes to [WorkspacesCubit.openPath] (activate if
-// open, register lazily otherwise). Reads live from the cubits — no local mirror.
+// [SessionTabBar] worktree chip contracts: the chip is a *quick* switcher shown
+// only when the sidebar is collapsed. It lists only the repo's *opened*
+// worktrees (staying consistent with the sidebar's default "open only" view);
+// picking one routes to [WorkspacesCubit.openPath]. Reads live from the cubits.
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +14,7 @@ import 'package:g_claude/features/claude/domain/entities/claude_thinking_mode.da
 import 'package:g_claude/features/claude/presentation/cubit/claude_sessions_cubit.dart';
 import 'package:g_claude/features/claude/presentation/widgets/session_tab_bar.dart';
 import 'package:g_claude/features/git/domain/entities/git_worktree.dart';
+import 'package:g_claude/features/shell/presentation/cubit/shell_cubit.dart';
 import 'package:g_claude/features/workspace/domain/entities/workspace.dart';
 import 'package:g_claude/features/workspace/presentation/cubit/workspaces_cubit.dart';
 import 'package:mocktail/mocktail.dart';
@@ -23,6 +24,8 @@ import '../../../../helpers/pump_app.dart';
 class _MockWorkspacesCubit extends MockCubit<WorkspacesState> implements WorkspacesCubit {}
 
 class _MockSessionsCubit extends MockCubit<ClaudeSessionsState> implements ClaudeSessionsCubit {}
+
+class _MockShellCubit extends MockCubit<ShellState> implements ShellCubit {}
 
 Workspace _ws(String path, {String? repoRoot, String? branch}) => Workspace(
   id: path,
@@ -39,21 +42,26 @@ void main() {
   const repoRoot = '/repo';
   const activePath = '/repo/main';
   final active = _ws(activePath, repoRoot: repoRoot, branch: 'main');
+  final feat = _ws('/repo/feat', repoRoot: repoRoot, branch: 'feature/x');
 
+  // The live git list carries a branch (`/repo/ghost`) that has NO open
+  // workspace — the chip must not offer it.
   final worktrees = const [
     GitWorktree(path: '/repo/main', head: 'a', branch: 'main'),
     GitWorktree(path: '/repo/feat', head: 'b', branch: 'feature/x'),
+    GitWorktree(path: '/repo/ghost', head: 'c', branch: 'feature/ghost'),
   ];
 
   late _MockWorkspacesCubit ws;
   late _MockSessionsCubit sessions;
+  late _MockShellCubit shell;
 
   setUp(() {
     ws = _MockWorkspacesCubit();
     whenListen(
       ws,
       const Stream<WorkspacesState>.empty(),
-      initialState: WorkspacesState.loaded(workspaces: [active], activeId: activePath),
+      initialState: WorkspacesState.loaded(workspaces: [active, feat], activeId: activePath),
     );
     when(() => ws.cachedWorktrees(repoRoot)).thenReturn(worktrees);
     when(() => ws.ensureWorktrees(repoRoot)).thenAnswer((_) async => worktrees);
@@ -76,15 +84,23 @@ void main() {
         },
       ),
     );
+
+    shell = _MockShellCubit();
   });
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<void> pump(WidgetTester tester, {required bool sidebarCollapsed}) async {
+    whenListen(
+      shell,
+      const Stream<ShellState>.empty(),
+      initialState: ShellState(selectedActivity: ActivityId.sessions, sidebarCollapsed: sidebarCollapsed),
+    );
     await pumpAppWidget(
       tester,
       MultiBlocProvider(
         providers: [
           BlocProvider<WorkspacesCubit>.value(value: ws),
           BlocProvider<ClaudeSessionsCubit>.value(value: sessions),
+          BlocProvider<ShellCubit>.value(value: shell),
         ],
         child: const SessionTabBar(),
       ),
@@ -92,21 +108,29 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('chip shows the active branch, lists worktrees, and picking one calls openPath', (tester) async {
-    await pump(tester);
+  testWidgets('sidebar collapsed: chip shows active branch, lists only opened worktrees, picking calls openPath', (
+    tester,
+  ) async {
+    await pump(tester, sidebarCollapsed: true);
 
-    // Chip is present and shows the active branch.
     expect(find.byKey(const ValueKey('worktree_chip')), findsOneWidget);
     expect(find.text('main'), findsWidgets);
 
-    // Open the menu: both worktrees appear (the not-opened one too).
     await tester.tap(find.byKey(const ValueKey('worktree_chip')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('worktree_menu_/repo/feat')), findsOneWidget);
 
-    // Picking the not-opened worktree routes to openPath.
+    // Opened worktrees appear; the branch without an open worktree does not.
+    expect(find.byKey(const ValueKey('worktree_menu_/repo/main')), findsOneWidget);
+    expect(find.byKey(const ValueKey('worktree_menu_/repo/feat')), findsOneWidget);
+    expect(find.byKey(const ValueKey('worktree_menu_/repo/ghost')), findsNothing);
+
     await tester.tap(find.byKey(const ValueKey('worktree_menu_/repo/feat')));
     await tester.pumpAndSettle();
     verify(() => ws.openPath('/repo/feat')).called(1);
+  });
+
+  testWidgets('sidebar expanded: chip is not shown (the tree switches worktrees instead)', (tester) async {
+    await pump(tester, sidebarCollapsed: false);
+    expect(find.byKey(const ValueKey('worktree_chip')), findsNothing);
   });
 }
