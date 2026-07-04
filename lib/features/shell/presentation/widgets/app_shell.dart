@@ -24,6 +24,7 @@ import '../../../claude/presentation/widgets/session_preview_view.dart';
 import '../../../claude/presentation/widgets/sessions_list_view.dart';
 import '../../../editor/presentation/cubit/active_editor_cubit.dart';
 import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
+import '../../../editor/presentation/widgets/quick_open_palette.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../../workspace/presentation/widgets/empty_state_view.dart';
 import '../cubit/shell_cubit.dart';
@@ -225,6 +226,13 @@ class AppShellPage extends HookWidget {
       return true;
     }
 
+    bool openQuickOpen() {
+      if (noWorkspaceGuard()) return true;
+      final id = activeWorkspaceId()!;
+      showQuickOpen(context, id);
+      return true;
+    }
+
     KeyEventResult onKey(FocusNode node, KeyEvent event) {
       if (event is! KeyDownEvent) return KeyEventResult.ignored;
       if (!HardwareKeyboard.instance.isMetaPressed) {
@@ -247,6 +255,7 @@ class AppShellPage extends HookWidget {
         handled = switch (key) {
           LogicalKeyboardKey.keyB => toggleSidebar(),
           LogicalKeyboardKey.keyW => closeActiveTab(),
+          LogicalKeyboardKey.keyP => openQuickOpen(),
           _ => false,
         };
       }

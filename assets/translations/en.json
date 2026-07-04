@@ -223,6 +223,11 @@
         "root": "root"
       }
     },
+    "worktreePicker": {
+      "sessionsHeader": "SESSIONS",
+      "worktreeHeader": "WORKTREE",
+      "changeWorktreeHint": "Switch worktree from the sidebar"
+    },
     "model": {
       "haiku": "Haiku",
       "sonnet": "Sonnet",
@@ -483,6 +488,13 @@
       "binary": "Binary file — no preview",
       "empty": "No changes",
       "loadError": "Failed to load diff"
+    },
+    "quickOpen": {
+      "placeholder": "Search open files...",
+      "badge": "OPEN FILES",
+      "empty": "No open files",
+      "noMatch": "No match",
+      "tooltip": "Quick open (⌘P)"
     }
   }
 }
