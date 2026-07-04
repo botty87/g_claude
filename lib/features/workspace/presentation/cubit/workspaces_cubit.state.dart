@@ -10,7 +10,16 @@ sealed class WorkspacesState with _$WorkspacesState {
     @Default(<Workspace>[]) List<Workspace> workspaces,
     WorkspaceId? activeId,
     Failure? lastFailure,
+    // Bumped whenever the live worktree list may have changed without a
+    // workspace-list change (e.g. creating a worktree without opening it), so
+    // the sidebar's memoized `git worktree list` future re-fetches.
+    @Default(0) int worktreesRevision,
   }) = WorkspacesStateLoaded;
+
+  int get worktreesRevisionOrZero => switch (this) {
+    WorkspacesStateInitial() => 0,
+    WorkspacesStateLoaded(:final worktreesRevision) => worktreesRevision,
+  };
 
   List<Workspace> get workspacesOrEmpty => switch (this) {
     WorkspacesStateInitial() => const [],

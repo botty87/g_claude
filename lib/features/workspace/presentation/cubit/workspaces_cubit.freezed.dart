@@ -119,11 +119,11 @@ return loaded(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function( List<Workspace> workspaces,  WorkspaceId? activeId,  Failure? lastFailure)?  loaded,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  initial,TResult Function( List<Workspace> workspaces,  WorkspaceId? activeId,  Failure? lastFailure,  int worktreesRevision)?  loaded,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case WorkspacesStateInitial() when initial != null:
 return initial();case WorkspacesStateLoaded() when loaded != null:
-return loaded(_that.workspaces,_that.activeId,_that.lastFailure);case _:
+return loaded(_that.workspaces,_that.activeId,_that.lastFailure,_that.worktreesRevision);case _:
   return orElse();
 
 }
@@ -141,11 +141,11 @@ return loaded(_that.workspaces,_that.activeId,_that.lastFailure);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function( List<Workspace> workspaces,  WorkspaceId? activeId,  Failure? lastFailure)  loaded,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  initial,required TResult Function( List<Workspace> workspaces,  WorkspaceId? activeId,  Failure? lastFailure,  int worktreesRevision)  loaded,}) {final _that = this;
 switch (_that) {
 case WorkspacesStateInitial():
 return initial();case WorkspacesStateLoaded():
-return loaded(_that.workspaces,_that.activeId,_that.lastFailure);}
+return loaded(_that.workspaces,_that.activeId,_that.lastFailure,_that.worktreesRevision);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -159,11 +159,11 @@ return loaded(_that.workspaces,_that.activeId,_that.lastFailure);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function( List<Workspace> workspaces,  WorkspaceId? activeId,  Failure? lastFailure)?  loaded,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  initial,TResult? Function( List<Workspace> workspaces,  WorkspaceId? activeId,  Failure? lastFailure,  int worktreesRevision)?  loaded,}) {final _that = this;
 switch (_that) {
 case WorkspacesStateInitial() when initial != null:
 return initial();case WorkspacesStateLoaded() when loaded != null:
-return loaded(_that.workspaces,_that.activeId,_that.lastFailure);case _:
+return loaded(_that.workspaces,_that.activeId,_that.lastFailure,_that.worktreesRevision);case _:
   return null;
 
 }
@@ -207,7 +207,7 @@ String toString() {
 
 
 class WorkspacesStateLoaded extends WorkspacesState {
-  const WorkspacesStateLoaded({final  List<Workspace> workspaces = const <Workspace>[], this.activeId, this.lastFailure}): _workspaces = workspaces,super._();
+  const WorkspacesStateLoaded({final  List<Workspace> workspaces = const <Workspace>[], this.activeId, this.lastFailure, this.worktreesRevision = 0}): _workspaces = workspaces,super._();
   
 
  final  List<Workspace> _workspaces;
@@ -219,6 +219,10 @@ class WorkspacesStateLoaded extends WorkspacesState {
 
  final  WorkspaceId? activeId;
  final  Failure? lastFailure;
+// Bumped whenever the live worktree list may have changed without a
+// workspace-list change (e.g. creating a worktree without opening it), so
+// the sidebar's memoized `git worktree list` future re-fetches.
+@JsonKey() final  int worktreesRevision;
 
 /// Create a copy of WorkspacesState
 /// with the given fields replaced by the non-null parameter values.
@@ -230,16 +234,16 @@ $WorkspacesStateLoadedCopyWith<WorkspacesStateLoaded> get copyWith => _$Workspac
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkspacesStateLoaded&&const DeepCollectionEquality().equals(other._workspaces, _workspaces)&&(identical(other.activeId, activeId) || other.activeId == activeId)&&(identical(other.lastFailure, lastFailure) || other.lastFailure == lastFailure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WorkspacesStateLoaded&&const DeepCollectionEquality().equals(other._workspaces, _workspaces)&&(identical(other.activeId, activeId) || other.activeId == activeId)&&(identical(other.lastFailure, lastFailure) || other.lastFailure == lastFailure)&&(identical(other.worktreesRevision, worktreesRevision) || other.worktreesRevision == worktreesRevision));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_workspaces),activeId,lastFailure);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_workspaces),activeId,lastFailure,worktreesRevision);
 
 @override
 String toString() {
-  return 'WorkspacesState.loaded(workspaces: $workspaces, activeId: $activeId, lastFailure: $lastFailure)';
+  return 'WorkspacesState.loaded(workspaces: $workspaces, activeId: $activeId, lastFailure: $lastFailure, worktreesRevision: $worktreesRevision)';
 }
 
 
@@ -250,7 +254,7 @@ abstract mixin class $WorkspacesStateLoadedCopyWith<$Res> implements $Workspaces
   factory $WorkspacesStateLoadedCopyWith(WorkspacesStateLoaded value, $Res Function(WorkspacesStateLoaded) _then) = _$WorkspacesStateLoadedCopyWithImpl;
 @useResult
 $Res call({
- List<Workspace> workspaces, WorkspaceId? activeId, Failure? lastFailure
+ List<Workspace> workspaces, WorkspaceId? activeId, Failure? lastFailure, int worktreesRevision
 });
 
 
@@ -267,12 +271,13 @@ class _$WorkspacesStateLoadedCopyWithImpl<$Res>
 
 /// Create a copy of WorkspacesState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? workspaces = null,Object? activeId = freezed,Object? lastFailure = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? workspaces = null,Object? activeId = freezed,Object? lastFailure = freezed,Object? worktreesRevision = null,}) {
   return _then(WorkspacesStateLoaded(
 workspaces: null == workspaces ? _self._workspaces : workspaces // ignore: cast_nullable_to_non_nullable
 as List<Workspace>,activeId: freezed == activeId ? _self.activeId : activeId // ignore: cast_nullable_to_non_nullable
 as WorkspaceId?,lastFailure: freezed == lastFailure ? _self.lastFailure : lastFailure // ignore: cast_nullable_to_non_nullable
-as Failure?,
+as Failure?,worktreesRevision: null == worktreesRevision ? _self.worktreesRevision : worktreesRevision // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

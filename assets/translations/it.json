@@ -35,7 +35,8 @@
         "showAll": "Mostra tutti",
         "showOpenOnly": "Solo aperti",
         "openedCount": "{count} aperti",
-        "openTooltip": "Apri questo worktree"
+        "openTooltip": "Apri questo worktree",
+        "addTooltip": "Nuovo worktree"
       }
     },
     "closeWorktree": {
@@ -50,7 +51,9 @@
       "force": "Forza",
       "cancel": "Annulla",
       "confirm": "Conferma",
-      "closeTooltip": "Chiudi"
+      "closeTooltip": "Chiudi",
+      "badgeSafe": "Sicuro",
+      "badgeDestructive": "Distruttivo"
     },
     "rightPanel": {
       "files": "Files",
@@ -65,6 +68,32 @@
       "thinkingChanged": "Pensiero: {value}",
       "permissionChanged": "Modalità: {value}",
       "noActiveWorkspace": "Nessun workspace attivo"
+    },
+    "newWorktree": {
+      "title": "Nuovo worktree",
+      "modeNew": "Nuovo branch",
+      "modeExisting": "Apri esistente",
+      "branchNameLabel": "Nome branch",
+      "branchNameHint": "feature/mio-lavoro",
+      "baseRefLabel": "Base",
+      "existingBranchLabel": "Branch",
+      "noExistingBranches": "Nessun branch disponibile senza worktree.",
+      "pathLabel": "Posizione",
+      "pickFolder": "Scegli cartella…",
+      "cancel": "Annulla",
+      "create": "Crea",
+      "openAfter": "Apri il worktree dopo la creazione",
+      "cartellaLabel": "Cartella sul disco",
+      "cartellaHint": "Scegli o incolla un percorso…",
+      "detectedWorktree": "Worktree Git rilevato",
+      "detectedRepo": "Repository Git rilevato",
+      "fieldRepository": "Repository",
+      "fieldBranch": "Branch",
+      "fieldStatus": "Stato",
+      "dirtyChanges": "{count} modifiche non committate",
+      "cleanStatus": "Nessuna modifica non committata",
+      "fallbackInfo": "Se la cartella non è un repository Git, verrà aperta comunque come workspace semplice (senza worktree né diff).",
+      "openConfirm": "Apri worktree"
     }
   },
   "claude": {

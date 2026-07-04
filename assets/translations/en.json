@@ -35,7 +35,8 @@
         "showAll": "Show all",
         "showOpenOnly": "Show open only",
         "openedCount": "{count} open",
-        "openTooltip": "Open this worktree"
+        "openTooltip": "Open this worktree",
+        "addTooltip": "New worktree"
       }
     },
     "closeWorktree": {
@@ -50,7 +51,9 @@
       "force": "Force",
       "cancel": "Cancel",
       "confirm": "Confirm",
-      "closeTooltip": "Close"
+      "closeTooltip": "Close",
+      "badgeSafe": "Safe",
+      "badgeDestructive": "Destructive"
     },
     "rightPanel": {
       "files": "Files",
@@ -65,6 +68,32 @@
       "thinkingChanged": "Thinking: {value}",
       "permissionChanged": "Mode: {value}",
       "noActiveWorkspace": "No active workspace"
+    },
+    "newWorktree": {
+      "title": "New worktree",
+      "modeNew": "New branch",
+      "modeExisting": "Open existing",
+      "branchNameLabel": "Branch name",
+      "branchNameHint": "feature/my-work",
+      "baseRefLabel": "Base",
+      "existingBranchLabel": "Branch",
+      "noExistingBranches": "No branch is available without a worktree.",
+      "pathLabel": "Location",
+      "pickFolder": "Choose folder…",
+      "cancel": "Cancel",
+      "create": "Create",
+      "openAfter": "Open the worktree after creation",
+      "cartellaLabel": "Folder on disk",
+      "cartellaHint": "Choose or paste a path…",
+      "detectedWorktree": "Git worktree detected",
+      "detectedRepo": "Git repository detected",
+      "fieldRepository": "Repository",
+      "fieldBranch": "Branch",
+      "fieldStatus": "Status",
+      "dirtyChanges": "{count} uncommitted changes",
+      "cleanStatus": "No uncommitted changes",
+      "fallbackInfo": "If the folder isn't a Git repository, it will be opened as a plain workspace anyway (no worktree or diff).",
+      "openConfirm": "Open worktree"
     }
   },
   "claude": {

@@ -843,6 +843,9 @@ class _Shell {
   /// Translations for closeWorktree
   final CloseWorktree = const _ShellCloseWorktree._();
 
+  /// Translations for newWorktree
+  final NewWorktree = const _ShellNewWorktree._();
+
   /// Translations for rightPanel
   final RightPanel = const _ShellRightPanel._();
 
@@ -878,6 +881,8 @@ class _ShellActivity {
 class _ShellCloseWorktree {
   const _ShellCloseWorktree._();
 
+  String get badgeDestructive => LocaleKeys.shell_closeWorktree_badgeDestructive.tr();
+  String get badgeSafe => LocaleKeys.shell_closeWorktree_badgeSafe.tr();
   String get cancel => LocaleKeys.shell_closeWorktree_cancel.tr();
   String get closeTooltip => LocaleKeys.shell_closeWorktree_closeTooltip.tr();
   String get confirm => LocaleKeys.shell_closeWorktree_confirm.tr();
@@ -890,6 +895,41 @@ class _ShellCloseWorktree {
   String get optionRemoveWorktree => LocaleKeys.shell_closeWorktree_optionRemoveWorktree.tr();
   String get optionRemoveWorktreeDescr => LocaleKeys.shell_closeWorktree_optionRemoveWorktreeDescr.tr();
   String get title => LocaleKeys.shell_closeWorktree_title.tr();
+}
+
+/// Nested class for newWorktree translations
+class _ShellNewWorktree {
+  const _ShellNewWorktree._();
+
+  String get baseRefLabel => LocaleKeys.shell_newWorktree_baseRefLabel.tr();
+  String get branchNameHint => LocaleKeys.shell_newWorktree_branchNameHint.tr();
+  String get branchNameLabel => LocaleKeys.shell_newWorktree_branchNameLabel.tr();
+  String get cancel => LocaleKeys.shell_newWorktree_cancel.tr();
+  String get cartellaHint => LocaleKeys.shell_newWorktree_cartellaHint.tr();
+  String get cartellaLabel => LocaleKeys.shell_newWorktree_cartellaLabel.tr();
+  String get cleanStatus => LocaleKeys.shell_newWorktree_cleanStatus.tr();
+  String get create => LocaleKeys.shell_newWorktree_create.tr();
+  String get detectedRepo => LocaleKeys.shell_newWorktree_detectedRepo.tr();
+  String get detectedWorktree => LocaleKeys.shell_newWorktree_detectedWorktree.tr();
+  String dirtyChanges({required String count}) {
+    return LocaleKeys.shell_newWorktree_dirtyChanges.tr(namedArgs: {
+      'count': count,
+    });
+  }
+
+  String get existingBranchLabel => LocaleKeys.shell_newWorktree_existingBranchLabel.tr();
+  String get fallbackInfo => LocaleKeys.shell_newWorktree_fallbackInfo.tr();
+  String get fieldBranch => LocaleKeys.shell_newWorktree_fieldBranch.tr();
+  String get fieldRepository => LocaleKeys.shell_newWorktree_fieldRepository.tr();
+  String get fieldStatus => LocaleKeys.shell_newWorktree_fieldStatus.tr();
+  String get modeExisting => LocaleKeys.shell_newWorktree_modeExisting.tr();
+  String get modeNew => LocaleKeys.shell_newWorktree_modeNew.tr();
+  String get noExistingBranches => LocaleKeys.shell_newWorktree_noExistingBranches.tr();
+  String get openAfter => LocaleKeys.shell_newWorktree_openAfter.tr();
+  String get openConfirm => LocaleKeys.shell_newWorktree_openConfirm.tr();
+  String get pathLabel => LocaleKeys.shell_newWorktree_pathLabel.tr();
+  String get pickFolder => LocaleKeys.shell_newWorktree_pickFolder.tr();
+  String get title => LocaleKeys.shell_newWorktree_title.tr();
 }
 
 /// Nested class for rightPanel translations
@@ -969,6 +1009,7 @@ class _ShellSidebar {
 class _ShellSidebarWorktrees {
   const _ShellSidebarWorktrees._();
 
+  String get addTooltip => LocaleKeys.shell_sidebar_worktrees_addTooltip.tr();
   String get openTooltip => LocaleKeys.shell_sidebar_worktrees_openTooltip.tr();
   String openedCount({required String count}) {
     return LocaleKeys.shell_sidebar_worktrees_openedCount.tr(namedArgs: {

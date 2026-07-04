@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/l10n/l10n.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
+import 'glass_dialog.dart';
 
 /// Radio choice for closing/removing a linked worktree. Not shown for the
 /// main checkout, which can only be closed (never removed as a worktree).
@@ -20,6 +24,7 @@ Future<void> showCloseWorktreeDialog(
 }) {
   return showDialog<void>(
     context: context,
+    barrierColor: kGlassDialogBarrier,
     builder: (_) => CloseWorktreeDialog(workspaceId: workspaceId, name: name, branch: branch, isMain: isMain),
   );
 }
@@ -52,17 +57,9 @@ class CloseWorktreeDialog extends HookWidget {
     final error = useState<Failure?>(null);
     final busy = useState(false);
 
-    final subtitle = branch == null ? name : '$name  ($branch)';
-
     Future<void> confirm() async {
       final cubit = context.read<WorkspacesCubit>();
-      if (isMain) {
-        cubit.closeWorkspace(workspaceId);
-        Navigator.of(context).pop();
-        return;
-      }
-
-      if (choice.value == _CloseChoice.closeOnly) {
+      if (isMain || choice.value == _CloseChoice.closeOnly) {
         cubit.closeWorkspace(workspaceId);
         Navigator.of(context).pop();
         return;
@@ -86,52 +83,78 @@ class CloseWorktreeDialog extends HookWidget {
       }, (_) => Navigator.of(context).pop());
     }
 
-    return AlertDialog(
-      title: Text(Locales.Shell.CloseWorktree.title),
-      content: SizedBox(
-        width: 420,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 12),
-            if (isMain)
-              Text(Locales.Shell.CloseWorktree.mainCannotRemove)
-            else ...[
-              RadioGroup<_CloseChoice>(
-                groupValue: choice.value,
-                onChanged: busy.value ? (_) {} : (v) => choice.value = v!,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    RadioListTile<_CloseChoice>(
-                      key: const ValueKey('close_worktree_option_closeOnly'),
-                      value: _CloseChoice.closeOnly,
-                      enabled: !busy.value,
-                      title: Text(Locales.Shell.CloseWorktree.optionCloseOnly),
-                      subtitle: Text(Locales.Shell.CloseWorktree.optionCloseOnlyDescr),
+    final destructive = !isMain && choice.value == _CloseChoice.removeWorktreeAndBranch;
+
+    return GlassDialog(
+      width: 460,
+      children: [
+        GlassDialogHeader(
+          icon: Symbols.warning,
+          iconTint: AppColors.tertiary,
+          title: Locales.Shell.CloseWorktree.title,
+          divider: true,
+          padding: const EdgeInsets.fromLTRB(22, 20, 16, 16),
+          onClose: busy.value ? null : () => Navigator.of(context).pop(),
+          subtitle: GlassBranchChip(name: name, branch: branch),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isMain)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    Locales.Shell.CloseWorktree.mainCannotRemove,
+                    style: AppTypography.navTab.copyWith(
+                      fontSize: 12.5,
+                      height: 1.5,
+                      color: AppColors.onSurfaceVariant,
                     ),
-                    RadioListTile<_CloseChoice>(
-                      key: const ValueKey('close_worktree_option_removeWorktree'),
-                      value: _CloseChoice.removeWorktree,
-                      enabled: !busy.value,
-                      title: Text(Locales.Shell.CloseWorktree.optionRemoveWorktree),
-                      subtitle: Text(Locales.Shell.CloseWorktree.optionRemoveWorktreeDescr),
-                    ),
-                    RadioListTile<_CloseChoice>(
-                      key: const ValueKey('close_worktree_option_removeWorktreeAndBranch'),
-                      value: _CloseChoice.removeWorktreeAndBranch,
-                      enabled: !busy.value,
-                      title: Text(Locales.Shell.CloseWorktree.optionRemoveBranch),
-                      subtitle: Text(Locales.Shell.CloseWorktree.optionRemoveBranchDescr),
-                    ),
-                  ],
+                  ),
+                )
+              else ...[
+                GlassOptionCard(
+                  key: const ValueKey('close_worktree_option_closeOnly'),
+                  selected: choice.value == _CloseChoice.closeOnly,
+                  enabled: !busy.value,
+                  onTap: () => choice.value = _CloseChoice.closeOnly,
+                  icon: Symbols.chat_bubble,
+                  title: Locales.Shell.CloseWorktree.optionCloseOnly,
+                  description: Locales.Shell.CloseWorktree.optionCloseOnlyDescr,
+                  badge: GlassBadge(label: Locales.Shell.CloseWorktree.badgeSafe, color: AppColors.secondary),
                 ),
-              ),
-              if (error.value != null) ...[
                 const SizedBox(height: 8),
-                Text(_messageOf(error.value!), style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                GlassOptionCard(
+                  key: const ValueKey('close_worktree_option_removeWorktree'),
+                  selected: choice.value == _CloseChoice.removeWorktree,
+                  enabled: !busy.value,
+                  onTap: () => choice.value = _CloseChoice.removeWorktree,
+                  icon: Symbols.folder,
+                  title: Locales.Shell.CloseWorktree.optionRemoveWorktree,
+                  description: Locales.Shell.CloseWorktree.optionRemoveWorktreeDescr,
+                ),
+                const SizedBox(height: 8),
+                GlassOptionCard(
+                  key: const ValueKey('close_worktree_option_removeWorktreeAndBranch'),
+                  selected: choice.value == _CloseChoice.removeWorktreeAndBranch,
+                  enabled: !busy.value,
+                  onTap: () => choice.value = _CloseChoice.removeWorktreeAndBranch,
+                  icon: Symbols.delete,
+                  destructive: true,
+                  title: Locales.Shell.CloseWorktree.optionRemoveBranch,
+                  description: Locales.Shell.CloseWorktree.optionRemoveBranchDescr,
+                  badge: GlassBadge(label: Locales.Shell.CloseWorktree.badgeDestructive, color: AppColors.error),
+                ),
+              ],
+              if (error.value != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  _messageOf(error.value!),
+                  style: AppTypography.navTab.copyWith(fontSize: 12, height: 1.4, color: AppColors.error),
+                ),
                 Row(
                   children: [
                     Checkbox(
@@ -139,25 +162,24 @@ class CloseWorktreeDialog extends HookWidget {
                       value: force.value,
                       onChanged: busy.value ? null : (v) => force.value = v ?? false,
                     ),
-                    Text(Locales.Shell.CloseWorktree.force),
+                    Text(
+                      Locales.Shell.CloseWorktree.force,
+                      style: AppTypography.navTab.copyWith(fontSize: 12.5, color: AppColors.onSurfaceVariant),
+                    ),
                   ],
                 ),
               ],
             ],
-          ],
+          ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: busy.value ? null : () => Navigator.of(context).pop(),
-          child: Text(Locales.Shell.CloseWorktree.cancel),
-        ),
-        TextButton(
-          key: const ValueKey('close_worktree_confirm'),
-          onPressed: busy.value ? null : confirm,
-          child: busy.value
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-              : Text(Locales.Shell.CloseWorktree.confirm),
+        GlassDialogActions(
+          cancelLabel: Locales.Shell.CloseWorktree.cancel,
+          onCancel: busy.value ? null : () => Navigator.of(context).pop(),
+          confirmLabel: Locales.Shell.CloseWorktree.confirm,
+          confirmKey: const ValueKey('close_worktree_confirm'),
+          confirmBusy: busy.value,
+          destructive: destructive,
+          onConfirm: busy.value ? null : confirm,
         ),
       ],
     );

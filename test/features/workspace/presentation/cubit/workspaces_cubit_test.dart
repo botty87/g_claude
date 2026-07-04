@@ -12,7 +12,10 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:g_claude/core/error/failures.dart';
 import 'package:g_claude/core/utils/either.dart';
+import 'package:g_claude/features/git/domain/usecases/add_worktree.dart';
 import 'package:g_claude/features/git/domain/usecases/delete_branch.dart';
+import 'package:g_claude/features/git/domain/usecases/inspect_folder.dart';
+import 'package:g_claude/features/git/domain/usecases/list_branches.dart';
 import 'package:g_claude/features/git/domain/usecases/list_worktrees.dart';
 import 'package:g_claude/features/git/domain/usecases/remove_worktree.dart';
 import 'package:g_claude/features/workspace/data/datasources/workspace_file_watcher.dart';
@@ -32,6 +35,12 @@ class _MockRemoveWorktree extends Mock implements RemoveWorktree {}
 
 class _MockDeleteBranch extends Mock implements DeleteBranch {}
 
+class _MockAddWorktree extends Mock implements AddWorktree {}
+
+class _MockListBranches extends Mock implements ListBranches {}
+
+class _MockInspectFolder extends Mock implements InspectFolder {}
+
 class _MockPersistence extends Mock implements WorkspacesPersistenceDataSource {}
 
 class _MockWatcher extends Mock implements WorkspaceFileWatcher {}
@@ -49,6 +58,9 @@ void main() {
   late _MockListWorktrees listWorktrees;
   late _MockRemoveWorktree removeWorktreeUsecase;
   late _MockDeleteBranch deleteBranchUsecase;
+  late _MockAddWorktree addWorktreeUsecase;
+  late _MockListBranches listBranchesUsecase;
+  late _MockInspectFolder inspectFolderUsecase;
   late _MockPersistence persistence;
   late _MockWatcher watcher;
 
@@ -57,6 +69,9 @@ void main() {
     listWorktrees = _MockListWorktrees();
     removeWorktreeUsecase = _MockRemoveWorktree();
     deleteBranchUsecase = _MockDeleteBranch();
+    addWorktreeUsecase = _MockAddWorktree();
+    listBranchesUsecase = _MockListBranches();
+    inspectFolderUsecase = _MockInspectFolder();
     persistence = _MockPersistence();
     watcher = _MockWatcher();
     // Default stubs.
@@ -71,6 +86,9 @@ void main() {
       listWorktrees,
       removeWorktreeUsecase,
       deleteBranchUsecase,
+      addWorktreeUsecase,
+      listBranchesUsecase,
+      inspectFolderUsecase,
       persistence,
       watcher,
       makeTestTalker(),
@@ -349,6 +367,82 @@ void main() {
           branch: any(named: 'branch'),
         ),
       );
+      await cubit.close();
+    });
+  });
+
+  group('createWorktree', () {
+    test('success creates the worktree then opens it as a workspace', () async {
+      when(
+        () => addWorktreeUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          worktreePath: any(named: 'worktreePath'),
+          newBranch: any(named: 'newBranch'),
+          baseRef: any(named: 'baseRef'),
+          checkoutBranch: any(named: 'checkoutBranch'),
+        ),
+      ).thenAnswer((_) async => const Right(null));
+      when(() => openWs(path: any(named: 'path'))).thenAnswer((_) async => Right(_ws('/repo/feature/new')));
+
+      final cubit = make();
+      final result = await cubit.createWorktree(
+        repoRoot: '/repo',
+        targetPath: '/repo/feature/new',
+        newBranch: 'feature/new',
+      );
+
+      expect(result.isRight, isTrue);
+      verify(() => openWs(path: '/repo/feature/new')).called(1);
+      expect(cubit.state.workspacesOrEmpty.map((w) => w.id), contains('/repo/feature/new'));
+      await cubit.close();
+    });
+
+    test('openAfter:false creates the worktree without opening it, and bumps the worktree revision', () async {
+      when(
+        () => addWorktreeUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          worktreePath: any(named: 'worktreePath'),
+          newBranch: any(named: 'newBranch'),
+          baseRef: any(named: 'baseRef'),
+          checkoutBranch: any(named: 'checkoutBranch'),
+        ),
+      ).thenAnswer((_) async => const Right(null));
+
+      final cubit = make();
+      cubit.emit(const WorkspacesState.loaded());
+      final before = cubit.state.worktreesRevisionOrZero;
+
+      final result = await cubit.createWorktree(
+        repoRoot: '/repo',
+        targetPath: '/repo/.worktrees/x',
+        newBranch: 'x',
+        openAfter: false,
+      );
+
+      expect(result.isRight, isTrue);
+      verifyNever(() => openWs(path: any(named: 'path')));
+      expect(cubit.state.workspacesOrEmpty, isEmpty, reason: 'not opened');
+      expect(cubit.state.worktreesRevisionOrZero, before + 1, reason: 'sidebar re-fetch trigger');
+      await cubit.close();
+    });
+
+    test('git failure returns Left and does NOT open a workspace', () async {
+      when(
+        () => addWorktreeUsecase(
+          repoRoot: any(named: 'repoRoot'),
+          worktreePath: any(named: 'worktreePath'),
+          newBranch: any(named: 'newBranch'),
+          baseRef: any(named: 'baseRef'),
+          checkoutBranch: any(named: 'checkoutBranch'),
+        ),
+      ).thenAnswer((_) async => const Left(SubprocessFailure(message: "fatal: '/repo/dup' already exists")));
+
+      final cubit = make();
+      final result = await cubit.createWorktree(repoRoot: '/repo', targetPath: '/repo/dup', newBranch: 'dup');
+
+      expect(result.isLeft, isTrue);
+      verifyNever(() => openWs(path: any(named: 'path')));
+      expect(cubit.state.workspacesOrEmpty, isEmpty);
       await cubit.close();
     });
   });

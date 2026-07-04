@@ -50,6 +50,9 @@ app.*.map.json
 # Claude Code agent worktrees (local-only)
 .claude/worktrees/
 
+# Worktrees created from Clyde (default location: <repoRoot>/.worktrees/<branch>)
+.worktrees/
+
 # Release artifacts — binaries live on GitHub Releases, not in repo
 release/**/*.zip
 release/**/*.app/

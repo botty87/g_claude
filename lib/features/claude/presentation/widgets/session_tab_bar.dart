@@ -11,6 +11,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
 import '../../../git/domain/entities/git_worktree.dart';
+import '../../../shell/presentation/cubit/shell_cubit.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../cubit/claude_sessions_cubit.dart';
@@ -39,6 +40,11 @@ class SessionTabBar extends StatelessWidget {
           '${ws.tabs.map((t) => '${t.tabId}:${t.runStatus.index}:${ClaudeSessionsCubit.sessionTitle(t)}').join(',')}';
     });
 
+    // The worktree chip is a *quick* switcher: it only earns its place when the
+    // sidebar is collapsed. With the sidebar open the tree already switches
+    // worktrees, so the chip would be redundant.
+    final sidebarCollapsed = context.select<ShellCubit, bool>((c) => c.state.sidebarCollapsed);
+
     final cubit = context.read<ClaudeSessionsCubit>();
     final tabs = cubit.state.tabsList(workspaceId);
     final activeTabId = cubit.state.tabsFor(workspaceId)?.activeTabId ?? '';
@@ -52,7 +58,7 @@ class SessionTabBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _WorktreeChip(workspaceId: workspaceId),
+          if (sidebarCollapsed) _WorktreeChip(workspaceId: workspaceId),
           Expanded(
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
@@ -128,16 +134,18 @@ class _WorktreeChip extends HookWidget {
             ? Locales.Claude.Terminal.WorktreeChip.detached
             : repoRoot == workspaceId
             ? Locales.Claude.Terminal.WorktreeChip.root
-            : Locales.Claude.Terminal.WorktreeChip.detached);
+            // Branchless but neither detached nor the repo root: don't mislabel
+            // as "detached" — fall back to the folder name.
+            : p.basename(workspaceId));
 
+    // Only opened worktrees, to stay consistent with the sidebar's default
+    // "open only" view: branches without an open worktree are hidden there, so
+    // the quick switcher hides them too. To open a new worktree, expand the
+    // sidebar. (`gitWorktrees` is still consulted above for the detached label.)
     final opened = wsCubit.state.workspacesOrEmpty.where((w) => w.repoRoot == repoRoot).toList(growable: false);
-    final openedPaths = opened.map((w) => w.path).toSet();
     final items = <_ChipItem>[
       for (final w in opened)
         _ChipItem(path: w.path, label: w.branch ?? p.basename(w.path), opened: true, isActive: w.id == workspaceId),
-      for (final g in gitWorktrees)
-        if (!g.isBare && !openedPaths.contains(g.path))
-          _ChipItem(path: g.path, label: g.branch ?? p.basename(g.path), opened: false, isActive: false),
     ];
 
     return MenuAnchor(
