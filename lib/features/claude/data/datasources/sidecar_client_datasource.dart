@@ -126,6 +126,34 @@ class SidecarClientDataSource {
     _transport.send({'t': 'setMode', 'sid': sid, 'mode': mode.cliFlag});
   }
 
+  /// Starts the OAuth flow for a `needs-auth` MCP server and resolves with the
+  /// browser `authUrl` to open (null if the SDK returned none). The sidecar runs
+  /// this in an ephemeral keep-alive query (see backend `runMcpAuth`); we
+  /// correlate the reply by a throwaway [sid] and await `mcpAuthUrl` /
+  /// `mcpAuthError` on the shared event stream.
+  Future<String?> authenticateMcpServer({required String cwd, required String serverName}) async {
+    await _transport.start();
+    final sid = 'mcpauth:$cwd:$serverName';
+    final completer = Completer<String?>();
+    late StreamSubscription<Map<String, dynamic>> sub;
+    sub = _transport.events.where((raw) => raw['sid'] == sid).listen((raw) {
+      final type = raw['t'] as String?;
+      if (type == 'mcpAuthUrl') {
+        if (!completer.isCompleted) completer.complete(raw['authUrl'] as String?);
+      } else if (type == 'mcpAuthError') {
+        if (!completer.isCompleted) {
+          completer.completeError(McpAuthException(raw['message'] as String? ?? 'unknown mcp auth error'));
+        }
+      }
+    });
+    _transport.send({'t': 'mcpAuth', 'sid': sid, 'cwd': cwd, 'serverName': serverName});
+    try {
+      return await completer.future.timeout(const Duration(seconds: 45));
+    } finally {
+      await sub.cancel();
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Protocol event → ClaudeEvent mapping
   // ---------------------------------------------------------------------------
@@ -318,4 +346,13 @@ class SidecarClientDataSource {
       options: options,
     );
   }
+}
+
+/// Thrown when the sidecar reports an `mcpAuthError` for an OAuth flow.
+class McpAuthException implements Exception {
+  McpAuthException(this.message);
+  final String message;
+
+  @override
+  String toString() => 'McpAuthException: $message';
 }

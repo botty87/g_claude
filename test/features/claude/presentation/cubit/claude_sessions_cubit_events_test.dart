@@ -24,13 +24,11 @@
 // stream so tests drive `_handleEvent` deterministically without touching
 // any real process/network.
 //
-// The `sessionInit → mcpServers merged into the MCP cache` sub-contract is
-// covered only indirectly: the cache itself is a private field, and the only
-// public read path (`ensureMcpServers`) is TTL-gated by wall-clock time,
-// which would make a direct assertion either flaky (real waits) or brittle
-// (reaching into private state). We assert the directly observable part
-// (runStatus → running) and leave the cache-merge internals to a future
-// `@visibleForTesting` seam if that specific bug surface needs coverage.
+// The `sessionInit → mcpServers merged` sub-contract is covered directly in
+// `claude_sessions_cubit_mcp_test.dart`: the list now lives in emitted state
+// (`state.mcpServers`) and `mergeMcpServersFromSessionInit` is a
+// `@visibleForTesting` seam. Here we assert only the directly observable
+// runStatus → running transition.
 
 import 'dart:async';
 

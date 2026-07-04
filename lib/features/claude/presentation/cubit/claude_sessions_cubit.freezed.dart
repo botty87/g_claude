@@ -672,7 +672,9 @@ as String,
 /// @nodoc
 mixin _$ClaudeSessionsState {
 
- Map<String, WorkspaceSessions> get workspaces;
+ Map<String, WorkspaceSessions> get workspaces;// Account-wide MCP server list (from `claude mcp list` + sessionInit merge).
+// Global, not per-workspace; kept in state so the "N active" count is reactive.
+ List<McpServer> get mcpServers;
 /// Create a copy of ClaudeSessionsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -683,16 +685,16 @@ $ClaudeSessionsStateCopyWith<ClaudeSessionsState> get copyWith => _$ClaudeSessio
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeSessionsState&&const DeepCollectionEquality().equals(other.workspaces, workspaces));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClaudeSessionsState&&const DeepCollectionEquality().equals(other.workspaces, workspaces)&&const DeepCollectionEquality().equals(other.mcpServers, mcpServers));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(workspaces));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(workspaces),const DeepCollectionEquality().hash(mcpServers));
 
 @override
 String toString() {
-  return 'ClaudeSessionsState(workspaces: $workspaces)';
+  return 'ClaudeSessionsState(workspaces: $workspaces, mcpServers: $mcpServers)';
 }
 
 
@@ -703,7 +705,7 @@ abstract mixin class $ClaudeSessionsStateCopyWith<$Res>  {
   factory $ClaudeSessionsStateCopyWith(ClaudeSessionsState value, $Res Function(ClaudeSessionsState) _then) = _$ClaudeSessionsStateCopyWithImpl;
 @useResult
 $Res call({
- Map<String, WorkspaceSessions> workspaces
+ Map<String, WorkspaceSessions> workspaces, List<McpServer> mcpServers
 });
 
 
@@ -720,10 +722,11 @@ class _$ClaudeSessionsStateCopyWithImpl<$Res>
 
 /// Create a copy of ClaudeSessionsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? workspaces = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? workspaces = null,Object? mcpServers = null,}) {
   return _then(_self.copyWith(
 workspaces: null == workspaces ? _self.workspaces : workspaces // ignore: cast_nullable_to_non_nullable
-as Map<String, WorkspaceSessions>,
+as Map<String, WorkspaceSessions>,mcpServers: null == mcpServers ? _self.mcpServers : mcpServers // ignore: cast_nullable_to_non_nullable
+as List<McpServer>,
   ));
 }
 
@@ -808,10 +811,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, WorkspaceSessions> workspaces)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<String, WorkspaceSessions> workspaces,  List<McpServer> mcpServers)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ClaudeSessionsState() when $default != null:
-return $default(_that.workspaces);case _:
+return $default(_that.workspaces,_that.mcpServers);case _:
   return orElse();
 
 }
@@ -829,10 +832,10 @@ return $default(_that.workspaces);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, WorkspaceSessions> workspaces)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<String, WorkspaceSessions> workspaces,  List<McpServer> mcpServers)  $default,) {final _that = this;
 switch (_that) {
 case _ClaudeSessionsState():
-return $default(_that.workspaces);case _:
+return $default(_that.workspaces,_that.mcpServers);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -849,10 +852,10 @@ return $default(_that.workspaces);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, WorkspaceSessions> workspaces)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<String, WorkspaceSessions> workspaces,  List<McpServer> mcpServers)?  $default,) {final _that = this;
 switch (_that) {
 case _ClaudeSessionsState() when $default != null:
-return $default(_that.workspaces);case _:
+return $default(_that.workspaces,_that.mcpServers);case _:
   return null;
 
 }
@@ -864,7 +867,7 @@ return $default(_that.workspaces);case _:
 
 
 class _ClaudeSessionsState extends ClaudeSessionsState {
-  const _ClaudeSessionsState({final  Map<String, WorkspaceSessions> workspaces = const <String, WorkspaceSessions>{}}): _workspaces = workspaces,super._();
+  const _ClaudeSessionsState({final  Map<String, WorkspaceSessions> workspaces = const <String, WorkspaceSessions>{}, final  List<McpServer> mcpServers = const <McpServer>[]}): _workspaces = workspaces,_mcpServers = mcpServers,super._();
   
 
  final  Map<String, WorkspaceSessions> _workspaces;
@@ -872,6 +875,17 @@ class _ClaudeSessionsState extends ClaudeSessionsState {
   if (_workspaces is EqualUnmodifiableMapView) return _workspaces;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_workspaces);
+}
+
+// Account-wide MCP server list (from `claude mcp list` + sessionInit merge).
+// Global, not per-workspace; kept in state so the "N active" count is reactive.
+ final  List<McpServer> _mcpServers;
+// Account-wide MCP server list (from `claude mcp list` + sessionInit merge).
+// Global, not per-workspace; kept in state so the "N active" count is reactive.
+@override@JsonKey() List<McpServer> get mcpServers {
+  if (_mcpServers is EqualUnmodifiableListView) return _mcpServers;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_mcpServers);
 }
 
 
@@ -885,16 +899,16 @@ _$ClaudeSessionsStateCopyWith<_ClaudeSessionsState> get copyWith => __$ClaudeSes
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClaudeSessionsState&&const DeepCollectionEquality().equals(other._workspaces, _workspaces));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClaudeSessionsState&&const DeepCollectionEquality().equals(other._workspaces, _workspaces)&&const DeepCollectionEquality().equals(other._mcpServers, _mcpServers));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_workspaces));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_workspaces),const DeepCollectionEquality().hash(_mcpServers));
 
 @override
 String toString() {
-  return 'ClaudeSessionsState(workspaces: $workspaces)';
+  return 'ClaudeSessionsState(workspaces: $workspaces, mcpServers: $mcpServers)';
 }
 
 
@@ -905,7 +919,7 @@ abstract mixin class _$ClaudeSessionsStateCopyWith<$Res> implements $ClaudeSessi
   factory _$ClaudeSessionsStateCopyWith(_ClaudeSessionsState value, $Res Function(_ClaudeSessionsState) _then) = __$ClaudeSessionsStateCopyWithImpl;
 @override @useResult
 $Res call({
- Map<String, WorkspaceSessions> workspaces
+ Map<String, WorkspaceSessions> workspaces, List<McpServer> mcpServers
 });
 
 
@@ -922,10 +936,11 @@ class __$ClaudeSessionsStateCopyWithImpl<$Res>
 
 /// Create a copy of ClaudeSessionsState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? workspaces = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? workspaces = null,Object? mcpServers = null,}) {
   return _then(_ClaudeSessionsState(
 workspaces: null == workspaces ? _self._workspaces : workspaces // ignore: cast_nullable_to_non_nullable
-as Map<String, WorkspaceSessions>,
+as Map<String, WorkspaceSessions>,mcpServers: null == mcpServers ? _self._mcpServers : mcpServers // ignore: cast_nullable_to_non_nullable
+as List<McpServer>,
   ));
 }
 

@@ -37,25 +37,28 @@ class McpListDataSource {
       final name = m.group(1)!.trim();
       final cmd = m.group(2)!.trim();
       final statusStr = m.group(3)!.trim();
-      out.add(
-        McpServer(
-          name: name,
-          displayName: _cleanName(name),
-          commandOrUrl: cmd,
-          status: _statusMap[statusStr] ?? McpServerStatus.unknown,
-        ),
-      );
+      out.add(McpServer(name: name, displayName: _cleanName(name), commandOrUrl: cmd, status: _parseStatus(statusStr)));
     }
     return out;
   }
 
   static final RegExp _lineRegex = RegExp(r'^(.+?): (.+?) - (.+)$');
 
-  static const Map<String, McpServerStatus> _statusMap = {
-    '✓ Connected': McpServerStatus.connected,
-    '✗ Failed to connect': McpServerStatus.failed,
-    '! Needs authentication': McpServerStatus.needsAuth,
-  };
+  /// Matches on wording, not the leading glyph: the CLI varies the mark
+  /// (`✔` U+2714 for connected, `✗`/`!`), so an exact-glyph map silently
+  /// degraded every connected server to `unknown`.
+  ///
+  /// Order matters. `connected` is checked before `failed` so the warning
+  /// variant `! Connected · tools fetch failed` (server up, tools unavailable)
+  /// counts as connected — while `✗ Failed to connect` has no "connected"
+  /// substring ("connect" ≠ "connected") and still falls through to failed.
+  static McpServerStatus _parseStatus(String raw) {
+    final s = raw.toLowerCase();
+    if (s.contains('needs authentication')) return McpServerStatus.needsAuth;
+    if (s.contains('connected')) return McpServerStatus.connected;
+    if (s.contains('failed')) return McpServerStatus.failed;
+    return McpServerStatus.unknown;
+  }
 
   static String _cleanName(String raw) {
     if (raw.startsWith('plugin:')) {

@@ -66,7 +66,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   /// UI can route the answer back to the right session.
   final Map<String, String> _permissionRequestToWorkspace = {};
 
-  List<McpServer>? _mcpServersCache;
+  // The MCP server list lives in emitted state (`state.mcpServers`) so the UI
+  // count stays reactive; this timestamp gates the TTL refresh only.
   DateTime? _mcpServersCachedAt;
   static const Duration _mcpCacheTtl = Duration(minutes: 2);
 
@@ -1112,7 +1113,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
           ),
         );
         unawaited(_writeOpenSessions(wid));
-        _mergeMcpServersFromSessionInit(mcpServers);
+        mergeMcpServersFromSessionInit(mcpServers);
 
       case ClaudeEventTextChunk(:final text):
         _ensureStreamingMessage(wid);
@@ -1413,53 +1414,51 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _lastFlushAt = null;
   }
 
-  /// Last known MCP server list from the TTL cache (null until first load).
+  /// Last known MCP server list from emitted state (empty until first load).
   /// Read-only convenience for cheap UI (e.g. the settings snippet count);
   /// callers that need freshness use [ensureMcpServers].
-  List<McpServer>? get cachedMcpServers => _mcpServersCache;
+  List<McpServer> get cachedMcpServers => state.mcpServers;
 
   Future<List<McpServer>> ensureMcpServers({bool force = false}) async {
     final now = DateTime.now();
     if (!force &&
-        _mcpServersCache != null &&
         _mcpServersCachedAt != null &&
+        state.mcpServers.isNotEmpty &&
         now.difference(_mcpServersCachedAt!) < _mcpCacheTtl) {
-      return _mcpServersCache!;
+      return state.mcpServers;
     }
     final result = await _listMcpServers();
     return result.fold(
       (f) {
         _talker.warning('mcp list failed: $f');
-        return _mcpServersCache ?? const <McpServer>[];
+        return state.mcpServers;
       },
       (servers) {
-        _mcpServersCache = servers;
         _mcpServersCachedAt = now;
+        emit(state.copyWith(mcpServers: servers));
         return servers;
       },
     );
   }
 
   /// Merges the free MCP status snapshot carried by `sessionInit` into the
-  /// TTL cache: updates the status of servers already known from `claude mcp
+  /// emitted list: updates the status of servers already known from `claude mcp
   /// list`, and adds any missing ones. Never downgrades an entry's
   /// `commandOrUrl` (sessionInit does not provide it).
-  void _mergeMcpServersFromSessionInit(List<McpServer> fromInit) {
+  ///
+  /// Exposed for testing: the merge is otherwise reachable only through a full
+  /// `sessionInit` event round-trip; the seam lets a test assert the merged
+  /// `state.mcpServers` deterministically.
+  @visibleForTesting
+  void mergeMcpServersFromSessionInit(List<McpServer> fromInit) {
     if (fromInit.isEmpty) return;
-    final existing = {for (final s in _mcpServersCache ?? const <McpServer>[]) s.name: s};
+    final existing = {for (final s in state.mcpServers) s.name: s};
     for (final incoming in fromInit) {
       final current = existing[incoming.name];
       existing[incoming.name] = current == null ? incoming : current.copyWith(status: incoming.status);
     }
-    _mcpServersCache = existing.values.toList();
     _mcpServersCachedAt = DateTime.now();
-  }
-
-  bool isSessionActive(String workspaceId) {
-    if (_runningWorkspaceId != workspaceId) return false;
-    final session = _runTab(workspaceId);
-    if (session == null) return false;
-    return session.runStatus == ClaudeRunStatus.running || session.runStatus == ClaudeRunStatus.connecting;
+    emit(state.copyWith(mcpServers: existing.values.toList()));
   }
 
   /// Toggling doesn't touch a live session — one-shot runs pick up
@@ -1480,13 +1479,15 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _talker.info('mcp toggle: $serverName=${enabled ? "on" : "off"} (applies to next run)');
   }
 
+  /// Kicks off the OAuth flow for a `needs-auth` MCP server. Runs in an
+  /// ephemeral sidecar query (no chat run required) and opens the returned
+  /// authUrl in the browser; claude.ai brokers the callback server-side. The
+  /// flow completes out-of-band in the browser, so the picker's refresh button
+  /// (or the TTL expiry) surfaces the new `connected` status — a forced
+  /// `claude mcp list` reflects it since claude.ai auth is account-wide.
   Future<void> authenticateMcpServer(String workspaceId, String serverName) async {
-    if (!isSessionActive(workspaceId)) {
-      _talker.warning('mcp auth: no active session for $workspaceId');
-      return;
-    }
     _talker.info('mcp auth: starting flow for $serverName');
-    final result = await _authenticateMcpServer(serverName: serverName);
+    final result = await _authenticateMcpServer(cwd: workspaceId, serverName: serverName);
     await result.fold(
       (f) async {
         _talker.error('mcp auth failed: ${f.toString()}');

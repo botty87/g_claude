@@ -1,4 +1,3 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -34,7 +33,12 @@ class McpServerList extends HookWidget {
     // frame (no loading-row flicker). Otherwise the size changes over two
     // consecutive frames (loading → loaded), which makes the parent AnimatedSize
     // treat the expansion as "unstable" and snap instead of animating.
-    final snapshot = useFuture(future.value, initialData: cubit.cachedMcpServers);
+    final snapshot = useFuture(
+      future.value,
+      // Only seed when the cache is warm; an empty list would make `hasData`
+      // true and render the "empty" body instead of the loading row on mount.
+      initialData: cubit.cachedMcpServers.isNotEmpty ? cubit.cachedMcpServers : null,
+    );
     // Header state (refresh button enable + re-entrancy guard + icon color)
     // tracks a load in flight regardless of retained data — the `initialData`
     // seed keeps `hasData` true across a forced refresh, so `&& !hasData` here
@@ -107,15 +111,13 @@ Widget _mcpBody(
   return ConstrainedBox(
     constraints: BoxConstraints(maxHeight: maxHeight),
     child: BlocBuilder<ClaudeSessionsCubit, ClaudeSessionsState>(
-      buildWhen: (a, b) {
-        final sa = a.sessionFor(workspaceId);
-        final sb = b.sessionFor(workspaceId);
-        return sa?.disabledMcpServers != sb?.disabledMcpServers || sa?.runStatus != sb?.runStatus;
-      },
+      buildWhen: (a, b) =>
+          a.sessionFor(workspaceId)?.disabledMcpServers != b.sessionFor(workspaceId)?.disabledMcpServers,
       builder: (context, sessionsState) {
         final session = sessionsState.sessionFor(workspaceId);
         final disabled = session?.disabledMcpServers ?? const <String>{};
-        final canAuth = cubit.isSessionActive(workspaceId);
+        // Auth runs in an ephemeral sidecar query (no chat run required).
+        const canAuth = true;
         return ScrollConfiguration(
           behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
           child: ListView.separated(
@@ -160,50 +162,42 @@ class _McpServerTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final dotColor = isDisabled ? AppColors.outline : _statusColor(server.status);
     final nameColor = isDisabled ? AppColors.outline : AppColors.onSurfaceVariant;
-    final tooltipParts = <String>[
-      server.name,
-      _statusLabel(server.status).tr(),
-      if (isDisabled) Locales.Claude.Terminal.Mcp.disabledLabel,
-    ];
-    return Tooltip(
-      message: tooltipParts.join(' — '),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                server.displayName,
+                style: AppTypography.bodyMain.copyWith(fontWeight: FontWeight.w600, fontSize: 12, color: nameColor),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                server.commandOrUrl,
+                style: AppTypography.bodyMain.copyWith(fontSize: 10, color: AppColors.outline),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  server.displayName,
-                  style: AppTypography.bodyMain.copyWith(fontWeight: FontWeight.w600, fontSize: 12, color: nameColor),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  server.commandOrUrl,
-                  style: AppTypography.bodyMain.copyWith(fontSize: 10, color: AppColors.outline),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          if (server.status == McpServerStatus.needsAuth && !isDisabled) ...[
-            const SizedBox(width: AppSpacing.xs),
-            _McpAuthButton(canAuth: canAuth, onTap: onAuth),
-          ],
-          const SizedBox(width: AppSpacing.sm),
-          _McpToggle(value: !isDisabled, onChanged: onToggle),
+        ),
+        if (server.status == McpServerStatus.needsAuth && !isDisabled) ...[
+          const SizedBox(width: AppSpacing.xs),
+          _McpAuthButton(canAuth: canAuth, onTap: onAuth),
         ],
-      ),
+        const SizedBox(width: AppSpacing.sm),
+        _McpToggle(value: !isDisabled, onChanged: onToggle),
+      ],
     );
   }
 }
@@ -325,18 +319,5 @@ Color _statusColor(McpServerStatus s) {
       return const Color(0xFFFFCC00);
     case McpServerStatus.unknown:
       return AppColors.outline;
-  }
-}
-
-String _statusLabel(McpServerStatus s) {
-  switch (s) {
-    case McpServerStatus.connected:
-      return 'claude.terminal.mcp.status.connected';
-    case McpServerStatus.failed:
-      return 'claude.terminal.mcp.status.failed';
-    case McpServerStatus.needsAuth:
-      return 'claude.terminal.mcp.status.needsAuth';
-    case McpServerStatus.unknown:
-      return 'claude.terminal.mcp.status.unknown';
   }
 }

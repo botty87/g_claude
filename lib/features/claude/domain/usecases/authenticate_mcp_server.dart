@@ -9,6 +9,6 @@ class AuthenticateMcpServer {
   AuthenticateMcpServer(this._repo);
   final ClaudeRepository _repo;
 
-  Future<Either<Failure, String?>> call({required String serverName}) =>
-      _repo.authenticateMcpServer(serverName: serverName);
+  Future<Either<Failure, String?>> call({required String cwd, required String serverName}) =>
+      _repo.authenticateMcpServer(cwd: cwd, serverName: serverName);
 }

@@ -246,8 +246,8 @@ class _McpSection extends HookWidget {
     final disabledCount = context.select<ClaudeSessionsCubit, int>(
       (c) => c.state.sessionFor(workspaceId)?.disabledMcpServers.length ?? 0,
     );
-    final total = context.read<ClaudeSessionsCubit>().cachedMcpServers?.length;
-    final countText = total == null
+    final total = context.select<ClaudeSessionsCubit, int>((c) => c.state.mcpServers.length);
+    final countText = total == 0
         ? ''
         : Locales.Claude.Terminal.Mcp.activeCount(count: '${(total - disabledCount).clamp(0, total)}');
 
@@ -313,7 +313,6 @@ class _SettingsSnippet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cubit = context.read<ClaudeSessionsCubit>();
     final model = context.select<ClaudeSessionsCubit, ClaudeModel>(
       (c) => c.state.sessionFor(workspaceId)?.model ?? ClaudeModel.defaultModel,
     );
@@ -329,8 +328,8 @@ class _SettingsSnippet extends StatelessWidget {
     final disabledCount = context.select<ClaudeSessionsCubit, int>(
       (c) => c.state.sessionFor(workspaceId)?.disabledMcpServers.length ?? 0,
     );
-    final total = cubit.cachedMcpServers?.length;
-    final mcpValue = total == null
+    final total = context.select<ClaudeSessionsCubit, int>((c) => c.state.mcpServers.length);
+    final mcpValue = total == 0
         ? '—'
         : Locales.Claude.Terminal.Mcp.activeCount(count: '${(total - disabledCount).clamp(0, total)}');
 

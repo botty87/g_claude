@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:injectable/injectable.dart';
 
 import '../../../../core/error/failures.dart';
@@ -53,15 +55,25 @@ class ClaudeRepositoryImpl implements ClaudeRepository {
     await _datasource.stop(sid: sid);
   }
 
-  // MCP toggle/auth are not yet implemented via the sidecar protocol.
-  // They will be wired in a future phase when the sidecar exposes mcpToggle/mcpAuth events.
+  // MCP live toggle is not yet a sidecar op — disabling is applied statically
+  // via `disabledMcp` on the next run (see startRun → disallowedTools).
   @override
   Future<Either<Failure, void>> toggleMcpServer({required String serverName, required bool enabled}) async =>
       const Left(NotImplementedFailure('mcp_toggle not yet implemented in sidecar protocol'));
 
   @override
-  Future<Either<Failure, String?>> authenticateMcpServer({required String serverName}) async =>
-      const Left(NotImplementedFailure('mcp_auth not yet implemented in sidecar protocol'));
+  Future<Either<Failure, String?>> authenticateMcpServer({required String cwd, required String serverName}) async {
+    try {
+      final authUrl = await _datasource.authenticateMcpServer(cwd: cwd, serverName: serverName);
+      return Right(authUrl);
+    } on McpAuthException catch (e) {
+      return Left(SubprocessFailure(message: e.message));
+    } on TimeoutException catch (e) {
+      return Left(SubprocessFailure(message: 'mcp auth timed out: ${e.message ?? ''}'));
+    } catch (e) {
+      return Left(UnexpectedFailure('$e'));
+    }
+  }
 
   @override
   void answerQuestion({required String sid, required String toolUseId, required Map<String, String> answers}) {

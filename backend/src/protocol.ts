@@ -20,6 +20,10 @@ export type Req =
   | { t: 'plan'; sid: string; toolUseID: string; decision: 'approve' | 'reject';
       mode?: PermissionMode; message?: string }
   | { t: 'setMode'; sid: string; mode: PermissionMode }
+  // Start an OAuth flow for a needs-auth MCP server. Runs in an ephemeral
+  // keep-alive query decoupled from any chat turn (see session.ts). `sid` is a
+  // throwaway session id owned by the auth flow, not a chat session.
+  | { t: 'mcpAuth'; sid: string; cwd: string; serverName: string }
   | { t: 'stop'; sid: string }
   | { t: 'close'; sid: string };
 
@@ -44,7 +48,13 @@ export type DomainEvt =
   | { t: 'sessionDead'; sid: string; exitCode?: number; stderrTail: string[] }
   | { t: 'permissionRequest'; sid: string; toolUseID: string; toolName: string; toolInput: Record<string, unknown> }
   | { t: 'askUserQuestion'; sid: string; toolUseID: string; questions: unknown[] }
-  | { t: 'planProposed'; sid: string; toolUseID: string; plan: string; planFilePath?: string };
+  | { t: 'planProposed'; sid: string; toolUseID: string; plan: string; planFilePath?: string }
+  // OAuth flow result for an MCP server. `authUrl` is opened in the browser by
+  // the client; claude.ai brokers the callback server-side (callbackExpected is
+  // false for claude.ai connectors), so no callback round-trip is needed.
+  | { t: 'mcpAuthUrl'; sid: string; serverName: string; authUrl: string;
+      requiresUserAction?: boolean; callbackExpected?: boolean }
+  | { t: 'mcpAuthError'; sid: string; serverName: string; message: string };
 
 // Transport/system events (not ClaudeEvent).
 export type SystemEvt =
