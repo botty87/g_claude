@@ -193,6 +193,9 @@ class _Claude {
   /// Translations for thinking
   final Thinking = const _ClaudeThinking._();
 
+  /// Translations for worktreePicker
+  final WorktreePicker = const _ClaudeWorktreePicker._();
+
 }
 
 /// Nested class for askUser translations
@@ -645,6 +648,15 @@ class _ClaudeThinking {
   String get on => LocaleKeys.claude_thinking_on.tr();
 }
 
+/// Nested class for worktreePicker translations
+class _ClaudeWorktreePicker {
+  const _ClaudeWorktreePicker._();
+
+  String get changeWorktreeHint => LocaleKeys.claude_worktreePicker_changeWorktreeHint.tr();
+  String get sessionsHeader => LocaleKeys.claude_worktreePicker_sessionsHeader.tr();
+  String get worktreeHeader => LocaleKeys.claude_worktreePicker_worktreeHeader.tr();
+}
+
 /// Nested class for editor translations
 class _Editor {
   const _Editor._();
@@ -676,6 +688,9 @@ class _Editor {
 
   /// Translations for peek
   final Peek = const _EditorPeek._();
+
+  /// Translations for quickOpen
+  final QuickOpen = const _EditorQuickOpen._();
 
   /// Translations for tab
   final Tab = const _EditorTab._();
@@ -759,6 +774,17 @@ class _EditorPeek {
   String get close => LocaleKeys.editor_peek_close.tr();
   String get openFull => LocaleKeys.editor_peek_openFull.tr();
   String get reduceToPeek => LocaleKeys.editor_peek_reduceToPeek.tr();
+}
+
+/// Nested class for quickOpen translations
+class _EditorQuickOpen {
+  const _EditorQuickOpen._();
+
+  String get badge => LocaleKeys.editor_quickOpen_badge.tr();
+  String get empty => LocaleKeys.editor_quickOpen_empty.tr();
+  String get noMatch => LocaleKeys.editor_quickOpen_noMatch.tr();
+  String get placeholder => LocaleKeys.editor_quickOpen_placeholder.tr();
+  String get tooltip => LocaleKeys.editor_quickOpen_tooltip.tr();
 }
 
 /// Nested class for tab translations

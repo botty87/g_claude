@@ -11,11 +11,12 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
 import '../../../claude/presentation/widgets/chat_status_indicators.dart';
 import '../../../claude/presentation/widgets/claude_terminal_pane.dart';
-import '../../../claude/presentation/widgets/session_tab_bar.dart';
+import '../../../claude/presentation/widgets/session_worktree_picker.dart';
 import '../../../editor/presentation/cubit/editor_view_cubit.dart';
 import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
 import '../../../editor/presentation/widgets/file_tab.dart';
 import '../../../editor/presentation/widgets/file_viewer.dart';
+import '../../../editor/presentation/widgets/quick_open_palette.dart';
 import '../../../terminal/presentation/widgets/terminal_pane.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
@@ -46,18 +47,18 @@ class CenterPane extends HookWidget {
 
     return Column(
       children: [
-        const SessionTabBar(),
-        _Segmented(
+        _TopBar(
           workspaceId: activeId,
           current: effectiveView,
           codeCount: openCount,
           codeEnabled: hasFiles,
           onSelect: (v) => context.read<EditorViewCubit>().setView(activeId, v),
         ),
+        if (effectiveView == CenterView.code) _CodeTabsBar(workspaceId: activeId),
         Expanded(
           child: switch (effectiveView) {
             CenterView.chat => _ChatSurface(workspaceId: activeId, peekOpen: peekOpen && hasFiles),
-            CenterView.code => _CodeView(workspaceId: activeId),
+            CenterView.code => const FileViewer(),
             CenterView.terminal => const TerminalPane(),
           },
         ),
@@ -107,8 +108,11 @@ class _ChatSurface extends StatelessWidget {
   }
 }
 
-class _Segmented extends StatelessWidget {
-  const _Segmented({
+/// Row 1: the worktree·session breadcrumb picker, the icon-only view switcher,
+/// the "reduce to peek" affordance (Code view only) and the context meter /
+/// status indicator. Always visible.
+class _TopBar extends StatelessWidget {
+  const _TopBar({
     required this.workspaceId,
     required this.current,
     required this.codeCount,
@@ -124,14 +128,61 @@ class _Segmented extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCode = current == CenterView.code;
+
     return Container(
-      height: 46,
+      height: 44,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       decoration: const BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
         border: Border(bottom: BorderSide(color: AppColors.outlineVariant, width: 1)),
       ),
       child: Row(
         children: [
+          // Expanded+Align (NOT Flexible+Spacer): the single Expanded owns all
+          // the free space, so there's no two-flex split that would truncate the
+          // breadcrumb while wasting a gap. Align keeps the pill at its natural
+          // (capped) size on the left; when the window shrinks the Expanded box
+          // shrinks with it and the picker's Flexible labels ellipsize instead
+          // of overflowing. Controls stay pinned right.
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SessionWorktreePicker(workspaceId: workspaceId),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          // "Reduce to peek" sits to the LEFT of the segmented so the switcher
+          // keeps a fixed position (anchored on the right by meter/status) and
+          // this button just appears/disappears in the free space. Styled as a
+          // toolbar chip to match the breadcrumb / segmented family.
+          if (isCode) ...[
+            Hoverable(
+              onTap: () => context.read<EditorViewCubit>().demoteToPeek(workspaceId),
+              builder: (context, hover) => Container(
+                key: const ValueKey('code_reduce_to_peek'),
+                height: 30,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: hover ? AppColors.surfaceContainer : AppColors.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(AppRadii.md),
+                  border: Border.all(color: AppColors.glassBorder),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Symbols.close_fullscreen, size: 13, color: AppColors.onSurfaceVariant),
+                    const SizedBox(width: 6),
+                    Text(
+                      Locales.Editor.Peek.reduceToPeek,
+                      style: AppTypography.navTab.copyWith(color: AppColors.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+          ],
           Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
@@ -153,7 +204,7 @@ class _Segmented extends StatelessWidget {
                   keyName: 'segment_code',
                   icon: Symbols.code,
                   label: Locales.Editor.CenterView.code,
-                  isActive: current == CenterView.code,
+                  isActive: isCode,
                   enabled: codeEnabled,
                   badge: codeCount > 0 ? '$codeCount' : null,
                   onTap: () => onSelect(CenterView.code),
@@ -168,12 +219,113 @@ class _Segmented extends StatelessWidget {
               ],
             ),
           ),
-          const Spacer(),
+          const SizedBox(width: AppSpacing.md),
           SessionContextMeter(workspaceId: workspaceId),
           const SizedBox(width: AppSpacing.md),
           SessionStatusIndicator(workspaceId: workspaceId),
         ],
       ),
+    );
+  }
+}
+
+/// Row 2 (Code view only): the open file tabs plus the quick-open trigger.
+class _CodeTabsBar extends HookWidget {
+  const _CodeTabsBar({required this.workspaceId});
+
+  final WorkspaceId workspaceId;
+
+  @override
+  Widget build(BuildContext context) {
+    final scrollController = useScrollController();
+    final openPaths = context.select<FileTabsCubit, List<String>>(
+      (c) => c.state.filesFor(workspaceId)?.openPaths ?? const [],
+    );
+    final activePath = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.activePath);
+    final previewPath = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.previewPath);
+    final activeDiffId = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.activeDiffId);
+    final previewDiffId = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.previewDiffId);
+    final openDiffs = context.select<FileTabsCubit, List<DiffTabRef>>(
+      (c) => c.state.filesFor(workspaceId)?.openDiffs ?? const [],
+    );
+    final showingDiff = activeDiffId != null;
+
+    return Container(
+      height: AppSpacing.toolbarHeight,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      decoration: const BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        border: Border(bottom: BorderSide(color: AppColors.outlineVariant, width: 1)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              controller: scrollController,
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final path in openPaths)
+                    FileTab(
+                      key: ValueKey('code-tab-$path'),
+                      workspaceId: workspaceId,
+                      path: path,
+                      isActive: !showingDiff && path == activePath,
+                      isPreview: path == previewPath,
+                    ),
+                  for (final diff in openDiffs)
+                    FileTab(
+                      key: ValueKey('code-diff-tab-${diff.path}'),
+                      workspaceId: workspaceId,
+                      path: diff.path,
+                      isActive: diff.path == activeDiffId,
+                      isPreview: diff.path == previewDiffId,
+                      isDiff: true,
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const _VerticalDivider(),
+          Hoverable(
+            key: const ValueKey('quick_open_trigger'),
+            onTap: () => showQuickOpen(context, workspaceId),
+            builder: (context, hover) => Tooltip(
+              message: Locales.Editor.QuickOpen.tooltip,
+              child: Container(
+                height: 26,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: hover ? AppColors.glassHover : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadii.sm),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Symbols.search, size: 14, color: AppColors.onSurfaceVariant),
+                    const SizedBox(width: 6),
+                    Text('⌘P', style: AppTypography.terminalCode.copyWith(fontSize: 10, color: AppColors.outline)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VerticalDivider extends StatelessWidget {
+  const _VerticalDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 20,
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      color: AppColors.outlineVariant,
     );
   }
 }
@@ -220,8 +372,6 @@ class _Segment extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: fg),
-          const SizedBox(width: 6),
-          Text(label, style: AppTypography.navTab.copyWith(color: fg)),
           if (badge != null) ...[
             const SizedBox(width: 6),
             Container(
@@ -237,102 +387,11 @@ class _Segment extends StatelessWidget {
       ),
     );
 
+    final tooltipped = Tooltip(message: label, child: content);
+
     if (!enabled) {
-      return Opacity(opacity: 1, child: content);
+      return Opacity(opacity: 1, child: tooltipped);
     }
-    return Hoverable(onTap: onTap, builder: (context, hover) => content);
-  }
-}
-
-class _CodeView extends HookWidget {
-  const _CodeView({required this.workspaceId});
-
-  final WorkspaceId workspaceId;
-
-  @override
-  Widget build(BuildContext context) {
-    final scrollController = useScrollController();
-    final openPaths = context.select<FileTabsCubit, List<String>>(
-      (c) => c.state.filesFor(workspaceId)?.openPaths ?? const [],
-    );
-    final activePath = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.activePath);
-    final previewPath = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.previewPath);
-    final activeDiffId = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.activeDiffId);
-    final previewDiffId = context.select<FileTabsCubit, String?>((c) => c.state.filesFor(workspaceId)?.previewDiffId);
-    final openDiffs = context.select<FileTabsCubit, List<DiffTabRef>>(
-      (c) => c.state.filesFor(workspaceId)?.openDiffs ?? const [],
-    );
-    final showingDiff = activeDiffId != null;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          height: AppSpacing.toolbarHeight,
-          decoration: const BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-            border: Border(bottom: BorderSide(color: AppColors.outlineVariant, width: 1)),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (final path in openPaths)
-                        FileTab(
-                          key: ValueKey('code-tab-$path'),
-                          workspaceId: workspaceId,
-                          path: path,
-                          isActive: !showingDiff && path == activePath,
-                          isPreview: path == previewPath,
-                        ),
-                      for (final diff in openDiffs)
-                        FileTab(
-                          key: ValueKey('code-diff-tab-${diff.path}'),
-                          workspaceId: workspaceId,
-                          path: diff.path,
-                          isActive: diff.path == activeDiffId,
-                          isPreview: diff.path == previewDiffId,
-                          isDiff: true,
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Hoverable(
-                onTap: () => context.read<EditorViewCubit>().demoteToPeek(workspaceId),
-                builder: (context, hover) => Container(
-                  key: const ValueKey('code_reduce_to_peek'),
-                  height: 26,
-                  padding: const EdgeInsets.symmetric(horizontal: 11),
-                  decoration: BoxDecoration(
-                    color: hover ? AppColors.glassHover : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppRadii.sm),
-                    border: Border.all(color: AppColors.glassBorder),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Symbols.close_fullscreen, size: 13, color: AppColors.onSurfaceVariant),
-                      const SizedBox(width: 6),
-                      Text(
-                        Locales.Editor.Peek.reduceToPeek,
-                        style: AppTypography.navTab.copyWith(color: AppColors.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-            ],
-          ),
-        ),
-        const Expanded(child: FileViewer()),
-      ],
-    );
+    return Hoverable(onTap: onTap, builder: (context, hover) => tooltipped);
   }
 }

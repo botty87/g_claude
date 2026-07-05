@@ -197,6 +197,10 @@ abstract class  LocaleKeys {
   static const claude_terminal_worktreeChip_root = 'claude.terminal.worktreeChip.root';
   static const claude_terminal_worktreeChip = 'claude.terminal.worktreeChip';
   static const claude_terminal = 'claude.terminal';
+  static const claude_worktreePicker_sessionsHeader = 'claude.worktreePicker.sessionsHeader';
+  static const claude_worktreePicker_worktreeHeader = 'claude.worktreePicker.worktreeHeader';
+  static const claude_worktreePicker_changeWorktreeHint = 'claude.worktreePicker.changeWorktreeHint';
+  static const claude_worktreePicker = 'claude.worktreePicker';
   static const claude_model_haiku = 'claude.model.haiku';
   static const claude_model_sonnet = 'claude.model.sonnet';
   static const claude_model_opus = 'claude.model.opus';
@@ -417,6 +421,12 @@ abstract class  LocaleKeys {
   static const editor_diff_empty = 'editor.diff.empty';
   static const editor_diff_loadError = 'editor.diff.loadError';
   static const editor_diff = 'editor.diff';
+  static const editor_quickOpen_placeholder = 'editor.quickOpen.placeholder';
+  static const editor_quickOpen_badge = 'editor.quickOpen.badge';
+  static const editor_quickOpen_empty = 'editor.quickOpen.empty';
+  static const editor_quickOpen_noMatch = 'editor.quickOpen.noMatch';
+  static const editor_quickOpen_tooltip = 'editor.quickOpen.tooltip';
+  static const editor_quickOpen = 'editor.quickOpen';
   static const editor = 'editor';
 
 }

@@ -10,6 +10,5 @@ abstract class ShellState with _$ShellState {
     // In-memory only (mirrors [sidebarCollapsed]) — the right panel collapse is
     // deliberately not persisted, to behave exactly like the left sidebar.
     @Default(false) bool rightPanelCollapsed,
-    @Default(<String, double>{}) Map<String, double> paneSizes,
   }) = _ShellState;
 }

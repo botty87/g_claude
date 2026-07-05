@@ -223,6 +223,11 @@
         "root": "root"
       }
     },
+    "worktreePicker": {
+      "sessionsHeader": "SESSIONI",
+      "worktreeHeader": "WORKTREE",
+      "changeWorktreeHint": "Cambia worktree dalla sidebar"
+    },
     "model": {
       "haiku": "Haiku",
       "sonnet": "Sonnet",
@@ -483,6 +488,13 @@
       "binary": "File binario — nessuna anteprima",
       "empty": "Nessuna modifica",
       "loadError": "Impossibile caricare il diff"
+    },
+    "quickOpen": {
+      "placeholder": "Cerca file aperti...",
+      "badge": "FILE APERTI",
+      "empty": "Nessun file aperto",
+      "noMatch": "Nessun risultato",
+      "tooltip": "Apri rapido (⌘P)"
     }
   }
 }

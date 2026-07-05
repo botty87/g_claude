@@ -58,9 +58,6 @@ dependencies:
   re_highlight: ^0.0.3
   re_editor: ^0.8.0
 
-  # Layout
-  multi_split_view: ^3.6.1
-
   # Markdown rendering
   flutter_markdown_plus: ^1.0.7
   markdown: ^7.3.0

@@ -516,8 +516,8 @@ class _WorktreeRow extends StatelessWidget {
 /// rows to close/remove a workspace. Wrapped in its own [Hoverable] (hence
 /// its own [GestureDetector]) nested inside the row's — Flutter's gesture
 /// arena resolves nested detectors to the innermost one, so tapping the ×
-/// never also fires the row's own onTap. Mirrors [SessionTabBar]'s close tab
-/// affordance.
+/// never also fires the row's own onTap. Mirrors [SessionWorktreePicker]'s
+/// close-session affordance.
 class _CloseAffordance extends StatelessWidget {
   const _CloseAffordance({required this.keyName, required this.onTap});
 

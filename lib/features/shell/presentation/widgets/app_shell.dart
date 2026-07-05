@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:multi_split_view/multi_split_view.dart';
 
 import 'package:path/path.dart' as p;
 import 'package:window_manager/window_manager.dart';
@@ -24,6 +23,7 @@ import '../../../claude/presentation/widgets/session_preview_view.dart';
 import '../../../claude/presentation/widgets/sessions_list_view.dart';
 import '../../../editor/presentation/cubit/active_editor_cubit.dart';
 import '../../../editor/presentation/cubit/file_tabs_cubit.dart';
+import '../../../editor/presentation/widgets/quick_open_palette.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
 import '../../../workspace/presentation/widgets/empty_state_view.dart';
 import '../cubit/shell_cubit.dart';
@@ -225,6 +225,13 @@ class AppShellPage extends HookWidget {
       return true;
     }
 
+    bool openQuickOpen() {
+      if (noWorkspaceGuard()) return true;
+      final id = activeWorkspaceId()!;
+      showQuickOpen(context, id);
+      return true;
+    }
+
     KeyEventResult onKey(FocusNode node, KeyEvent event) {
       if (event is! KeyDownEvent) return KeyEventResult.ignored;
       if (!HardwareKeyboard.instance.isMetaPressed) {
@@ -247,6 +254,7 @@ class AppShellPage extends HookWidget {
         handled = switch (key) {
           LogicalKeyboardKey.keyB => toggleSidebar(),
           LogicalKeyboardKey.keyW => closeActiveTab(),
+          LogicalKeyboardKey.keyP => openQuickOpen(),
           _ => false,
         };
       }
@@ -330,24 +338,8 @@ class _TitleBar extends StatelessWidget {
   }
 }
 
-class _MainArea extends HookWidget {
+class _MainArea extends StatelessWidget {
   const _MainArea();
-
-  static const _idCenter = 'center';
-  static const _idRight = 'right';
-
-  static const _centerMin = 360.0;
-  static const _rightMin = 290.0;
-  static const _rightDefault = 320.0;
-
-  static final _splitTheme = MultiSplitViewThemeData(
-    dividerThickness: 1,
-    dividerHandleBuffer: 2,
-    dividerPainter: DividerPainters.background(
-      color: AppColors.outlineVariant,
-      highlightedColor: AppColors.brandIndigo,
-    ),
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -357,125 +349,15 @@ class _MainArea extends HookWidget {
     }
 
     final selectedActivity = context.select<ShellCubit, ActivityId>((c) => c.state.selectedActivity);
-    // The right-hand Files/Diff/Editor panel only makes sense in the default
-    // workspace (chat) view; history/logs/terminal take the whole center.
+    // The right-hand Files/Diff panel only makes sense in the default workspace
+    // (chat) view; history/logs/terminal take the whole center.
     final showRight = selectedActivity == ActivityId.explorer;
-    final rightCollapsed = context.select<ShellCubit, bool>((c) => c.state.rightPanelCollapsed);
-
-    final savedSizes = context.read<ShellCubit>().state.paneSizes;
-    final controller = useMemoized(() {
-      final rightW = rightCollapsed ? kRightPanelCollapsedWidth : (savedSizes[_idRight] ?? _rightDefault);
-      return MultiSplitViewController(
-        areas: [
-          Area(id: _idCenter, flex: 1, min: _centerMin),
-          if (showRight)
-            Area(
-              id: _idRight,
-              size: rightW,
-              min: rightCollapsed ? kRightPanelCollapsedWidth : _rightMin,
-              max: rightCollapsed ? kRightPanelCollapsedWidth : null,
-            ),
-        ],
-      );
-      // rightCollapsed only seeds the initial size on (re)creation; runtime
-      // toggles are animated by the effect below, so it is intentionally NOT a
-      // dependency (adding it would recreate the controller and snap, not tween).
-    }, [showRight]);
-    useEffect(() => controller.dispose, [controller]);
-
-    // Animate the right Area between expanded and collapsed widths, mirroring
-    // the sidebar's motion. The Area's size is driven frame-by-frame; min/max
-    // are opened during the tween and re-locked at the end so a collapsed panel
-    // cannot be drag-resized.
-    final anim = useAnimationController(duration: kSidebarAnimDuration);
-    useEffect(() {
-      if (!showRight) return null;
-      Area? area;
-      for (final a in controller.areas) {
-        if (a.id == _idRight) {
-          area = a;
-          break;
-        }
-      }
-      if (area == null) return null;
-      final expandedW = savedSizes[_idRight] ?? _rightDefault;
-      final target = rightCollapsed ? kRightPanelCollapsedWidth : expandedW;
-      final start = area.size ?? expandedW;
-      final locked = area;
-      void lockEnds() {
-        if (rightCollapsed) {
-          locked
-            ..min = kRightPanelCollapsedWidth
-            ..max = kRightPanelCollapsedWidth
-            ..size = kRightPanelCollapsedWidth;
-        } else {
-          locked
-            ..min = _rightMin
-            ..max = null
-            ..size = expandedW;
-        }
-      }
-
-      if ((start - target).abs() < 0.5) {
-        lockEnds();
-        return null;
-      }
-      locked
-        ..min = kRightPanelCollapsedWidth
-        ..max = null;
-      void tick() => locked.size = start + (target - start) * kSidebarAnimCurve.transform(anim.value);
-      anim.addListener(tick);
-      anim.forward(from: 0).whenComplete(() {
-        anim.removeListener(tick);
-        lockEnds();
-      });
-      // Cleanup must stop the ticker before the next toggle re-runs this effect:
-      // a still-running ticker would make the next forward(from:0) restart over
-      // an active ticker, and its (now stale) whenComplete could re-lock with the
-      // previous target. Stopping cancels that future, so only the latest run locks.
-      return () {
-        anim.removeListener(tick);
-        anim.stop();
-      };
-    }, [rightCollapsed, controller]);
-
-    void persistSizes() {
-      final next = <String, double>{};
-      for (final area in controller.areas) {
-        final id = area.id;
-        final size = area.size;
-        if (id is String && size != null) {
-          next[id] = size;
-        }
-      }
-      if (next.isNotEmpty) {
-        context.read<ShellCubit>().setPaneSizes(next);
-      }
-    }
 
     return Row(
       children: [
         const WorkspaceSidebar(),
-        Expanded(
-          child: MultiSplitViewTheme(
-            data: _splitTheme,
-            child: MultiSplitView(
-              controller: controller,
-              sizeOverflowPolicy: SizeOverflowPolicy.shrinkFirst,
-              onDividerDragEnd: (_) => persistSizes(),
-              builder: (context, area) {
-                switch (area.id) {
-                  case _idCenter:
-                    return _CenterView(activity: selectedActivity);
-                  case _idRight:
-                    return const RightPanel();
-                  default:
-                    return const SizedBox.shrink();
-                }
-              },
-            ),
-          ),
-        ),
+        Expanded(child: _CenterView(activity: selectedActivity)),
+        if (showRight) const RightPanel(),
       ],
     );
   }

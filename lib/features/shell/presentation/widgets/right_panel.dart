@@ -15,13 +15,15 @@ import 'diff_panel_view.dart';
 import 'workspace_sidebar.dart' show kSidebarAnimDuration, kSidebarAnimCurve;
 
 const double kRightPanelCollapsedWidth = 52;
+const double kRightPanelExpandedWidth = 320;
 
 enum _RightTab { files, diff }
 
 /// Right-hand navigation panel: Files tree and Diff. Pure navigation — clicking
-/// a file opens it in the center (peek / Code view), not here. Collapsible to an
-/// icon rail exactly like the left [WorkspaceSidebar]; its width is animated by
-/// the enclosing split (see `app_shell.dart`).
+/// a file opens it in the center (peek / Code view), not here. Collapses to an
+/// icon rail exactly like the left [WorkspaceSidebar]: it owns its width via an
+/// [AnimatedContainer] (collapse/expand only, not drag-resizable), so it is a
+/// fixed sibling in the shell Row rather than a resizable split area.
 class RightPanel extends HookWidget {
   const RightPanel({super.key});
 
@@ -30,7 +32,10 @@ class RightPanel extends HookWidget {
     final tab = useState(_RightTab.files);
     final collapsed = context.select<ShellCubit, bool>((c) => c.state.rightPanelCollapsed);
 
-    return Container(
+    return AnimatedContainer(
+      duration: kSidebarAnimDuration,
+      curve: kSidebarAnimCurve,
+      width: collapsed ? kRightPanelCollapsedWidth : kRightPanelExpandedWidth,
       decoration: const BoxDecoration(
         color: AppColors.surfaceContainer,
         border: Border(left: BorderSide(color: AppColors.outlineVariant, width: 1)),
@@ -52,8 +57,9 @@ class RightPanel extends HookWidget {
                     onExpand: () => context.read<ShellCubit>().toggleRightPanel(),
                   ),
                 )
-              : KeyedSubtree(
+              : _PinnedWidth(
                   key: const ValueKey('right_expanded'),
+                  width: kRightPanelExpandedWidth,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
