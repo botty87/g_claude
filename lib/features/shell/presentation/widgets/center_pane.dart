@@ -139,12 +139,19 @@ class _TopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // The breadcrumb chip sizes to its (capped) content — NOT flex — so
-          // the single Spacer below owns all the free space. A Flexible here
-          // would split that space with the Spacer and truncate the label while
-          // leaving a wide empty gap.
-          SessionWorktreePicker(workspaceId: workspaceId),
-          const Spacer(),
+          // Expanded+Align (NOT Flexible+Spacer): the single Expanded owns all
+          // the free space, so there's no two-flex split that would truncate the
+          // breadcrumb while wasting a gap. Align keeps the pill at its natural
+          // (capped) size on the left; when the window shrinks the Expanded box
+          // shrinks with it and the picker's Flexible labels ellipsize instead
+          // of overflowing. Controls stay pinned right.
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SessionWorktreePicker(workspaceId: workspaceId),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
           // "Reduce to peek" sits to the LEFT of the segmented so the switcher
           // keeps a fixed position (anchored on the right by meter/status) and
           // this button just appears/disappears in the free space. Styled as a

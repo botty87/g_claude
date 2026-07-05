@@ -21,6 +21,7 @@ import 'package:g_claude/features/editor/presentation/cubit/editor_view_cubit.da
 import 'package:g_claude/features/editor/presentation/cubit/file_tabs_cubit.dart';
 import 'package:g_claude/features/editor/presentation/widgets/quick_open_palette.dart';
 import 'package:g_claude/features/git/domain/entities/git_diff_file.dart';
+import 'package:g_claude/features/shell/presentation/cubit/shell_cubit.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../../helpers/pump_app.dart';
@@ -29,14 +30,20 @@ class _MockFileTabsCubit extends MockCubit<FileTabsState> implements FileTabsCub
 
 class _MockEditorViewCubit extends MockCubit<EditorViewState> implements EditorViewCubit {}
 
+class _MockShellCubit extends MockCubit<ShellState> implements ShellCubit {}
+
 const _workspaceId = '/ws/a';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  setUpAll(() => registerFallbackValue(CenterView.chat));
+  setUpAll(() {
+    registerFallbackValue(CenterView.chat);
+    registerFallbackValue(ActivityId.explorer);
+  });
 
   late _MockFileTabsCubit fileTabs;
   late _MockEditorViewCubit editorView;
+  late _MockShellCubit shell;
 
   setUp(() {
     fileTabs = _MockFileTabsCubit();
@@ -56,6 +63,10 @@ void main() {
 
     editorView = _MockEditorViewCubit();
     when(() => editorView.setView(any(), any())).thenReturn(null);
+
+    shell = _MockShellCubit();
+    when(() => shell.state).thenReturn(const ShellState(selectedActivity: ActivityId.explorer));
+    when(() => shell.selectActivity(any())).thenReturn(null);
   });
 
   testWidgets('filters by typing, selecting a row acts + closes, empty state shows the placeholder', (tester) async {
@@ -70,6 +81,7 @@ void main() {
         providers: [
           BlocProvider<FileTabsCubit>.value(value: fileTabs),
           BlocProvider<EditorViewCubit>.value(value: editorView),
+          BlocProvider<ShellCubit>.value(value: shell),
         ],
         child: navigatorChild!,
       ),
@@ -104,6 +116,9 @@ void main() {
 
     verify(() => fileTabs.setActiveFile(_workspaceId, '/ws/a/lib/foo_widget.dart')).called(1);
     verify(() => editorView.setView(_workspaceId, CenterView.code)).called(1);
+    // ⌘P is global: selecting must also land the user on the Explorer activity
+    // (the one that renders the code view), else the change stays invisible.
+    verify(() => shell.selectActivity(ActivityId.explorer)).called(1);
     expect(find.byKey(const ValueKey('quick_open_search_field')), findsNothing);
     clearInteractions(fileTabs);
     clearInteractions(editorView);

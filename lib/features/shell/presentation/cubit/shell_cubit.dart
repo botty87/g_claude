@@ -31,9 +31,4 @@ class ShellCubit extends Cubit<ShellState> {
     if (state.selectedActivity == id) return;
     emit(state.copyWith(selectedActivity: id));
   }
-
-  void setPaneSizes(Map<String, double> sizes) {
-    final next = {...state.paneSizes, ...sizes};
-    emit(state.copyWith(paneSizes: next));
-  }
 }

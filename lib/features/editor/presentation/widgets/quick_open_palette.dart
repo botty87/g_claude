@@ -11,6 +11,7 @@ import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
+import '../../../shell/presentation/cubit/shell_cubit.dart';
 import '../../../shell/presentation/widgets/glass_dialog.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../cubit/editor_view_cubit.dart';
@@ -40,6 +41,11 @@ class _QuickOpenPalette extends HookWidget {
       files.setActiveFile(workspaceId, entry.path);
     }
     context.read<EditorViewCubit>().setView(workspaceId, CenterView.code);
+    // ⌘P is global: it can fire while the activity is Sessions/Logs, which do
+    // NOT render the CenterPane. Without this the code view would be set but
+    // stay invisible until the user manually returns to Explorer. Land them on
+    // the activity that actually shows the file.
+    context.read<ShellCubit>().selectActivity(ActivityId.explorer);
     Navigator.of(context).pop();
   }
 
@@ -70,9 +76,7 @@ class _QuickOpenPalette extends HookWidget {
     // "g_claude") and shared dirs are prefixes of every open file, so matching
     // the path makes a query like "claud" hit everything.
     final q = query.value;
-    final filtered = q.isEmpty
-        ? entries
-        : entries.where((e) => p.basename(e.path).toLowerCase().contains(q)).toList();
+    final filtered = q.isEmpty ? entries : entries.where((e) => p.basename(e.path).toLowerCase().contains(q)).toList();
 
     final clampedIndex = filtered.isEmpty ? 0 : selectedIndex.value.clamp(0, filtered.length - 1);
 
@@ -213,9 +217,7 @@ class _QuickOpenRow extends StatelessWidget {
             Icon(
               isDiff ? Symbols.difference : Symbols.description,
               size: 14,
-              color: isDiff
-                  ? AppColors.secondary
-                  : (selected ? AppColors.secondary : AppColors.outline),
+              color: isDiff ? AppColors.secondary : (selected ? AppColors.secondary : AppColors.outline),
             ),
             const SizedBox(width: 9),
             Expanded(

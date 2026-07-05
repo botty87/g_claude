@@ -26,7 +26,9 @@ import 'package:g_claude/features/claude/domain/entities/claude_model.dart';
 import 'package:g_claude/features/claude/domain/entities/claude_permission_mode.dart';
 import 'package:g_claude/features/claude/domain/entities/claude_thinking_mode.dart';
 import 'package:g_claude/features/claude/presentation/cubit/claude_sessions_cubit.dart';
+import 'package:g_claude/core/l10n/l10n.dart';
 import 'package:g_claude/features/claude/presentation/widgets/session_worktree_picker.dart';
+import 'package:g_claude/features/git/domain/entities/git_worktree.dart';
 import 'package:g_claude/features/shell/presentation/cubit/shell_cubit.dart';
 import 'package:g_claude/features/workspace/domain/entities/workspace.dart';
 import 'package:g_claude/features/workspace/presentation/cubit/workspaces_cubit.dart';
@@ -71,6 +73,8 @@ void main() {
   setUp(() {
     ws = _MockWorkspacesCubit();
     when(() => ws.openPath(any())).thenAnswer((_) async {});
+    when(() => ws.ensureWorktrees(any())).thenAnswer((_) async => const <GitWorktree>[]);
+    when(() => ws.cachedWorktrees(any())).thenReturn(null);
 
     sessions = _MockSessionsCubit();
     when(() => sessions.switchTab(any(), any())).thenReturn(null);
@@ -139,6 +143,20 @@ void main() {
     await openDropdown(tester);
     expect(find.byKey(const ValueKey('worktree_picker_worktree_header')), findsNothing);
     expect(find.byKey(ValueKey('worktree_picker_worktree_${plain.path}')), findsNothing);
+  });
+
+  testWidgets('detached-HEAD worktree labels the breadcrumb "Detached", not the folder name', (tester) async {
+    const detachedPath = '/repo/wt';
+    final detachedWs = _ws(detachedPath, repoRoot: repoRoot); // branch: null
+    const detachedList = [GitWorktree(path: detachedPath, head: 'abc123', isDetached: true)];
+    when(() => ws.ensureWorktrees(repoRoot)).thenAnswer((_) async => detachedList);
+    when(() => ws.cachedWorktrees(repoRoot)).thenReturn(detachedList);
+    stubWorkspaces(workspaces: [detachedWs], activeId: detachedPath);
+    stubSessions(workspaceId: detachedPath, tabs: [_session('t')], activeTab: 't');
+
+    await pump(tester, workspaceId: detachedPath, sidebarCollapsed: false);
+    expect(find.text(Locales.Claude.Terminal.WorktreeChip.detached), findsOneWidget);
+    expect(find.text('wt'), findsNothing);
   });
 
   testWidgets('plain-folder workspace (sidebar expanded) still shows no WORKTREE section', (tester) async {

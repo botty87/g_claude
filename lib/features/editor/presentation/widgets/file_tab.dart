@@ -83,9 +83,7 @@ class FileTab extends StatelessWidget {
                 Positioned.fill(
                   child: IgnorePointer(
                     child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.brandIndigo, width: 1.5),
-                      ),
+                      decoration: BoxDecoration(border: Border.all(color: AppColors.brandIndigo, width: 1.5)),
                     ),
                   ),
                 ),

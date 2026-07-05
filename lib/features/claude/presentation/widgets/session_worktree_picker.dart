@@ -10,6 +10,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radii.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/hoverable.dart';
+import '../../../git/domain/entities/git_worktree.dart';
 import '../../../shell/presentation/cubit/shell_cubit.dart';
 import '../../../workspace/domain/entities/workspace.dart';
 import '../../../workspace/presentation/cubit/workspaces_cubit.dart';
@@ -53,6 +54,21 @@ class SessionWorktreePicker extends HookWidget {
     final activeTabId = sessionsCubit.state.tabsFor(workspaceId)?.activeTabId ?? '';
     final active = tabs.firstWhereOrNull((t) => t.tabId == activeTabId);
 
+    // Live git worktrees for the label, mirroring the sidebar's WorktreeChip
+    // (workspace_sidebar.dart): a detached HEAD or a bare/root worktree has no
+    // branch, so `branch ?? basename` would show a misleading folder name.
+    // Seed with the warm cache to avoid a flicker; refetch on revision bumps.
+    final worktreesRevision = context.select<WorkspacesCubit, int>((c) => c.state.worktreesRevisionOrZero);
+    final worktreesFuture = useMemoized(
+      () => repoRoot != null ? wsCubit.ensureWorktrees(repoRoot) : Future<List<GitWorktree>>.value(const []),
+      [repoRoot, worktreesRevision],
+    );
+    final worktreesSnap = useFuture(
+      worktreesFuture,
+      initialData: repoRoot != null ? wsCubit.cachedWorktrees(repoRoot) : null,
+    );
+    final activeWorktree = (worktreesSnap.data ?? const <GitWorktree>[]).firstWhereOrNull((g) => g.path == path);
+
     final panelCtrl = useMemoized(OverlayPortalController.new, const []);
     final panelShown = useState(false);
 
@@ -74,7 +90,18 @@ class SessionWorktreePicker extends HookWidget {
 
     final hasBusyOtherTab = tabs.any((t) => t.tabId != activeTabId && _isBusy(t.runStatus));
     final tint = _chipTints[(repoRoot ?? path).hashCode.abs() % _chipTints.length];
-    final label = repoRoot != null ? (branch ?? p.basename(path)) : p.basename(path);
+    // Same rule as the sidebar WorktreeChip: detached → "Detached"; else the
+    // branch; else the root/main worktree → "root"; else the folder name.
+    final String label;
+    if (repoRoot == null) {
+      label = p.basename(path);
+    } else if (activeWorktree?.isDetached ?? false) {
+      label = Locales.Claude.Terminal.WorktreeChip.detached;
+    } else {
+      label =
+          (branch ?? activeWorktree?.branch) ??
+          (path == repoRoot ? Locales.Claude.Terminal.WorktreeChip.root : p.basename(path));
+    }
     final initial = label.isEmpty ? '?' : label.characters.first.toUpperCase();
 
     final breadcrumb = Hoverable(
@@ -129,28 +156,33 @@ class SessionWorktreePicker extends HookWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              // Cap each label instead of using Flexible: the chip is a natural-
-              // width (non-flex) child of the top bar Row, so a Flexible here
-              // would have unbounded constraints. maxWidth keeps a long branch /
-              // session title from stretching the bar while still showing plenty.
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 140),
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.terminalCode.copyWith(fontSize: 11, color: AppColors.outline, height: 1.0),
+              // Flexible(ConstrainedBox): the cap keeps a long branch/session
+              // from stretching the pill when there's room, while Flexible lets
+              // the label shrink+ellipsize when the top bar is tight (the parent
+              // Expanded+Align gives BOUNDED constraints, so the flex resolves —
+              // it would collapse to 0 only under unbounded constraints).
+              Flexible(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 200),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.terminalCode.copyWith(fontSize: 11, color: AppColors.outline, height: 1.0),
+                  ),
                 ),
               ),
               if (active != null) ...[
                 Text(' · ', style: TextStyle(color: AppColors.outlineVariant)),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 220),
-                  child: Text(
-                    ClaudeSessionsCubit.sessionTitle(active),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.navTab.copyWith(color: AppColors.onSurface),
+                Flexible(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 220),
+                    child: Text(
+                      ClaudeSessionsCubit.sessionTitle(active),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.navTab.copyWith(color: AppColors.onSurface),
+                    ),
                   ),
                 ),
               ],
