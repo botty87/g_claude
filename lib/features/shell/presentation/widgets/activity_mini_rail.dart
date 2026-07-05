@@ -19,21 +19,22 @@ class _RailEntry {
 }
 
 // "Chat" maps to explorer (the default workspace view, with its Chat/Code/
-// Terminal segmented control). History mirrors the old activity bar entry.
-// Terminal is no longer here — it is a center segment.
+// Terminal segmented control). Terminal is no longer here — it is a center
+// segment.
 const _entries = [
   _RailEntry(id: ActivityId.explorer, icon: Symbols.forum, tooltipKey: 'shell.activity.explorer', keyName: 'rail_chat'),
-  _RailEntry(
-    id: ActivityId.sessions,
-    icon: Symbols.history,
-    tooltipKey: 'shell.activity.sessions',
-    keyName: 'rail_sessions',
-  ),
 ];
 
-// Logs and Settings are hidden until those views are implemented. Entries kept
-// (and their ActivityId pages/cubits remain fully wired) so re-enabling is a
-// one-line add back into [_entries] / the rendered rail.
+// Sessions, Logs and Settings are hidden until those views are reworked/
+// implemented. Entries kept (and their ActivityId pages/cubits remain fully
+// wired) so re-enabling is a one-line add back into [_entries].
+// ignore: unused_element
+const _sessionsEntry = _RailEntry(
+  id: ActivityId.sessions,
+  icon: Symbols.history,
+  tooltipKey: 'shell.activity.sessions',
+  keyName: 'rail_sessions',
+);
 // ignore: unused_element
 const _logsEntry = _RailEntry(
   id: ActivityId.logs,
