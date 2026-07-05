@@ -32,8 +32,13 @@ class _QuickOpenPalette extends HookWidget {
 
   final WorkspaceId workspaceId;
 
-  void _select(BuildContext context, String path) {
-    context.read<FileTabsCubit>().setActiveFile(workspaceId, path);
+  void _select(BuildContext context, _OpenEntry entry) {
+    final files = context.read<FileTabsCubit>();
+    if (entry.isDiff) {
+      files.setActiveDiff(workspaceId, entry.path);
+    } else {
+      files.setActiveFile(workspaceId, entry.path);
+    }
     context.read<EditorViewCubit>().setView(workspaceId, CenterView.code);
     Navigator.of(context).pop();
   }
@@ -56,13 +61,18 @@ class _QuickOpenPalette extends HookWidget {
       return () => controller.removeListener(listener);
     }, [controller]);
 
-    final openPaths = context.read<FileTabsCubit>().state.filesFor(workspaceId)?.openPaths ?? const <String>[];
+    final files = context.read<FileTabsCubit>().state.filesFor(workspaceId);
+    final entries = <_OpenEntry>[
+      for (final path in files?.openPaths ?? const <String>[]) _OpenEntry(path, isDiff: false),
+      for (final diff in files?.openDiffs ?? const <DiffTabRef>[]) _OpenEntry(diff.path, isDiff: true),
+    ];
+    // Match on the file name only — not the path. The repo folder (e.g.
+    // "g_claude") and shared dirs are prefixes of every open file, so matching
+    // the path makes a query like "claud" hit everything.
     final q = query.value;
     final filtered = q.isEmpty
-        ? openPaths
-        : openPaths
-              .where((path) => p.basename(path).toLowerCase().contains(q) || path.toLowerCase().contains(q))
-              .toList();
+        ? entries
+        : entries.where((e) => p.basename(e.path).toLowerCase().contains(q)).toList();
 
     final clampedIndex = filtered.isEmpty ? 0 : selectedIndex.value.clamp(0, filtered.length - 1);
 
@@ -143,7 +153,7 @@ class _QuickOpenPalette extends HookWidget {
                       ? Padding(
                           padding: const EdgeInsets.symmetric(vertical: AppSpacing.md, horizontal: AppSpacing.sm),
                           child: Text(
-                            openPaths.isEmpty ? Locales.Editor.QuickOpen.empty : Locales.Editor.QuickOpen.noMatch,
+                            entries.isEmpty ? Locales.Editor.QuickOpen.empty : Locales.Editor.QuickOpen.noMatch,
                             style: AppTypography.navTab.copyWith(color: AppColors.outline),
                           ),
                         )
@@ -152,7 +162,8 @@ class _QuickOpenPalette extends HookWidget {
                           children: [
                             for (var i = 0; i < filtered.length; i++)
                               _QuickOpenRow(
-                                path: filtered[i],
+                                path: filtered[i].path,
+                                isDiff: filtered[i].isDiff,
                                 selected: i == clampedIndex,
                                 onTap: () => _select(context, filtered[i]),
                               ),
@@ -168,10 +179,19 @@ class _QuickOpenPalette extends HookWidget {
   }
 }
 
-class _QuickOpenRow extends StatelessWidget {
-  const _QuickOpenRow({required this.path, required this.selected, required this.onTap});
+/// One open tab in the quick-open list: an editor file or a diff view.
+class _OpenEntry {
+  const _OpenEntry(this.path, {required this.isDiff});
 
   final String path;
+  final bool isDiff;
+}
+
+class _QuickOpenRow extends StatelessWidget {
+  const _QuickOpenRow({required this.path, required this.isDiff, required this.selected, required this.onTap});
+
+  final String path;
+  final bool isDiff;
   final bool selected;
   final VoidCallback onTap;
 
@@ -190,7 +210,13 @@ class _QuickOpenRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Symbols.description, size: 14, color: selected ? AppColors.secondary : AppColors.outline),
+            Icon(
+              isDiff ? Symbols.difference : Symbols.description,
+              size: 14,
+              color: isDiff
+                  ? AppColors.secondary
+                  : (selected ? AppColors.secondary : AppColors.outline),
+            ),
             const SizedBox(width: 9),
             Expanded(
               child: Text(
@@ -203,6 +229,20 @@ class _QuickOpenRow extends StatelessWidget {
                 ),
               ),
             ),
+            if (isDiff) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: AppColors.brandIndigo.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(AppRadii.sm),
+                ),
+                child: Text(
+                  Locales.Editor.Diff.badge,
+                  style: AppTypography.navTab.copyWith(fontSize: 9.5, color: AppColors.primary),
+                ),
+              ),
+            ],
           ],
         ),
       ),

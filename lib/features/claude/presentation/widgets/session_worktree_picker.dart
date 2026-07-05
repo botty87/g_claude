@@ -129,7 +129,12 @@ class SessionWorktreePicker extends HookWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Flexible(
+              // Cap each label instead of using Flexible: the chip is a natural-
+              // width (non-flex) child of the top bar Row, so a Flexible here
+              // would have unbounded constraints. maxWidth keeps a long branch /
+              // session title from stretching the bar while still showing plenty.
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 140),
                 child: Text(
                   label,
                   maxLines: 1,
@@ -139,7 +144,8 @@ class SessionWorktreePicker extends HookWidget {
               ),
               if (active != null) ...[
                 Text(' · ', style: TextStyle(color: AppColors.outlineVariant)),
-                Flexible(
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 220),
                   child: Text(
                     ClaudeSessionsCubit.sessionTitle(active),
                     maxLines: 1,

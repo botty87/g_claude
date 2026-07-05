@@ -20,6 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:g_claude/features/editor/presentation/cubit/editor_view_cubit.dart';
 import 'package:g_claude/features/editor/presentation/cubit/file_tabs_cubit.dart';
 import 'package:g_claude/features/editor/presentation/widgets/quick_open_palette.dart';
+import 'package:g_claude/features/git/domain/entities/git_diff_file.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../../../helpers/pump_app.dart';
@@ -45,11 +46,13 @@ void main() {
           _workspaceId: WorkspaceFiles(
             openPaths: ['/ws/a/lib/main.dart', '/ws/a/lib/foo_widget.dart', '/ws/a/README.md'],
             activePath: '/ws/a/lib/main.dart',
+            openDiffs: [DiffTabRef(path: '/ws/a/lib/protocol.ts', status: GitFileStatus.modified)],
           ),
         },
       ),
     );
     when(() => fileTabs.setActiveFile(any(), any())).thenReturn(null);
+    when(() => fileTabs.setActiveDiff(any(), any())).thenReturn(null);
 
     editorView = _MockEditorViewCubit();
     when(() => editorView.setView(any(), any())).thenReturn(null);
@@ -117,7 +120,33 @@ void main() {
     verify(() => editorView.setView(_workspaceId, CenterView.code)).called(1);
     expect(find.byKey(const ValueKey('quick_open_search_field')), findsNothing);
 
-    // 3) No open files: the empty placeholder shows instead of a list.
+    // 3) A diff tab is listed too (with a DIFF badge); picking it activates the
+    // diff, not a file.
+    clearInteractions(fileTabs);
+    clearInteractions(editorView);
+    await open();
+    expect(find.text('protocol.ts'), findsOneWidget);
+    expect(find.text('DIFF'), findsWidgets);
+    await tester.tap(find.text('protocol.ts'));
+    await tester.pumpAndSettle();
+    verify(() => fileTabs.setActiveDiff(_workspaceId, '/ws/a/lib/protocol.ts')).called(1);
+    verify(() => editorView.setView(_workspaceId, CenterView.code)).called(1);
+    verifyNever(() => fileTabs.setActiveFile(any(), any()));
+
+    // 3b) Regression: filtering is on the file NAME only, not the path. A
+    // directory segment shared by every file ('lib') must match nothing.
+    clearInteractions(fileTabs);
+    clearInteractions(editorView);
+    await open();
+    await tester.enterText(find.byKey(const ValueKey('quick_open_search_field')), 'lib');
+    await tester.pumpAndSettle();
+    expect(find.text('main.dart'), findsNothing);
+    expect(find.text('foo_widget.dart'), findsNothing);
+    expect(find.text('protocol.ts'), findsNothing);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    // 4) No open files or diffs: the empty placeholder shows instead of a list.
     when(() => fileTabs.state).thenReturn(const FileTabsState());
     await open();
     expect(find.text('No open files'), findsOneWidget);

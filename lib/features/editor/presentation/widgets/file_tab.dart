@@ -84,7 +84,6 @@ class FileTab extends StatelessWidget {
                   child: IgnorePointer(
                     child: Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppRadii.sm),
                         border: Border.all(color: AppColors.brandIndigo, width: 1.5),
                       ),
                     ),
@@ -137,17 +136,25 @@ class _TabBody extends StatelessWidget {
         final textColor = isActive ? AppColors.onSurface : AppColors.onSurfaceVariant;
         return Container(
           height: AppSpacing.toolbarHeight,
-          margin: const EdgeInsets.symmetric(horizontal: 2),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          // Flat VS Code-style tab (design 11a): active accent is a 2px bar on
+          // TOP, tabs are separated by a thin right divider (no rounded pills).
+          // The inactive top border is transparent so the content never shifts.
           decoration: BoxDecoration(
             color: fill,
-            borderRadius: BorderRadius.circular(AppRadii.sm),
-            border: isActive ? const Border(bottom: BorderSide(color: AppColors.brandIndigo, width: 2)) : null,
+            border: Border(
+              top: BorderSide(color: isActive ? AppColors.brandIndigo : Colors.transparent, width: 2),
+              right: const BorderSide(color: AppColors.glassBorder, width: 1),
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(isDiff ? Symbols.difference : Symbols.description, size: 14, color: textColor),
+              Icon(
+                isDiff ? Symbols.difference : Symbols.description,
+                size: 14,
+                color: isDiff ? AppColors.secondary : textColor,
+              ),
               const SizedBox(width: AppSpacing.sm),
               Text(
                 p.basename(path),

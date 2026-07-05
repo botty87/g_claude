@@ -139,24 +139,26 @@ class _TopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Loose Flexible so a long "branch · session" label truncates instead
-          // of pushing the segmented off the right edge (RenderFlex overflow).
-          Flexible(child: SessionWorktreePicker(workspaceId: workspaceId)),
-          const SizedBox(width: AppSpacing.md),
+          // The breadcrumb chip sizes to its (capped) content — NOT flex — so
+          // the single Spacer below owns all the free space. A Flexible here
+          // would split that space with the Spacer and truncate the label while
+          // leaving a wide empty gap.
+          SessionWorktreePicker(workspaceId: workspaceId),
           const Spacer(),
           // "Reduce to peek" sits to the LEFT of the segmented so the switcher
           // keeps a fixed position (anchored on the right by meter/status) and
-          // this button just appears/disappears in the free space.
+          // this button just appears/disappears in the free space. Styled as a
+          // toolbar chip to match the breadcrumb / segmented family.
           if (isCode) ...[
             Hoverable(
               onTap: () => context.read<EditorViewCubit>().demoteToPeek(workspaceId),
               builder: (context, hover) => Container(
                 key: const ValueKey('code_reduce_to_peek'),
-                height: 26,
-                padding: const EdgeInsets.symmetric(horizontal: 11),
+                height: 30,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
-                  color: hover ? AppColors.glassHover : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadii.sm),
+                  color: hover ? AppColors.surfaceContainer : AppColors.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(AppRadii.md),
                   border: Border.all(color: AppColors.glassBorder),
                 ),
                 child: Row(
