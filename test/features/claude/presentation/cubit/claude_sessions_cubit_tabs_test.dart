@@ -95,7 +95,7 @@ ClaudeSessionsCubit _makeCubit({
 
 void main() {
   setUpAll(() {
-    registerFallbackValue(const SendPromptParams(cwd: '/fallback', prompt: '', mode: ClaudePermissionMode.defaultMode));
+    registerFallbackValue(const SendPromptParams(sid: '/fallback', cwd: '/fallback', prompt: '', mode: ClaudePermissionMode.defaultMode));
   });
 
   setUp(() async {
@@ -196,7 +196,7 @@ void main() {
     await cubit.close();
   });
 
-  test('sending on an idle tab while a sibling runs queues (never drops) on the target tab', () async {
+  test('sending on a sibling tab while another tab runs starts concurrently (no cross-tab queuing)', () async {
     // A run stays in flight on tab A (open, non-completing stream).
     final running = StreamController<Either<Failure, ClaudeEvent>>.broadcast();
     addTearDown(running.close);
@@ -210,14 +210,18 @@ void main() {
     final tabB = cubit.state.sessionFor(_wid)!.tabId;
     expect(tabB, isNot(tabA));
 
-    await cubit.sendPrompt(_wid, 'queued on B'); // sibling A still running
+    await cubit.sendPrompt(_wid, 'second on B'); // sibling A still running
 
-    // The message is parked on B (not dropped, not sent into A).
+    // B starts its OWN run immediately — each tab has an independent sid, so
+    // a busy sibling tab never blocks or queues this one.
     final bTab = cubit.state.tabsFor(_wid)!.tabById(tabB)!;
-    expect(bTab.queuedPrompt?.text, 'queued on B');
-    expect(bTab.runStatus, ClaudeRunStatus.idle);
+    expect(bTab.queuedPrompt, isNull, reason: 'sibling tabs run concurrently, nothing to queue');
+    expect(bTab.runStatus, ClaudeRunStatus.connecting);
+    expect(bTab.messages.whereType<ClaudeMessageUser>().map((m) => m.text), contains('second on B'));
+
+    // A is untouched by B starting its own run.
     final aTab = cubit.state.tabsFor(_wid)!.tabById(tabA)!;
-    expect(aTab.queuedPrompt, isNull, reason: 'the queued prompt must land on B, not the running tab A');
+    expect(aTab.runStatus, ClaudeRunStatus.connecting, reason: 'A keeps running, unaffected by B');
     expect(aTab.messages.whereType<ClaudeMessageUser>().map((m) => m.text), contains('first'));
     await cubit.close();
   });

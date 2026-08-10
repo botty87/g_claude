@@ -20,6 +20,7 @@ class ClaudeRepositoryImpl implements ClaudeRepository {
 
   @override
   Stream<Either<Failure, ClaudeEvent>> startRun({
+    required String sid,
     required String cwd,
     required String prompt,
     required ClaudePermissionMode mode,
@@ -32,6 +33,7 @@ class ClaudeRepositoryImpl implements ClaudeRepository {
   }) async* {
     try {
       final source = _datasource.startRun(
+        sid: sid,
         cwd: cwd,
         prompt: prompt,
         mode: mode,

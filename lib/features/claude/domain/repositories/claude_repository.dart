@@ -8,8 +8,11 @@ import '../entities/claude_permission_mode.dart';
 
 abstract interface class ClaudeRepository {
   /// Starts a run via the sidecar and streams normalized events until the
-  /// session completes (sessionDead). sid = cwd = workspaceId.
+  /// session completes (sessionDead). [sid] identifies the run slot
+  /// (`'$workspaceId::$tabId'`); [cwd] is always the workspace path and stays
+  /// independent of [sid] (history JSONL + MCP resolution key off [cwd]).
   Stream<Either<Failure, ClaudeEvent>> startRun({
+    required String sid,
     required String cwd,
     required String prompt,
     required ClaudePermissionMode mode,

@@ -36,6 +36,29 @@ import '../../domain/utils/attachment_token.dart';
 part 'claude_sessions_cubit.freezed.dart';
 part 'claude_sessions_cubit.state.dart';
 
+/// Mutable per-run state for one `(workspaceId, tabId)` slot: its sidecar
+/// session id, event subscription, and streaming-chunk coalescing state.
+/// Lives only while a run is in flight — removed from `_runs` on finish.
+class _RunController {
+  _RunController({required this.workspaceId, required this.tabId, required this.sid});
+
+  final String workspaceId;
+  final String tabId;
+  final String sid;
+
+  StreamSubscription<Either<Failure, ClaudeEvent>>? sub;
+  Timer? chunkFlushTimer;
+  DateTime? lastFlushAt;
+  String streamingText = '';
+
+  void cancel() {
+    chunkFlushTimer?.cancel();
+    chunkFlushTimer = null;
+    sub?.cancel();
+    sub = null;
+  }
+}
+
 @lazySingleton
 class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   ClaudeSessionsCubit(
@@ -72,13 +95,13 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   static const Duration _mcpCacheTtl = Duration(minutes: 2);
 
   StreamSubscription<WorkspacesState>? _workspacesSub;
-  StreamSubscription<Either<Failure, ClaudeEvent>>? _runSub;
-  Timer? _chunkFlushTimer;
-  DateTime? _lastFlushAt;
 
-  String? _runningWorkspaceId;
-  String? _runningTabId;
-  String _streamingText = '';
+  /// One run slot per `(workspaceId, tabId)` pair, keyed by [_sidFor]. Lets N
+  /// tabs (same or different workspaces) run concurrently: each owns its own
+  /// sidecar session id, subscription and streaming-chunk state.
+  final Map<String, _RunController> _runs = {};
+
+  String _sidFor(String workspaceId, String tabId) => '$workspaceId::$tabId';
 
   final Map<String, String> _sessionToWorkspace = {};
 
@@ -116,15 +139,6 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
   /// Returns the ACTIVE tab of a workspace.
   ClaudeSessionData? _active(String wid) => state.workspaces[wid]?.activeTab;
-
-  /// Returns the tab currently owning the in-flight run for [wid] (which may
-  /// differ from the active tab if the user switched tabs meanwhile). Falls
-  /// back to the active tab when no run is tracked for this workspace.
-  ClaudeSessionData? _runTab(String wid) {
-    final tabId = _runningTabId;
-    if (tabId == null) return _active(wid);
-    return state.workspaces[wid]?.tabById(tabId) ?? _active(wid);
-  }
 
   /// Rewrites the ACTIVE tab of the workspace, preserving other tabs and
   /// activeTabId.
@@ -164,18 +178,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     );
   }
 
-  /// Rewrites the tab that owns the current in-flight run, wherever it is.
-  void _emitRunTab(String wid, ClaudeSessionData data) {
-    final tabId = _runningTabId;
-    if (tabId == null) {
-      _emitActive(wid, data);
-      return;
-    }
-    _emitTab(wid, tabId, data);
-  }
-
-  String? _toolNameFor(String wid, String? toolUseId) {
-    final session = _runTab(wid);
+  String? _toolNameFor(String wid, String tabId, String? toolUseId) {
+    final session = state.workspaces[wid]?.tabById(tabId);
     if (session == null) return null;
     for (var i = session.messages.length - 1; i >= 0; i--) {
       final m = session.messages[i];
@@ -186,8 +190,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     return null;
   }
 
-  String? _streamingMessageIdFor(String wid) {
-    final session = _runTab(wid);
+  String? _streamingMessageIdFor(String wid, String tabId) {
+    final session = state.workspaces[wid]?.tabById(tabId);
     if (session == null) return null;
     for (var i = session.messages.length - 1; i >= 0; i--) {
       final m = session.messages[i];
@@ -268,9 +272,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       }
       map.remove(id);
     }
-    if (_runningWorkspaceId != null && removed.contains(_runningWorkspaceId)) {
-      unawaited(_stopRun.call(sid: _runningWorkspaceId!));
-      _cleanupRun();
+    for (final ctl in _runs.values.where((c) => removed.contains(c.workspaceId)).toList()) {
+      unawaited(_stopRun.call(sid: ctl.sid));
+      _cleanupRun(ctl.sid);
     }
     emit(state.copyWith(workspaces: map));
     for (final (wid, tabId, sessionId) in pendingHydrations) {
@@ -421,8 +425,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     if (session == null) return;
     _emitActive(workspaceId, session.copyWith(permissionMode: mode));
     _prefs.setString('$_permPrefix$workspaceId', mode.name);
-    if (_runningWorkspaceId == workspaceId) {
-      _claudeRepository.setMode(sid: workspaceId, mode: mode);
+    final sid = _sidFor(workspaceId, session.tabId);
+    if (_runs.containsKey(sid)) {
+      _claudeRepository.setMode(sid: sid, mode: mode);
     }
   }
 
@@ -443,9 +448,10 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   void clearConversation(String workspaceId) {
     final session = _active(workspaceId);
     if (session == null) return;
-    if (_runningWorkspaceId == workspaceId) {
-      unawaited(_stopRun.call(sid: workspaceId));
-      _cleanupRun();
+    final sid = _sidFor(workspaceId, session.tabId);
+    if (_runs.containsKey(sid)) {
+      unawaited(_stopRun.call(sid: sid));
+      _cleanupRun(sid);
     }
     final oldId = session.claudeSessionId;
     if (oldId != null) _sessionToWorkspace.remove(oldId);
@@ -509,8 +515,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     final idx = ws.tabs.indexWhere((t) => t.tabId == tabId);
     if (idx == -1) return;
 
-    if (_runningWorkspaceId == workspaceId && _runningTabId == tabId) {
-      unawaited(stopRun());
+    if (_runs.containsKey(_sidFor(workspaceId, tabId))) {
+      unawaited(stopRun(workspaceId, tabId: tabId));
     }
 
     final closedClaudeId = ws.tabs[idx].claudeSessionId;
@@ -573,8 +579,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
   Future<void> compactSession(String workspaceId) async {
     final session = _active(workspaceId);
     if (session == null) return;
-    if (_runningWorkspaceId != null) {
-      _talker.warning('compactSession while another run is active; ignored');
+    final sid = _sidFor(workspaceId, session.tabId);
+    if (_runs.containsKey(sid)) {
+      _talker.warning('compactSession while another run is active on this tab; ignored');
       return;
     }
     if (session.messages.isEmpty) {
@@ -589,8 +596,8 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
     _talker.info('Compacting session for workspace=$workspaceId');
 
-    _runningWorkspaceId = workspaceId;
-    _runningTabId = session.tabId;
+    final ctl = _RunController(workspaceId: workspaceId, tabId: session.tabId, sid: sid);
+    _runs[sid] = ctl;
 
     _emitActive(
       workspaceId,
@@ -611,6 +618,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         'as a continuous shared history. Output ONLY the recap.';
 
     final params = SendPromptParams(
+      sid: sid,
       cwd: workspaceId,
       prompt: summaryPrompt,
       mode: session.permissionMode,
@@ -669,15 +677,19 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     await sub.cancel();
     // Ensure the spawned subprocess is killed; otherwise it sits idle
     // holding stdin open and would block the next sendPrompt.
-    await _stopRun.call(sid: workspaceId);
+    await _stopRun.call(sid: sid);
 
-    final tabId = _runningTabId;
-    _runningWorkspaceId = null;
-    _runningTabId = null;
+    final tabId = ctl.tabId;
+    _cleanupRun(sid);
 
     final summary = buf.toString().trim();
-    final current = tabId == null ? null : state.workspaces[workspaceId]?.tabById(tabId);
-    if (current == null) return;
+    final current = state.workspaces[workspaceId]?.tabById(tabId);
+    if (current == null) {
+      // A queued prompt on this same tab (set while compacting) must drain
+      // now: there's no cross-tab fallback to pick it up later (see _drainTab).
+      _drainTab(workspaceId, tabId);
+      return;
+    }
 
     // A late onError can land after the summary already arrived; treat the
     // run as a failure only if we genuinely have nothing usable.
@@ -690,6 +702,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
           lastError: failure ?? const UnexpectedFailure('compact: empty summary'),
         ),
       );
+      _drainTab(workspaceId, tabId);
       return;
     }
 
@@ -716,6 +729,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     );
     unawaited(_writeOpenSessions(workspaceId));
     _talker.info('Compact summary appended (hidden=$hiddenCount)');
+    _drainTab(workspaceId, tabId);
   }
 
   _InterceptedCommand? _interceptedSlashCommand(String text, List<String> chips) {
@@ -744,7 +758,11 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     if (target == null) return;
     _emitActive(workspaceId, session.copyWith(messages: list));
 
-    _claudeRepository.answerQuestion(sid: workspaceId, toolUseId: target.toolUseId, answers: answers);
+    _claudeRepository.answerQuestion(
+      sid: _sidFor(workspaceId, session.tabId),
+      toolUseId: target.toolUseId,
+      answers: answers,
+    );
   }
 
   void answerPlan(String workspaceId, String messageId, bool approve) {
@@ -773,7 +791,12 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       _prefs.setString('$_permPrefix$workspaceId', approveMode.name);
     }
 
-    _claudeRepository.respondPlan(sid: workspaceId, toolUseId: target.toolUseId, approve: approve, mode: approveMode);
+    _claudeRepository.respondPlan(
+      sid: _sidFor(workspaceId, session.tabId),
+      toolUseId: target.toolUseId,
+      approve: approve,
+      mode: approveMode,
+    );
   }
 
   void answerPermission(String workspaceId, String messageId, ClaudePermissionDecision decision) {
@@ -796,7 +819,11 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       session.copyWith(messages: list, allowAlwaysActive: session.allowAlwaysActive || allowAlways),
     );
     _permissionRequestToWorkspace.remove(requestId);
-    _claudeRepository.respondPermission(sid: workspaceId, toolUseId: requestId, decision: decision);
+    _claudeRepository.respondPermission(
+      sid: _sidFor(workspaceId, session.tabId),
+      toolUseId: requestId,
+      decision: decision,
+    );
   }
 
   Future<void> resumeSession(String workspaceId, String sessionId) async {
@@ -805,9 +832,10 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     final active = wsSessions?.activeTab;
     if (ws == null || wsSessions == null || active == null) return;
 
-    if (_runningWorkspaceId == workspaceId) {
-      await _stopRun.call(sid: workspaceId);
-      _cleanupRun();
+    final activeSid = _sidFor(workspaceId, active.tabId);
+    if (_runs.containsKey(activeSid)) {
+      await _stopRun.call(sid: activeSid);
+      _cleanupRun(activeSid);
     }
 
     final isActiveEmpty = active.messages.isEmpty && active.claudeSessionId == null;
@@ -853,14 +881,16 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     });
   }
 
-  Future<void> stopRun() async {
-    if (_runningWorkspaceId == null) return;
-    final wid = _runningWorkspaceId!;
-    final s = _runTab(wid);
+  Future<void> stopRun(String workspaceId, {String? tabId}) async {
+    final resolvedTabId = tabId ?? state.workspaces[workspaceId]?.activeTabId;
+    if (resolvedTabId == null) return;
+    final sid = _sidFor(workspaceId, resolvedTabId);
+    if (!_runs.containsKey(sid)) return;
+    final s = state.workspaces[workspaceId]?.tabById(resolvedTabId);
     if (s != null && s.queuedPrompt != null) {
-      _emitRunTab(wid, s.copyWith(queuedPrompt: null));
+      _emitTab(workspaceId, resolvedTabId, s.copyWith(queuedPrompt: null));
     }
-    await _stopRun.call(sid: wid);
+    await _stopRun.call(sid: sid);
   }
 
   void setInputDraft(String workspaceId, ChatInputDraft draft) {
@@ -895,36 +925,19 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _emitActive(workspaceId, session.copyWith(queuedPrompt: null));
   }
 
-  /// After a run finishes, start the next queued prompt (single-run model).
-  /// Prefers the just-finished tab, then falls back to the globally oldest
-  /// queued prompt by `enqueuedAt` so nothing sits stuck behind a busy tab.
-  void _drainNextQueued({String? preferWid, String? preferTabId}) {
-    if (_runningWorkspaceId != null) return;
+  /// After a run finishes, start the next queued prompt on that SAME tab
+  /// (per-tab single-run model). No cross-tab fallback: each tab drains only
+  /// its own queue when its own run ends, independently of what other tabs
+  /// are doing.
+  void _drainTab(String wid, String tabId) {
+    if (_runs.containsKey(_sidFor(wid, tabId))) return;
+    final tab = state.workspaces[wid]?.tabById(tabId);
+    final queued = tab?.queuedPrompt;
+    if (tab == null || queued == null) return;
 
-    (String wid, ClaudeSessionData tab)? pick;
-    if (preferWid != null && preferTabId != null) {
-      final t = state.workspaces[preferWid]?.tabById(preferTabId);
-      if (t?.queuedPrompt != null) pick = (preferWid, t!);
-    }
-    if (pick == null) {
-      DateTime? oldest;
-      state.workspaces.forEach((wid, ws) {
-        for (final t in ws.tabs) {
-          final q = t.queuedPrompt;
-          if (q == null) continue;
-          if (oldest == null || q.enqueuedAt.isBefore(oldest!)) {
-            oldest = q.enqueuedAt;
-            pick = (wid, t);
-          }
-        }
-      });
-    }
-    if (pick == null) return;
-
-    final (wid, tab) = pick!;
-    final text = tab.queuedPrompt!.text;
-    _emitTab(wid, tab.tabId, tab.copyWith(queuedPrompt: null));
-    Future.microtask(() => sendPrompt(wid, text, tabId: tab.tabId));
+    final text = queued.text;
+    _emitTab(wid, tabId, tab.copyWith(queuedPrompt: null));
+    Future.microtask(() => sendPrompt(wid, text, tabId: tabId));
   }
 
   Future<void> sendPrompt(
@@ -946,10 +959,11 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       _talker.warning('sendPrompt for unknown workspace/tab: $workspaceId/$tabId');
       return;
     }
-    if (_runningWorkspaceId != null) {
-      // Single-run model: a run is already in flight (this or another tab).
-      // Don't drop the message — queue it on its target tab, FIFO-drained when
-      // the current run finishes (see _drainNextQueued).
+    final sid = _sidFor(workspaceId, targetTabId);
+    if (_runs.containsKey(sid)) {
+      // Per-tab single-run model: a run is already in flight for THIS tab.
+      // Don't drop the message — queue it, FIFO-drained when this tab's own
+      // run finishes (see _drainTab). Other tabs are unaffected.
       if (trimmed.isNotEmpty) {
         _emitTab(
           workspaceId,
@@ -1048,12 +1062,11 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
     _talker.debug('[cc] u> ${_oneLine(_truncate(cliPrompt, 800))}');
 
-    _runningWorkspaceId = workspaceId;
-    _runningTabId = targetTabId;
-    _streamingText = '';
-    _lastFlushAt = null;
+    final ctl = _RunController(workspaceId: workspaceId, tabId: targetTabId, sid: sid);
+    _runs[sid] = ctl;
 
     final params = SendPromptParams(
+      sid: sid,
       cwd: workspaceId,
       prompt: cliPrompt,
       mode: session.permissionMode,
@@ -1065,32 +1078,34 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       disabledMcp: session.disabledMcpServers,
     );
 
-    _runSub = _sendPrompt
+    ctl.sub = _sendPrompt
         .call(params)
         .listen(
-          _onEvent,
+          (result) => _onEvent(ctl, result),
           onError: (e, st) {
             _talker.error('Claude run errored', e, st);
-            _finishRun(status: ClaudeRunStatus.error, failure: UnexpectedFailure('$e'));
+            _finishRun(ctl, status: ClaudeRunStatus.error, failure: UnexpectedFailure('$e'));
           },
           onDone: () {
-            if (_runningWorkspaceId != null) {
-              _finishRun(status: ClaudeRunStatus.idle);
+            // Double-finish guard: sessionDead may already have reached
+            // _finishRun (which removes ctl.sid from _runs) before this
+            // stream's onDone fires — don't drain/re-emit a second time.
+            if (_runs.containsKey(sid)) {
+              _finishRun(ctl, status: ClaudeRunStatus.idle);
             }
           },
         );
   }
 
-  void _onEvent(Either<Failure, ClaudeEvent> result) {
+  void _onEvent(_RunController ctl, Either<Failure, ClaudeEvent> result) {
     result.fold((failure) {
-      _finishRun(status: ClaudeRunStatus.error, failure: failure);
-    }, _handleEvent);
+      _finishRun(ctl, status: ClaudeRunStatus.error, failure: failure);
+    }, (event) => _handleEvent(ctl, event));
   }
 
-  void _handleEvent(ClaudeEvent event) {
-    final wid = _runningWorkspaceId;
-    final tabId = _runningTabId;
-    if (wid == null || tabId == null) return;
+  void _handleEvent(_RunController ctl, ClaudeEvent event) {
+    final wid = ctl.workspaceId;
+    final tabId = ctl.tabId;
     final session = state.workspaces[wid]?.tabById(tabId);
     if (session == null) return;
 
@@ -1116,21 +1131,24 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         mergeMcpServersFromSessionInit(mcpServers);
 
       case ClaudeEventTextChunk(:final text):
-        _ensureStreamingMessage(wid);
-        _streamingText += text;
+        _ensureStreamingMessage(ctl);
+        ctl.streamingText += text;
         final now = DateTime.now();
-        final since = _lastFlushAt == null ? const Duration(days: 1) : now.difference(_lastFlushAt!);
+        final since = ctl.lastFlushAt == null ? const Duration(days: 1) : now.difference(ctl.lastFlushAt!);
         if (since.inMilliseconds >= _flushMs) {
-          _flushStreamingChunks();
+          _flushStreamingChunks(ctl);
         } else {
-          _chunkFlushTimer ??= Timer(Duration(milliseconds: _flushMs - since.inMilliseconds), _flushStreamingChunks);
+          ctl.chunkFlushTimer ??= Timer(
+            Duration(milliseconds: _flushMs - since.inMilliseconds),
+            () => _flushStreamingChunks(ctl),
+          );
         }
 
       case ClaudeEventAssistantMessage(:final text):
-        _flushChunkTimerCancel();
-        _streamingText = '';
-        _ensureStreamingMessage(wid);
-        _replaceStreamingMessage(wid, text, isStreaming: false);
+        _flushChunkTimerCancel(ctl);
+        ctl.streamingText = '';
+        _ensureStreamingMessage(ctl);
+        _replaceStreamingMessage(ctl, text, isStreaming: false);
         if (text.trim().isNotEmpty) {
           _talker.debug('[cc] a> ${_oneLine(_truncate(text, 800))}');
         }
@@ -1138,6 +1156,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       case ClaudeEventToolCall(:final toolName, :final toolId):
         _appendMessage(
           wid,
+          tabId,
           ClaudeMessage.tool(
             id: _genId('t'),
             toolName: toolName,
@@ -1151,28 +1170,29 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         break;
 
       case ClaudeEventToolCallComplete(:final toolId, :final input, :final index):
-        _completeToolMessage(wid, toolUseId: toolId, input: input);
+        _completeToolMessage(wid, tabId, toolUseId: toolId, input: input);
         _talker.debug(
-          '[cc] tool> ${_toolNameFor(wid, toolId) ?? "?"}#$index'
+          '[cc] tool> ${_toolNameFor(wid, tabId, toolId) ?? "?"}#$index'
           '${_describeToolInput(input)}',
         );
 
       case ClaudeEventToolResult(:final toolUseId, :final content, :final isError):
-        _attachToolResult(wid, toolUseId: toolUseId, output: content, isError: isError);
+        _attachToolResult(wid, tabId, toolUseId: toolUseId, output: content, isError: isError);
         _talker.debug(
-          '[cc] result> ${_toolNameFor(wid, toolUseId) ?? "?"} '
+          '[cc] result> ${_toolNameFor(wid, tabId, toolUseId) ?? "?"} '
           'err=$isError ${_oneLine(_truncate(content, 300))}',
         );
 
       case ClaudeEventTaskComplete():
-        _flushStreamingChunks();
+        _flushStreamingChunks(ctl);
         _talker.info('[cc] done');
-        _finishRun(status: ClaudeRunStatus.idle);
+        _finishRun(ctl, status: ClaudeRunStatus.idle);
 
       case ClaudeEventErrorEvent(:final message):
-        _flushStreamingChunks();
+        _flushStreamingChunks(ctl);
         _talker.error('[cc] error> ${_oneLine(message)}');
         _finishRun(
+          ctl,
           status: ClaudeRunStatus.error,
           failure: SubprocessFailure(message: message),
         );
@@ -1183,6 +1203,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       case ClaudeEventAskUserQuestion(:final toolUseId, :final questions):
         _appendMessage(
           wid,
+          tabId,
           ClaudeMessage.askUserQuestion(
             id: _genId('q'),
             toolUseId: toolUseId,
@@ -1196,6 +1217,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         final messageId = _genId('pr');
         _appendMessage(
           wid,
+          tabId,
           ClaudeMessage.permissionRequest(
             id: messageId,
             requestId: requestId,
@@ -1208,6 +1230,7 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       case ClaudeEventPlanProposed(:final toolUseId, :final plan, :final planFilePath):
         _appendMessage(
           wid,
+          tabId,
           ClaudeMessage.plan(
             id: _genId('pl'),
             toolUseId: toolUseId,
@@ -1236,8 +1259,9 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
         _emitTab(wid, tabId, session.copyWith(usage: updated));
 
       case ClaudeEventSessionDead(:final exitCode, :final stderrTail):
-        _flushStreamingChunks();
+        _flushStreamingChunks(ctl);
         _finishRun(
+          ctl,
           status: exitCode == 0 ? ClaudeRunStatus.idle : ClaudeRunStatus.sessionDead,
           failure: exitCode == 0 ? null : SubprocessFailure(message: 'exit_code', exitCode: exitCode),
           stderrTail: stderrTail,
@@ -1245,27 +1269,23 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     }
   }
 
-  void _flushStreamingChunks() {
-    _flushChunkTimerCancel();
-    final wid = _runningWorkspaceId;
-    if (wid == null) return;
-    final mid = _streamingMessageIdFor(wid);
+  void _flushStreamingChunks(_RunController ctl) {
+    _flushChunkTimerCancel(ctl);
+    final mid = _streamingMessageIdFor(ctl.workspaceId, ctl.tabId);
     if (mid == null) return;
-    if (_streamingText.isEmpty) return;
-    _replaceStreamingMessage(wid, _streamingText, isStreaming: true);
-    _lastFlushAt = DateTime.now();
+    if (ctl.streamingText.isEmpty) return;
+    _replaceStreamingMessage(ctl, ctl.streamingText, isStreaming: true);
+    ctl.lastFlushAt = DateTime.now();
   }
 
-  void _flushChunkTimerCancel() {
-    _chunkFlushTimer?.cancel();
-    _chunkFlushTimer = null;
+  void _flushChunkTimerCancel(_RunController ctl) {
+    ctl.chunkFlushTimer?.cancel();
+    ctl.chunkFlushTimer = null;
   }
 
-  void _ensureStreamingMessage(String wid) {
-    if (_streamingMessageIdFor(wid) != null) return;
-    final tabId = _runningTabId;
-    if (tabId == null) return;
-    final session = state.workspaces[wid]?.tabById(tabId);
+  void _ensureStreamingMessage(_RunController ctl) {
+    if (_streamingMessageIdFor(ctl.workspaceId, ctl.tabId) != null) return;
+    final session = state.workspaces[ctl.workspaceId]?.tabById(ctl.tabId);
     if (session == null) return;
     final placeholder = ClaudeMessage.assistant(
       id: _genId('a'),
@@ -1273,15 +1293,15 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
       isStreaming: true,
       createdAt: DateTime.now(),
     );
-    _emitTab(wid, tabId, session.copyWith(messages: [...session.messages, placeholder]));
+    _emitTab(ctl.workspaceId, ctl.tabId, session.copyWith(messages: [...session.messages, placeholder]));
   }
 
-  void _replaceStreamingMessage(String wid, String text, {required bool isStreaming}) {
-    final tabId = _runningTabId;
-    if (tabId == null) return;
+  void _replaceStreamingMessage(_RunController ctl, String text, {required bool isStreaming}) {
+    final wid = ctl.workspaceId;
+    final tabId = ctl.tabId;
     final session = state.workspaces[wid]?.tabById(tabId);
     if (session == null) return;
-    final mid = _streamingMessageIdFor(wid);
+    final mid = _streamingMessageIdFor(wid, tabId);
     if (mid == null) return;
     final messages = [
       for (final m in session.messages)
@@ -1290,18 +1310,14 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _emitTab(wid, tabId, session.copyWith(messages: messages));
   }
 
-  void _appendMessage(String wid, ClaudeMessage message) {
-    final tabId = _runningTabId;
-    if (tabId == null) return;
+  void _appendMessage(String wid, String tabId, ClaudeMessage message) {
     final session = state.workspaces[wid]?.tabById(tabId);
     if (session == null) return;
     final messages = [...session.messages, message];
     _emitTab(wid, tabId, session.copyWith(messages: messages));
   }
 
-  void _completeToolMessage(String wid, {String? toolUseId, Map<String, dynamic>? input}) {
-    final tabId = _runningTabId;
-    if (tabId == null) return;
+  void _completeToolMessage(String wid, String tabId, {String? toolUseId, Map<String, dynamic>? input}) {
     final session = state.workspaces[wid]?.tabById(tabId);
     if (session == null) return;
     final list = [...session.messages];
@@ -1318,10 +1334,14 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     _emitTab(wid, tabId, session.copyWith(messages: list));
   }
 
-  void _attachToolResult(String wid, {required String toolUseId, required String output, required bool isError}) {
+  void _attachToolResult(
+    String wid,
+    String tabId, {
+    required String toolUseId,
+    required String output,
+    required bool isError,
+  }) {
     if (toolUseId.isEmpty) return;
-    final tabId = _runningTabId;
-    if (tabId == null) return;
     final session = state.workspaces[wid]?.tabById(tabId);
     if (session == null) return;
     final list = [...session.messages];
@@ -1364,54 +1384,47 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
     ];
   }
 
-  void _finishRun({required ClaudeRunStatus status, Failure? failure, List<String>? stderrTail}) {
-    final wid = _runningWorkspaceId;
-    final tabId = _runningTabId;
-    if (wid != null && tabId != null) {
-      final session = state.workspaces[wid]?.tabById(tabId);
-      if (session != null) {
-        final mid = _streamingMessageIdFor(wid);
-        var messages = session.messages;
-        if (mid != null) {
-          messages = [
-            for (final m in messages)
-              if (m is ClaudeMessageAssistant && m.id == mid) m.copyWith(isStreaming: false) else m,
-          ];
-          if (messages.isNotEmpty &&
-              messages.last is ClaudeMessageAssistant &&
-              (messages.last as ClaudeMessageAssistant).text.isEmpty) {
-            messages = messages.sublist(0, messages.length - 1);
-          }
+  void _finishRun(_RunController ctl, {required ClaudeRunStatus status, Failure? failure, List<String>? stderrTail}) {
+    final wid = ctl.workspaceId;
+    final tabId = ctl.tabId;
+    final session = state.workspaces[wid]?.tabById(tabId);
+    if (session != null) {
+      final mid = _streamingMessageIdFor(wid, tabId);
+      var messages = session.messages;
+      if (mid != null) {
+        messages = [
+          for (final m in messages)
+            if (m is ClaudeMessageAssistant && m.id == mid) m.copyWith(isStreaming: false) else m,
+        ];
+        if (messages.isNotEmpty &&
+            messages.last is ClaudeMessageAssistant &&
+            (messages.last as ClaudeMessageAssistant).text.isEmpty) {
+          messages = messages.sublist(0, messages.length - 1);
         }
-        if (status == ClaudeRunStatus.idle) {
-          messages = _appendCompletionStubIfNeeded(messages);
-        }
-        _emitTab(
-          wid,
-          tabId,
-          session.copyWith(
-            messages: messages,
-            runStatus: status,
-            lastError: failure,
-            stderrTail: stderrTail ?? session.stderrTail,
-          ),
-        );
       }
+      if (status == ClaudeRunStatus.idle) {
+        messages = _appendCompletionStubIfNeeded(messages);
+      }
+      _emitTab(
+        wid,
+        tabId,
+        session.copyWith(
+          messages: messages,
+          runStatus: status,
+          lastError: failure,
+          stderrTail: stderrTail ?? session.stderrTail,
+        ),
+      );
     }
-    _cleanupRun();
+    _cleanupRun(ctl.sid);
     // Drain on ANY terminal status (idle/error/sessionDead) so a queued prompt
-    // never gets stuck behind a run that ended badly.
-    _drainNextQueued(preferWid: wid, preferTabId: tabId);
+    // never gets stuck behind a run that ended badly. Only THIS tab's own
+    // queue — no cross-tab fallback (see _drainTab).
+    _drainTab(wid, tabId);
   }
 
-  void _cleanupRun() {
-    _flushChunkTimerCancel();
-    _runSub?.cancel();
-    _runSub = null;
-    _runningWorkspaceId = null;
-    _runningTabId = null;
-    _streamingText = '';
-    _lastFlushAt = null;
+  void _cleanupRun(String sid) {
+    _runs.remove(sid)?.cancel();
   }
 
   /// Last known MCP server list from emitted state (empty until first load).
@@ -1533,10 +1546,11 @@ class ClaudeSessionsCubit extends Cubit<ClaudeSessionsState> {
 
   @override
   Future<void> close() async {
-    _cleanupRun();
     await _workspacesSub?.cancel();
-    if (_runningWorkspaceId != null) {
-      await _stopRun.call(sid: _runningWorkspaceId!);
+    final sids = _runs.keys.toList();
+    for (final sid in sids) {
+      await _stopRun.call(sid: sid);
+      _cleanupRun(sid);
     }
     return super.close();
   }

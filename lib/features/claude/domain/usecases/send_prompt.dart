@@ -12,6 +12,7 @@ import '../repositories/claude_repository.dart';
 
 class SendPromptParams extends Equatable {
   const SendPromptParams({
+    required this.sid,
     required this.cwd,
     required this.prompt,
     required this.mode,
@@ -23,6 +24,7 @@ class SendPromptParams extends Equatable {
     this.disabledMcp = const {},
   });
 
+  final String sid;
   final String cwd;
   final String prompt;
   final ClaudePermissionMode mode;
@@ -34,7 +36,18 @@ class SendPromptParams extends Equatable {
   final Set<String> disabledMcp;
 
   @override
-  List<Object?> get props => [cwd, prompt, mode, model, effort, thinking, resumeSessionId, imagePaths, disabledMcp];
+  List<Object?> get props => [
+    sid,
+    cwd,
+    prompt,
+    mode,
+    model,
+    effort,
+    thinking,
+    resumeSessionId,
+    imagePaths,
+    disabledMcp,
+  ];
 }
 
 @injectable
@@ -46,6 +59,7 @@ class SendPrompt implements StreamUseCase<ClaudeEvent, SendPromptParams> {
   @override
   Stream<Either<Failure, ClaudeEvent>> call(SendPromptParams params) {
     return _repository.startRun(
+      sid: params.sid,
       cwd: params.cwd,
       prompt: params.prompt,
       mode: params.mode,

@@ -23,6 +23,7 @@ class SidecarClientDataSource {
   final Map<String, List<Map<String, dynamic>>> _questionCache = {};
 
   Stream<ClaudeEvent> startRun({
+    required String sid,
     required String cwd,
     required String prompt,
     required ClaudePermissionMode mode,
@@ -35,7 +36,6 @@ class SidecarClientDataSource {
   }) async* {
     await _transport.start();
 
-    final sid = cwd;
     final req = <String, dynamic>{
       't': 'start',
       'sid': sid,

@@ -288,7 +288,7 @@ class ClaudeInputBar extends HookWidget {
         return KeyEventResult.handled;
       }
       if (event.logicalKey == LogicalKeyboardKey.period && HardwareKeyboard.instance.isMetaPressed) {
-        if (_isBusy) sessionsCubit.stopRun();
+        if (_isBusy) sessionsCubit.stopRun(workspaceId);
         return KeyEventResult.handled;
       }
       if (event.logicalKey == LogicalKeyboardKey.escape) {
@@ -301,7 +301,7 @@ class ClaudeInputBar extends HookWidget {
         if (armed != null && now.difference(armed) <= const Duration(seconds: 3)) {
           escArmedAt.value = null;
           ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
-          sessionsCubit.stopRun();
+          sessionsCubit.stopRun(workspaceId);
           return KeyEventResult.handled;
         }
         escArmedAt.value = now;
@@ -430,7 +430,7 @@ class ClaudeInputBar extends HookWidget {
                       tooltipKey: 'claude.terminal.input.stop',
                       color: AppColors.error,
                       filled: true,
-                      onTap: sessionsCubit.stopRun,
+                      onTap: () => sessionsCubit.stopRun(workspaceId),
                     )
                   else
                     _ActionButton(

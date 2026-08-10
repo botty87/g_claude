@@ -167,7 +167,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(ClaudePermissionMode.defaultMode);
     registerFallbackValue(ClaudePermissionDecision.allowOnce);
-    registerFallbackValue(const SendPromptParams(cwd: '/fallback', prompt: '', mode: ClaudePermissionMode.defaultMode));
+    registerFallbackValue(const SendPromptParams(sid: '/fallback', cwd: '/fallback', prompt: '', mode: ClaudePermissionMode.defaultMode));
   });
 
   setUp(() async {
@@ -339,6 +339,7 @@ void main() {
       final fixture = _makeFixture();
       await _startRun(fixture);
 
+      final tabId = fixture.cubit.state.sessionFor(_wid)!.tabId;
       fixture.runController.add(const Right(ClaudeEvent.planProposed(toolUseId: 'pl1', plan: 'plan text')));
       await _drain();
 
@@ -353,7 +354,12 @@ void main() {
       expect(updatedPlan.approved, isTrue);
 
       verify(
-        () => fixture.repo.respondPlan(sid: _wid, toolUseId: 'pl1', approve: true, mode: ClaudePermissionMode.auto),
+        () => fixture.repo.respondPlan(
+          sid: '$_wid::$tabId',
+          toolUseId: 'pl1',
+          approve: true,
+          mode: ClaudePermissionMode.auto,
+        ),
       ).called(1);
 
       await fixture.cubit.close();
@@ -365,6 +371,7 @@ void main() {
         final fixture = _makeFixture();
         await _startRun(fixture);
 
+        final tabId = fixture.cubit.state.sessionFor(_wid)!.tabId;
         fixture.runController.add(const Right(ClaudeEvent.planProposed(toolUseId: 'pl2', plan: 'plan text')));
         await _drain();
 
@@ -376,7 +383,9 @@ void main() {
 
         expect(fixture.cubit.state.sessionFor(_wid)?.permissionMode, before, reason: 'rejecting must not change mode');
 
-        verify(() => fixture.repo.respondPlan(sid: _wid, toolUseId: 'pl2', approve: false, mode: null)).called(1);
+        verify(
+          () => fixture.repo.respondPlan(sid: '$_wid::$tabId', toolUseId: 'pl2', approve: false, mode: null),
+        ).called(1);
 
         await fixture.cubit.close();
       },

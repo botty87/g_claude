@@ -40,6 +40,7 @@ void main() {
     final done = Completer<void>();
     final sub = ds
         .startRun(
+          sid: sandbox.path,
           cwd: sandbox.path,
           prompt: 'Reply with exactly the word DONE. Do not use any tools.',
           mode: ClaudePermissionMode.defaultMode,
@@ -62,6 +63,7 @@ void main() {
     final done = Completer<void>();
     final sub = ds
         .startRun(
+          sid: sandbox.path,
           cwd: sandbox.path,
           prompt:
               'Without reading or exploring any files, IMMEDIATELY call ExitPlanMode '

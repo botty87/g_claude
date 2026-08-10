@@ -82,6 +82,7 @@ void main() {
     test('sid/cwd/prompt/mode always present; optional fields included only when non-null/non-empty', () async {
       final sub = ds
           .startRun(
+            sid: '/w',
             cwd: '/w',
             prompt: 'p',
             mode: ClaudePermissionMode.plan,
@@ -112,7 +113,9 @@ void main() {
     });
 
     test('omits model/effort/resume/images/disabledMcp when null/empty', () async {
-      final sub = ds.startRun(cwd: '/w2', prompt: 'p2', mode: ClaudePermissionMode.defaultMode).listen((_) {});
+      final sub = ds
+          .startRun(sid: '/w2', cwd: '/w2', prompt: 'p2', mode: ClaudePermissionMode.defaultMode)
+          .listen((_) {});
       addTearDown(sub.cancel);
       await Future<void>.delayed(Duration.zero);
 
@@ -128,7 +131,7 @@ void main() {
 
     test('thinking:false is sent explicitly when the caller passes thinking:false', () async {
       final sub = ds
-          .startRun(cwd: '/w3', prompt: 'p3', mode: ClaudePermissionMode.acceptEdits, thinking: false)
+          .startRun(sid: '/w3', cwd: '/w3', prompt: 'p3', mode: ClaudePermissionMode.acceptEdits, thinking: false)
           .listen((_) {});
       addTearDown(sub.cancel);
       await Future<void>.delayed(Duration.zero);
@@ -144,7 +147,9 @@ void main() {
   group('startRun — events are filtered by sid (sid == cwd of this run)', () {
     test('an event with a different sid is not emitted on this run stream', () async {
       final seen = <ClaudeEvent>[];
-      final sub = ds.startRun(cwd: '/mine', prompt: 'p', mode: ClaudePermissionMode.defaultMode).listen(seen.add);
+      final sub = ds
+          .startRun(sid: '/mine', cwd: '/mine', prompt: 'p', mode: ClaudePermissionMode.defaultMode)
+          .listen(seen.add);
       addTearDown(sub.cancel);
       await Future<void>.delayed(Duration.zero);
 
@@ -166,7 +171,7 @@ void main() {
 
   group('startRun — stream completes after sessionDead', () {
     test('sessionDead closes the run stream (emits the event then emitsDone)', () async {
-      final stream = ds.startRun(cwd: '/w', prompt: 'p', mode: ClaudePermissionMode.defaultMode);
+      final stream = ds.startRun(sid: '/w', cwd: '/w', prompt: 'p', mode: ClaudePermissionMode.defaultMode);
 
       final expectation = expectLater(
         stream,
@@ -189,7 +194,7 @@ void main() {
   group('startRun — maps each protocol event to the matching ClaudeEvent variant', () {
     Future<ClaudeEvent> firstEventFor(Map<String, dynamic> raw, {String sid = '/w'}) async {
       final events = <ClaudeEvent>[];
-      final sub = ds.startRun(cwd: sid, prompt: 'p', mode: ClaudePermissionMode.defaultMode).listen(events.add);
+      final sub = ds.startRun(sid: sid, cwd: sid, prompt: 'p', mode: ClaudePermissionMode.defaultMode).listen(events.add);
       addTearDown(sub.cancel);
       await Future<void>.delayed(Duration.zero);
       transport.push(raw);
@@ -436,7 +441,7 @@ void main() {
 
     test('an unrecognized event type is dropped (no ClaudeEvent emitted)', () async {
       final events = <ClaudeEvent>[];
-      final sub = ds.startRun(cwd: '/w', prompt: 'p', mode: ClaudePermissionMode.defaultMode).listen(events.add);
+      final sub = ds.startRun(sid: '/w', cwd: '/w', prompt: 'p', mode: ClaudePermissionMode.defaultMode).listen(events.add);
       addTearDown(sub.cancel);
       await Future<void>.delayed(Duration.zero);
 
@@ -464,7 +469,7 @@ void main() {
         },
       ];
 
-      final sub = ds.startRun(cwd: '/w', prompt: 'p', mode: ClaudePermissionMode.defaultMode).listen((_) {});
+      final sub = ds.startRun(sid: '/w', cwd: '/w', prompt: 'p', mode: ClaudePermissionMode.defaultMode).listen((_) {});
       addTearDown(sub.cancel);
       await Future<void>.delayed(Duration.zero);
 
