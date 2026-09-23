@@ -56,3 +56,5 @@ app.*.map.json
 # Release artifacts — binaries live on GitHub Releases, not in repo
 release/**/*.zip
 release/**/*.app/
+# Claude Code local settings (personal configuration), at any depth
+**/.claude/settings.local.json
