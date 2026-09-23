@@ -1,0 +1,44 @@
+diff --git a/backend/src/session.ts b/backend/src/session.ts
+index 559b38d..cfbb3f9 100644
+--- a/backend/src/session.ts
++++ b/backend/src/session.ts
+@@ -54,16 +54,6 @@ function userMessage(text: string, images: string[] = []): SDKUserMessage {
+   return { type: 'user', message: { role: 'user', content: blocks as never }, parent_tool_use_id: null };
+ }
+ 
+-// 1M-token context beta, auto-enabled for models that support it. The SDK
+-// documents `context-1m-2025-08-07` for Sonnet 4/4.5; Opus 4.8 carries its own
+-// large-context model variant so needs no beta flag.
+-function oneMillionBetas(model?: string): { betas?: never } {
+-  if (model && model.toLowerCase().includes('sonnet')) {
+-    return { betas: ['context-1m-2025-08-07'] as never };
+-  }
+-  return {};
+-}
+-
+ // Replicates the Claude Code CLI's MCP-server-name → tool-namespace sanitizer.
+ // The CLI exposes an MCP server's tools as `mcp__<sanitized>__<tool>`, so a
+ // `disallowedTools` spec of `mcp__<name>__*` only matches if <name> is the
+@@ -123,8 +113,6 @@ class Session {
+         // Undefined → leave the model default (adaptive on Opus).
+         ...(req.thinking === true ? { thinking: { type: 'adaptive' } as never }
+           : req.thinking === false ? { thinking: { type: 'disabled' } as never } : {}),
+-        // 1M context window, auto-enabled where supported (documented: Sonnet).
+-        ...(oneMillionBetas(req.model)),
+         // Disabled MCP servers → block all their tools (mcp__<name>__*). Names
+         // must be sanitized to the CLI's tool namespace or the spec won't match
+         // remote/claude.ai servers (see sanitizeMcpToolPrefix).
+diff --git a/lib/features/claude/domain/entities/claude_model.dart b/lib/features/claude/domain/entities/claude_model.dart
+index 05fd3ef..6c7c134 100644
+--- a/lib/features/claude/domain/entities/claude_model.dart
++++ b/lib/features/claude/domain/entities/claude_model.dart
+@@ -28,8 +28,7 @@ enum ClaudeModel {
+ }
+ 
+ extension ClaudeModelContext on ClaudeModel {
+-  /// Context window in tokens. Sonnet and Opus run with the 1M-context beta
+-  /// enabled by the sidecar automatically; Haiku stays at the standard 200k.
++  /// Context window in tokens: 1M on Sonnet and Opus, 200k on Haiku.
+   int get contextLimit {
+     switch (this) {
+       case ClaudeModel.sonnet:
